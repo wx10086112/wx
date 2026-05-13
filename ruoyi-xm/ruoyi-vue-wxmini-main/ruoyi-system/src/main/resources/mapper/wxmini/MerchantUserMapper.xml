@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.wxmini.mapper.MerchantUserMapper">
+
+    <resultMap type="MerchantUser" id="MerchantUserResult">
+        <result property="id" column="id"/>
+        <result property="merchantId" column="merchant_id"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="realName" column="real_name"/>
+        <result property="phone" column="phone"/>
+        <result property="role" column="role"/>
+        <result property="status" column="status"/>
+        <result property="lastLoginTime" column="last_login_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectMerchantUserVo">
+        select id, merchant_id, username, password, real_name, phone, role,
+               status, last_login_time, create_by, create_time, update_by,
+               update_time, remark
+        from merchant_user
+    </sql>
+
+    <select id="selectMerchantUserList" parameterType="MerchantUser" resultMap="MerchantUserResult">
+        <include refid="selectMerchantUserVo"/>
+        <where>
+            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
+            <if test="username != null and username != ''">and username like concat('%', #{username}, '%')</if>
+            <if test="realName != null and realName != ''">and real_name like concat('%', #{realName}, '%')</if>
+            <if test="phone != null and phone != ''">and phone = #{phone}</if>
+            <if test="role != null and role != ''">and role = #{role}</if>
+            <if test="status != null">and status = #{status}</if>
+        </where>
+    </select>
+
+    <select id="selectMerchantUserById" parameterType="Long" resultMap="MerchantUserResult">
+        <include refid="selectMerchantUserVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectMerchantUserByUsername" parameterType="String" resultMap="MerchantUserResult">
+        <include refid="selectMerchantUserVo"/>
+        where username = #{username}
+    </select>
+
+    <select id="selectMerchantUserByMerchantId" parameterType="Long" resultMap="MerchantUserResult">
+        <include refid="selectMerchantUserVo"/>
+        where merchant_id = #{merchantId}
+    </select>
+
+    <insert id="insertMerchantUser" parameterType="MerchantUser" useGeneratedKeys="true" keyProperty="id">
+        insert into merchant_user
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="merchantId != null">merchant_id,</if>
+            <if test="username != null and username != ''">username,</if>
+            <if test="password != null and password != ''">password,</if>
+            <if test="realName != null">real_name,</if>
+            <if test="phone != null">phone,</if>
+            <if test="role != null">role,</if>
+            <if test="status != null">status,</if>
+            <if test="lastLoginTime != null">last_login_time,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="merchantId != null">#{merchantId},</if>
+            <if test="username != null and username != ''">#{username},</if>
+            <if test="password != null and password != ''">#{password},</if>
+            <if test="realName != null">#{realName},</if>
+            <if test="phone != null">#{phone},</if>
+            <if test="role != null">#{role},</if>
+            <if test="status != null">#{status},</if>
+            <if test="lastLoginTime != null">#{lastLoginTime},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateMerchantUser" parameterType="MerchantUser">
+        update merchant_user
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="merchantId != null">merchant_id = #{merchantId},</if>
+            <if test="username != null and username != ''">username = #{username},</if>
+            <if test="password != null and password != ''">password = #{password},</if>
+            <if test="realName != null">real_name = #{realName},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="role != null">role = #{role},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="lastLoginTime != null">last_login_time = #{lastLoginTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteMerchantUserById" parameterType="Long">
+        delete from merchant_user where id = #{id}
+    </delete>
+
+    <delete id="deleteMerchantUserByIds" parameterType="String">
+        delete from merchant_user where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

@@ -1,0 +1,86 @@
+.staff-panel,
+.permission-panel {
+  padding: 28rpx;
+}
+
+.permission-panel {
+  margin-top: 20rpx;
+}
+
+.staff-row {
+  margin-top: 18rpx;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #edf1f5;
+  display: flex;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.staff-row.active {
+  background: #f8fbff;
+}
+
+.staff-row:last-child {
+  border-bottom: none;
+}
+
+.staff-main {
+  flex: 1;
+}
+
+.staff-name {
+  display: block;
+  font-size: 30rpx;
+  color: #1f2a37;
+  font-weight: 600;
+}
+
+.staff-meta,
+.permission-code {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.staff-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12rpx;
+}
+
+.mini-btn {
+  width: 120rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  font-size: 22rpx;
+}
+
+.permission-row {
+  margin-top: 18rpx;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #edf1f5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.permission-row:last-child {
+  border-bottom: none;
+}
+
+.permission-main {
+  flex: 1;
+}
+
+.permission-title {
+  display: block;
+  font-size: 28rpx;
+  color: #1f2a37;
+}
+
+.save-btn {
+  margin-top: 24rpx;
+}

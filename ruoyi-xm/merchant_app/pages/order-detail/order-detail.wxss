@@ -1,0 +1,34 @@
+.detail-card {
+  padding: 28rpx;
+}
+
+.detail-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-no {
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.detail-title {
+  display: block;
+  margin-top: 18rpx;
+  font-size: 34rpx;
+  color: #1f2a37;
+  font-weight: 700;
+}
+
+.detail-line {
+  display: block;
+  margin-top: 14rpx;
+  font-size: 26rpx;
+  color: #516170;
+  line-height: 1.6;
+}
+
+.verify-btn {
+  margin-top: 22rpx;
+}

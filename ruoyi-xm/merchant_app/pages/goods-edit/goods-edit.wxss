@@ -1,0 +1,90 @@
+.form-panel {
+  padding: 28rpx;
+}
+
+.image-uploader {
+  width: 100%;
+  height: 300rpx;
+  border-radius: 18rpx;
+  overflow: hidden;
+  background: #f6f9ff;
+}
+
+.goods-image-preview {
+  width: 100%;
+  height: 100%;
+}
+
+.image-placeholder {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #1f6feb;
+}
+
+.image-plus {
+  font-size: 64rpx;
+  line-height: 1;
+}
+
+.image-tip {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+}
+
+.field {
+  margin-top: 20rpx;
+}
+
+.field:first-child {
+  margin-top: 0;
+}
+
+.field-label {
+  display: block;
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.field-input,
+.field-textarea {
+  margin-top: 12rpx;
+  width: 100%;
+  border-radius: 16rpx;
+  background: #f6f9ff;
+  padding: 0 20rpx;
+  box-sizing: border-box;
+  font-size: 28rpx;
+  color: #1f2a37;
+}
+
+.field-input {
+  height: 84rpx;
+}
+
+.field-textarea {
+  min-height: 180rpx;
+  padding-top: 18rpx;
+}
+
+.two-col {
+  display: flex;
+  gap: 14rpx;
+}
+
+.field-half {
+  flex: 1;
+}
+
+.switch-row {
+  margin-top: 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.save-btn {
+  margin-top: 30rpx;
+}

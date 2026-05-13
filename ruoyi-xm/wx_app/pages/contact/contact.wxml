@@ -1,0 +1,7 @@
+<view class="simple-page">
+  <view class="simple-card">
+    <text class="simple-title">联系客服</text>
+    <text class="simple-subtitle">服务热线：{{brandInfo.servicePhone}}</text>
+    <text class="simple-subtitle">支付、核销或退款问题，可联系门店客服处理。</text>
+  </view>
+</view>

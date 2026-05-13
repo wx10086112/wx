@@ -1,0 +1,25 @@
+<view class="login-page">
+  <view class="hero-block">
+    <text class="hero-title">商家端日常操作</text>
+    <text class="hero-desc">单店店长 / 店员登录，处理团购订单、到店核销、商品和门店运营。</text>
+  </view>
+
+  <view class="role-list">
+    <view
+      wx:for="{{roleCardList}}"
+      wx:key="roleKey"
+      class="role-card {{selectedRoleKey === item.roleKey ? 'active' : ''}}"
+      bindtap="handleRoleTap"
+      data-role="{{item.roleKey}}"
+    >
+      <text class="role-title">{{item.title}}</text>
+      <text class="role-desc">{{item.desc}}</text>
+    </view>
+  </view>
+
+  <view class="login-panel">
+    <text class="panel-label">当前模拟账号</text>
+    <text class="panel-value">{{selectedRoleKey === 'manager' ? '林店长 / 店长角色' : '周店员 / 店员角色'}}</text>
+    <button class="primary-btn login-btn" bindtap="submitLogin">进入商家端</button>
+  </view>
+</view>

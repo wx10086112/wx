@@ -1,0 +1,118 @@
+<!-- 1. 声明 WXS 模块，用于视图层的价格计算 -->
+<wxs module="tools">
+var calculateSave = function(original, price) {
+  var diff = (original - price) / 100;
+  return diff.toFixed(0);
+}
+module.exports = {
+  calculateSave: calculateSave
+};
+</wxs>
+
+<view class="product-page">
+  <view class="loading-state" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:else class="product-detail">
+    <swiper class="image-swiper" indicator-dots autoplay circular interval="3000">
+      <swiper-item>
+        <image src="{{product.image}}" class="product-image" mode="aspectFill"></image>
+      </swiper-item>
+    </swiper>
+
+    <view class="price-section bg-white p-32">
+      <text class="price fs-48">¥{{product.price / 100}}</text>
+      <text wx:if="{{product.originalPrice > product.price}}" class="original-price ml-16">¥{{product.originalPrice / 100}}</text>
+      <view class="discount-tag ml-16" wx:if="{{product.originalPrice > product.price}}">
+        省{{tools.calculateSave(product.originalPrice, product.price)}}元
+      </view>
+    </view>
+    
+    <view class="title-row mt-16">
+      <text class="product-title fs-34">{{product.title}}</text>
+    </view>
+    
+    <view class="subtitle-row mt-8">
+      <text class="subtitle text-muted fs-28">{{product.subtitle}}</text>
+    </view>
+    
+    <view class="stats-row flex flex-between mt-20">
+      <view class="stats-item">
+        <text class="stat-label text-muted fs-24">已售</text>
+        <text class="stat-value ml-8">{{product.sales || 0}}</text>
+      </view>
+      <view class="stats-item">
+        <text class="stat-label text-muted fs-24">库存</text>
+        <text class="stat-value ml-8">{{product.stock || 0}}</text>
+      </view>
+      <view class="stats-item">
+        <text class="stat-label text-muted fs-24">有效期</text>
+        <text class="stat-value ml-8">{{product.validDays || 30}}天</text>
+      </view>
+    </view>
+    <!-- 删除了这里多余的 </view> -->
+
+    <view class="divider"></view>
+
+    <view class="merchant-section bg-white p-32" bindtap="goToMerchant">
+      <view class="merchant-header flex flex-align-center">
+        <image src="{{merchant.avatar}}" class="merchant-avatar" mode="aspectFill"></image>
+        <view class="merchant-info flex-1 ml-20">
+          <view class="merchant-name fs-32 text-bold">{{merchant.name}}</view>
+          <view class="merchant-stats flex flex-align-center mt-8">
+            <text class="star">★</text>
+            <text class="rating text-danger ml-4">{{merchant.rating}}</text>
+            <text class="text-muted ml-16 fs-24">{{merchant.distance}}</text>
+          </view>
+        </view>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+
+    <view class="divider"></view>
+
+    <view class="detail-section bg-white p-32">
+      <view class="section-title flex flex-align-center mb-24">
+        <text class="title-dot mr-12"></text>
+        <text class="title-text fs-32 text-bold">商品详情</text>
+      </view>
+      <view class="detail-content">
+        <view class="detail-item mb-24">
+          <text class="item-label text-muted fs-28">购买须知</text>
+          <view class="item-value mt-12">
+            <text class="fs-28 text-muted">• 有效期：{{product.validDays || 30}}天</text>
+            <text class="fs-28 text-muted ml-16">• 需提前1小时预约</text>
+          </view>
+        </view>
+        <view class="detail-item">
+          <text class="item-label text-muted fs-28">套餐内容</text>
+          <view class="item-value mt-12">
+            <text class="fs-28 text-ellipsis-2">{{product.description || '专业服务，品质保证'}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="safe-area-bottom"></view>
+  </view>
+
+  <view class="bottom-bar flex flex-align-center safe-area-bottom" wx:if="{{!loading}}">
+    <view class="bar-left flex flex-align-center">
+      <view class="bar-item flex flex-col flex-center" bindtap="goHome">
+        <text class="bar-icon">🏠</text>
+        <text class="bar-text fs-20">首页</text>
+      </view>
+      <view class="bar-item flex flex-col flex-center ml-32" bindtap="goMerchant">
+        <text class="bar-icon">🏪</text>
+        <text class="bar-text fs-20">商家</text>
+      </view>
+    </view>
+    <view class="bar-right flex flex-align-center">
+      <view class="stock-info mr-32 text-right">
+        <text class="stock-text text-muted fs-22">库存{{product.stock || 0}}件</text>
+      </view>
+      <button class="buy-btn" bindtap="buyNow">立即购买</button>
+    </view>
+  </view>
+</view>

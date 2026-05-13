@@ -1,0 +1,54 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/workbench/workbench",
+    "pages/order/order",
+    "pages/verify/verify",
+    "pages/goods/goods",
+    "pages/mine/mine",
+    "pages/order-detail/order-detail",
+    "pages/goods-edit/goods-edit",
+    "pages/store/store",
+    "pages/staff/staff",
+    "pages/verify-records/verify-records",
+    "pages/finance/finance"
+  ],
+  "window": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "商家端",
+    "navigationBarBackgroundColor": "#1f6feb",
+    "backgroundColor": "#f2f5f9"
+  },
+  "tabBar": {
+    "color": "#6f7d91",
+    "selectedColor": "#1f6feb",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/workbench/workbench",
+        "text": "工作台"
+      },
+      {
+        "pagePath": "pages/order/order",
+        "text": "订单"
+      },
+      {
+        "pagePath": "pages/verify/verify",
+        "text": "核销"
+      },
+      {
+        "pagePath": "pages/goods/goods",
+        "text": "商品"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的"
+      }
+    ]
+  },
+  "style": "v2",
+  "componentFramework": "glass-easel",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

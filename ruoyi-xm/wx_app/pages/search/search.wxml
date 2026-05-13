@@ -1,0 +1,18 @@
+<view class="simple-page">
+  <view class="simple-card">
+    <input class="search-input" placeholder="搜索套餐、服务项目" confirm-type="search" bindconfirm="onSearch" bindinput="onKeywordInput" />
+    <view class="quick-list">
+      <text wx:for="{{hotList}}" wx:key="index" class="quick-tag" bindtap="onQuickSearch" data-keyword="{{item}}">{{item}}</text>
+    </view>
+  </view>
+
+  <view class="simple-card">
+    <text class="simple-title">本店信息</text>
+    <view wx:for="{{merchantList}}" wx:key="id" class="simple-line">{{item.name}}</view>
+  </view>
+
+  <view class="simple-card">
+    <text class="simple-title">推荐套餐</text>
+    <view wx:for="{{productList}}" wx:key="id" class="simple-line">{{item.title}}</view>
+  </view>
+</view>

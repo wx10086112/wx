@@ -1,0 +1,78 @@
+<view class="merchant-detail-page">
+  <view class="loading-state" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:else class="detail-content">
+    <swiper class="banner-swiper" indicator-dots autoplay circular>
+      <swiper-item wx:for="{{albumList}}" wx:key="index">
+        <image src="{{item}}" class="banner-image" mode="aspectFill"></image>
+      </swiper-item>
+    </swiper>
+
+    <view class="merchant-info-card">
+      <view class="merchant-header">
+        <image src="{{merchant.avatar}}" class="merchant-avatar" mode="aspectFill"></image>
+        <view class="merchant-text">
+          <view class="merchant-name-row">
+            <text class="merchant-name">{{merchant.name}}</text>
+            <view wx:if="{{merchant.isHot}}" class="hot-tag">{{merchantConfig.hotTag}}</view>
+          </view>
+          <view class="merchant-rating-row">
+            <text>评分 {{merchant.rating}}</text>
+            <text>月售 {{merchant.sales}}</text>
+            <text>{{merchant.reviewCount}} 条评价</text>
+          </view>
+          <view class="merchant-tags">
+            <text wx:for="{{merchant.tags}}" wx:key="index" class="merchant-tag">{{item}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="merchant-action-row">
+        <view class="action-chip" bindtap="makePhoneCall">{{merchantConfig.phoneActionText}}</view>
+        <view class="action-chip" bindtap="viewLocation">{{merchantConfig.mapActionText}}</view>
+        <view class="action-chip">{{merchant.businessHours}}</view>
+      </view>
+
+      <view class="address-block">
+        <text class="address-title">{{merchantConfig.addressTitle}}</text>
+        <text class="address-detail">{{merchant.address}}</text>
+        <text class="address-detail">距您约 {{merchant.distance}}</text>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">{{merchantConfig.reviewSectionTitle}}</text>
+        <text class="section-subtitle">{{merchantConfig.reviewSectionSubtitle}}</text>
+      </view>
+      <view class="review-list">
+        <view wx:for="{{reviewList}}" wx:key="id" class="review-card">
+          <view class="review-top">
+            <text class="review-user">{{item.userName}}</text>
+            <text class="review-score">{{item.score}} 分</text>
+          </view>
+          <text class="review-content">{{item.content}}</text>
+          <view class="review-tags">
+            <text wx:for="{{item.tags}}" wx:key="index" class="review-tag">{{item}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">{{merchantConfig.albumSectionTitle}}</text>
+        <text class="section-subtitle">{{merchantConfig.albumSectionSubtitle}}</text>
+      </view>
+      <view class="album-grid">
+        <view wx:for="{{albumList}}" wx:key="index" class="album-item" bindtap="previewAlbum" data-index="{{index}}">
+          <image src="{{item}}" class="album-image" mode="aspectFill"></image>
+        </view>
+      </view>
+    </view>
+
+    <view class="safe-area-bottom"></view>
+  </view>
+</view>

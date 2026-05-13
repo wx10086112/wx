@@ -1,0 +1,79 @@
+.simple-page {
+  min-height: 100vh;
+  background: #f3f7fd;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.simple-card {
+  margin-bottom: 20rpx;
+  padding: 28rpx;
+  border-radius: 24rpx;
+  background: #fff;
+}
+
+.simple-title {
+  display: block;
+  color: #20304a;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.simple-subtitle {
+  display: block;
+  margin-top: 10rpx;
+  color: #71829b;
+  font-size: 24rpx;
+}
+
+.score-text {
+  display: block;
+  color: #1677ff;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  margin-top: 20rpx;
+}
+
+.tag-item {
+  padding: 12rpx 22rpx;
+  border-radius: 999rpx;
+  background: #f2f6ff;
+  color: #52657f;
+  font-size: 24rpx;
+}
+
+.tag-item.active {
+  background: #1677ff;
+  color: #fff;
+}
+
+.review-textarea {
+  width: 100%;
+  min-height: 180rpx;
+  margin-top: 20rpx;
+  padding: 20rpx;
+  box-sizing: border-box;
+  border-radius: 18rpx;
+  background: #f6f9ff;
+  color: #24364f;
+  font-size: 26rpx;
+}
+
+.submit-btn {
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
+  background: #1677ff;
+  color: #fff;
+  font-size: 30rpx;
+}
+
+.submit-btn::after {
+  border: none;
+}

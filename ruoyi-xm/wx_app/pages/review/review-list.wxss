@@ -1,0 +1,28 @@
+.simple-page {
+  min-height: 100vh;
+  background: #f3f7fd;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.simple-card {
+  margin-bottom: 20rpx;
+  padding: 28rpx;
+  border-radius: 24rpx;
+  background: #fff;
+}
+
+.simple-title {
+  display: block;
+  color: #20304a;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.simple-subtitle {
+  display: block;
+  margin-top: 10rpx;
+  color: #71829b;
+  font-size: 24rpx;
+  line-height: 1.6;
+}

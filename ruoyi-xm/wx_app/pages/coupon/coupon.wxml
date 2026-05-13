@@ -1,0 +1,7 @@
+<view class="simple-page">
+  <view wx:for="{{couponList}}" wx:key="couponId" class="simple-card">
+    <text class="simple-title">{{item.couponName}}</text>
+    <text class="simple-subtitle">满 {{item.thresholdText}} 元可用，减 {{item.amountText}} 元</text>
+    <text class="simple-subtitle">{{item.statusText}} · 有效期至 {{item.validEndTime}}</text>
+  </view>
+</view>

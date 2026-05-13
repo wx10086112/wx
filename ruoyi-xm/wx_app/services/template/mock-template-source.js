@@ -1,0 +1,113 @@
+const { merchantInfo } = require('../../data/mock')
+
+const mockTemplateSource = {
+  brandInfo: {
+    id: 'brand_001',
+    name: merchantInfo.brandName,
+    slogan: merchantInfo.brandSlogan,
+    notice: merchantInfo.notice,
+    servicePhone: merchantInfo.phone,
+    searchPlaceholder: '搜索套餐、服务项目',
+    primaryColor: '#1677ff'
+  },
+  home: {
+    locationLabel: '距离本店',
+    noticeTag: '',
+    statsCards: [],
+    merchantSectionTitle: '本店信息',
+    merchantSectionSubtitle: '查看营业时间、门店地址与联系方式',
+    productSectionTitle: '本店团购套餐',
+    productSectionSubtitle: '购买后到店出示核销码即可使用',
+    sortOptions: [
+      { label: '销量优先', value: 'sales' },
+      { label: '价格排序', value: 'price' }
+    ]
+  },
+  profile: {
+    loginTitle: '点击登录',
+    loginDesc: '登录后查看订单、券包与到店核销信息',
+    orderSectionTitle: '我的订单',
+    orderMoreText: '全部订单 ›',
+    orderEntries: [
+      { label: '待支付', status: 'PENDING_PAY' },
+      { label: '待使用', status: 'UNUSED' },
+      { label: '退款/售后', status: 'AFTER_SALE' },
+      { label: '我的评价', url: '/pages/review/review-list' }
+    ],
+    assetEntries: [
+      { label: '优惠券/红包', url: '/pages/coupon/coupon', countField: 'couponCount' },
+      { label: '我的收藏', url: '/pages/favorite/favorite', countField: 'favoriteCount' }
+    ],
+    benefitTitle: '权益中心',
+    benefitDesc: '优惠券、收藏和待核销订单统一展示，方便到店前快速查看。',
+    benefitTips: ['支持到店核销', '支持退款售后'],
+    serviceMenus: [
+      { label: '我的优惠券 / 红包', url: '/pages/coupon/coupon' },
+      { label: '我的收藏', url: '/pages/favorite/favorite' },
+      { label: '联系客服', url: '/pages/contact/contact' }
+    ],
+    logoutText: '退出登录'
+  },
+  merchantDetail: {
+    hotTag: '热门',
+    phoneActionText: '一键拨打',
+    mapActionText: '查看地图',
+    addressTitle: '门店地址',
+    productSectionTitle: '在售套餐',
+    productSectionSubtitle: '点击查看详情与使用规则',
+    reviewSectionTitle: '用户评价',
+    reviewSectionSubtitle: '真实消费后的反馈内容',
+    albumSectionTitle: '门店相册',
+    albumSectionSubtitle: '门头、环境与项目实拍',
+    homeNavText: '首页',
+    orderNavText: '订单',
+    collectText: '收藏门店',
+    collectedText: '已收藏',
+    contactButtonText: '联系门店'
+  },
+  productDetail: {
+    decisionSectionTitle: '购买决策信息',
+    ruleSectionTitle: '使用规则',
+    merchantSectionTitle: '服务门店',
+    contentSectionTitle: '套餐内容',
+    salesLabel: '已售',
+    stockLabel: '库存',
+    validDaysLabel: '有效期',
+    timeRangeRuleText: '使用时间段：以门店营业时间为准',
+    bookingYesText: '需要预约',
+    bookingNoText: '无需预约',
+    collectText: '收藏',
+    collectedText: '已收藏',
+    shareText: '分享',
+    buyButtonText: '立即抢购'
+  },
+  checkout: {
+    productSectionTitle: '确认商品',
+    infoSectionTitle: '购买信息',
+    priceSectionTitle: '价格明细',
+    useRuleSectionTitle: '使用说明',
+    quantityLabel: '购买数量',
+    phoneLabel: '手机号',
+    couponLabel: '优惠券',
+    subtotalLabel: '商品金额',
+    discountLabel: '优惠抵扣',
+    totalLabel: '实付总金额',
+    paySummaryLabel: '待支付',
+    submitButtonText: '提交订单并支付',
+    loginHintText: '订单创建后可在订单中心完成支付与核销'
+  },
+  featureToggle: {
+    enableCoupon: true,
+    enableFavorite: true,
+    enableAddress: false,
+    enableReview: true,
+    enableJoinApply: false,
+    enableBookingRule: true,
+    enableRefundRule: true,
+    enableMerchantAlbum: true
+  }
+}
+
+module.exports = {
+  mockTemplateSource
+}

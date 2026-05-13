@@ -1,0 +1,39 @@
+<view class="page-shell">
+  <view wx:if="{{canManageStaff}}">
+    <view class="panel staff-panel">
+      <text class="section-title">员工列表</text>
+      <view wx:for="{{staffList}}" wx:key="staffId" class="staff-row {{selectedStaffId === item.staffId ? 'active' : ''}}" bindtap="selectStaff" data-id="{{item.staffId}}">
+        <view class="staff-main">
+          <text class="staff-name">{{item.name}}</text>
+          <text class="staff-meta">{{item.roleName}} · {{item.phone}}</text>
+        </view>
+        <view class="staff-side">
+          <view class="status-tag {{item.status === 'ACTIVE' ? 'green' : 'gray'}}">
+            {{item.status === 'ACTIVE' ? '启用中' : '已停用'}}
+          </view>
+          <button class="ghost-btn mini-btn" catchtap="toggleStaffStatus" data-id="{{item.staffId}}">
+            {{item.status === 'ACTIVE' ? '停用' : '启用'}}
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <view class="panel permission-panel">
+      <text class="section-title">权限配置</text>
+      <checkbox-group bindchange="handlePermissionChange">
+        <label wx:for="{{permissionOptions}}" wx:key="value" class="permission-row">
+          <view class="permission-main">
+            <text class="permission-title">{{item.label}}</text>
+            <text class="permission-code">{{item.value}}</text>
+          </view>
+          <checkbox value="{{item.value}}" checked="{{selectedPermissionList.indexOf(item.value) > -1}}" color="#1f6feb"></checkbox>
+        </label>
+      </checkbox-group>
+      <button class="primary-btn save-btn" bindtap="savePermission">保存权限</button>
+    </view>
+  </view>
+
+  <view wx:else class="empty-state">
+    <text class="empty-text">当前账号没有员工权限管理能力</text>
+  </view>
+</view>

@@ -1,0 +1,86 @@
+.login-page {
+  min-height: 100vh;
+  padding: 32rpx 24rpx;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.24), transparent 34%),
+    linear-gradient(180deg, #edf4ff 0%, #f5f7fb 100%);
+}
+
+.hero-block {
+  padding: 44rpx 36rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #1f6feb 0%, #3b82f6 100%);
+  box-shadow: 0 18rpx 44rpx rgba(31, 111, 235, 0.18);
+}
+
+.hero-title {
+  display: block;
+  color: #fff;
+  font-size: 40rpx;
+  font-weight: 700;
+}
+
+.hero-desc {
+  display: block;
+  margin-top: 14rpx;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 26rpx;
+  line-height: 1.7;
+}
+
+.role-list {
+  margin-top: 28rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.role-card,
+.login-panel {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 20rpx;
+  padding: 28rpx;
+  box-shadow: 0 12rpx 28rpx rgba(31, 51, 73, 0.06);
+}
+
+.role-card.active {
+  border: 2rpx solid #1f6feb;
+}
+
+.role-title {
+  display: block;
+  font-size: 30rpx;
+  color: #1f2a37;
+  font-weight: 600;
+}
+
+.role-desc {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #6f7d91;
+  line-height: 1.6;
+}
+
+.login-panel {
+  margin-top: 28rpx;
+}
+
+.panel-label {
+  display: block;
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.panel-value {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 32rpx;
+  color: #1f2a37;
+  font-weight: 600;
+}
+
+.login-btn {
+  margin-top: 28rpx;
+}

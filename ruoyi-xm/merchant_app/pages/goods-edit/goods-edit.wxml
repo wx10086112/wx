@@ -1,0 +1,50 @@
+<view class="page-shell">
+  <view class="form-panel panel">
+    <view class="image-uploader" bindtap="chooseGoodsImage">
+      <image wx:if="{{form.imageUrl}}" class="goods-image-preview" src="{{form.imageUrl}}" mode="aspectFill"></image>
+      <view wx:else class="image-placeholder">
+        <text class="image-plus">+</text>
+        <text class="image-tip">上传套餐图片</text>
+      </view>
+    </view>
+    <view class="field">
+      <text class="field-label">套餐名称</text>
+      <input class="field-input" value="{{form.title}}" data-key="title" bindinput="handleInput" placeholder="请输入套餐名称" />
+    </view>
+    <view class="field">
+      <text class="field-label">副标题</text>
+      <input class="field-input" value="{{form.subtitle}}" data-key="subtitle" bindinput="handleInput" placeholder="请输入副标题" />
+    </view>
+    <view class="field">
+      <text class="field-label">分类</text>
+      <input class="field-input" value="{{form.categoryName}}" data-key="categoryName" bindinput="handleInput" placeholder="请输入分类名称" />
+    </view>
+    <view class="field two-col">
+      <view class="field-half">
+        <text class="field-label">现价</text>
+        <input class="field-input" type="digit" value="{{form.price}}" data-key="price" bindinput="handleInput" placeholder="0.00" />
+      </view>
+      <view class="field-half">
+        <text class="field-label">原价</text>
+        <input class="field-input" type="digit" value="{{form.originalPrice}}" data-key="originalPrice" bindinput="handleInput" placeholder="0.00" />
+      </view>
+    </view>
+    <view class="field">
+      <text class="field-label">库存</text>
+      <input class="field-input" type="number" value="{{form.stock}}" data-key="stock" bindinput="handleInput" placeholder="请输入库存" />
+    </view>
+    <view class="field">
+      <text class="field-label">有效期</text>
+      <input class="field-input" value="{{form.validPeriod}}" data-key="validPeriod" bindinput="handleInput" placeholder="例如 2026-05-01 至 2026-06-30" />
+    </view>
+    <view class="field">
+      <text class="field-label">核销说明</text>
+      <textarea class="field-textarea" value="{{form.verifyNotice}}" data-key="verifyNotice" bindinput="handleInput" placeholder="请输入核销说明"></textarea>
+    </view>
+    <view class="switch-row">
+      <text class="field-label">上架状态</text>
+      <switch checked="{{form.status === 'ON_SHELF'}}" color="#1f6feb" bindchange="handleStatusChange" />
+    </view>
+    <button class="primary-btn save-btn" bindtap="saveGoods">保存套餐</button>
+  </view>
+</view>

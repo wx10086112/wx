@@ -1,0 +1,6 @@
+<view class="simple-page">
+  <view wx:for="{{favoriteList}}" wx:key="id" class="simple-card">
+    <text class="simple-title">{{item.title}}</text>
+    <text class="simple-subtitle">{{item.subtitle}}</text>
+  </view>
+</view>

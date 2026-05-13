@@ -1,0 +1,278 @@
+.merchant-detail-page {
+  min-height: 100vh;
+  background: #f3f7fd;
+  padding-bottom: 136rpx;
+}
+
+.banner-swiper {
+  width: 100%;
+  height: 430rpx;
+}
+
+.banner-image {
+  width: 100%;
+  height: 100%;
+}
+
+.merchant-info-card,
+.review-card,
+.section-content,
+.review-list,
+.album-grid {
+  box-sizing: border-box;
+}
+
+.merchant-info-card {
+  margin: -56rpx 24rpx 0;
+  padding: 28rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18rpx 46rpx rgba(20, 69, 138, 0.08);
+  position: relative;
+  z-index: 2;
+}
+
+.merchant-header {
+  display: flex;
+}
+
+.merchant-avatar {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 20rpx;
+  flex-shrink: 0;
+}
+
+.merchant-text {
+  margin-left: 20rpx;
+  flex: 1;
+}
+
+.merchant-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.merchant-name {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #20304a;
+}
+
+.hot-tag {
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(22, 119, 255, 0.12);
+  color: #1677ff;
+  font-size: 22rpx;
+}
+
+.merchant-rating-row {
+  margin-top: 14rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18rpx;
+  font-size: 24rpx;
+  color: #72839a;
+}
+
+.merchant-tags,
+.review-tags {
+  margin-top: 14rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.merchant-tag,
+.review-tag {
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  background: #eef5ff;
+  color: #4a7fcf;
+  font-size: 22rpx;
+}
+
+.merchant-action-row {
+  margin-top: 22rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.action-chip {
+  padding: 14rpx 20rpx;
+  border-radius: 18rpx;
+  background: #f4f8ff;
+  color: #385172;
+  font-size: 24rpx;
+}
+
+.address-block {
+  margin-top: 22rpx;
+  padding: 22rpx;
+  border-radius: 20rpx;
+  background: #f8fbff;
+}
+
+.address-title {
+  display: block;
+  font-size: 28rpx;
+  color: #20304a;
+  font-weight: 600;
+}
+
+.address-detail {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #70819a;
+  line-height: 1.5;
+}
+
+.section {
+  margin-top: 26rpx;
+  padding: 0 24rpx;
+}
+
+.section-header {
+  margin-bottom: 16rpx;
+}
+
+.section-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #20304a;
+}
+
+.section-subtitle {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #7c8ba1;
+}
+
+.review-card {
+  margin-bottom: 18rpx;
+  padding: 24rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 14rpx 36rpx rgba(20, 69, 138, 0.06);
+}
+
+.review-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.review-user {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #20304a;
+}
+
+.review-score {
+  font-size: 24rpx;
+  color: #1677ff;
+}
+
+.review-content {
+  display: block;
+  margin-top: 14rpx;
+  color: #52657f;
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+
+.album-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.album-item {
+  width: calc(33.33% - 11rpx);
+  height: 190rpx;
+  overflow: hidden;
+  border-radius: 18rpx;
+}
+
+.album-image {
+  width: 100%;
+  height: 100%;
+}
+
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16rpx 24rpx;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(18rpx);
+  display: flex;
+  align-items: center;
+  box-shadow: 0 -8rpx 30rpx rgba(14, 52, 110, 0.08);
+}
+
+.bar-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.bar-item {
+  min-width: 82rpx;
+  height: 74rpx;
+  padding: 0 18rpx;
+  border-radius: 20rpx;
+  background: #f4f8ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bar-item-collect {
+  min-width: 41rpx;
+}
+
+.bar-label {
+  font-size: 24rpx;
+  color: #4c6281;
+}
+
+.bar-right {
+  margin-left: 18rpx;
+  flex: 1;
+  display: flex;
+  gap: 14rpx;
+}
+
+.ghost-btn,
+.primary-btn {
+  flex: 1;
+  height: 78rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  border: none;
+  margin: 0;
+}
+
+.ghost-btn::after,
+.primary-btn::after {
+  border: none;
+}
+
+.ghost-btn {
+  background: #f4f8ff;
+  color: #4d6586;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #1677ff 0%, #59a8ff 100%);
+  color: #fff;
+}

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.wxmini.mapper.OrderItemMapper">
+
+    <resultMap type="OrderItem" id="OrderItemResult">
+        <result property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="merchantId" column="merchant_id"/>
+        <result property="productId" column="product_id"/>
+        <result property="productName" column="product_name"/>
+        <result property="productImage" column="product_image"/>
+        <result property="price" column="price"/>
+        <result property="quantity" column="quantity"/>
+        <result property="subtotal" column="subtotal"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <sql id="selectOrderItemVo">
+        select id, order_id, order_no, merchant_id, product_id, product_name,
+               product_image, price, quantity, subtotal, create_time
+        from order_item
+    </sql>
+
+    <select id="selectOrderItemList" parameterType="OrderItem" resultMap="OrderItemResult">
+        <include refid="selectOrderItemVo"/>
+        <where>
+            <if test="orderId != null">and order_id = #{orderId}</if>
+            <if test="orderNo != null and orderNo != ''">and order_no = #{orderNo}</if>
+            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
+            <if test="productId != null">and product_id = #{productId}</if>
+        </where>
+    </select>
+
+    <select id="selectOrderItemById" parameterType="Long" resultMap="OrderItemResult">
+        <include refid="selectOrderItemVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectOrderItemByOrderId" parameterType="Long" resultMap="OrderItemResult">
+        <include refid="selectOrderItemVo"/>
+        where order_id = #{orderId}
+    </select>
+
+    <select id="selectOrderItemByOrderNo" parameterType="String" resultMap="OrderItemResult">
+        <include refid="selectOrderItemVo"/>
+        where order_no = #{orderNo}
+    </select>
+
+    <insert id="insertOrderItem" parameterType="OrderItem" useGeneratedKeys="true" keyProperty="id">
+        insert into order_item
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">order_id,</if>
+            <if test="orderNo != null">order_no,</if>
+            <if test="merchantId != null">merchant_id,</if>
+            <if test="productId != null">product_id,</if>
+            <if test="productName != null">product_name,</if>
+            <if test="productImage != null">product_image,</if>
+            <if test="price != null">price,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="subtotal != null">subtotal,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">#{orderId},</if>
+            <if test="orderNo != null">#{orderNo},</if>
+            <if test="merchantId != null">#{merchantId},</if>
+            <if test="productId != null">#{productId},</if>
+            <if test="productName != null">#{productName},</if>
+            <if test="productImage != null">#{productImage},</if>
+            <if test="price != null">#{price},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="subtotal != null">#{subtotal},</if>
+        </trim>
+    </insert>
+
+    <update id="updateOrderItem" parameterType="OrderItem">
+        update order_item
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="orderId != null">order_id = #{orderId},</if>
+            <if test="orderNo != null">order_no = #{orderNo},</if>
+            <if test="merchantId != null">merchant_id = #{merchantId},</if>
+            <if test="productId != null">product_id = #{productId},</if>
+            <if test="productName != null">product_name = #{productName},</if>
+            <if test="productImage != null">product_image = #{productImage},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="subtotal != null">subtotal = #{subtotal},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteOrderItemById" parameterType="Long">
+        delete from order_item where id = #{id}
+    </delete>
+
+    <delete id="deleteOrderItemByIds" parameterType="String">
+        delete from order_item where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

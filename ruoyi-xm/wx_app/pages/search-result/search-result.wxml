@@ -1,0 +1,14 @@
+<view class="simple-page">
+  <view class="simple-card">
+    <text class="simple-title">搜索结果：{{keyword || '全部'}}</text>
+    <text class="simple-subtitle">本店 {{merchantList.length}} 个，套餐 {{productList.length}} 个</text>
+  </view>
+  <view class="simple-card">
+    <text class="simple-title">本店</text>
+    <view wx:for="{{merchantList}}" wx:key="id" class="simple-line">{{item.name}}</view>
+  </view>
+  <view class="simple-card">
+    <text class="simple-title">套餐</text>
+    <view wx:for="{{productList}}" wx:key="id" class="simple-line">{{item.title}}</view>
+  </view>
+</view>

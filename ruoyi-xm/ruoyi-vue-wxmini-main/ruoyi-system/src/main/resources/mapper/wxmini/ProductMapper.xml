@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.wxmini.mapper.ProductMapper">
+
+    <resultMap type="Product" id="ProductResult">
+        <result property="id" column="id"/>
+        <result property="merchantId" column="merchant_id"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="grouponId" column="groupon_id"/>
+        <result property="name" column="name"/>
+        <result property="coverImage" column="cover_image"/>
+        <result property="images" column="images"/>
+        <result property="price" column="price"/>
+        <result property="originalPrice" column="original_price"/>
+        <result property="stock" column="stock"/>
+        <result property="sales" column="sales"/>
+        <result property="status" column="status"/>
+        <result property="validDays" column="valid_days"/>
+        <result property="description" column="description"/>
+        <result property="storeIds" column="store_ids"/>
+        <result property="sort" column="sort"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectProductVo">
+        select id, merchant_id, category_id, groupon_id, name, cover_image, images,
+               price, original_price, stock, sales, status, valid_days, description,
+               store_ids, sort, create_by, create_time, update_by, update_time, remark
+        from product
+    </sql>
+
+    <select id="selectProductList" parameterType="Product" resultMap="ProductResult">
+        <include refid="selectProductVo"/>
+        <where>
+            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
+            <if test="categoryId != null">and category_id = #{categoryId}</if>
+            <if test="name != null and name != ''">and name like concat('%', #{name}, '%')</if>
+            <if test="status != null">and status = #{status}</if>
+        </where>
+        order by sort desc
+    </select>
+
+    <select id="selectProductById" parameterType="Long" resultMap="ProductResult">
+        <include refid="selectProductVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectProductByMerchantId" parameterType="Long" resultMap="ProductResult">
+        <include refid="selectProductVo"/>
+        where merchant_id = #{merchantId}
+        order by sort desc
+    </select>
+
+    <insert id="insertProduct" parameterType="Product" useGeneratedKeys="true" keyProperty="id">
+        insert into product
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="merchantId != null">merchant_id,</if>
+            <if test="categoryId != null">category_id,</if>
+            <if test="grouponId != null">groupon_id,</if>
+            <if test="name != null and name != ''">name,</if>
+            <if test="coverImage != null">cover_image,</if>
+            <if test="images != null">images,</if>
+            <if test="price != null">price,</if>
+            <if test="originalPrice != null">original_price,</if>
+            <if test="stock != null">stock,</if>
+            <if test="sales != null">sales,</if>
+            <if test="status != null">status,</if>
+            <if test="validDays != null">valid_days,</if>
+            <if test="description != null">description,</if>
+            <if test="storeIds != null">store_ids,</if>
+            <if test="sort != null">sort,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="merchantId != null">#{merchantId},</if>
+            <if test="categoryId != null">#{categoryId},</if>
+            <if test="grouponId != null">#{grouponId},</if>
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="coverImage != null">#{coverImage},</if>
+            <if test="images != null">#{images},</if>
+            <if test="price != null">#{price},</if>
+            <if test="originalPrice != null">#{originalPrice},</if>
+            <if test="stock != null">#{stock},</if>
+            <if test="sales != null">#{sales},</if>
+            <if test="status != null">#{status},</if>
+            <if test="validDays != null">#{validDays},</if>
+            <if test="description != null">#{description},</if>
+            <if test="storeIds != null">#{storeIds},</if>
+            <if test="sort != null">#{sort},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateProduct" parameterType="Product">
+        update product
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="merchantId != null">merchant_id = #{merchantId},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="grouponId != null">groupon_id = #{grouponId},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="coverImage != null">cover_image = #{coverImage},</if>
+            <if test="images != null">images = #{images},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="originalPrice != null">original_price = #{originalPrice},</if>
+            <if test="stock != null">stock = #{stock},</if>
+            <if test="sales != null">sales = #{sales},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="validDays != null">valid_days = #{validDays},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="storeIds != null">store_ids = #{storeIds},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteProductById" parameterType="Long">
+        delete from product where id = #{id}
+    </delete>
+
+    <delete id="deleteProductByIds" parameterType="String">
+        delete from product where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="countProductByMerchantId" parameterType="Long" resultType="int">
+        select count(*) from product where merchant_id = #{merchantId}
+    </select>
+
+</mapper>

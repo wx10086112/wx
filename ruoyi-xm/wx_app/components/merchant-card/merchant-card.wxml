@@ -1,0 +1,25 @@
+<view class="merchant-card" bindtap="onTap">
+  <view class="merchant-header flex">
+    <image src="{{merchant.avatar}}" class="merchant-avatar" mode="aspectFill"></image>
+    <view class="merchant-basic flex-1">
+      <view class="merchant-name flex flex-align-center">
+        <text class="name fs-32 text-bold">{{merchant.name}}</text>
+        <view wx:if="{{merchant.isHot}}" class="hot-tag ml-16">热门</view>
+      </view>
+      <view class="merchant-stats flex flex-align-center mt-8">
+        <view class="rating">
+          <text class="star">★</text>
+          <text class="rating-value text-danger">{{merchant.rating}}</text>
+        </view>
+        <text class="text-muted ml-16 fs-24">{{merchant.distance}}</text>
+      </view>
+    </view>
+  </view>
+  <view class="merchant-tags flex mt-12">
+    <text wx:for="{{merchant.tags}}" wx:key="index" class="tag-item">{{item}}</text>
+  </view>
+  <view class="merchant-address flex flex-align-center mt-12">
+    <text class="location-icon">📍</text>
+    <text class="address text-muted text-ellipsis fs-24 flex-1">{{merchant.address}}</text>
+  </view>
+</view>

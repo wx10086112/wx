@@ -1,0 +1,44 @@
+<view class="page-shell">
+  <view class="tabs panel">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="value"
+      class="tab-item {{currentTab === item.value ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="{{item.value}}"
+    >
+      {{item.label}}
+    </view>
+  </view>
+
+  <view wx:if="{{canManageGoods}}">
+    <button class="primary-btn add-btn" bindtap="goAddGoods">新增套餐</button>
+    <view wx:for="{{goodsList}}" wx:key="goodsId" class="goods-card panel">
+      <view class="goods-cover {{item.imageUrl ? '' : 'empty'}}">
+        <image wx:if="{{item.imageUrl}}" src="{{item.imageUrl}}" mode="aspectFill"></image>
+        <text wx:else>暂无图片</text>
+      </view>
+      <view class="goods-top">
+        <view>
+          <text class="goods-title">{{item.title}}</text>
+          <text class="goods-meta">{{item.categoryName}} · 库存 {{item.stock}} · 销量 {{item.sales}}</text>
+        </view>
+        <view class="status-tag {{item.status === 'ON_SHELF' ? 'green' : 'gray'}}">
+          {{item.status === 'ON_SHELF' ? '上架中' : '已下架'}}
+        </view>
+      </view>
+      <text class="goods-subtitle">{{item.subtitle}}</text>
+      <text class="goods-price">¥{{item.priceText}} <text class="goods-origin">¥{{item.originalPriceText}}</text></text>
+      <view class="goods-actions">
+        <button class="ghost-btn mini-btn" bindtap="toggleGoodsStatus" data-id="{{item.goodsId}}">
+          {{item.status === 'ON_SHELF' ? '下架' : '上架'}}
+        </button>
+        <button class="primary-btn mini-btn" bindtap="goEditGoods" data-id="{{item.goodsId}}">编辑</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="empty-state">
+    <text class="empty-text">当前账号没有商品管理权限</text>
+  </view>
+</view>

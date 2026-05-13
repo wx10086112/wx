@@ -1,0 +1,74 @@
+<view class="page-shell">
+  <view class="finance-hero">
+    <text class="hero-label">可提现余额</text>
+    <text class="hero-amount">¥{{overview.withdrawableText}}</text>
+    <text class="hero-meta">已扣除平台佣金 ¥{{overview.platformFeeText}}</text>
+  </view>
+
+  <view class="stats-grid">
+    <view class="stats-card panel">
+      <text class="stats-value">¥{{overview.todayIncomeText}}</text>
+      <text class="stats-label">今日收益</text>
+    </view>
+    <view class="stats-card panel">
+      <text class="stats-value">¥{{overview.monthIncomeText}}</text>
+      <text class="stats-label">本月收益</text>
+    </view>
+    <view class="stats-card panel">
+      <text class="stats-value">¥{{overview.pendingSettleText}}</text>
+      <text class="stats-label">T+1待结算</text>
+    </view>
+    <view class="stats-card panel">
+      <text class="stats-value">{{overview.completedOrderCount || 0}}</text>
+      <text class="stats-label">完成订单</text>
+    </view>
+  </view>
+
+  <view class="panel withdraw-panel">
+    <text class="section-title">在线提现</text>
+    <view class="withdraw-row">
+      <input class="amount-input" type="digit" value="{{withdrawAmount}}" bindinput="handleAmountInput" placeholder="输入提现金额" />
+      <button class="primary-btn withdraw-btn" bindtap="submitWithdraw">申请提现</button>
+    </view>
+  </view>
+
+  <view class="panel section-panel">
+    <text class="section-title">分账流水</text>
+    <view wx:if="{{ledgerList.length}}">
+      <view wx:for="{{ledgerList}}" wx:key="ledgerId" class="ledger-row">
+        <view class="ledger-main">
+          <text class="ledger-title">{{item.title}}</text>
+          <text class="ledger-meta">{{item.orderNo}} · {{item.finishTimeText}}</text>
+          <text class="ledger-meta">预计到账 {{item.settleTimeText}}</text>
+        </view>
+        <view class="ledger-side">
+          <text class="ledger-amount">¥{{item.merchantAmountText}}</text>
+          <text class="ledger-status">{{item.statusText}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="empty-inline">
+      <text class="empty-text">暂无分账流水</text>
+    </view>
+  </view>
+
+  <view class="panel section-panel">
+    <text class="section-title">提现进度</text>
+    <view wx:if="{{withdrawList.length}}">
+      <view wx:for="{{withdrawList}}" wx:key="withdrawId" class="ledger-row">
+        <view class="ledger-main">
+          <text class="ledger-title">提现申请 #{{item.withdrawId}}</text>
+          <text class="ledger-meta">{{item.applyTimeText}}</text>
+          <text class="ledger-meta">{{item.remark}}</text>
+        </view>
+        <view class="ledger-side">
+          <text class="ledger-amount">¥{{item.amountText}}</text>
+          <text class="ledger-status">{{item.statusText}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="empty-inline">
+      <text class="empty-text">暂无提现记录</text>
+    </view>
+  </view>
+</view>

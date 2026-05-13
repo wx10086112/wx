@@ -1,0 +1,217 @@
+.mine-page {
+  min-height: 100vh;
+  background: #f3f7fd;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.user-section {
+  padding: 30rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(135deg, #1677ff 0%, #64b1ff 100%);
+  box-shadow: 0 24rpx 60rpx rgba(22, 119, 255, 0.18);
+}
+
+.user-info,
+.login-prompt {
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar,
+.login-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-avatar {
+  background: transparent;
+}
+
+.avatar-placeholder {
+  color: #fff;
+  font-size: 52rpx;
+}
+
+.user-text,
+.login-text {
+  margin-left: 22rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.nickname,
+.login-title {
+  color: #fff;
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+.phone,
+.login-desc {
+  margin-top: 12rpx;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 24rpx;
+}
+
+.order-section,
+.menu-section {
+  margin-top: 24rpx;
+  padding: 28rpx;
+  border-radius: 26rpx;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16rpx 40rpx rgba(20, 69, 138, 0.07);
+}
+
+.section-header,
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-title,
+.asset-value {
+  font-size: 30rpx;
+  color: #20304a;
+  font-weight: 600;
+}
+
+.more-text,
+.menu-arrow,
+.asset-label {
+  font-size: 24rpx;
+  color: #73849d;
+}
+
+.order-icons,
+.asset-section {
+  margin-top: 22rpx;
+  display: flex;
+  gap: 16rpx;
+}
+
+.icon-item,
+.asset-card {
+  flex: 1;
+  padding: 24rpx 12rpx;
+  border-radius: 22rpx;
+  background: #f4f8ff;
+  text-align: center;
+}
+
+.icon-item {
+  position: relative;
+}
+
+.item-icon {
+  color: #44617f;
+  font-size: 24rpx;
+}
+
+.entry-badge {
+  position: absolute;
+  top: 10rpx;
+  right: 16rpx;
+  min-width: 34rpx;
+  height: 34rpx;
+  padding: 0 10rpx;
+  border-radius: 20rpx;
+  background: #1677ff;
+  color: #fff;
+  font-size: 20rpx;
+  line-height: 34rpx;
+  text-align: center;
+}
+
+.asset-section {
+  gap: 14rpx;
+}
+
+.asset-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.asset-label {
+  margin-top: 8rpx;
+}
+
+.benefit-section {
+  margin-top: 24rpx;
+}
+
+.benefit-card {
+  padding: 26rpx 28rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, rgba(22, 119, 255, 0.12) 0%, rgba(100, 177, 255, 0.18) 100%);
+}
+
+.benefit-title {
+  display: block;
+  color: #20304a;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.benefit-desc {
+  display: block;
+  margin-top: 10rpx;
+  color: #5f728e;
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+
+.benefit-tags {
+  margin-top: 18rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.benefit-tag {
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.75);
+  color: #3f638d;
+  font-size: 22rpx;
+}
+
+.menu-item {
+  padding: 22rpx 0;
+  border-bottom: 1rpx solid #edf2fb;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-text {
+  color: #30445e;
+  font-size: 28rpx;
+}
+
+.logout-section {
+  margin-top: 32rpx;
+}
+
+.logout-btn {
+  height: 84rpx;
+  line-height: 84rpx;
+  border-radius: 42rpx;
+  background: #fff;
+  color: #1677ff;
+  font-size: 30rpx;
+  border: none;
+}
+
+.logout-btn::after {
+  border: none;
+}

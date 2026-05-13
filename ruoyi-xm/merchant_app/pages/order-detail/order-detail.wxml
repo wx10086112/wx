@@ -1,0 +1,19 @@
+<view class="page-shell">
+  <view class="detail-card panel">
+    <view class="detail-top">
+      <text class="detail-no">{{order.orderNo}}</text>
+      <view class="status-tag {{order.statusMeta.className}}">{{order.statusMeta.text}}</view>
+    </view>
+    <text class="detail-title">{{order.title}}</text>
+    <text class="detail-line">客户：{{order.customerName}} · {{order.customerPhone}}</text>
+    <text class="detail-line">数量：{{order.quantity}} 份</text>
+    <text class="detail-line">金额：¥{{order.payAmountText}}</text>
+    <text class="detail-line">支付时间：{{order.payTimeText}}</text>
+    <text class="detail-line">核销码：{{order.writeOffCode}}</text>
+    <text wx:if="{{order.verifyStaffName}}" class="detail-line">核销人：{{order.verifyStaffName}}</text>
+    <text wx:if="{{order.verifyTimeText}}" class="detail-line">核销时间：{{order.verifyTimeText}}</text>
+    <text wx:if="{{order.refundReason}}" class="detail-line">退款原因：{{order.refundReason}}</text>
+  </view>
+
+  <button wx:if="{{order.status === 'PENDING_VERIFY'}}" class="primary-btn verify-btn" bindtap="goVerify">去核销</button>
+</view>

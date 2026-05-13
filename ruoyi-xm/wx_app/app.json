@@ -1,0 +1,61 @@
+{
+  "pages": [
+    "pages/home/home",
+    "pages/order/order",
+    "pages/mine/mine",
+<<<<<<< HEAD
+    "pages/search/search",
+    "pages/search-result/search-result",
+    "pages/merchant-detail/merchant-detail",
+    "pages/product-detail/product-detail",
+    "pages/checkout/checkout",
+    "pages/order-detail/order-detail",
+    "pages/coupon/coupon",
+    "pages/favorite/favorite",
+    "pages/review/review-list",
+    "pages/review/review-create",
+    "pages/contact/contact"
+=======
+    "pages/merchant-detail/merchant-detail",
+    "pages/home_page/home_page"
+>>>>>>> 6a4f24e0c25e0524d0edb6ef9701a24bbe8fcecc
+  ],
+  "window": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "本地生活",
+    "navigationBarBackgroundColor": "#1677ff",
+    "backgroundColor": "#eef4ff"
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于展示你到本店的距离"
+    }
+  },
+  "requiredPrivateInfos": [
+    "getLocation"
+  ],
+  "tabBar": {
+    "color": "#7a8aa0",
+    "selectedColor": "#1677ff",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/order/order",
+        "text": "订单"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的"
+      }
+    ]
+  },
+  "style": "v2",
+  "componentFramework": "glass-easel",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

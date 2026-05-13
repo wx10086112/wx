@@ -1,0 +1,35 @@
+<view class="page-shell">
+  <view class="user-card">
+    <text class="user-name">{{staffUser.name}}</text>
+    <text class="user-meta">{{staffUser.roleName}} · {{staffUser.phone}}</text>
+    <text class="user-store">{{storeInfo.storeName}}</text>
+  </view>
+
+  <view class="panel permission-panel">
+    <text class="section-title">当前权限</text>
+    <view class="permission-tags">
+      <text wx:for="{{permissionList}}" wx:key="index" class="permission-tag">{{item}}</text>
+    </view>
+  </view>
+
+  <view class="panel menu-panel">
+    <view class="menu-item" bindtap="goStore">
+      <text class="menu-label">门店设置</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goStaff">
+      <text class="menu-label">员工权限</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goVerifyRecords">
+      <text class="menu-label">核销记录</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view wx:if="{{permissionList.indexOf('finance.manage') > -1}}" class="menu-item" bindtap="goFinance">
+      <text class="menu-label">财务收益</text>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <button class="ghost-btn logout-btn" bindtap="logout">退出登录</button>
+</view>

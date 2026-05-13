@@ -1,0 +1,72 @@
+.tabs {
+  padding: 10rpx;
+  display: flex;
+  gap: 10rpx;
+}
+
+.tab-item {
+  flex: 1;
+  height: 68rpx;
+  border-radius: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6f7d91;
+  font-size: 24rpx;
+}
+
+.tab-item.active {
+  background: #eaf2ff;
+  color: #1f6feb;
+  font-weight: 600;
+}
+
+.order-card {
+  margin-top: 18rpx;
+  padding: 24rpx;
+}
+
+.order-top,
+.order-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.order-no {
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.order-title {
+  display: block;
+  margin-top: 18rpx;
+  font-size: 30rpx;
+  color: #1f2a37;
+  font-weight: 600;
+}
+
+.order-meta,
+.order-code {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.order-bottom {
+  margin-top: 20rpx;
+}
+
+.order-amount {
+  font-size: 30rpx;
+  color: #1f6feb;
+  font-weight: 700;
+}
+
+.action-btn {
+  width: 160rpx;
+  height: 68rpx;
+  line-height: 68rpx;
+  font-size: 24rpx;
+}
