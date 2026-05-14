@@ -11,14 +11,10 @@
             "id": "2f8eb284125ad10b",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "ruoyi-xm/ruoyi-vue-wxmini-main/ruoyi-ui/node_modules/enquirer/README.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "README"
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "关系图谱"
             }
           }
         ]
@@ -185,6 +181,7 @@
   },
   "active": "2f8eb284125ad10b",
   "lastOpenFiles": [
+    "ruoyi-xm/ruoyi-vue-wxmini-main/ruoyi-ui/node_modules/enquirer/README.md",
     "ruoyi-xm/ruoyi-vue-wxmini-main/ruoyi-ui/node_modules/lint-staged/node_modules/commander/Readme.md",
     "ruoyi-xm/ruoyi-vue-wxmini-main/ruoyi-ui/node_modules/bfj/CONTRIBUTING.md",
     "ruoyi-xm/ruoyi-vue-wxmini-main/ruoyi-ui/node_modules/ms/license.md",

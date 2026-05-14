@@ -24,20 +24,15 @@ public class DashboardServiceImpl implements IDashboardService {
     @Autowired
     private ProductMapper productMapper;
 
-    @Autowired
-    private TransactionRecordMapper transactionRecordMapper;
-
     @Override
     public Map<String, Object> selectDashboardStats() {
         Map<String, Object> stats = new HashMap<>();
-        // 今日交易额、总流水、今日订单数、商家数、用户数、今日新增用户
-        // 通过 Mapper 直接执行聚合查询
-        stats.put("todayAmount", BigDecimal.ZERO);
-        stats.put("totalFlow", BigDecimal.ZERO);
-        stats.put("todayOrders", 0);
-        stats.put("merchantCount", 0);
-        stats.put("userTotal", 0);
-        stats.put("userTodayNew", 0);
+        stats.put("todayAmount", mallOrderMapper.sumTodayAmount());
+        stats.put("totalFlow", mallOrderMapper.sumTotalFlow());
+        stats.put("todayOrders", mallOrderMapper.countTodayOrders());
+        stats.put("merchantCount", merchantMapper.countActiveMerchant());
+        stats.put("userTotal", mallUserMapper.countTotal());
+        stats.put("userTodayNew", mallUserMapper.countTodayNew());
         return stats;
     }
 
@@ -47,18 +42,40 @@ public class DashboardServiceImpl implements IDashboardService {
         SimpleDateFormat sdf = new SimpleDateFormat("MM-dd");
         Calendar cal = Calendar.getInstance();
 
+        // 先初始化近7天的日期
         List<String> dates = new ArrayList<>();
-        List<Integer> orderCounts = new ArrayList<>();
-        List<BigDecimal> amounts = new ArrayList<>();
-        List<Integer> completedCounts = new ArrayList<>();
+        Map<String, Integer> countMap = new HashMap<>();
+        Map<String, BigDecimal> amountMap = new HashMap<>();
+        Map<String, Integer> completedMap = new HashMap<>();
 
         for (int i = 6; i >= 0; i--) {
             cal.setTime(new Date());
             cal.add(Calendar.DAY_OF_MONTH, -i);
-            dates.add(sdf.format(cal.getTime()));
-            orderCounts.add(0);
-            amounts.add(BigDecimal.ZERO);
-            completedCounts.add(0);
+            String dateStr = sdf.format(cal.getTime());
+            dates.add(dateStr);
+            countMap.put(dateStr, 0);
+            amountMap.put(dateStr, BigDecimal.ZERO);
+            completedMap.put(dateStr, 0);
+        }
+
+        // 用数据库查询结果填充
+        List<Map<String, Object>> dbData = mallOrderMapper.selectDailyStatsForWeek();
+        for (Map<String, Object> row : dbData) {
+            String date = (String) row.get("date");
+            if (countMap.containsKey(date)) {
+                countMap.put(date, ((Number) row.get("count")).intValue());
+                amountMap.put(date, (BigDecimal) row.get("amount"));
+                completedMap.put(date, ((Number) row.get("completedCount")).intValue());
+            }
+        }
+
+        List<Integer> orderCounts = new ArrayList<>();
+        List<BigDecimal> amounts = new ArrayList<>();
+        List<Integer> completedCounts = new ArrayList<>();
+        for (String d : dates) {
+            orderCounts.add(countMap.get(d));
+            amounts.add(amountMap.get(d));
+            completedCounts.add(completedMap.get(d));
         }
 
         trend.put("dates", dates);
@@ -70,14 +87,28 @@ public class DashboardServiceImpl implements IDashboardService {
 
     @Override
     public List<Map<String, Object>> selectOrderStatusData() {
-        // 返回各状态订单数量
-        List<Map<String, Object>> result = new ArrayList<>();
         String[] statusNames = {"待支付", "已支付", "已使用", "已完成", "已退款", "已取消"};
+
+        // 先初始化所有状态为0
+        Map<Integer, Integer> countMap = new LinkedHashMap<>();
+        for (int i = 0; i < statusNames.length; i++) {
+            countMap.put(i, 0);
+        }
+
+        // 用数据库结果覆盖
+        List<Map<String, Object>> dbData = mallOrderMapper.selectOrderStatsByStatus();
+        for (Map<String, Object> row : dbData) {
+            Integer status = ((Number) row.get("status")).intValue();
+            Integer count = ((Number) row.get("cnt")).intValue();
+            countMap.put(status, count);
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
         for (int i = 0; i < statusNames.length; i++) {
             Map<String, Object> item = new HashMap<>();
             item.put("status", i);
             item.put("name", statusNames[i]);
-            item.put("count", 0);
+            item.put("count", countMap.get(i));
             result.add(item);
         }
         return result;
@@ -85,13 +116,11 @@ public class DashboardServiceImpl implements IDashboardService {
 
     @Override
     public List<Map<String, Object>> selectHotProducts() {
-        // 按销量排序的商品排行
-        return new ArrayList<>();
+        return productMapper.selectHotProducts(5);
     }
 
     @Override
     public List<Map<String, Object>> selectMerchantRank() {
-        // 按收入排序的商家排行
-        return new ArrayList<>();
+        return merchantMapper.selectMerchantRankByIncome(5);
     }
 }
