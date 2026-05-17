@@ -1,0 +1,77 @@
+<view class="page-shell">
+  <scroll-view scroll-x class="tabs-scroll">
+    <view class="tabs panel">
+      <view
+        wx:for="{{tabs}}"
+        wx:key="value"
+        class="tab-item {{currentTab === item.value ? 'active' : ''}}"
+        bindtap="switchTab"
+        data-tab="{{item.value}}"
+      >
+        {{item.label}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <view wx:if="{{orderList.length}}">
+    <view wx:for="{{orderList}}" wx:key="orderNo" class="order-card panel" bindtap="goOrderDetail" data-orderno="{{item.orderNo}}">
+      <view class="order-top">
+        <text class="order-no">{{item.orderNo}}</text>
+        <view class="status-tag {{item.statusMeta.className}}">{{item.statusMeta.text}}</view>
+      </view>
+      <text class="order-title">{{item.title}}</text>
+      <text class="order-meta">{{item.customerName}} · {{item.customerPhone}} · {{item.payTimeText}}</text>
+      <text wx:if="{{item.deliveryAddress}}" class="order-delivery">📍 {{item.deliveryAddress}}</text>
+      <text wx:if="{{item.remark}}" class="order-remark">💬 {{item.remark}}</text>
+      <view class="order-bottom">
+        <view>
+          <text class="order-amount">¥{{item.payAmountText}}</text>
+          <text wx:if="{{item.writeOffCode}}" class="order-code">核销码 {{item.writeOffCode}}</text>
+        </view>
+        <view class="order-actions" catchtap="">
+          <!-- 待接单：接单 / 拒单 -->
+          <button
+            wx:if="{{item.status === 'PENDING_ACCEPT'}}"
+            class="ghost-btn action-btn reject-btn"
+            catchtap="handleRejectOrder"
+            data-orderno="{{item.orderNo}}"
+          >拒单</button>
+          <button
+            wx:if="{{item.status === 'PENDING_ACCEPT'}}"
+            class="primary-btn action-btn"
+            catchtap="handleAcceptOrder"
+            data-orderno="{{item.orderNo}}"
+          >接单</button>
+
+          <!-- 已接单：去发货 -->
+          <button
+            wx:if="{{item.status === 'ACCEPTED'}}"
+            class="primary-btn action-btn"
+            catchtap="handleShipOrder"
+            data-orderno="{{item.orderNo}}"
+          >去发货</button>
+
+          <!-- 配送中：确认完成 -->
+          <button
+            wx:if="{{item.status === 'SHIPPING'}}"
+            class="primary-btn action-btn"
+            catchtap="handleCompleteOrder"
+            data-orderno="{{item.orderNo}}"
+          >确认送达</button>
+
+          <!-- 待核销：去核销 -->
+          <button
+            wx:if="{{item.status === 'PENDING_VERIFY'}}"
+            class="ghost-btn action-btn"
+            catchtap="goVerify"
+            data-orderno="{{item.orderNo}}"
+          >去核销</button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="empty-state">
+    <text class="empty-text">当前筛选条件下没有订单</text>
+  </view>
+</view>

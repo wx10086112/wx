@@ -1,0 +1,6 @@
+<canvas
+  id="qr-canvas"
+  type="2d"
+  class="qr-canvas"
+  style="width: {{size}}px; height: {{size}}px;"
+/>

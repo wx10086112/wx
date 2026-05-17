@@ -1,0 +1,85 @@
+<view class="order-page">
+  <view class="order-header-card">
+    <text class="order-title">订单中心</text>
+    <text class="order-subtitle">待支付、待使用、退款售后统一处理</text>
+    <view class="order-stats">
+      <view wx:for="{{orderStats}}" wx:key="label" class="order-stat-card">
+        <text class="order-stat-value">{{item.value}}</text>
+        <text class="order-stat-label">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="order-tabs">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="value"
+      class="tab-item {{currentTab === item.value ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="{{item.value}}"
+    >
+      <text class="tab-text">{{item.label}}</text>
+    </view>
+  </view>
+
+  <view class="order-list">
+    <order-card
+      wx:for="{{orderList}}"
+      wx:key="id"
+      order="{{item}}"
+      showActions="{{true}}"
+      bind:click="onOrderTap"
+      bind:cancel="onCancelOrder"
+      bind:pay="onPayOrder"
+      bind:viewCode="onViewCode"
+      bind:refund="onRefundOrder"
+      bind:rebuy="onRebuyOrder"
+    ></order-card>
+  </view>
+
+  <empty-state
+    wx:if="{{!loading && orderList.length === 0}}"
+    icon="📋"
+    text="当前状态下暂无订单"
+    showButton="{{true}}"
+    buttonText="去逛逛"
+    bind:buttonTap="goShopping"
+  ></empty-state>
+
+  <view class="loading-state" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view class="write-off-modal" wx:if="{{showWriteOffModal}}" catchtouchmove="preventMove">
+    <view class="modal-mask" bindtap="closeWriteOffModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">使用码</text>
+        <text class="modal-close" bindtap="closeWriteOffModal">×</text>
+      </view>
+      <view class="write-off-info">
+        <view class="order-preview flex flex-align-center">
+          <image src="{{currentOrder.image}}" class="preview-image" mode="aspectFill"></image>
+          <view class="preview-info ml-20 flex-1">
+            <text class="preview-title text-ellipsis-2 fs-28">{{currentOrder.title}}</text>
+            <text class="preview-merchant text-muted fs-24 mt-8">{{currentOrder.merchantName}}</text>
+          </view>
+        </view>
+        <view class="write-off-code-section">
+          <text class="code-label">请向门店店员出示以下使用码</text>
+          <view class="code-display">
+            <text class="code-text">{{currentOrder.writeOffCode}}</text>
+          </view>
+          <text class="code-tip text-muted fs-24 mt-16">有效期至：{{currentOrder.writeOffDeadlineText}}</text>
+        </view>
+        <view class="qr-code-section">
+          <qrcode text="{{currentOrder.writeOffCode}}" size="{{280}}" />
+          <text class="qr-hint text-muted fs-22 mt-12">商家扫码后将自动变更为已完成</text>
+        </view>
+        <view class="modal-footer">
+          <button class="modal-action-btn" bindtap="confirmWriteOffResult">我知道了</button>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

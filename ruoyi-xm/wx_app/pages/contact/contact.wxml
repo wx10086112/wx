@@ -1,0 +1,33 @@
+<view class="contact-page">
+  <view class="contact-card">
+    <view class="contact-icon-wrap">
+      <text class="contact-icon">☎</text>
+    </view>
+    <text class="contact-title">联系客服</text>
+    <text class="contact-desc">如有任何问题，欢迎联系我们的客服团队</text>
+
+    <view class="contact-phone-row" wx:if="{{brandInfo.servicePhone}}">
+      <text class="contact-phone-label">服务热线</text>
+      <text class="contact-phone">{{brandInfo.servicePhone}}</text>
+    </view>
+
+    <view class="contact-info-list">
+      <view class="contact-info-item">
+        <text class="info-dot">●</text>
+        <text class="info-text">支付、核销或退款问题，可联系门店客服处理</text>
+      </view>
+      <view class="contact-info-item">
+        <text class="info-dot">●</text>
+        <text class="info-text">服务时间：周一至周日 10:00 - 22:00</text>
+      </view>
+      <view class="contact-info-item">
+        <text class="info-dot">●</text>
+        <text class="info-text">也可直接到店咨询，门店地址见首页</text>
+      </view>
+    </view>
+
+    <button class="call-btn" bindtap="callService">
+      一键拨打客服电话
+    </button>
+  </view>
+</view>

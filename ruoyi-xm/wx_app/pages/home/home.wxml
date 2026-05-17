@@ -1,0 +1,84 @@
+<view class="home-page">
+  <view class="loading-state" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:else class="content">
+    <view class="store-card">
+      <view class="store-main">
+        <image src="{{currentMerchant.avatar}}" class="store-avatar" mode="aspectFill"></image>
+        <view class="store-info">
+          <view class="store-name-row">
+            <text class="store-name">{{currentMerchant.name}}</text>
+            <view wx:if="{{currentMerchant.businessStatusText}}" class="store-status {{currentMerchant.businessStatus ? 'open' : 'closed'}}">
+              {{currentMerchant.businessStatusText}}
+            </view>
+          </view>
+          <view class="store-sales-row">
+            <text>月售{{currentMerchant.sales}}</text>
+          </view>
+          <view class="store-tag-row">
+            <text wx:for="{{currentMerchant.displayTags}}" wx:key="index" class="store-tag">{{item}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="store-time-row">
+        <text class="time-strong">今日 {{currentMerchant.businessHours}}</text>
+        <text class="mini-tag">{{currentMerchant.bookingText}}</text>
+        <text class="detail-link" bindtap="goMerchantDetail">商家详情 ›</text>
+      </view>
+
+      <view class="store-address-row">
+        <view class="address-main">
+          <text class="store-address">{{currentMerchant.address}}</text>
+          <text class="distance-text">距您 {{currentMerchant.distance}}</text>
+        </view>
+        <view class="store-actions">
+          <view class="store-action" catchtap="openMerchantMap">
+            <text class="action-icon">⌖</text>
+            <text>导航</text>
+          </view>
+          <view class="store-action" catchtap="callMerchant">
+            <text class="action-icon">☎</text>
+            <text>电话</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="search-bar" bindtap="onSearchTap">
+      <text class="search-icon">⌕</text>
+      <text class="search-text">{{brandInfo.searchPlaceholder}}</text>
+    </view>
+
+    <view class="store-tabs">
+      <view
+        wx:for="{{storeTabs}}"
+        wx:key="label"
+        class="store-tab {{activeStoreTab === item.key ? 'active' : ''}}"
+        bindtap="onStoreTabTap"
+        data-key="{{item.key}}"
+        data-type="{{item.type}}"
+      >
+        {{item.label}}
+      </view>
+    </view>
+
+    <view class="section-block product-section">
+      <view class="section-title-row">
+        <view>
+          <text class="section-title">{{homeConfig.productSectionTitle}}</text>
+          <text class="section-subtitle">{{homeConfig.productSectionSubtitle}}</text>
+        </view>
+      </view>
+      <product-card
+        wx:for="{{displayGrouponList}}"
+        wx:key="id"
+        product="{{item}}"
+        bind:click="onProductTap"
+        bind:buy="onProductBuy"
+      ></product-card>
+    </view>
+  </view>
+</view>

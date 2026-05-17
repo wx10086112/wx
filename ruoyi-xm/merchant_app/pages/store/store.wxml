@@ -1,0 +1,88 @@
+<view class="page-shell">
+  <view wx:if="{{canManageStore}}" class="form-panel panel">
+    <text class="panel-title">基本信息</text>
+    <view class="field">
+      <text class="field-label">门店名称</text>
+      <input class="field-input" value="{{form.storeName}}" data-key="storeName" bindinput="handleInput" />
+    </view>
+    <view class="field">
+      <text class="field-label">品牌标语</text>
+      <input class="field-input" value="{{form.brandSlogan}}" data-key="brandSlogan" bindinput="handleInput" />
+    </view>
+    <view class="field">
+      <text class="field-label">公告文案</text>
+      <textarea class="field-textarea" value="{{form.notice}}" data-key="notice" bindinput="handleInput"></textarea>
+    </view>
+
+    <text class="panel-title separator">营业设置</text>
+    <view class="field">
+      <text class="field-label">营业时间</text>
+      <input class="field-input" value="{{form.businessHours}}" data-key="businessHours" bindinput="handleInput" placeholder="例如 10:00-22:00" />
+    </view>
+    <view class="field">
+      <text class="field-label">联系电话</text>
+      <input class="field-input" value="{{form.phone}}" data-key="phone" bindinput="handleInput" />
+    </view>
+    <view class="field">
+      <text class="field-label">门店地址</text>
+      <input class="field-input" value="{{form.address}}" data-key="address" bindinput="handleInput" />
+    </view>
+
+    <text class="panel-title separator">配送设置</text>
+    <view class="field">
+      <text class="field-label">配送范围（公里）</text>
+      <input class="field-input" type="digit" value="{{form.deliveryRange}}" data-key="deliveryRange" bindinput="handleInput" placeholder="例如 5" />
+    </view>
+    <view class="field two-col">
+      <view class="field-half">
+        <text class="field-label">基础配送费（元）</text>
+        <input class="field-input" type="digit" value="{{form.deliveryFeeText}}" data-key="deliveryFeeText" bindinput="handleInput" placeholder="0.00" />
+      </view>
+      <view class="field-half">
+        <text class="field-label">免配送费起送价（元）</text>
+        <input class="field-input" type="digit" value="{{form.freeDeliveryAmountText}}" data-key="freeDeliveryAmountText" bindinput="handleInput" placeholder="0.00" />
+      </view>
+    </view>
+
+    <text class="panel-title separator">个性化</text>
+    <view class="field">
+      <text class="field-label">服务标签（用、分隔）</text>
+      <input class="field-input" value="{{form.serviceTagsText}}" data-key="serviceTagsText" bindinput="handleInput" />
+    </view>
+    <view class="field">
+      <text class="field-label">首页 Banner 文案（用、分隔）</text>
+      <input class="field-input" value="{{form.bannerTitlesText}}" data-key="bannerTitlesText" bindinput="handleInput" />
+    </view>
+
+    <text class="panel-title separator">开关配置</text>
+    <view class="switch-row">
+      <text class="field-label">营业状态</text>
+      <switch checked="{{form.businessStatus}}" color="#1f6feb" bindchange="handleSwitchChange" data-key="businessStatus" />
+    </view>
+    <view class="switch-row">
+      <view>
+        <text class="field-label">自动接单</text>
+        <text class="field-hint">开启后新订单自动接受，无需手动操作</text>
+      </view>
+      <switch checked="{{form.autoAccept}}" color="#1f6feb" bindchange="handleSwitchChange" data-key="autoAccept" />
+    </view>
+    <view class="switch-row">
+      <text class="field-label">支持退款</text>
+      <switch checked="{{form.supportRefund}}" color="#1f6feb" bindchange="handleSwitchChange" data-key="supportRefund" />
+    </view>
+    <view class="switch-row">
+      <text class="field-label">支持预约</text>
+      <switch checked="{{form.supportBooking}}" color="#1f6feb" bindchange="handleSwitchChange" data-key="supportBooking" />
+    </view>
+    <view class="field">
+      <text class="field-label">库存预警阈值</text>
+      <text class="field-hint">商品库存低于此值时，在工作台和商品页提醒</text>
+      <input class="field-input" type="number" value="{{form.stockAlertThreshold}}" data-key="stockAlertThreshold" bindinput="handleInput" placeholder="默认 20" />
+    </view>
+    <button class="primary-btn save-btn" bindtap="saveStore">保存门店信息</button>
+  </view>
+
+  <view wx:else class="empty-state">
+    <text class="empty-text">当前账号没有门店设置权限</text>
+  </view>
+</view>

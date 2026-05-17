@@ -1,0 +1,158 @@
+.merchant-detail-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 92% 0%, rgba(22, 119, 255, 0.14), transparent 30%),
+    linear-gradient(180deg, #f7faff 0%, #f4f6fa 100%);
+  padding: 28rpx 24rpx 44rpx;
+  box-sizing: border-box;
+}
+
+.detail-header {
+  padding: 20rpx 6rpx 26rpx;
+}
+
+.page-title {
+  display: block;
+  color: #172033;
+  font-size: 42rpx;
+  font-weight: 850;
+}
+
+.page-subtitle {
+  display: block;
+  margin-top: 10rpx;
+  color: #7b8798;
+  font-size: 25rpx;
+}
+
+.detail-card {
+  margin-bottom: 22rpx;
+  padding: 30rpx;
+  border-radius: 30rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 16rpx 42rpx rgba(20, 55, 105, 0.07);
+  box-sizing: border-box;
+}
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  margin-bottom: 20rpx;
+}
+
+.card-title {
+  color: #172033;
+  font-size: 34rpx;
+  font-weight: 800;
+}
+
+.card-tag,
+.distance-pill {
+  flex-shrink: 0;
+  padding: 7rpx 16rpx;
+  border-radius: 999rpx;
+  color: #1677ff;
+  background: #eef6ff;
+  font-size: 22rpx;
+  font-weight: 650;
+}
+
+.primary-text {
+  display: block;
+  color: #202a3c;
+  font-size: 30rpx;
+  line-height: 1.55;
+  font-weight: 650;
+}
+
+.muted-text {
+  display: block;
+  margin-top: 14rpx;
+  color: #8a96a8;
+  font-size: 24rpx;
+}
+
+.muted-inline {
+  color: #8a96a8;
+  font-size: 24rpx;
+}
+
+.action-row {
+  margin-top: 24rpx;
+  display: flex;
+  gap: 16rpx;
+}
+
+.action-button {
+  flex: 1;
+  height: 78rpx;
+  border-radius: 22rpx;
+  background: #f4f8ff;
+  color: #25415f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 27rpx;
+  font-weight: 700;
+}
+
+.action-icon {
+  margin-right: 10rpx;
+  font-size: 31rpx;
+}
+
+.ability-block {
+  margin-top: 22rpx;
+}
+
+.ability-block:first-of-type {
+  margin-top: 0;
+}
+
+.ability-title {
+  display: block;
+  color: #3a4860;
+  font-size: 28rpx;
+  font-weight: 750;
+  margin-bottom: 14rpx;
+}
+
+.tag-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.ability-tag {
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  color: #ff6f23;
+  background: #fff3ec;
+  font-size: 24rpx;
+  font-weight: 650;
+}
+
+.ability-tag.facility {
+  color: #426c9e;
+  background: #eef5ff;
+}
+
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14rpx;
+}
+
+.album-item {
+  height: 190rpx;
+  overflow: hidden;
+  border-radius: 20rpx;
+  background: #eef2f7;
+}
+
+.album-image {
+  width: 100%;
+  height: 100%;
+}

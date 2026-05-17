@@ -1,0 +1,187 @@
+.checkout-page {
+  min-height: 100vh;
+  background: #f3f7fd;
+  padding: 24rpx 24rpx 128rpx;
+  box-sizing: border-box;
+}
+
+.card {
+  margin-bottom: 22rpx;
+  padding: 28rpx;
+  border-radius: 26rpx;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16rpx 40rpx rgba(20, 69, 138, 0.07);
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #20304a;
+}
+
+.product-row {
+  margin-top: 20rpx;
+  display: flex;
+}
+
+.cart-product-list .product-row + .product-row {
+  padding-top: 20rpx;
+  border-top: 1rpx solid #edf2fb;
+}
+
+.product-image {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 18rpx;
+  flex-shrink: 0;
+}
+
+.product-info {
+  margin-left: 18rpx;
+  flex: 1;
+}
+
+.product-title,
+.pay-text,
+.summary-price {
+  font-size: 30rpx;
+  color: #20304a;
+  font-weight: 600;
+}
+
+.product-meta,
+.picker-text,
+.summary-label {
+  display: block;
+  margin-top: 10rpx;
+  color: #72839a;
+  font-size: 24rpx;
+}
+
+.product-price {
+  display: block;
+  margin-top: 14rpx;
+  font-size: 34rpx;
+  color: #1677ff;
+  font-weight: 700;
+}
+
+.line-row {
+  margin-top: 22rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #51657f;
+  font-size: 26rpx;
+}
+
+.quantity-box {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.quantity-btn {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 14rpx;
+  background: #eef5ff;
+  color: #1677ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+}
+
+.phone-input {
+  width: 260rpx;
+  text-align: right;
+  font-size: 26rpx;
+  color: #20304a;
+}
+
+.line-value-group {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.line-value-tip,
+.coupon-hint {
+  color: #7c8ba1;
+  font-size: 22rpx;
+}
+
+.coupon-hint {
+  display: block;
+  margin-top: 12rpx;
+  text-align: right;
+}
+
+.discount-text {
+  color: #18a058;
+}
+
+.total-row {
+  padding-top: 16rpx;
+  border-top: 1rpx solid #edf2fb;
+}
+
+.rule-line {
+  margin-top: 18rpx;
+  color: #607089;
+  font-size: 25rpx;
+  line-height: 1.6;
+}
+
+.notice-strip {
+  margin-top: 20rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 18rpx;
+  background: #f4f8ff;
+}
+
+.notice-text {
+  color: #4d6586;
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+
+.login-hint {
+  display: block;
+  margin-top: 18rpx;
+  color: #95a3b7;
+  font-size: 22rpx;
+}
+
+.pay-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  padding: 16rpx 24rpx;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(18rpx);
+  box-shadow: 0 -8rpx 30rpx rgba(14, 52, 110, 0.08);
+}
+
+.pay-summary {
+  flex: 1;
+}
+
+.pay-btn {
+  width: 320rpx;
+  height: 78rpx;
+  border-radius: 40rpx;
+  background: linear-gradient(135deg, #1677ff 0%, #59a8ff 100%);
+  color: #fff;
+  font-size: 30rpx;
+  border: none;
+  margin: 0;
+}
+
+.pay-btn::after {
+  border: none;
+}

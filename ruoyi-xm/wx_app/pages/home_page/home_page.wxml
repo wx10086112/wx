@@ -1,0 +1,59 @@
+<view class="page-container">
+  <view class="card-section">
+    <view class="card-header">
+      <text class="card-title">页面模板</text>
+    </view>
+    <view class="card-content">
+      <text class="card-text">这是一个标准的微信小程序页面模板</text>
+      <text class="card-text">包含：加载、列表、下拉刷新、上拉加载</text>
+    </view>
+  </view>
+
+  <view class="action-section">
+    <button class="action-btn primary" bindtap="onButtonTap">主要按钮</button>
+    <button class="action-btn outline" bindtap="goOtherPage">跳转页面</button>
+  </view>
+
+  <view class="list-section">
+    <view class="list-header">
+      <text class="list-title">数据列表</text>
+      <text wx:if="{{!loading}}" class="list-count">共{{list.length}}条</text>
+    </view>
+
+    <view class="loading-state" wx:if="{{loading && list.length === 0}}">
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <view class="empty-state" wx:if="{{!loading && list.length === 0}}">
+      <text class="empty-icon">📭</text>
+      <text class="empty-text">暂无数据</text>
+    </view>
+
+    <view class="list-content" wx:if="{{list.length > 0}}">
+      <view 
+        wx:for="{{list}}" 
+        wx:key="id" 
+        class="list-item"
+        bindtap="onItemTap"
+        data-item="{{item}}"
+      >
+        <view class="item-info">
+          <text class="item-title">{{item.title}}</text>
+          <text class="item-desc">{{item.desc}}</text>
+        </view>
+        <view class="item-meta">
+          <text class="item-time">{{item.time}}</text>
+          <text class="item-arrow">›</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="loading-more" wx:if="{{loading && list.length > 0}}">
+      <text class="loading-text">加载更多...</text>
+    </view>
+
+    <view class="no-more" wx:if="{{!hasMore && list.length > 0}}">
+      <text class="no-more-text">没有更多了</text>
+    </view>
+  </view>
+</view>

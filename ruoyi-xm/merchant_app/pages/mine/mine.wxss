@@ -1,0 +1,68 @@
+.user-card {
+  padding: 30rpx;
+  border-radius: 22rpx;
+  background: linear-gradient(135deg, #1f6feb 0%, #3b82f6 100%);
+  box-shadow: 0 18rpx 44rpx rgba(31, 111, 235, 0.18);
+}
+
+.user-name {
+  display: block;
+  font-size: 38rpx;
+  color: #fff;
+  font-weight: 700;
+}
+
+.user-meta,
+.user-store {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.permission-panel,
+.menu-panel {
+  margin-top: 20rpx;
+  padding: 28rpx;
+}
+
+.permission-tags {
+  margin-top: 18rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.permission-tag {
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: #eef4ff;
+  color: #1f6feb;
+  font-size: 22rpx;
+}
+
+.menu-item {
+  padding: 22rpx 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1rpx solid #edf1f5;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-label {
+  font-size: 28rpx;
+  color: #1f2a37;
+}
+
+.menu-arrow {
+  font-size: 30rpx;
+  color: #7a8798;
+}
+
+.logout-btn {
+  margin-top: 24rpx;
+}

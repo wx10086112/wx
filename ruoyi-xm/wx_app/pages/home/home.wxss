@@ -1,0 +1,255 @@
+.home-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 88% 6%, rgba(22, 119, 255, 0.16), transparent 30%),
+    linear-gradient(180deg, #f4f8ff 0%, #f7f8fb 48%, #f3f5f8 100%);
+  box-sizing: border-box;
+}
+
+.content {
+  padding: 0 24rpx 28rpx;
+}
+
+.store-card {
+  position: relative;
+  z-index: 3;
+  padding: 26rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 24rpx 68rpx rgba(20, 55, 105, 0.14);
+}
+
+.store-main {
+  display: flex;
+  align-items: flex-start;
+}
+
+.store-avatar {
+  width: 142rpx;
+  height: 142rpx;
+  border-radius: 22rpx;
+  flex-shrink: 0;
+  box-shadow: 0 12rpx 26rpx rgba(20, 55, 105, 0.16);
+}
+
+.store-info {
+  flex: 1;
+  min-width: 0;
+  margin-left: 22rpx;
+}
+
+.store-name-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+}
+
+.store-name {
+  flex: 1;
+  color: #161d2f;
+  font-size: 38rpx;
+  line-height: 1.22;
+  font-weight: 800;
+}
+
+.store-status {
+  flex-shrink: 0;
+  margin-top: 4rpx;
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.store-status.open {
+  color: #0b9b61;
+  background: rgba(11, 155, 97, 0.1);
+}
+
+.store-status.closed {
+  color: #8a96a8;
+  background: #eef1f5;
+}
+
+.store-sales-row {
+  margin-top: 14rpx;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  color: #7b8798;
+  font-size: 23rpx;
+}
+
+.store-tag-row {
+  margin-top: 14rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.store-tag,
+.mini-tag {
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  color: #4c6f9d;
+  background: #edf5ff;
+  font-size: 22rpx;
+}
+
+.store-time-row {
+  margin-top: 24rpx;
+  padding-top: 22rpx;
+  border-top: 1rpx solid #eef1f6;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  color: #5c6573;
+  font-size: 25rpx;
+}
+
+.time-strong {
+  color: #1f2a3d;
+  font-weight: 700;
+}
+
+.detail-link {
+  margin-left: auto;
+  color: #7b8798;
+}
+
+.store-address-row {
+  margin-top: 20rpx;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.address-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.store-address {
+  display: block;
+  color: #1f2a3d;
+  font-size: 27rpx;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.distance-text {
+  display: block;
+  margin-top: 8rpx;
+  color: #8a96a8;
+  font-size: 24rpx;
+}
+
+.store-actions {
+  display: flex;
+  gap: 14rpx;
+}
+
+.store-action {
+  width: 86rpx;
+  height: 86rpx;
+  border-radius: 24rpx;
+  background: #f4f7fb;
+  color: #20293b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 21rpx;
+}
+
+.action-icon {
+  margin-bottom: 4rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.search-bar {
+  margin-top: 22rpx;
+  height: 78rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 26rpx;
+  border-radius: 26rpx;
+  background: #fff;
+  box-shadow: 0 14rpx 38rpx rgba(20, 55, 105, 0.06);
+}
+
+.search-icon {
+  color: #1677ff;
+  font-size: 30rpx;
+}
+
+.search-text {
+  margin-left: 14rpx;
+  color: #8a96a8;
+  font-size: 26rpx;
+}
+
+.store-tabs {
+  margin-top: 28rpx;
+  display: flex;
+  align-items: center;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 12rpx 30rpx rgba(20, 55, 105, 0.05);
+  overflow: hidden;
+}
+
+.store-tab {
+  position: relative;
+  flex: 1;
+  padding: 22rpx 0 24rpx;
+  text-align: center;
+  color: #252d3d;
+  font-size: 30rpx;
+  font-weight: 650;
+}
+
+.store-tab.active {
+  color: #ff6f23;
+}
+
+.store-tab.active::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 10rpx;
+  width: 54rpx;
+  height: 7rpx;
+  border-radius: 999rpx;
+  background: #ff6f23;
+  transform: translateX(-50%);
+}
+
+.section-block {
+  margin-top: 28rpx;
+}
+
+.section-title-row {
+  margin-bottom: 18rpx;
+}
+
+.section-title {
+  display: block;
+  color: #1e2738;
+  font-size: 34rpx;
+  font-weight: 800;
+}
+
+.section-subtitle {
+  display: block;
+  margin-top: 8rpx;
+  color: #7e8a9b;
+  font-size: 24rpx;
+}
+
+.product-section {
+  padding-bottom: 18rpx;
+}

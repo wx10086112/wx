@@ -1,0 +1,43 @@
+<view class="coupon-page">
+  <view class="coupon-header">
+    <text class="coupon-title">我的优惠券</text>
+    <text class="coupon-subtitle">到店消费可使用优惠券抵扣</text>
+  </view>
+
+  <view class="coupon-tabs">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="value"
+      class="coupon-tab {{currentTab === item.value ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="{{item.value}}"
+    >
+      {{item.label}}
+    </view>
+  </view>
+
+  <view class="coupon-list" wx:if="{{couponList.length}}">
+    <view wx:for="{{couponList}}" wx:key="couponId" class="coupon-card {{item.isAvailable ? '' : 'coupon-disabled'}}">
+      <view class="coupon-left">
+        <text class="coupon-amount">¥{{item.amountText}}</text>
+        <text class="coupon-threshold">满{{item.thresholdText}}可用</text>
+      </view>
+      <view class="coupon-divider"></view>
+      <view class="coupon-right">
+        <text class="coupon-name">{{item.couponName}}</text>
+        <text class="coupon-valid">有效期至 {{item.validEndTime}}</text>
+        <view wx:if="{{item.isAvailable}}" class="coupon-use-btn" catchtap="onUseCoupon" data-coupon="{{item}}">去使用</view>
+        <view wx:else class="coupon-status-tag">{{item.statusText}}</view>
+      </view>
+    </view>
+  </view>
+
+  <empty-state
+    wx:if="{{!couponList.length}}"
+    icon="🎫"
+    text="{{currentTab === 'AVAILABLE' ? '暂无可用优惠券' : '暂无优惠券记录'}}"
+    showButton="{{currentTab === 'AVAILABLE'}}"
+    buttonText="去逛逛"
+    bind:buttonTap="goShopping"
+  />
+</view>

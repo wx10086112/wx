@@ -1,0 +1,23 @@
+<view class="product-card" bindtap="onTap">
+  <view class="product-image">
+    <image src="{{product.image}}" mode="aspectFill" class="image" lazy-load></image>
+  </view>
+  <view class="product-info">
+    <view wx:if="{{product.tags && product.tags.length > 0}}" class="tags">
+      <text class="tag" wx:for="{{product.tags}}" wx:key="index">{{item}}</text>
+    </view>
+    <view class="product-title text-ellipsis-2">{{product.title}}</view>
+    <view class="product-subtitle text-ellipsis">{{product.subtitle}}</view>
+    <view class="rule-line">
+      <text>{{product.refundRule}}</text>
+    </view>
+    <view class="product-footer">
+      <view class="price-info">
+        <text class="price">¥{{product.price / 100}}</text>
+        <text wx:if="{{product.originalPrice > product.price}}" class="original-price">¥{{product.originalPrice / 100}}</text>
+        <text class="sales">已售{{product.sales || 0}}</text>
+      </view>
+      <view class="buy-btn" catchtap="onBuy">抢购</view>
+    </view>
+  </view>
+</view>

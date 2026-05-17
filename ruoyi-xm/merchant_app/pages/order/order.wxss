@@ -1,0 +1,107 @@
+.tabs-scroll {
+  white-space: nowrap;
+}
+
+.tabs {
+  padding: 10rpx;
+  display: inline-flex;
+  gap: 10rpx;
+  min-width: 100%;
+}
+
+.tab-item {
+  flex-shrink: 0;
+  min-width: 120rpx;
+  height: 68rpx;
+  border-radius: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6f7d91;
+  font-size: 24rpx;
+  padding: 0 20rpx;
+}
+
+.tab-item.active {
+  background: #eaf2ff;
+  color: #1f6feb;
+  font-weight: 600;
+}
+
+.order-card {
+  margin-top: 18rpx;
+  padding: 24rpx;
+}
+
+.order-top,
+.order-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.order-no {
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.order-title {
+  display: block;
+  margin-top: 18rpx;
+  font-size: 30rpx;
+  color: #1f2a37;
+  font-weight: 600;
+}
+
+.order-meta,
+.order-code {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.order-delivery {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #516170;
+  line-height: 1.6;
+}
+
+.order-remark {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #9aa6b6;
+  font-style: italic;
+}
+
+.order-bottom {
+  margin-top: 20rpx;
+}
+
+.order-amount {
+  font-size: 30rpx;
+  color: #1f6feb;
+  font-weight: 700;
+}
+
+.order-actions {
+  display: flex;
+  gap: 12rpx;
+}
+
+.action-btn {
+  width: auto;
+  min-width: 140rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  font-size: 24rpx;
+  padding: 0 20rpx;
+}
+
+.reject-btn {
+  background: #fff0f0;
+  color: #d93025;
+}

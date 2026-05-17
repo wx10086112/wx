@@ -1,0 +1,81 @@
+<view class="page-shell">
+  <!-- 顶部卡片 -->
+  <view class="hero-card">
+    <view class="hero-top">
+      <view>
+        <text class="hero-store">{{storeInfo.storeName}}</text>
+        <text class="hero-role">{{staffUser.name}} · {{staffUser.roleName}}</text>
+      </view>
+      <view class="status-tag {{storeInfo.businessStatus ? 'green' : 'gray'}}">
+        {{storeInfo.businessStatus ? '营业中' : '休息中'}}
+      </view>
+    </view>
+    <view class="hero-sales-row">
+      <view>
+        <text class="hero-sales-label">今日流水</text>
+        <text class="hero-sales-value">¥{{todaySalesText}}</text>
+      </view>
+      <button class="hero-switch" bindtap="toggleBusinessStatus">
+        {{storeInfo.businessStatus ? '切换休息' : '恢复营业'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 提醒区域 -->
+  <view wx:if="{{alertList.length}}" class="alert-section">
+    <view wx:for="{{alertList}}" wx:key="text" class="alert-item {{item.type}}" bindtap="goAlertOrders" data-filter="{{item.filter}}" data-action="{{item.action}}">
+      <text class="alert-icon">{{item.type === 'urgent' ? '🔔' : '⚠️'}}</text>
+      <text class="alert-text">{{item.text}}</text>
+      <text class="alert-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 数据概览 -->
+  <view class="stats-grid">
+    <view wx:for="{{statsCardList}}" wx:key="label" class="stats-card panel {{item.highlight ? 'highlight' : ''}} {{item.warn ? 'warn' : ''}}">
+      <text class="stats-value">{{item.value}}</text>
+      <text class="stats-label">{{item.label}}</text>
+    </view>
+  </view>
+
+  <!-- 快捷入口 -->
+  <view class="section panel">
+    <text class="section-title">快捷入口</text>
+    <view class="quick-grid">
+      <view
+        wx:for="{{quickActionList}}"
+        wx:key="label"
+        class="quick-item"
+        bindtap="goQuickAction"
+        data-url="{{item.url}}"
+        data-istab="{{item.isTab}}"
+        data-filter="{{item.filter}}"
+      >
+        <text class="quick-icon">{{item.icon}}</text>
+        <text class="quick-label">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 待处理订单 -->
+  <view class="section panel">
+    <text class="section-title">待处理订单</text>
+    <text class="section-desc">优先处理待接单和待核销订单</text>
+    <view wx:if="{{pendingOrderList.length}}">
+      <view wx:for="{{pendingOrderList}}" wx:key="orderNo" class="pending-row" bindtap="goOrderDetail" data-orderno="{{item.orderNo}}">
+        <view class="pending-main">
+          <text class="pending-title">{{item.title}}</text>
+          <text class="pending-meta">{{item.customerName}} · {{item.payTimeText}}</text>
+        </view>
+        <view class="pending-side">
+          <text class="pending-price">¥{{item.payAmountText}}</text>
+          <view wx:if="{{item.statusMeta}}" class="status-tag {{item.statusMeta.className}} mini-tag">{{item.statusMeta.text}}</view>
+          <text wx:elif="{{item.writeOffCode}}" class="pending-code">{{item.writeOffCode}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="empty-inline">
+      <text class="empty-text">当前没有待处理订单 🎉</text>
+    </view>
+  </view>
+</view>

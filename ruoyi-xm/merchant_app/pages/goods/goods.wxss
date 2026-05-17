@@ -1,0 +1,185 @@
+.tabs {
+  padding: 10rpx;
+  display: flex;
+  gap: 10rpx;
+}
+
+.tab-item {
+  flex: 1;
+  height: 68rpx;
+  border-radius: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6f7d91;
+  font-size: 24rpx;
+}
+
+.tab-item.active {
+  background: #eaf2ff;
+  color: #1f6feb;
+  font-weight: 600;
+}
+
+/* 顶部工具栏 */
+.toolbar {
+  margin-top: 18rpx;
+  display: flex;
+  gap: 14rpx;
+}
+
+.toolbar-btn {
+  flex: 1;
+}
+
+/* 批量操作栏 */
+.batch-bar {
+  margin-top: 14rpx;
+  padding: 18rpx 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 2rpx solid #93c5fd;
+}
+
+.batch-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.batch-text {
+  font-size: 26rpx;
+  color: #1f6feb;
+  font-weight: 600;
+}
+
+.batch-count {
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.batch-actions {
+  display: flex;
+  gap: 10rpx;
+}
+
+/* 商品卡片 */
+.goods-card {
+  margin-top: 18rpx;
+  padding: 24rpx;
+  display: flex;
+  gap: 18rpx;
+}
+
+.goods-card.low-stock-card {
+  border-left: 6rpx solid #f59e0b;
+}
+
+.goods-checkbox {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-top: 60rpx;
+}
+
+.checkbox-icon {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 10rpx;
+  border: 3rpx solid #d1d5db;
+  background: #fff;
+}
+
+.checkbox-icon.checked {
+  background: #1f6feb;
+  border-color: #1f6feb;
+}
+
+.goods-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.goods-cover {
+  height: 220rpx;
+  margin-bottom: 20rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  background: #eef4ff;
+}
+
+.goods-cover image {
+  width: 100%;
+  height: 100%;
+}
+
+.goods-cover.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7a8798;
+  font-size: 24rpx;
+}
+
+.goods-top,
+.goods-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.goods-title {
+  display: block;
+  font-size: 30rpx;
+  color: #1f2a37;
+  font-weight: 600;
+}
+
+.goods-meta,
+.goods-subtitle {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #7a8798;
+  line-height: 1.6;
+}
+
+.low-stock-tag {
+  display: inline-block;
+  margin-top: 8rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 8rpx;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.goods-price {
+  display: block;
+  margin-top: 18rpx;
+  font-size: 32rpx;
+  color: #1f6feb;
+  font-weight: 700;
+}
+
+.goods-origin {
+  margin-left: 12rpx;
+  font-size: 24rpx;
+  color: #9aa6b6;
+  text-decoration: line-through;
+}
+
+.goods-actions {
+  margin-top: 20rpx;
+}
+
+.mini-btn {
+  flex: 1;
+  height: 68rpx;
+  line-height: 68rpx;
+  font-size: 24rpx;
+}
