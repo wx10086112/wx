@@ -27,7 +27,7 @@
         <el-table-column label="商家" prop="merchantId" width="140" />
         <el-table-column label="提现金额" width="120">
           <template slot-scope="scope">
-            <span class="text-primary">¥{{ (scope.row.amount || 0).toFixed(2) }}</span>
+            <span class="text-primary">¥{{ Number(scope.row.amount || 0).toFixed(2) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="银行" prop="bankName" width="120" />

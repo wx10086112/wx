@@ -3,7 +3,6 @@
     "pages/home/home",
     "pages/order/order",
     "pages/mine/mine",
-<<<<<<< HEAD
     "pages/search/search",
     "pages/search-result/search-result",
     "pages/merchant-detail/merchant-detail",
@@ -14,11 +13,8 @@
     "pages/favorite/favorite",
     "pages/review/review-list",
     "pages/review/review-create",
-    "pages/contact/contact"
-=======
-    "pages/merchant-detail/merchant-detail",
+    "pages/contact/contact",
     "pages/home_page/home_page"
->>>>>>> 6a4f24e0c25e0524d0edb6ef9701a24bbe8fcecc
   ],
   "window": {
     "navigationBarTextStyle": "white",

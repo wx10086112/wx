@@ -27,7 +27,7 @@
         <el-table-column prop="merchantId" label="商家名称" min-width="120" show-overflow-tooltip />
         <el-table-column prop="amount" label="提现金额" width="120" align="center">
           <template slot-scope="scope">
-            <span class="withdraw-amount">¥{{ scope.row.amount.toLocaleString() }}</span>
+            <span class="withdraw-amount">¥{{ Number(scope.row.amount).toLocaleString() }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="bankName" label="银行名称" width="120" align="center" />
@@ -79,10 +79,10 @@
     <el-dialog title="提现详情" :visible.sync="detailDialogVisible" width="550px">
       <el-descriptions :column="2" border>
         <el-descriptions-item label="商家名称">{{ detailRow.merchantId }}</el-descriptions-item>
-        <el-descriptions-item label="提现金额">¥{{ (detailRow.amount || 0).toLocaleString() }}</el-descriptions-item>
+        <el-descriptions-item label="提现金额">¥{{ Number(detailRow.amount || 0).toLocaleString() }}</el-descriptions-item>
         <el-descriptions-item label="银行名称">{{ detailRow.bankName }}</el-descriptions-item>
         <el-descriptions-item label="银行账号">{{ detailRow.bankAccount }}</el-descriptions-item>
-        <el-descriptions-item label="申请时间">{{ detailRow.applyTime }}</el-descriptions-item>
+        <el-descriptions-item label="申请时间">{{ detailRow.createTime }}</el-descriptions-item>
         <el-descriptions-item label="状态">{{ statusText(detailRow.status) }}</el-descriptions-item>
         <el-descriptions-item v-if="detailRow.auditTime" label="审核时间">{{ detailRow.auditTime }}</el-descriptions-item>
         <el-descriptions-item v-if="detailRow.payTime" label="完成时间">{{ detailRow.payTime }}</el-descriptions-item>
@@ -100,7 +100,7 @@
           <span>{{ rejectRow.merchantId }}</span>
         </el-form-item>
         <el-form-item label="提现金额">
-          <span>¥{{ (rejectRow.amount || 0).toLocaleString() }}</span>
+          <span>¥{{ Number(rejectRow.amount || 0).toLocaleString() }}</span>
         </el-form-item>
         <el-form-item label="拒绝原因" required>
           <el-input v-model="rejectReason" type="textarea" :rows="3" placeholder="请输入拒绝原因" />
@@ -115,7 +115,7 @@
 </template>
 
 <script>
-import { getWithdrawList } from '@/api/merchant'
+import { getWithdrawList, approveWithdraw } from '@/api/finance'
 
 export default {
   name: 'MerchantWithdraw',
@@ -189,16 +189,17 @@ export default {
       this.detailDialogVisible = true
     },
     handlePass(row) {
-      this.$confirm(`确认通过 ${row.merchantId} 的提现申请（¥${row.amount.toLocaleString()}）？`, '确认通过', {
+      this.$confirm(`确认通过商家 ${row.merchantId} 的提现申请（¥${Number(row.amount).toLocaleString()}）？`, '确认通过', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'success'
-      }).then(() => {
-        this.$message.success('已通过提现申请')
-        // 模拟更新状态
-        const index = this.tableList.findIndex(item => item.id === row.id)
-        if (index !== -1) {
-          this.$set(this.tableList, index, { ...row, status: 1, auditTime: '2026-05-09 15:00' })
+      }).then(async () => {
+        try {
+          await approveWithdraw(row.id, 1)
+          this.$message.success('已通过提现申请')
+          this.fetchData()
+        } catch (e) {
+          this.$message.error('操作失败')
         }
       }).catch(() => {})
     },
@@ -213,20 +214,15 @@ export default {
         return
       }
       this.rejectLoading = true
-      setTimeout(() => {
-        const index = this.tableList.findIndex(item => item.id === this.rejectRow.id)
-        if (index !== -1) {
-          this.$set(this.tableList, index, {
-            ...this.rejectRow,
-            status: 3,
-            auditTime: '2026-05-09 15:00',
-            rejectReason: this.rejectReason
-          })
-        }
+      approveWithdraw(this.rejectRow.id, 0).then(() => {
         this.$message.success('已拒绝提现申请')
         this.rejectDialogVisible = false
+        this.fetchData()
+      }).catch(() => {
+        this.$message.error('操作失败')
+      }).finally(() => {
         this.rejectLoading = false
-      }, 500)
+      })
     },
     statusText(status) {
       const map = { 0: '待审核', 1: '已审核', 2: '已完成', 3: '已拒绝' }

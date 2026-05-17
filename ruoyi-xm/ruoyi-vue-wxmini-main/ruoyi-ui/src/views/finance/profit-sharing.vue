@@ -26,7 +26,7 @@
         <el-table-column label="订单号" prop="orderNo" width="180" />
         <el-table-column label="订单金额" width="120">
           <template slot-scope="scope">
-            <span>¥{{ scope.row.orderAmount.toFixed(2) }}</span>
+            <span>¥{{ Number(scope.row.orderAmount || 0).toFixed(2) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="佣金比例" width="100" align="center">
@@ -36,12 +36,12 @@
         </el-table-column>
         <el-table-column label="佣金" width="120">
           <template slot-scope="scope">
-            <span class="text-warning">¥{{ scope.row.commission.toFixed(2) }}</span>
+            <span class="text-warning">¥{{ Number(scope.row.commission || 0).toFixed(2) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="商家收入" width="120">
           <template slot-scope="scope">
-            <span class="text-success">¥{{ ((scope.row.orderAmount || 0) - (scope.row.commission || 0)).toFixed(2) }}</span>
+            <span class="text-success">¥{{ (Number(scope.row.orderAmount || 0) - Number(scope.row.commission || 0)).toFixed(2) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="状态" width="100" align="center">

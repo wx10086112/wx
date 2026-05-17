@@ -10,9 +10,9 @@
         </el-form-item>
         <el-form-item label="类型">
           <el-select v-model="queryParams.type" placeholder="请选择" clearable>
-            <el-option label="订单收入" value="订单收入" />
-            <el-option label="提现扣款" value="提现扣款" />
-            <el-option label="退款扣款" value="退款扣款" />
+            <el-option label="订单收入" value="income" />
+            <el-option label="提现扣款" value="withdraw" />
+            <el-option label="退款扣款" value="refund" />
           </el-select>
         </el-form-item>
         <el-form-item label="时间范围">
@@ -37,13 +37,13 @@
         <el-table-column prop="merchantId" label="商家名称" min-width="120" show-overflow-tooltip />
         <el-table-column prop="type" label="类型" width="110" align="center">
           <template slot-scope="scope">
-            <el-tag :type="flowTypeTag(scope.row.type)" size="small">{{ scope.row.type }}</el-tag>
+            <el-tag :type="flowTypeTag(scope.row.type)" size="small">{{ flowTypeText(scope.row.type) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="amount" label="金额" width="130" align="center">
           <template slot-scope="scope">
-            <span :class="scope.row.totalAmount >= 0 ? 'amount-positive' : 'amount-negative'">
-              {{ scope.row.totalAmount >= 0 ? '+' : '' }}¥{{ Math.abs(scope.row.totalAmount).toLocaleString() }}
+            <span :class="Number(scope.row.amount || 0) >= 0 ? 'amount-positive' : 'amount-negative'">
+              {{ scope.row.amount >= 0 ? '+' : '' }}¥{{ Math.abs(Number(scope.row.amount || 0)).toLocaleString() }}
             </span>
           </template>
         </el-table-column>
@@ -141,8 +141,12 @@ export default {
       this.fetchData()
     },
     flowTypeTag(type) {
-      const map = { '订单收入': 'success', '提现扣款': 'warning', '退款扣款': 'danger' }
+      const map = { income: 'success', withdraw: 'warning', refund: 'danger', payment: 'success', commission: 'primary' }
       return map[type] || 'info'
+    },
+    flowTypeText(type) {
+      const map = { income: '订单收入', withdraw: '提现扣款', refund: '退款扣款', payment: '支付收入', commission: '佣金' }
+      return map[type] || type
     }
   }
 }

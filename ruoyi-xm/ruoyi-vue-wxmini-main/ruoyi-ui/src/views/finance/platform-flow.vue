@@ -7,8 +7,8 @@
       <el-form :inline="true" :model="queryParams" size="small" class="search-form">
         <el-form-item label="类型">
           <el-select v-model="queryParams.type" placeholder="全部" clearable>
-            <el-option label="订单收入" value="订单收入" />
-            <el-option label="退款支出" value="退款支出" />
+            <el-option label="支付收入" value="payment" />
+            <el-option label="退款支出" value="refund" />
           </el-select>
         </el-form-item>
         <el-form-item label="时间范围">
@@ -38,8 +38,8 @@
         </el-table-column>
         <el-table-column label="金额" width="130">
           <template slot-scope="scope">
-            <span :class="(scope.row.amount || 0) >= 0 ? 'text-success' : 'text-danger'">
-              {{ (scope.row.amount || 0) >= 0 ? '+' : '' }}¥{{ (scope.row.amount || 0).toFixed(2) }}
+            <span :class="Number(scope.row.amount || 0) >= 0 ? 'text-success' : 'text-danger'">
+              {{ Number(scope.row.amount || 0) >= 0 ? '+' : '' }}¥{{ Math.abs(Number(scope.row.amount || 0)).toFixed(2) }}
             </span>
           </template>
         </el-table-column>
@@ -85,11 +85,11 @@ export default {
       },
       dateRange: [],
       typeMap: {
-        1: { text: '支付收入', type: 'success' },
-        2: { text: '收入', type: 'success' },
-        3: { text: '提现', type: 'warning' },
-        4: { text: '退款', type: 'danger' },
-        5: { text: '佣金', type: 'primary' }
+        payment: { text: '支付收入', type: 'success' },
+        income: { text: '收入', type: 'success' },
+        withdraw: { text: '提现', type: 'warning' },
+        refund: { text: '退款', type: 'danger' },
+        commission: { text: '佣金', type: 'primary' }
       }
     }
   },
