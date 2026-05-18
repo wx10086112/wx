@@ -1,0 +1,42 @@
+<view class="profile-edit-page">
+  <view class="edit-section">
+    <view class="edit-item edit-item-avatar">
+      <text class="edit-label">头像</text>
+      <view class="edit-value">
+        <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+          <image src="{{avatarUrl}}" class="edit-avatar" mode="aspectFill"></image>
+          <text class="edit-arrow">›</text>
+        </button>
+      </view>
+    </view>
+
+    <view class="edit-item">
+      <text class="edit-label">昵称</text>
+      <view class="edit-value">
+        <input
+          class="edit-input"
+          type="nickname"
+          value="{{nickName}}"
+          placeholder="请输入昵称"
+          bindinput="onNickNameInput"
+          maxlength="20"
+        />
+      </view>
+    </view>
+
+    <view class="edit-item">
+      <text class="edit-label">手机号</text>
+      <view class="edit-value">
+        <text class="edit-phone">{{phone || '未绑定'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="edit-tip">
+    <text class="tip-text">头像和昵称用于在小程序内展示，手机号用于到店服务通知</text>
+  </view>
+
+  <button class="save-btn" bindtap="saveProfile" disabled="{{saving}}">
+    {{saving ? '保存中...' : '保存'}}
+  </button>
+</view>

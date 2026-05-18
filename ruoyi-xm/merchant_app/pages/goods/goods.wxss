@@ -21,13 +21,85 @@
   font-weight: 600;
 }
 
-.add-btn {
+/* 顶部工具栏 */
+.toolbar {
   margin-top: 18rpx;
+  display: flex;
+  gap: 14rpx;
 }
 
+.toolbar-btn {
+  flex: 1;
+}
+
+/* 批量操作栏 */
+.batch-bar {
+  margin-top: 14rpx;
+  padding: 18rpx 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 2rpx solid #93c5fd;
+}
+
+.batch-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.batch-text {
+  font-size: 26rpx;
+  color: #1f6feb;
+  font-weight: 600;
+}
+
+.batch-count {
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.batch-actions {
+  display: flex;
+  gap: 10rpx;
+}
+
+/* 商品卡片 */
 .goods-card {
   margin-top: 18rpx;
   padding: 24rpx;
+  display: flex;
+  gap: 18rpx;
+}
+
+.goods-card.low-stock-card {
+  border-left: 6rpx solid #f59e0b;
+}
+
+.goods-checkbox {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-top: 60rpx;
+}
+
+.checkbox-icon {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 10rpx;
+  border: 3rpx solid #d1d5db;
+  background: #fff;
+}
+
+.checkbox-icon.checked {
+  background: #1f6feb;
+  border-color: #1f6feb;
+}
+
+.goods-body {
+  flex: 1;
+  min-width: 0;
 }
 
 .goods-cover {
@@ -73,6 +145,17 @@
   font-size: 24rpx;
   color: #7a8798;
   line-height: 1.6;
+}
+
+.low-stock-tag {
+  display: inline-block;
+  margin-top: 8rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 8rpx;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 22rpx;
+  font-weight: 600;
 }
 
 .goods-price {

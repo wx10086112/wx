@@ -1,6 +1,36 @@
-<view class="simple-page">
-  <view wx:for="{{favoriteList}}" wx:key="id" class="simple-card">
-    <text class="simple-title">{{item.title}}</text>
-    <text class="simple-subtitle">{{item.subtitle}}</text>
+<view class="favorite-page">
+  <view class="favorite-header">
+    <text class="favorite-title">我的收藏</text>
+    <text class="favorite-subtitle">收藏的商品和门店</text>
   </view>
+
+  <view class="favorite-list" wx:if="{{!isEmpty}}">
+    <view
+      wx:for="{{favoriteList}}"
+      wx:key="id"
+      class="favorite-card"
+      bindtap="onItemTap"
+      data-item="{{item}}"
+    >
+      <image src="{{item.image}}" class="favorite-image" mode="aspectFill"></image>
+      <view class="favorite-info">
+        <text class="favorite-name text-ellipsis-2">{{item.title}}</text>
+        <text class="favorite-desc text-ellipsis">{{item.subtitle}}</text>
+        <view class="favorite-bottom">
+          <text wx:if="{{item.priceText}}" class="favorite-price">¥{{item.priceText}}</text>
+          <text wx:else class="favorite-type-tag">{{item.type === 'merchant' ? '门店' : '商品'}}</text>
+          <view class="favorite-remove" catchtap="onRemove" data-item="{{item}}">取消收藏</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <empty-state
+    wx:if="{{isEmpty}}"
+    icon="⭐"
+    text="暂无收藏内容"
+    showButton="{{true}}"
+    buttonText="去逛逛"
+    bind:buttonTap="goShopping"
+  />
 </view>

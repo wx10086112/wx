@@ -11,8 +11,12 @@ const MERCHANT_RATE = 90
 const PLATFORM_RATE = 10
 
 const orderStatusMap = {
+  PENDING_ACCEPT: { text: '待接单', className: 'orange' },
+  ACCEPTED: { text: '已接单', className: 'blue' },
+  SHIPPING: { text: '配送中', className: 'blue' },
   PENDING_VERIFY: { text: '待核销', className: 'blue' },
   COMPLETED: { text: '已完成', className: 'green' },
+  REJECTED: { text: '已拒单', className: 'gray' },
   REFUNDING: { text: '退款中', className: 'orange' },
   REFUNDED: { text: '已退款', className: 'gray' },
   CANCELLED: { text: '已取消', className: 'gray' }
@@ -59,6 +63,23 @@ const showModal = (title, content) => {
       title,
       content,
       success: (res) => resolve(res.confirm)
+    })
+  })
+}
+
+const showModalWithInput = (title, placeholder = '') => {
+  return new Promise((resolve) => {
+    wx.showModal({
+      title,
+      editable: true,
+      placeholderText: placeholder,
+      success: (res) => {
+        if (res.confirm) {
+          resolve(res.content || '')
+        } else {
+          resolve(null)
+        }
+      }
     })
   })
 }
@@ -136,13 +157,16 @@ const consumePendingOrderFilter = () => {
 
 const buildWorkbenchStats = (orderList = [], goodsList = []) => {
   return {
+    pendingAcceptCount: orderList.filter((item) => item.status === 'PENDING_ACCEPT').length,
     pendingVerifyCount: orderList.filter((item) => item.status === 'PENDING_VERIFY').length,
     completedCount: orderList.filter((item) => item.status === 'COMPLETED').length,
     refundingCount: orderList.filter((item) => item.status === 'REFUNDING').length,
+    shippingCount: orderList.filter((item) => item.status === 'SHIPPING').length,
     onShelfCount: goodsList.filter((item) => item.status === 'ON_SHELF').length,
     todaySalesAmount: orderList
-      .filter((item) => ['PENDING_VERIFY', 'COMPLETED'].includes(item.status))
-      .reduce((sum, item) => sum + Number(item.payAmount || 0), 0)
+      .filter((item) => ['PENDING_VERIFY', 'COMPLETED', 'ACCEPTED', 'SHIPPING'].includes(item.status))
+      .reduce((sum, item) => sum + Number(item.payAmount || 0), 0),
+    abnormalCount: orderList.filter((item) => ['REFUNDING', 'REJECTED'].includes(item.status)).length
   }
 }
 
@@ -269,11 +293,79 @@ const verifyOrderByCode = (code, staffUser) => {
   }
 }
 
+/**
+ * 接单操作（本地）
+ */
+const acceptOrder = (orderNo) => {
+  const orderList = getOrderList()
+  const target = orderList.find((item) => item.orderNo === orderNo)
+  if (!target) return { success: false, message: '订单不存在' }
+  if (target.status !== 'PENDING_ACCEPT') return { success: false, message: '当前状态不可接单' }
+  const nextList = orderList.map((item) =>
+    item.orderNo === orderNo
+      ? { ...item, status: 'ACCEPTED', acceptTime: Date.now() }
+      : item
+  )
+  setOrderList(nextList)
+  return { success: true, message: '接单成功', order: nextList.find((item) => item.orderNo === orderNo) }
+}
+
+/**
+ * 拒单操作（本地）
+ */
+const rejectOrder = (orderNo, reason = '') => {
+  const orderList = getOrderList()
+  const target = orderList.find((item) => item.orderNo === orderNo)
+  if (!target) return { success: false, message: '订单不存在' }
+  if (target.status !== 'PENDING_ACCEPT') return { success: false, message: '当前状态不可拒单' }
+  const nextList = orderList.map((item) =>
+    item.orderNo === orderNo
+      ? { ...item, status: 'REJECTED', rejectTime: Date.now(), rejectReason: reason }
+      : item
+  )
+  setOrderList(nextList)
+  return { success: true, message: '已拒单', order: nextList.find((item) => item.orderNo === orderNo) }
+}
+
+/**
+ * 发货/配送操作（本地）
+ */
+const shipOrder = (orderNo) => {
+  const orderList = getOrderList()
+  const target = orderList.find((item) => item.orderNo === orderNo)
+  if (!target) return { success: false, message: '订单不存在' }
+  if (target.status !== 'ACCEPTED') return { success: false, message: '当前状态不可发货' }
+  const nextList = orderList.map((item) =>
+    item.orderNo === orderNo
+      ? { ...item, status: 'SHIPPING', shipTime: Date.now() }
+      : item
+  )
+  setOrderList(nextList)
+  return { success: true, message: '已发货', order: nextList.find((item) => item.orderNo === orderNo) }
+}
+
+/**
+ * 确认完成（配送到达 / 本地）
+ */
+const completeOrder = (orderNo) => {
+  const orderList = getOrderList()
+  const target = orderList.find((item) => item.orderNo === orderNo)
+  if (!target) return { success: false, message: '订单不存在' }
+  if (target.status !== 'SHIPPING') return { success: false, message: '当前状态不可确认完成' }
+  const nextList = orderList.map((item) =>
+    item.orderNo === orderNo
+      ? { ...item, status: 'COMPLETED', completeTime: Date.now() }
+      : item
+  )
+  setOrderList(nextList)
+  return { success: true, message: '订单已完成', order: nextList.find((item) => item.orderNo === orderNo) }
+}
+
 const buildFinanceLedgerList = () => {
   return getOrderList()
     .filter((item) => item.status === 'COMPLETED')
     .map((item, index) => {
-      const finishTime = item.verifyTime || item.payTime
+      const finishTime = item.verifyTime || item.completeTime || item.payTime
       const settleTime = finishTime + DAY_MILLISECONDS
       return {
         ledgerId: index + 1,
@@ -350,12 +442,118 @@ const applyWithdraw = (amount) => {
   }
 }
 
+/**
+ * 添加新员工（本地）
+ */
+const addStaff = (staffData) => {
+  const staffList = getStaffList()
+  const maxId = staffList.reduce((max, item) => Math.max(max, Number(item.staffId || 0)), 0)
+  const newStaff = {
+    staffId: maxId + 1,
+    name: staffData.name || '',
+    phone: staffData.phone || '',
+    roleKey: staffData.roleKey || 'clerk',
+    roleName: staffData.roleKey === 'manager' ? '店长' : '店员',
+    status: 'ACTIVE',
+    permissions: staffData.permissions || ['stats.view', 'order.manage', 'verify.scan', 'verify.manual', 'verify.record']
+  }
+  setStaffList([...staffList, newStaff])
+  return { success: true, message: '员工添加成功', staff: newStaff }
+}
+
+/**
+ * 编辑员工信息（本地）
+ */
+const updateStaffInfo = (staffId, updates) => {
+  const staffList = getStaffList()
+  const target = staffList.find((item) => item.staffId === staffId)
+  if (!target) return { success: false, message: '员工不存在' }
+  const nextList = staffList.map((item) =>
+    item.staffId === staffId ? { ...item, ...updates } : item
+  )
+  setStaffList(nextList)
+  return { success: true, message: '员工信息已更新', staff: nextList.find((item) => item.staffId === staffId) }
+}
+
+/**
+ * 商家取消订单（本地）
+ */
+const cancelOrder = (orderNo, reason = '') => {
+  const orderList = getOrderList()
+  const target = orderList.find((item) => item.orderNo === orderNo)
+  if (!target) return { success: false, message: '订单不存在' }
+  if (['COMPLETED', 'CANCELLED', 'REFUNDED'].includes(target.status)) {
+    return { success: false, message: '当前状态不可取消' }
+  }
+  const nextList = orderList.map((item) =>
+    item.orderNo === orderNo
+      ? { ...item, status: 'CANCELLED', cancelTime: Date.now(), cancelReason: reason }
+      : item
+  )
+  setOrderList(nextList)
+  return { success: true, message: '订单已取消' }
+}
+
+/**
+ * 同意退款（本地）
+ */
+const approveRefundOrder = (orderNo) => {
+  const orderList = getOrderList()
+  const target = orderList.find((item) => item.orderNo === orderNo)
+  if (!target) return { success: false, message: '订单不存在' }
+  if (target.status !== 'REFUNDING') return { success: false, message: '当前状态不可退款' }
+  const nextList = orderList.map((item) =>
+    item.orderNo === orderNo
+      ? { ...item, status: 'REFUNDED', refundTime: Date.now() }
+      : item
+  )
+  setOrderList(nextList)
+  return { success: true, message: '已同意退款' }
+}
+
+/**
+ * 拒绝退款（本地）
+ */
+const rejectRefundOrder = (orderNo, reason = '') => {
+  const orderList = getOrderList()
+  const target = orderList.find((item) => item.orderNo === orderNo)
+  if (!target) return { success: false, message: '订单不存在' }
+  if (target.status !== 'REFUNDING') return { success: false, message: '当前状态不可操作' }
+  const nextList = orderList.map((item) =>
+    item.orderNo === orderNo
+      ? { ...item, status: 'PENDING_VERIFY', refundRejectReason: reason, refundRejectTime: Date.now() }
+      : item
+  )
+  setOrderList(nextList)
+  return { success: true, message: '已拒绝退款' }
+}
+
+/**
+ * 获取库存预警商品（库存 ≤ 阈值的上架商品）
+ */
+const getLowStockGoods = (threshold = 20) => {
+  return getGoodsList().filter((item) => item.status === 'ON_SHELF' && Number(item.stock || 0) <= threshold)
+}
+
+/**
+ * 批量更新商品状态（本地）
+ */
+const batchUpdateGoodsStatus = (goodsIds = [], status = 'OFF_SHELF') => {
+  const goodsList = getGoodsList()
+  const nextList = goodsList.map((item) =>
+    goodsIds.includes(item.goodsId) ? { ...item, status } : item
+  )
+  setGoodsList(nextList)
+  return { success: true, message: `已批量${status === 'ON_SHELF' ? '上架' : '下架'} ${goodsIds.length} 个商品` }
+}
+
 module.exports = {
   clone,
   formatDate,
   formatPrice,
   showToast,
   showModal,
+  showModalWithInput,
   navigateTo,
   redirectTo,
   switchTab,
@@ -377,6 +575,17 @@ module.exports = {
   consumePendingOrderFilter,
   buildWorkbenchStats,
   verifyOrderByCode,
+  acceptOrder,
+  rejectOrder,
+  shipOrder,
+  completeOrder,
+  cancelOrder,
+  approveRefundOrder,
+  rejectRefundOrder,
+  getLowStockGoods,
+  batchUpdateGoodsStatus,
   buildFinanceOverview,
-  applyWithdraw
+  applyWithdraw,
+  addStaff,
+  updateStaffInfo
 }

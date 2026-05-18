@@ -2,6 +2,7 @@ const app = getApp()
 const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
+const userApi = require('../../api/user')
 
 Page({
   data: {
@@ -14,13 +15,13 @@ Page({
     featureToggle: {},
     couponCount: 0,
     favoriteCount: 0,
-    benefitTagList: []
+    benefitTagList: [],
+    loginStep: 'idle'
   },
 
   onLoad() {
     this.initTemplateConfig()
     this.checkLoginStatus()
-    this.loadAssets()
   },
 
   onShow() {
@@ -37,9 +38,10 @@ Page({
       serviceMenuList: (profileConfig.serviceMenus || []).filter((item) => {
         if (item.url === '/pages/coupon/coupon') return featureToggle.enableCoupon
         if (item.url === '/pages/favorite/favorite') return featureToggle.enableFavorite
-        if (item.url === '/pages/review/review-list') return featureToggle.enableReview
         return true
       })
+    }, () => {
+      this.loadAssets(profileConfig, featureToggle)
     })
   },
 
@@ -80,11 +82,17 @@ Page({
     return dynamicTags.concat(profileConfig.benefitTips || []).slice(0, 4)
   },
 
-  loadAssets() {
+  loadAssets(profileConfigArg, featureToggleArg) {
     const profileConfig =
-      this.data.profileConfig && this.data.profileConfig.assetEntries
+      profileConfigArg || (this.data.profileConfig && this.data.profileConfig.assetEntries
         ? this.data.profileConfig
         : templateService.getTemplateSection('profile')
+      )
+    const featureToggle =
+      featureToggleArg || (this.data.featureToggle && Object.keys(this.data.featureToggle).length
+        ? this.data.featureToggle
+        : templateService.getTemplateSection('featureToggle')
+      )
     const storedOrderList = util.getStoredOrderList(mock.orderList)
     const orderCountMap = this.buildOrderCountMap(storedOrderList)
     const counters = {
@@ -93,8 +101,8 @@ Page({
     }
     const assetCardList = (profileConfig.assetEntries || [])
       .filter((item) => {
-        if (item.url === '/pages/coupon/coupon') return this.data.featureToggle.enableCoupon
-        if (item.url === '/pages/favorite/favorite') return this.data.featureToggle.enableFavorite
+        if (item.url === '/pages/coupon/coupon') return featureToggle.enableCoupon
+        if (item.url === '/pages/favorite/favorite') return featureToggle.enableFavorite
         return true
       })
       .map((item) => ({
@@ -111,33 +119,102 @@ Page({
   },
 
   handleLogin() {
+    this.setData({ loginStep: 'loading' })
     util.showLoading('登录中...')
+
     wx.login({
-      success: (res) => {
-        if (!res.code) {
+      success: (loginRes) => {
+        if (!loginRes.code) {
           util.hideLoading()
-          util.showToast('登录失败')
+          util.showToast('登录失败，请重试')
+          this.setData({ loginStep: 'idle' })
           return
         }
-        setTimeout(() => {
-          const userInfo = {
-            ...mock.userInfo,
-            nickName: '微信用户'
-          }
-          app.setLoginInfo('mock_token_' + Date.now(), userInfo)
-          this.setData({
-            isLoggedIn: true,
-            userInfo
+
+        userApi
+          .login(app.appId || 'wx6c708117ea8eaab4', loginRes.code)
+          .then((res) => {
+            const info = res.data || {}
+            const userInfo = {
+              userId: info.userId || '',
+              openId: info.openId || '',
+              nickName: info.userName || '微信用户',
+              avatarUrl: info.avatarUrl || '/assets/images/avatar.png',
+              phone: info.phone || ''
+            }
+            const token = info.apiToken || ''
+
+            if (!token) {
+              util.hideLoading()
+              util.showToast('登录失败，请重试')
+              this.setData({ loginStep: 'idle' })
+              return
+            }
+
+            app.setLoginInfo(token, userInfo)
+
+            if (!userInfo.phone) {
+              util.hideLoading()
+              this.setData({
+                isLoggedIn: true,
+                userInfo,
+                loginStep: 'phone'
+              })
+              return
+            }
+
+            this.setData({
+              isLoggedIn: true,
+              userInfo,
+              loginStep: 'idle'
+            })
+            util.hideLoading()
+            util.showToast('登录成功', 'success')
           })
-          util.hideLoading()
-          util.showToast('登录成功', 'success')
-        }, 500)
+          .catch(() => {
+            util.hideLoading()
+            util.showToast('登录失败，请重试')
+            this.setData({ loginStep: 'idle' })
+          })
       },
       fail: () => {
         util.hideLoading()
-        util.showToast('登录失败')
+        util.showToast('登录失败，请重试')
+        this.setData({ loginStep: 'idle' })
       }
     })
+  },
+
+  handlePhoneAuth(e) {
+    if (e.detail.errMsg !== 'getPhoneNumber:ok') {
+      util.showToast('需要授权手机号才能使用完整功能')
+      return
+    }
+
+    const phoneCode = e.detail.code
+    if (!phoneCode) {
+      util.showToast('获取手机号失败，请重试')
+      return
+    }
+
+    util.showLoading('绑定中...')
+    userApi
+      .bindPhoneByCode(phoneCode)
+      .then((res) => {
+        const info = res.data || {}
+        if (info.phone) {
+          const userInfo = { ...this.data.userInfo, phone: info.phone }
+          app.setLoginInfo(app.globalData.token, userInfo)
+          this.setData({ userInfo, loginStep: 'idle' })
+        }
+        util.hideLoading()
+        util.showToast('登录成功', 'success')
+      })
+      .catch(() => {
+        util.hideLoading()
+        this.setData({ loginStep: 'idle' })
+        util.showToast('手机号绑定失败，可稍后在个人中心补充')
+      })
   },
 
   handleLogout() {
@@ -153,12 +230,12 @@ Page({
   },
 
   goOrder() {
-    util.switchTab('/pages/order/order')
+    util.navigateTo('/pages/order/order')
   },
 
   goOrderStatus(e) {
     util.setPendingOrderFilter(e.currentTarget.dataset.status)
-    util.switchTab('/pages/order/order')
+    util.navigateTo('/pages/order/order')
   },
 
   handleOrderEntry(e) {
@@ -174,5 +251,9 @@ Page({
 
   goPage(e) {
     util.navigateTo(e.currentTarget.dataset.url)
+  },
+
+  goProfileEdit() {
+    util.navigateTo('/pages/profile-edit/profile-edit')
   }
 })

@@ -13,11 +13,16 @@ Page({
       businessHours: '',
       phone: '',
       address: '',
+      deliveryRange: '',
+      deliveryFeeText: '',
+      freeDeliveryAmountText: '',
       serviceTagsText: '',
       bannerTitlesText: '',
       businessStatus: true,
+      autoAccept: false,
       supportRefund: true,
-      supportBooking: true
+      supportBooking: true,
+      stockAlertThreshold: '20'
     }
   },
 
@@ -46,8 +51,13 @@ Page({
     this.setData({
       form: {
         ...storeInfo,
+        deliveryRange: storeInfo.deliveryRange != null ? String(storeInfo.deliveryRange) : '',
+        deliveryFeeText: storeInfo.deliveryFee != null ? util.formatPrice(storeInfo.deliveryFee) : '',
+        freeDeliveryAmountText: storeInfo.freeDeliveryAmount != null ? util.formatPrice(storeInfo.freeDeliveryAmount) : '',
         serviceTagsText: (storeInfo.serviceTags || []).join('、'),
-        bannerTitlesText: (storeInfo.bannerTitles || []).join('、')
+        bannerTitlesText: (storeInfo.bannerTitles || []).join('、'),
+        autoAccept: !!storeInfo.autoAccept,
+        stockAlertThreshold: String(storeInfo.stockAlertThreshold || 20)
       }
     })
   },
@@ -70,6 +80,10 @@ Page({
     const form = this.data.form
     const storeInfo = {
       ...form,
+      deliveryRange: Number(form.deliveryRange || 0),
+      deliveryFee: Math.round(Number(form.deliveryFeeText || 0) * 100),
+      freeDeliveryAmount: Math.round(Number(form.freeDeliveryAmountText || 0) * 100),
+      stockAlertThreshold: Number(form.stockAlertThreshold || 20),
       serviceTags: (form.serviceTagsText || '')
         .split('、')
         .map((item) => item.trim())

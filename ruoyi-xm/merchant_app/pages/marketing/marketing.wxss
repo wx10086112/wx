@@ -1,0 +1,146 @@
+.tabs {
+  padding: 10rpx;
+  display: flex;
+  gap: 10rpx;
+}
+
+.tab-item {
+  flex: 1;
+  height: 68rpx;
+  border-radius: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6f7d91;
+  font-size: 24rpx;
+}
+
+.tab-item.active {
+  background: #eaf2ff;
+  color: #1f6feb;
+  font-weight: 600;
+}
+
+.add-btn {
+  margin-top: 18rpx;
+}
+
+.card {
+  margin-top: 18rpx;
+  padding: 24rpx;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.coupon-badge {
+  padding: 8rpx 20rpx;
+  border-radius: 12rpx;
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.promo-badge {
+  padding: 8rpx 20rpx;
+  border-radius: 12rpx;
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.card-title {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 30rpx;
+  color: #1f2a37;
+  font-weight: 600;
+}
+
+.card-meta {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.card-actions {
+  margin-top: 16rpx;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12rpx;
+}
+
+.mini-btn {
+  width: auto;
+  min-width: 140rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  font-size: 24rpx;
+  padding: 0 24rpx;
+}
+
+/* 弹窗 */
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-panel {
+  width: 600rpx;
+  padding: 36rpx;
+  border-radius: 22rpx;
+}
+
+.modal-title {
+  display: block;
+  font-size: 34rpx;
+  color: #1f2a37;
+  font-weight: 700;
+  margin-bottom: 24rpx;
+}
+
+.modal-field {
+  margin-top: 20rpx;
+}
+
+.field-label {
+  display: block;
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.field-input {
+  margin-top: 12rpx;
+  width: 100%;
+  height: 84rpx;
+  border-radius: 16rpx;
+  background: #f6f9ff;
+  padding: 0 20rpx;
+  box-sizing: border-box;
+  font-size: 28rpx;
+  color: #1f2a37;
+}
+
+.modal-actions {
+  margin-top: 30rpx;
+  display: flex;
+  gap: 16rpx;
+}
+
+.modal-btn {
+  flex: 1;
+}

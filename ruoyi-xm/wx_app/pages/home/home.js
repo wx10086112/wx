@@ -13,18 +13,12 @@ Page({
     displayMerchantList: [],
     grouponList: [],
     displayGrouponList: [],
-    bannerList: [],
-    categoryList: [],
     storeTabs: [
       { label: '团购优惠', key: 'deals', type: 'products' },
       { label: '服务项目', key: 'services', type: 'products' },
-      { label: '用户评价', key: 'reviews', type: 'reviews' },
       { label: '商家信息', key: 'info', type: 'info' }
     ],
     activeStoreTab: 'deals',
-    selectedCategoryId: 0,
-    sortType: 'sales',
-    sortOptions: [],
     loading: true
   },
 
@@ -48,12 +42,9 @@ Page({
       .then((userLocation) => {
         const templateConfig = templateService.getTemplateConfig()
         const merchantList = this.buildLocatedMerchantList(mock.merchantList, userLocation)
-        const sortOptions = this.buildSortOptions(templateConfig.home.sortOptions)
         const filteredData = this.buildFilteredLists({
           merchantList,
-          grouponList: mock.grouponList,
-          selectedCategoryId: this.data.selectedCategoryId,
-          sortType: this.data.sortType
+          grouponList: mock.grouponList
         })
         this.setData({
           brandInfo: templateConfig.brandInfo,
@@ -63,9 +54,6 @@ Page({
           currentMerchant: merchantList[0] || {},
           merchantList,
           grouponList: mock.grouponList,
-          bannerList: mock.bannerList,
-          categoryList: mock.categoryList,
-          sortOptions,
           displayMerchantList: filteredData.displayMerchantList,
           displayGrouponList: filteredData.displayGrouponList,
           loading: false
@@ -138,55 +126,23 @@ Page({
         distance: this.formatDistance(distanceValue),
         businessStatusText: merchant.businessStatus ? '营业中' : '休息中',
         bookingText: merchant.supportBooking === false ? '到店即用' : '可预约',
-        displayTags: (merchant.tags || []).filter((tag) => tag !== '营业中' && tag !== '休息中')
+        displayTags: (merchant.tags || []).filter((tag) => !['营业中', '休息中'].includes(tag))
       }
     })
   },
 
-  buildSortOptions(sortOptions = []) {
-    return sortOptions.filter((item) => item.value !== 'distance')
-  },
-
-  buildFilteredLists({ merchantList = [], grouponList = [], selectedCategoryId = 0, sortType = 'sales' }) {
-    let filteredMerchants = merchantList.slice()
-    let filteredProducts = grouponList.slice()
-
-    if (selectedCategoryId) {
-      filteredProducts = filteredProducts.filter((item) => item.categoryId === selectedCategoryId)
-    }
-
-    if (sortType === 'distance') {
-      filteredMerchants.sort((a, b) => a.distanceValue - b.distanceValue)
-      filteredProducts.sort((a, b) => {
-        const merchantA = merchantList.find((m) => m.id === a.merchantId) || {}
-        const merchantB = merchantList.find((m) => m.id === b.merchantId) || {}
-        return (merchantA.distanceValue || 0) - (merchantB.distanceValue || 0)
-      })
-    }
-
-    if (sortType === 'sales') {
-      filteredMerchants.sort((a, b) => b.sales - a.sales)
-      filteredProducts.sort((a, b) => b.sales - a.sales)
-    }
-
-    if (sortType === 'price') {
-      filteredProducts.sort((a, b) => a.price - b.price)
-      filteredMerchants.sort((a, b) => a.distanceValue - b.distanceValue)
-    }
-
+  buildFilteredLists({ merchantList = [], grouponList = [] }) {
     return {
-      displayMerchantList: filteredMerchants,
-      displayGrouponList: filteredProducts
+      displayMerchantList: merchantList,
+      displayGrouponList: grouponList
     }
   },
 
   applyFilters() {
-    const { merchantList, grouponList, selectedCategoryId, sortType } = this.data
+    const { merchantList, grouponList } = this.data
     const filteredData = this.buildFilteredLists({
       merchantList,
-      grouponList,
-      selectedCategoryId,
-      sortType
+      grouponList
     })
     this.setData({
       displayMerchantList: filteredData.displayMerchantList,
@@ -225,39 +181,6 @@ Page({
     })
   },
 
-  onBannerTap(e) {
-    const banner = e.currentTarget.dataset.banner
-    if (banner.linkType === 'merchant') {
-      util.navigateTo(`/pages/merchant-detail/merchant-detail?id=${banner.linkId}`)
-      return
-    }
-    util.navigateTo(`/pages/product-detail/product-detail?id=${banner.linkId}`)
-  },
-
-  onCategoryTap(e) {
-    const categoryId = e.currentTarget.dataset.id
-    this.setData(
-      {
-        selectedCategoryId: categoryId
-      },
-      () => {
-        this.applyFilters()
-      }
-    )
-  },
-
-  onSortTap(e) {
-    const sortType = e.currentTarget.dataset.sort
-    this.setData(
-      {
-        sortType
-      },
-      () => {
-        this.applyFilters()
-      }
-    )
-  },
-
   onMerchantTap(e) {
     const merchant = e.currentTarget.dataset.merchant
     util.navigateTo(`/pages/merchant-detail/merchant-detail?id=${merchant.id}`)
@@ -270,8 +193,7 @@ Page({
     if (tabType === 'products') {
       this.setData(
         {
-          activeStoreTab: tabKey,
-          selectedCategoryId: 0
+          activeStoreTab: tabKey
         },
         () => {
           this.applyFilters()
@@ -323,7 +245,7 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: this.data.brandInfo.name || '门店团购服务',
+      title: this.data.brandInfo.name || '门店服务',
       path: '/pages/home/home'
     }
   }

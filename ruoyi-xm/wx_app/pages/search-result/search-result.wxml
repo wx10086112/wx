@@ -1,14 +1,49 @@
-<view class="simple-page">
-  <view class="simple-card">
-    <text class="simple-title">搜索结果：{{keyword || '全部'}}</text>
-    <text class="simple-subtitle">本店 {{merchantList.length}} 个，套餐 {{productList.length}} 个</text>
+<view class="result-page">
+  <view class="result-header">
+    <text class="result-keyword">"{{keyword || '全部'}}"</text>
+    <text class="result-count">共 {{totalResultCount}} 个结果</text>
   </view>
-  <view class="simple-card">
-    <text class="simple-title">本店</text>
-    <view wx:for="{{merchantList}}" wx:key="id" class="simple-line">{{item.name}}</view>
+
+  <view class="sort-bar">
+    <view
+      wx:for="{{sortOptions}}"
+      wx:key="value"
+      class="sort-item {{sortKey === item.value ? 'active' : ''}}"
+      bindtap="onSortTap"
+      data-key="{{item.value}}"
+    >
+      {{item.label}}
+      <text wx:if="{{item.value === 'price' && sortKey === 'price'}}" class="sort-arrow">{{priceAsc ? '↑' : '↓'}}</text>
+    </view>
   </view>
-  <view class="simple-card">
-    <text class="simple-title">套餐</text>
-    <view wx:for="{{productList}}" wx:key="id" class="simple-line">{{item.title}}</view>
+
+  <view wx:if="{{merchantList.length}}" class="section">
+    <text class="section-title">商家 ({{merchantList.length}})</text>
+    <view wx:for="{{merchantList}}" wx:key="id" class="merchant-row" bindtap="onMerchantTap" data-item="{{item}}">
+      <image src="{{item.avatar}}" class="merchant-avatar" mode="aspectFill"></image>
+      <view class="merchant-info">
+        <text class="merchant-name">{{item.name}}</text>
+        <text class="merchant-meta">{{item.distance}} · 月售{{item.sales}}</text>
+        <view class="merchant-tags">
+          <text wx:for="{{item.displayTags}}" wx:for-item="tag" wx:key="index" class="merchant-tag">{{tag}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{productList.length}}" class="section">
+    <text class="section-title">套餐 ({{productList.length}})</text>
+    <product-card
+      wx:for="{{productList}}"
+      wx:key="id"
+      product="{{item}}"
+      bind:click="onProductTap"
+      bind:buy="onProductBuy"
+    ></product-card>
+  </view>
+
+  <view wx:if="{{!totalResultCount}}" class="empty-wrap">
+    <view class="empty-icon">🔍</view>
+    <text class="empty-text">未找到相关结果</text>
   </view>
 </view>

@@ -1,0 +1,109 @@
+<view class="page-shell">
+  <view class="tabs panel">
+    <view wx:for="{{tabs}}" wx:key="value" class="tab-item {{currentTab === item.value ? 'active' : ''}}" bindtap="switchTab" data-tab="{{item.value}}">
+      {{item.label}}
+    </view>
+  </view>
+
+  <!-- 优惠券 -->
+  <block wx:if="{{currentTab === 'coupon'}}">
+    <button class="primary-btn add-btn" bindtap="openCouponForm">+ 新建优惠券</button>
+    <view wx:for="{{couponList}}" wx:key="couponId" class="card panel">
+      <view class="card-top">
+        <view class="coupon-badge">¥{{item.discountAmountText}}</view>
+        <view class="status-tag {{item.status === 'ACTIVE' ? 'green' : 'gray'}}">
+          {{item.status === 'ACTIVE' ? '生效中' : '已停用'}}
+        </view>
+      </view>
+      <text class="card-title">{{item.name}}</text>
+      <text class="card-meta">满 ¥{{item.minOrderAmountText}} 可用 · 有效期 {{item.validDays}} 天</text>
+      <text class="card-meta">发放 {{item.totalCount}} 张 · 已领 {{item.usedCount}} · 剩余 {{item.remainCount}}</text>
+      <text class="card-meta">创建时间 {{item.createTimeText}}</text>
+      <view class="card-actions">
+        <button class="ghost-btn mini-btn" catchtap="toggleCouponStatus" data-id="{{item.couponId}}">
+          {{item.status === 'ACTIVE' ? '停用' : '启用'}}
+        </button>
+      </view>
+    </view>
+    <view wx:if="{{!couponList.length}}" class="empty-state">
+      <text class="empty-text">暂无优惠券，点击上方创建</text>
+    </view>
+  </block>
+
+  <!-- 满减活动 -->
+  <block wx:if="{{currentTab === 'promotion'}}">
+    <button class="primary-btn add-btn" bindtap="openPromotionForm">+ 新建满减活动</button>
+    <view wx:for="{{promotionList}}" wx:key="promotionId" class="card panel">
+      <view class="card-top">
+        <view class="promo-badge">满 ¥{{item.fullAmountText}} 减 ¥{{item.reduceAmountText}}</view>
+        <view class="status-tag {{item.status === 'ACTIVE' ? 'green' : 'gray'}}">
+          {{item.status === 'ACTIVE' ? '生效中' : '已停用'}}
+        </view>
+      </view>
+      <text class="card-title">{{item.name}}</text>
+      <text class="card-meta">创建时间 {{item.createTimeText}}</text>
+      <view class="card-actions">
+        <button class="ghost-btn mini-btn" catchtap="togglePromotionStatus" data-id="{{item.promotionId}}">
+          {{item.status === 'ACTIVE' ? '停用' : '启用'}}
+        </button>
+      </view>
+    </view>
+    <view wx:if="{{!promotionList.length}}" class="empty-state">
+      <text class="empty-text">暂无满减活动，点击上方创建</text>
+    </view>
+  </block>
+
+  <!-- 优惠券表单弹窗 -->
+  <view wx:if="{{showCouponForm}}" class="modal-mask" bindtap="closeCouponForm">
+    <view class="modal-panel panel" catchtap="">
+      <text class="modal-title">新建优惠券</text>
+      <view class="modal-field">
+        <text class="field-label">券名称</text>
+        <input class="field-input" value="{{couponForm.name}}" data-key="name" bindinput="handleCouponInput" placeholder="例如：新客立减 10 元" />
+      </view>
+      <view class="modal-field">
+        <text class="field-label">优惠金额（元）</text>
+        <input class="field-input" type="digit" value="{{couponForm.discountAmount}}" data-key="discountAmount" bindinput="handleCouponInput" placeholder="例如 10" />
+      </view>
+      <view class="modal-field">
+        <text class="field-label">最低消费（元）</text>
+        <input class="field-input" type="digit" value="{{couponForm.minOrderAmount}}" data-key="minOrderAmount" bindinput="handleCouponInput" placeholder="0 表示无门槛" />
+      </view>
+      <view class="modal-field">
+        <text class="field-label">发放总量</text>
+        <input class="field-input" type="number" value="{{couponForm.totalCount}}" data-key="totalCount" bindinput="handleCouponInput" placeholder="默认 999" />
+      </view>
+      <view class="modal-field">
+        <text class="field-label">有效天数</text>
+        <input class="field-input" type="number" value="{{couponForm.validDays}}" data-key="validDays" bindinput="handleCouponInput" placeholder="默认 30 天" />
+      </view>
+      <view class="modal-actions">
+        <button class="ghost-btn modal-btn" bindtap="closeCouponForm">取消</button>
+        <button class="primary-btn modal-btn" bindtap="submitCoupon">创建</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 满减表单弹窗 -->
+  <view wx:if="{{showPromotionForm}}" class="modal-mask" bindtap="closePromotionForm">
+    <view class="modal-panel panel" catchtap="">
+      <text class="modal-title">新建满减活动</text>
+      <view class="modal-field">
+        <text class="field-label">活动名称</text>
+        <input class="field-input" value="{{promotionForm.name}}" data-key="name" bindinput="handlePromotionInput" placeholder="例如：午市满减" />
+      </view>
+      <view class="modal-field">
+        <text class="field-label">满（元）</text>
+        <input class="field-input" type="digit" value="{{promotionForm.fullAmount}}" data-key="fullAmount" bindinput="handlePromotionInput" placeholder="例如 80" />
+      </view>
+      <view class="modal-field">
+        <text class="field-label">减（元）</text>
+        <input class="field-input" type="digit" value="{{promotionForm.reduceAmount}}" data-key="reduceAmount" bindinput="handlePromotionInput" placeholder="例如 10" />
+      </view>
+      <view class="modal-actions">
+        <button class="ghost-btn modal-btn" bindtap="closePromotionForm">取消</button>
+        <button class="primary-btn modal-btn" bindtap="submitPromotion">创建</button>
+      </view>
+    </view>
+  </view>
+</view>

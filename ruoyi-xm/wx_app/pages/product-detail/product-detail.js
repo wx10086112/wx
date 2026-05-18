@@ -1,6 +1,7 @@
 const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
+const cartService = require('../../services/cart')
 
 Page({
   data: {
@@ -45,7 +46,7 @@ Page({
         otherStoreList,
         serviceHighlightList: rawProduct.tags || [],
         decisionList: [
-          `原价 ¥${(rawProduct.originalPrice / 100).toFixed(2)}，团购价 ¥${(rawProduct.price / 100).toFixed(2)}`,
+          `原价 ¥${(rawProduct.originalPrice / 100).toFixed(2)}，优惠价 ¥${(rawProduct.price / 100).toFixed(2)}`,
           `已售 ${rawProduct.sales}，库存 ${rawProduct.stock}，有效期 ${rawProduct.validDays} 天`,
           `适用门店 ${merchant.name}，距您约 ${merchant.distance}`
         ],
@@ -94,11 +95,16 @@ Page({
     this.setData({
       isCollected: !this.data.isCollected
     })
-    util.showToast(this.data.isCollected ? '已收藏套餐' : '已取消收藏', 'success')
+    util.showToast(this.data.isCollected ? '已收藏项目' : '已取消收藏', 'success')
   },
 
   shareProduct() {
     util.showToast('已唤起微信分享能力')
+  },
+
+  addToCart() {
+    cartService.addToCart(this.data.product, 1)
+    util.showToast('已加入购物车', 'success')
   },
 
   buyNow() {
@@ -107,7 +113,7 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: this.data.product.title || '套餐详情',
+      title: this.data.product.title || '项目详情',
       path: `/pages/product-detail/product-detail?id=${this.data.productId}`
     }
   }

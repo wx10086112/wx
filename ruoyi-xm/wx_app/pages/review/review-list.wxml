@@ -1,6 +1,0 @@
-<view class="simple-page">
-  <view wx:for="{{reviewList}}" wx:key="id" class="simple-card">
-    <text class="simple-title">{{item.userName}} · {{item.score}} 分</text>
-    <text class="simple-subtitle">{{item.content}}</text>
-  </view>
-</view>

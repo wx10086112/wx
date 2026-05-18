@@ -84,3 +84,15 @@
 .login-btn {
   margin-top: 28rpx;
 }
+
+.apply-entry {
+  margin-top: 20rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.apply-link {
+  color: #1f6feb;
+  margin-left: 8rpx;
+}

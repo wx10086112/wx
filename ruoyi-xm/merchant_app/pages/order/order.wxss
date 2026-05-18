@@ -1,11 +1,17 @@
+.tabs-scroll {
+  white-space: nowrap;
+}
+
 .tabs {
   padding: 10rpx;
-  display: flex;
+  display: inline-flex;
   gap: 10rpx;
+  min-width: 100%;
 }
 
 .tab-item {
-  flex: 1;
+  flex-shrink: 0;
+  min-width: 120rpx;
   height: 68rpx;
   border-radius: 14rpx;
   display: flex;
@@ -13,6 +19,7 @@
   justify-content: center;
   color: #6f7d91;
   font-size: 24rpx;
+  padding: 0 20rpx;
 }
 
 .tab-item.active {
@@ -54,6 +61,22 @@
   color: #7a8798;
 }
 
+.order-delivery {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #516170;
+  line-height: 1.6;
+}
+
+.order-remark {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #9aa6b6;
+  font-style: italic;
+}
+
 .order-bottom {
   margin-top: 20rpx;
 }
@@ -64,9 +87,21 @@
   font-weight: 700;
 }
 
+.order-actions {
+  display: flex;
+  gap: 12rpx;
+}
+
 .action-btn {
-  width: 160rpx;
-  height: 68rpx;
-  line-height: 68rpx;
+  width: auto;
+  min-width: 140rpx;
+  height: 64rpx;
+  line-height: 64rpx;
   font-size: 24rpx;
+  padding: 0 20rpx;
+}
+
+.reject-btn {
+  background: #fff0f0;
+  color: #d93025;
 }

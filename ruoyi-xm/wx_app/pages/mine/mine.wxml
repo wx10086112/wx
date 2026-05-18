@@ -1,11 +1,26 @@
 <view class="mine-page">
   <view class="user-section">
-    <view wx:if="{{isLoggedIn}}" class="user-info">
+    <view wx:if="{{isLoggedIn}}" class="user-info" bindtap="goProfileEdit">
       <image src="{{userInfo.avatarUrl}}" class="user-avatar" mode="aspectFill"></image>
       <view class="user-text">
         <text class="nickname">{{userInfo.nickName || '微信用户'}}</text>
         <text class="phone">{{userInfo.phone || '未绑定手机号'}}</text>
       </view>
+    </view>
+
+    <view wx:elif="{{loginStep === 'phone'}}" class="login-prompt">
+      <view class="login-avatar">
+        <text class="avatar-placeholder">◉</text>
+      </view>
+      <view class="login-text">
+        <text class="login-title">授权手机号</text>
+        <text class="login-desc">需要获取手机号以使用完整服务</text>
+      </view>
+      <button
+        class="phone-auth-btn"
+        open-type="getPhoneNumber"
+        bindgetphonenumber="handlePhoneAuth"
+      >授权</button>
     </view>
 
     <view wx:else class="login-prompt" bindtap="handleLogin">

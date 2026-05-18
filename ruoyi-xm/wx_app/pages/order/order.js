@@ -1,5 +1,6 @@
 const mock = require('../../data/mock')
 const util = require('../../utils/util')
+const orderApi = require('../../api/order')
 
 Page({
   data: {
@@ -83,20 +84,34 @@ Page({
   loadOrders() {
     this.setData({ loading: true })
 
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const orders = util
-          .getStoredOrderList(mock.orderList)
+    const statusParam = this.data.currentTab === 'ALL' ? '' : this.data.currentTab
+    return orderApi
+      .getOrderList({ status: statusParam })
+      .then((res) => {
+        const orders = (res.data || res || [])
           .sort((a, b) => (b.createTime || 0) - (a.createTime || 0))
           .map((item) => this.normalizeOrder(item))
-
         this.setData({
           orderStats: this.buildOrderStats(orders),
-          orderList: this.getFilteredOrders(orders),
+          orderList: orders,
           loading: false
         })
-        resolve()
-      }, 180)
+      })
+      .catch(() => {
+        this.loadOrdersLocal()
+      })
+  },
+
+  loadOrdersLocal() {
+    const orders = util
+      .getStoredOrderList(mock.orderList)
+      .sort((a, b) => (b.createTime || 0) - (a.createTime || 0))
+      .map((item) => this.normalizeOrder(item))
+
+    this.setData({
+      orderStats: this.buildOrderStats(orders),
+      orderList: this.getFilteredOrders(orders),
+      loading: false
     })
   },
 
@@ -173,11 +188,6 @@ Page({
 
   confirmWriteOffResult() {
     this.closeWriteOffModal()
-  },
-
-  onReviewOrder(e) {
-    const order = e.detail.order
-    util.navigateTo(`/pages/review/review-create?orderNo=${order.orderNo}`)
   },
 
   onRebuyOrder(e) {

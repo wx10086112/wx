@@ -57,11 +57,6 @@ Component({
       this.triggerEvent('refund', { order: this.properties.order })
     },
 
-    onReview(e) {
-      e.stopPropagation()
-      this.triggerEvent('review', { order: this.properties.order })
-    },
-
     onRebuy(e) {
       e.stopPropagation()
       this.triggerEvent('rebuy', { order: this.properties.order })

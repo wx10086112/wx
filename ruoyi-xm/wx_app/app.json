@@ -2,6 +2,7 @@
   "pages": [
     "pages/home/home",
     "pages/order/order",
+    "pages/cart/cart",
     "pages/mine/mine",
     "pages/search/search",
     "pages/search-result/search-result",
@@ -11,10 +12,9 @@
     "pages/order-detail/order-detail",
     "pages/coupon/coupon",
     "pages/favorite/favorite",
-    "pages/review/review-list",
-    "pages/review/review-create",
     "pages/contact/contact",
-    "pages/home_page/home_page"
+    "pages/profile-edit/profile-edit",
+    "pages/review/review"
   ],
   "window": {
     "navigationBarTextStyle": "white",
@@ -41,8 +41,8 @@
         "text": "首页"
       },
       {
-        "pagePath": "pages/order/order",
-        "text": "订单"
+        "pagePath": "pages/cart/cart",
+        "text": "购物车"
       },
       {
         "pagePath": "pages/mine/mine",

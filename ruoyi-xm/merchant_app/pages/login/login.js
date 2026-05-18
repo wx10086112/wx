@@ -35,6 +35,10 @@ Page({
     })
   },
 
+  goApply() {
+    util.navigateTo('/pages/apply/apply')
+  },
+
   submitLogin() {
     wx.showLoading({
       title: '登录中',

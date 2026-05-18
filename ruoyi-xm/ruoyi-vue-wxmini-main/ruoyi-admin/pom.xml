@@ -61,9 +61,52 @@
             <artifactId>ruoyi-generator</artifactId>
         </dependency>
 
+        <!-- 商城公共模块 -->
         <dependency>
             <groupId>com.ruoyi</groupId>
-            <artifactId>ruoyi-wxmini</artifactId>
+            <artifactId>ruoyi-mall-common</artifactId>
+        </dependency>
+
+        <!-- 商城用户模块 -->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-mall-user</artifactId>
+        </dependency>
+
+        <!-- 商城商户模块 -->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-mall-merchant</artifactId>
+        </dependency>
+
+        <!-- 商城商品模块 -->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-mall-product</artifactId>
+        </dependency>
+
+        <!-- 商城订单模块 -->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-mall-order</artifactId>
+        </dependency>
+
+        <!-- 商城财务模块 -->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-mall-finance</artifactId>
+        </dependency>
+
+        <!-- 商城营销模块 -->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-mall-marketing</artifactId>
+        </dependency>
+
+        <!-- 商城支付模块 -->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-mall-pay</artifactId>
         </dependency>
 
     </dependencies>

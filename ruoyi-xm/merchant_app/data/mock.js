@@ -63,7 +63,10 @@ const merchantInfo = {
   bannerTitles: ['午市轻养专场', '肩颈护理次卡', '晚间舒压热卖'],
   businessStatus: true,
   supportRefund: true,
-  supportBooking: true
+  supportBooking: true,
+  deliveryRange: 5,
+  deliveryFee: 500,
+  freeDeliveryAmount: 5000
 }
 
 const goodsList = [
@@ -202,6 +205,60 @@ const orderList = [
     createTime: 1777564800000,
     payTime: 1777565400000,
     writeOffCode: 'LY0005'
+  },
+  {
+    orderId: 6,
+    orderNo: 'M202605170006',
+    goodsId: 101,
+    title: '芳香舒压 SPA 90 分钟',
+    customerName: '刘女士',
+    customerPhone: '186****6606',
+    quantity: 2,
+    payAmount: 37600,
+    status: 'PENDING_ACCEPT',
+    orderType: 'TAKEAWAY',
+    createTime: Date.now() - 300000,
+    payTime: Date.now() - 240000,
+    deliveryAddress: '朝阳区建国路100号3号楼1102',
+    deliveryPhone: '186****6606',
+    remark: '请尽快配送，谢谢'
+  },
+  {
+    orderId: 7,
+    orderNo: 'M202605170007',
+    goodsId: 102,
+    title: '肩颈理疗放松套餐 60 分钟',
+    customerName: '张先生',
+    customerPhone: '159****7707',
+    quantity: 1,
+    payAmount: 13800,
+    status: 'ACCEPTED',
+    orderType: 'TAKEAWAY',
+    createTime: Date.now() - 1800000,
+    payTime: Date.now() - 1740000,
+    acceptTime: Date.now() - 600000,
+    deliveryAddress: '朝阳区光华路甲9号世贸天阶',
+    deliveryPhone: '159****7707',
+    remark: ''
+  },
+  {
+    orderId: 8,
+    orderNo: 'M202605170008',
+    goodsId: 103,
+    title: '都市焕肤护理 75 分钟',
+    customerName: '吴女士',
+    customerPhone: '133****8808',
+    quantity: 1,
+    payAmount: 16800,
+    status: 'SHIPPING',
+    orderType: 'TAKEAWAY',
+    createTime: Date.now() - 3600000,
+    payTime: Date.now() - 3540000,
+    acceptTime: Date.now() - 3000000,
+    shipTime: Date.now() - 1200000,
+    deliveryAddress: '朝阳区国贸大厦A座2201',
+    deliveryPhone: '133****8808',
+    remark: '放前台即可'
   }
 ]
 

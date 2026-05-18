@@ -33,7 +33,6 @@
       bind:pay="onPayOrder"
       bind:viewCode="onViewCode"
       bind:refund="onRefundOrder"
-      bind:review="onReviewOrder"
       bind:rebuy="onRebuyOrder"
     ></order-card>
   </view>
@@ -55,7 +54,7 @@
     <view class="modal-mask" bindtap="closeWriteOffModal"></view>
     <view class="modal-content">
       <view class="modal-header">
-        <text class="modal-title">到店核销码</text>
+        <text class="modal-title">使用码</text>
         <text class="modal-close" bindtap="closeWriteOffModal">×</text>
       </view>
       <view class="write-off-info">
@@ -67,17 +66,14 @@
           </view>
         </view>
         <view class="write-off-code-section">
-          <text class="code-label">请向门店店员出示以下核销码</text>
+          <text class="code-label">请向门店店员出示以下使用码</text>
           <view class="code-display">
             <text class="code-text">{{currentOrder.writeOffCode}}</text>
           </view>
           <text class="code-tip text-muted fs-24 mt-16">有效期至：{{currentOrder.writeOffDeadlineText}}</text>
         </view>
         <view class="qr-code-section">
-          <view class="qr-placeholder">
-            <text class="qr-icon">▦</text>
-            <text class="qr-text text-muted fs-22">扫码核销</text>
-          </view>
+          <qrcode text="{{currentOrder.writeOffCode}}" size="{{280}}" />
           <text class="qr-hint text-muted fs-22 mt-12">商家扫码后将自动变更为已完成</text>
         </view>
         <view class="modal-footer">

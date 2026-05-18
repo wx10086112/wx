@@ -29,7 +29,6 @@
     </view>
     <view wx:if="{{viewOrder.status === 'USED_COMPLETED'}}" class="action-btns">
       <button class="action-btn action-btn-light" bindtap="onRebuy">再来一单</button>
-      <button class="action-btn action-btn-primary" bindtap="onReview">去评价</button>
     </view>
     <view wx:if="{{viewOrder.status === 'REFUNDING' || viewOrder.status === 'REFUNDED'}}" class="action-btns">
       <button class="action-btn action-btn-light" bindtap="onTap">查看进度</button>

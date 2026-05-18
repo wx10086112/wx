@@ -21,5 +21,9 @@
     <text class="panel-label">当前模拟账号</text>
     <text class="panel-value">{{selectedRoleKey === 'manager' ? '林店长 / 店长角色' : '周店员 / 店员角色'}}</text>
     <button class="primary-btn login-btn" bindtap="submitLogin">进入商家端</button>
+    <view class="apply-entry" bindtap="goApply">
+      <text>还没有店铺？</text>
+      <text class="apply-link">商家入驻申请</text>
+    </view>
   </view>
 </view>

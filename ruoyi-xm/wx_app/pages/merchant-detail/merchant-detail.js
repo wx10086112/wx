@@ -7,9 +7,7 @@ Page({
     merchantId: null,
     merchantConfig: {},
     merchant: {},
-    grouponList: [],
     albumList: [],
-    reviewList: [],
     loading: true,
     isCollected: false
   },
@@ -28,27 +26,17 @@ Page({
     setTimeout(() => {
       const merchant = mock.merchantList.find((item) => item.id === this.data.merchantId) || mock.merchantList[0]
       const grouponList = mock.grouponList.filter((item) => item.merchantId === merchant.id)
-      const reviewList = mock.reviewList.filter((item) => item.merchantId === merchant.id).slice(0, 2)
-      const albumList = [merchant.coverImage, merchant.avatar, ...grouponList.map((item) => item.image)].slice(0, 5)
+      const albumList = (merchant.albumList && merchant.albumList.length
+        ? merchant.albumList
+        : [merchant.coverImage, merchant.avatar, ...grouponList.map((item) => item.image)]
+      ).slice(0, 6)
 
       this.setData({
         merchant,
-        grouponList,
-        reviewList,
         albumList,
         loading: false
       })
     }, 180)
-  },
-
-  onGrouponTap(e) {
-    const product = e.detail.product
-    util.navigateTo(`/pages/product-detail/product-detail?id=${product.id}`)
-  },
-
-  onGrouponBuy(e) {
-    const product = e.detail.product
-    util.navigateTo(`/pages/checkout/checkout?id=${product.id}`)
   },
 
   makePhoneCall() {
@@ -91,7 +79,7 @@ Page({
   },
 
   goOrder() {
-    util.switchTab('/pages/order/order')
+    util.navigateTo('/pages/order/order')
   },
 
   onShareAppMessage() {

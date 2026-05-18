@@ -123,3 +123,66 @@ export const orderStatusMap = {
   4: { text: '已退款', type: 'danger' },
   5: { text: '已取消', type: 'info' }
 }
+
+// ==================== 商家用户管理 ====================
+
+// 商家用户列表
+export function getMerchantUserList(query) {
+  return request({
+    url: '/mall/merchant-user/list',
+    method: 'get',
+    params: query
+  })
+}
+
+// 商家用户详情
+export function getMerchantUser(id) {
+  return request({
+    url: '/mall/merchant-user/' + id,
+    method: 'get'
+  })
+}
+
+// 新增商家用户
+export function addMerchantUser(data) {
+  return request({
+    url: '/mall/merchant-user',
+    method: 'post',
+    data: data
+  })
+}
+
+// 修改商家用户
+export function updateMerchantUser(data) {
+  return request({
+    url: '/mall/merchant-user',
+    method: 'put',
+    data: data
+  })
+}
+
+// 删除商家用户
+export function deleteMerchantUser(ids) {
+  return request({
+    url: '/mall/merchant-user/' + ids,
+    method: 'delete'
+  })
+}
+
+// 重置密码
+export function resetMerchantUserPwd(id, password) {
+  return request({
+    url: '/mall/merchant-user/resetPwd/' + id,
+    method: 'put',
+    data: { password }
+  })
+}
+
+// 切换状态
+export function changeMerchantUserStatus(id, status) {
+  return request({
+    url: '/mall/merchant-user/changeStatus',
+    method: 'put',
+    data: { id, status }
+  })
+}

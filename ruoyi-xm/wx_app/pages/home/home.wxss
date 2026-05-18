@@ -71,7 +71,7 @@
   background: #eef1f5;
 }
 
-.store-rating-row {
+.store-sales-row {
   margin-top: 14rpx;
   display: flex;
   align-items: center;
@@ -79,21 +79,6 @@
   gap: 10rpx;
   color: #7b8798;
   font-size: 23rpx;
-}
-
-.rating-badge {
-  padding: 4rpx 12rpx;
-  border-radius: 10rpx;
-  color: #fff;
-  background: #ff7629;
-  font-size: 26rpx;
-  font-weight: 700;
-}
-
-.rating-stars {
-  color: #ff7629;
-  letter-spacing: 2rpx;
-  font-size: 22rpx;
 }
 
 .store-tag-row {
@@ -207,55 +192,21 @@
   font-size: 26rpx;
 }
 
-.banner-swiper {
-  margin-top: 22rpx;
-  height: 214rpx;
-  border-radius: 28rpx;
-  overflow: hidden;
-  box-shadow: 0 16rpx 42rpx rgba(20, 55, 105, 0.08);
-}
-
-.banner-item {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.banner-image,
-.banner-mask {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.banner-mask {
-  background: linear-gradient(90deg, rgba(14, 30, 56, 0.76) 0%, rgba(14, 30, 56, 0.08) 100%);
-}
-
-.banner-copy {
-  position: absolute;
-  left: 24rpx;
-  bottom: 24rpx;
-  right: 24rpx;
-}
-
-.banner-title {
-  color: #fff;
-  font-size: 32rpx;
-  font-weight: 800;
-}
-
 .store-tabs {
   margin-top: 28rpx;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 12rpx 30rpx rgba(20, 55, 105, 0.05);
+  overflow: hidden;
 }
 
 .store-tab {
   position: relative;
-  padding: 12rpx 0 18rpx;
+  flex: 1;
+  padding: 22rpx 0 24rpx;
+  text-align: center;
   color: #252d3d;
   font-size: 30rpx;
   font-weight: 650;
@@ -268,62 +219,13 @@
 .store-tab.active::after {
   content: '';
   position: absolute;
-  left: 8rpx;
-  right: 8rpx;
-  bottom: 0;
+  left: 50%;
+  bottom: 10rpx;
+  width: 54rpx;
   height: 7rpx;
   border-radius: 999rpx;
   background: #ff6f23;
-}
-
-.category-scroll {
-  margin-top: 16rpx;
-  white-space: nowrap;
-}
-
-.category-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 16rpx;
-  padding: 0 28rpx;
-  height: 64rpx;
-  border-radius: 18rpx;
-  background: #fff;
-  color: #596579;
-  font-size: 26rpx;
-  box-shadow: 0 10rpx 24rpx rgba(20, 55, 105, 0.05);
-}
-
-.category-pill.active {
-  color: #ff6f23;
-  background: #fff4ee;
-  box-shadow: inset 0 0 0 2rpx rgba(255, 111, 35, 0.24);
-}
-
-.sort-bar {
-  margin-top: 18rpx;
-  display: flex;
-  gap: 14rpx;
-}
-
-.sort-item {
-  flex: 1;
-  height: 68rpx;
-  border-radius: 18rpx;
-  background: #fff;
-  color: #697589;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 25rpx;
-  box-shadow: 0 10rpx 24rpx rgba(20, 55, 105, 0.04);
-}
-
-.sort-item.active {
-  color: #1677ff;
-  background: #eef6ff;
-  font-weight: 700;
+  transform: translateX(-50%);
 }
 
 .section-block {

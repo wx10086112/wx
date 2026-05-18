@@ -97,6 +97,7 @@ export const constantRoutes = [
       { path: 'list', component: () => import('@/views/merchant/list'), name: 'MerchantList', meta: { title: '商家列表' } },
       { path: 'add', component: () => import('@/views/merchant/add'), name: 'MerchantAdd', meta: { title: '添加商户', activeMenu: '/merchant/list' }, hidden: true },
       { path: 'detail/:id', component: () => import('@/views/merchant/detail'), name: 'MerchantDetail', meta: { title: '商家详情', activeMenu: '/merchant/list' }, hidden: true },
+      { path: 'user', component: () => import('@/views/merchant/user'), name: 'MerchantUser', meta: { title: '商家用户' } },
       { path: 'withdraw', component: () => import('@/views/merchant/withdraw'), name: 'MerchantWithdraw', meta: { title: '商家提现' } },
       { path: 'audit', component: () => import('@/views/merchant/audit'), name: 'MerchantAudit', meta: { title: '入驻审核' } }
     ]

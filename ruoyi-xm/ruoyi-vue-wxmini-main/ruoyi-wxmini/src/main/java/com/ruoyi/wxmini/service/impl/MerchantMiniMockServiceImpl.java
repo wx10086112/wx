@@ -1,6 +1,6 @@
 package com.ruoyi.wxmini.service.impl;
 
-import com.ruoyi.wxmini.bo.WxMiniAuthContext;
+import com.ruoyi.mall.common.bo.WxMiniAuthContext;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniFinanceLedgerDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniFinanceOverviewDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniGoodsDto;
@@ -15,7 +15,7 @@ import com.ruoyi.wxmini.dto.merchant.MerchantMiniVerifyRecordDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniWithdrawRecordDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniWorkbenchStatsDto;
 import com.ruoyi.wxmini.service.IMerchantMiniMockService;
-import com.ruoyi.wxmini.service.IWxMiniJwtService;
+import com.ruoyi.mall.common.service.IWxMiniJwtService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@Service
+// @Service  // 已被 MerchantMiniServiceImpl 替代，保留代码作为参考
 public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
 
     private static final Long MERCHANT_ID = 1L;

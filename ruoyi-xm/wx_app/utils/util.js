@@ -177,13 +177,13 @@ const navigateBack = (delta = 1) => {
 }
 
 const getStoredOrderList = (fallback = []) => {
-  const stored = wx.getStorageSync(ORDER_STORAGE_KEY)
-  if (Array.isArray(stored) && stored.length) {
-    const normalized = normalizeImageFields(clone(stored))
-    if (JSON.stringify(stored) !== JSON.stringify(normalized)) {
-      wx.setStorageSync(ORDER_STORAGE_KEY, normalized)
+  try {
+    const stored = wx.getStorageSync(ORDER_STORAGE_KEY)
+    if (Array.isArray(stored) && stored.length) {
+      return normalizeImageFields(clone(stored))
     }
-    return normalized
+  } catch (e) {
+    wx.removeStorageSync(ORDER_STORAGE_KEY)
   }
   return normalizeImageFields(clone(fallback))
 }
@@ -246,6 +246,52 @@ const transitionOrderToCompleted = (order = {}) => {
   }
 }
 
+const SUBSCRIBE_TMPL_IDS = [
+  'order_status_change',
+  'write_off_remind'
+]
+
+const requestSubscribeMessage = () => {
+  return new Promise((resolve) => {
+    if (!wx.requestSubscribeMessage) {
+      resolve(true)
+      return
+    }
+    wx.requestSubscribeMessage({
+      tmplIds: SUBSCRIBE_TMPL_IDS,
+      success: (res) => {
+        const accepted = SUBSCRIBE_TMPL_IDS.some((id) => res[id] === 'accept')
+        resolve(accepted)
+      },
+      fail: () => resolve(false)
+    })
+  })
+}
+
+const requestPayment = (payParams) => {
+  return new Promise((resolve, reject) => {
+    if (!payParams || !payParams.timeStamp) {
+      resolve(true)
+      return
+    }
+    wx.requestPayment({
+      timeStamp: payParams.timeStamp,
+      nonceStr: payParams.nonceStr,
+      package: payParams.package,
+      signType: payParams.signType || 'RSA',
+      paySign: payParams.paySign,
+      success: () => resolve(true),
+      fail: (err) => {
+        if (err.errMsg && err.errMsg.includes('cancel')) {
+          reject(new Error('用户取消支付'))
+        } else {
+          reject(new Error('支付失败'))
+        }
+      }
+    })
+  })
+}
+
 module.exports = {
   formatDate,
   formatTime,
@@ -274,5 +320,7 @@ module.exports = {
   transitionOrderToCancelled,
   transitionOrderToPaidUnused,
   transitionOrderToRefunding,
-  transitionOrderToCompleted
+  transitionOrderToCompleted,
+  requestSubscribeMessage,
+  requestPayment
 }

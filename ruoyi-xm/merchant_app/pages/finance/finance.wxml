@@ -33,7 +33,18 @@
   </view>
 
   <view class="panel section-panel">
-    <text class="section-title">分账流水</text>
+    <view class="section-head">
+      <text class="section-title">分账流水</text>
+      <view class="filter-tabs">
+        <text
+          wx:for="{{filterTabs}}"
+          wx:key="value"
+          class="filter-tab {{currentFilter === item.value ? 'active' : ''}}"
+          bindtap="switchFilter"
+          data-filter="{{item.value}}"
+        >{{item.label}}</text>
+      </view>
+    </view>
     <view wx:if="{{ledgerList.length}}">
       <view wx:for="{{ledgerList}}" wx:key="ledgerId" class="ledger-row">
         <view class="ledger-main">
@@ -43,6 +54,7 @@
         </view>
         <view class="ledger-side">
           <text class="ledger-amount">¥{{item.merchantAmountText}}</text>
+          <text class="ledger-fee">佣金 ¥{{item.platformFeeAmountText}}</text>
           <text class="ledger-status">{{item.statusText}}</text>
         </view>
       </view>
@@ -63,7 +75,7 @@
         </view>
         <view class="ledger-side">
           <text class="ledger-amount">¥{{item.amountText}}</text>
-          <text class="ledger-status">{{item.statusText}}</text>
+          <text class="ledger-status {{item.status === 'PROCESSING' ? 'processing' : 'done'}}">{{item.statusText}}</text>
         </view>
       </view>
     </view>

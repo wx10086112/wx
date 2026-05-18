@@ -2,7 +2,8 @@ package com.ruoyi.web.controller.mall;
 
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.wxmini.mapper.MallOrderMapper;
+import com.ruoyi.mall.common.service.IDashboardService;
+import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,36 @@ public class MallDashboardExtendController extends BaseController {
     @Autowired
     private MallOrderMapper mallOrderMapper;
 
+    @Autowired
+    private IDashboardService dashboardService;
+
+    /**
+     * 工作台统计
+     */
+    @PreAuthorize("@ss.hasPermi('mall:dashboard:list')")
+    @GetMapping("/stats")
+    public AjaxResult stats() {
+        return success(dashboardService.selectDashboardStats());
+    }
+
+    /**
+     * 趋势数据
+     */
+    @PreAuthorize("@ss.hasPermi('mall:dashboard:list')")
+    @GetMapping("/trend")
+    public AjaxResult trend() {
+        return success(dashboardService.selectTrendData());
+    }
+
+    /**
+     * 商家排行
+     */
+    @PreAuthorize("@ss.hasPermi('mall:dashboard:list')")
+    @GetMapping("/merchant-rank")
+    public AjaxResult merchantRank() {
+        return success(dashboardService.selectMerchantRank());
+    }
+
     /**
      * 销售统计
      */
@@ -27,9 +58,14 @@ public class MallDashboardExtendController extends BaseController {
         Map<String, Object> stats = new HashMap<>();
 
         Map<String, Object> sales = mallOrderMapper.selectSalesStats();
-        BigDecimal totalSales = (BigDecimal) sales.get("totalSales");
-        Long totalOrders = (Long) sales.get("totalOrders");
-        BigDecimal avgOrderAmount = (BigDecimal) sales.get("avgOrderAmount");
+        BigDecimal totalAmount = (BigDecimal) sales.get("totalAmount");
+        Long totalOrders = ((Number) sales.get("totalOrders")).longValue();
+
+        // 平均客单价 = 总金额 / 总订单数
+        BigDecimal avgOrderAmount = BigDecimal.ZERO;
+        if (totalOrders != null && totalOrders > 0 && totalAmount != null) {
+            avgOrderAmount = totalAmount.divide(BigDecimal.valueOf(totalOrders), 2, RoundingMode.HALF_UP);
+        }
 
         // 转换率 = 已完成订单 / 总订单
         int completedCount = mallOrderMapper.countByStatus(2);
@@ -39,12 +75,30 @@ public class MallDashboardExtendController extends BaseController {
                     .divide(BigDecimal.valueOf(totalOrders), 4, RoundingMode.HALF_UP);
         }
 
-        stats.put("totalSales", totalSales);
+        stats.put("totalSales", totalAmount);
         stats.put("totalOrders", totalOrders);
         stats.put("avgOrderAmount", avgOrderAmount);
         stats.put("conversionRate", conversionRate);
         stats.put("categoryData", new ArrayList<>());
         return success(stats);
+    }
+
+    /**
+     * 订单状态分布
+     */
+    @PreAuthorize("@ss.hasPermi('mall:dashboard:list')")
+    @GetMapping("/order-status")
+    public AjaxResult orderStatus() {
+        return success(dashboardService.selectOrderStatusData());
+    }
+
+    /**
+     * 热销商品
+     */
+    @PreAuthorize("@ss.hasPermi('mall:dashboard:list')")
+    @GetMapping("/hot-products")
+    public AjaxResult hotProducts() {
+        return success(dashboardService.selectHotProducts());
     }
 
     /**

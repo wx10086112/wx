@@ -2,6 +2,19 @@
   padding: 28rpx;
 }
 
+.panel-title {
+  display: block;
+  font-size: 30rpx;
+  color: #1f2a37;
+  font-weight: 700;
+}
+
+.panel-title.separator {
+  margin-top: 32rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #edf1f5;
+}
+
 .field {
   margin-top: 20rpx;
 }
@@ -37,6 +50,15 @@
   padding-top: 18rpx;
 }
 
+.two-col {
+  display: flex;
+  gap: 14rpx;
+}
+
+.field-half {
+  flex: 1;
+}
+
 .switch-row {
   margin-top: 24rpx;
   display: flex;
@@ -44,6 +66,15 @@
   align-items: center;
 }
 
+.field-hint {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: #9aa6b6;
+  line-height: 1.5;
+}
+
 .save-btn {
   margin-top: 30rpx;
 }
+

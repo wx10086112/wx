@@ -188,23 +188,9 @@
   padding: 30rpx;
   background: #f6faff;
   border-radius: 20rpx;
-}
-
-.qr-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  width: 230rpx;
-  height: 230rpx;
-  margin: 0 auto;
-  border-radius: 16rpx;
-  background: #fff;
-}
-
-.qr-icon {
-  font-size: 84rpx;
-  color: #1677ff;
 }
 
 .modal-footer {

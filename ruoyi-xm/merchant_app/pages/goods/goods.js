@@ -12,7 +12,9 @@ Page({
       { label: '已下架', value: 'OFF_SHELF' }
     ],
     currentTab: 'ALL',
-    goodsList: []
+    goodsList: [],
+    batchMode: false,
+    selectedIds: []
   },
 
   onShow() {
@@ -41,7 +43,9 @@ Page({
       .map((item) => ({
         ...item,
         priceText: util.formatPrice(item.price),
-        originalPriceText: util.formatPrice(item.originalPrice)
+        originalPriceText: util.formatPrice(item.originalPrice),
+        selected: this.data.selectedIds.includes(item.goodsId),
+        lowStock: item.status === 'ON_SHELF' && Number(item.stock || 0) <= 20
       }))
 
     this.setData({
@@ -101,5 +105,61 @@ Page({
   goAddGoods() {
     if (!app.needPermission(['goods.manage'])) return
     util.navigateTo('/pages/goods-edit/goods-edit')
+  },
+
+  /* --- 批量操作 --- */
+  toggleBatchMode() {
+    this.setData({
+      batchMode: !this.data.batchMode,
+      selectedIds: []
+    }, () => this.loadData())
+  },
+
+  toggleSelectGoods(e) {
+    const goodsId = Number(e.currentTarget.dataset.id)
+    let selectedIds = [...this.data.selectedIds]
+    const index = selectedIds.indexOf(goodsId)
+    if (index > -1) {
+      selectedIds.splice(index, 1)
+    } else {
+      selectedIds.push(goodsId)
+    }
+    this.setData({ selectedIds }, () => this.loadData())
+  },
+
+  selectAll() {
+    const allIds = this.data.goodsList.map((item) => item.goodsId)
+    const isAllSelected = this.data.selectedIds.length === allIds.length
+    this.setData({
+      selectedIds: isAllSelected ? [] : allIds
+    }, () => this.loadData())
+  },
+
+  batchOnShelf() {
+    if (!this.data.selectedIds.length) {
+      util.showToast('请先选择商品')
+      return
+    }
+    util.showModal('批量上架', `确定上架选中的 ${this.data.selectedIds.length} 个商品吗？`).then((confirm) => {
+      if (!confirm) return
+      const result = util.batchUpdateGoodsStatus(this.data.selectedIds, 'ON_SHELF')
+      util.showToast(result.message, 'success')
+      this.setData({ selectedIds: [], batchMode: false })
+      this.loadData()
+    })
+  },
+
+  batchOffShelf() {
+    if (!this.data.selectedIds.length) {
+      util.showToast('请先选择商品')
+      return
+    }
+    util.showModal('批量下架', `确定下架选中的 ${this.data.selectedIds.length} 个商品吗？`).then((confirm) => {
+      if (!confirm) return
+      const result = util.batchUpdateGoodsStatus(this.data.selectedIds, 'OFF_SHELF')
+      util.showToast(result.message, 'success')
+      this.setData({ selectedIds: [], batchMode: false })
+      this.loadData()
+    })
   }
 })

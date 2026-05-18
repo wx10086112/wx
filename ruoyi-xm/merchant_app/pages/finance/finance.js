@@ -8,7 +8,13 @@ Page({
     overview: {},
     ledgerList: [],
     withdrawList: [],
-    withdrawAmount: ''
+    withdrawAmount: '',
+    filterTabs: [
+      { label: '全部', value: 'ALL' },
+      { label: '今日', value: 'TODAY' },
+      { label: '本月', value: 'MONTH' }
+    ],
+    currentFilter: 'ALL'
   },
 
   onShow() {
@@ -28,7 +34,8 @@ Page({
   },
 
   renderFinance(overview = {}) {
-    const ledgerList = (overview.ledgerList || []).slice(0, 10).map((item) => ({
+    const filteredLedgerList = this.filterLedgerByDate(overview.ledgerList || [], this.data.currentFilter)
+    const ledgerList = filteredLedgerList.slice(0, 20).map((item) => ({
       ...item,
       orderAmountText: util.formatPrice(item.orderAmount),
       merchantAmountText: util.formatPrice(item.merchantAmount),
@@ -55,6 +62,28 @@ Page({
       },
       ledgerList,
       withdrawList
+    })
+  },
+
+  filterLedgerByDate(ledgerList = [], filter = 'ALL') {
+    if (filter === 'ALL') return ledgerList
+    const now = new Date()
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+
+    if (filter === 'TODAY') {
+      return ledgerList.filter((item) => (item.finishTime || 0) >= todayStart)
+    }
+    if (filter === 'MONTH') {
+      return ledgerList.filter((item) => (item.finishTime || 0) >= monthStart)
+    }
+    return ledgerList
+  },
+
+  switchFilter(e) {
+    const filter = e.currentTarget.dataset.filter
+    this.setData({ currentFilter: filter }, () => {
+      this.loadData()
     })
   },
 

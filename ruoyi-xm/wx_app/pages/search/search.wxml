@@ -1,18 +1,43 @@
-<view class="simple-page">
-  <view class="simple-card">
-    <input class="search-input" placeholder="搜索套餐、服务项目" confirm-type="search" bindconfirm="onSearch" bindinput="onKeywordInput" />
-    <view class="quick-list">
-      <text wx:for="{{hotList}}" wx:key="index" class="quick-tag" bindtap="onQuickSearch" data-keyword="{{item}}">{{item}}</text>
+<view class="search-page">
+  <view class="search-bar">
+    <input
+      class="search-input"
+      placeholder="搜索套餐、服务项目"
+      confirm-type="search"
+      focus="{{true}}"
+      bindconfirm="onSearch"
+      bindinput="onKeywordInput"
+      value="{{keyword}}"
+    />
+    <view class="search-go" bindtap="onSearch">搜索</view>
+  </view>
+
+  <view wx:if="{{historyList.length}}" class="section">
+    <view class="section-head">
+      <text class="section-title">搜索历史</text>
+      <text class="section-action" bindtap="onClearHistory">清空</text>
+    </view>
+    <view class="tag-list">
+      <text wx:for="{{historyList}}" wx:key="index" class="tag-item" bindtap="onQuickSearch" data-keyword="{{item}}">{{item}}</text>
     </view>
   </view>
 
-  <view class="simple-card">
-    <text class="simple-title">本店信息</text>
-    <view wx:for="{{merchantList}}" wx:key="id" class="simple-line">{{item.name}}</view>
+  <view class="section">
+    <text class="section-title">热门搜索</text>
+    <view class="tag-list">
+      <text wx:for="{{hotList}}" wx:key="index" class="tag-item hot" bindtap="onQuickSearch" data-keyword="{{item}}">{{item}}</text>
+    </view>
   </view>
 
-  <view class="simple-card">
-    <text class="simple-title">推荐套餐</text>
-    <view wx:for="{{productList}}" wx:key="id" class="simple-line">{{item.title}}</view>
+  <view class="section">
+    <text class="section-title">推荐套餐</text>
+    <view wx:for="{{productList}}" wx:key="id" class="suggest-row" bindtap="onProductTap" data-item="{{item}}">
+      <image src="{{item.image}}" class="suggest-image" mode="aspectFill"></image>
+      <view class="suggest-info">
+        <text class="suggest-title text-ellipsis">{{item.title}}</text>
+        <text class="suggest-sub text-ellipsis">{{item.subtitle}}</text>
+        <text class="suggest-price">¥{{item.price / 100}}</text>
+      </view>
+    </view>
   </view>
 </view>

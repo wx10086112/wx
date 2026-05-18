@@ -34,7 +34,7 @@
       <image src="{{merchant.avatar}}" class="merchant-avatar" mode="aspectFill"></image>
       <view class="merchant-info">
         <text class="merchant-name">{{merchant.name}}</text>
-        <text class="merchant-meta">评分 {{merchant.rating}} · {{merchant.distance}} · {{merchant.businessHours}}</text>
+        <text class="merchant-meta">{{merchant.distance}} · {{merchant.businessHours}}</text>
         <text class="merchant-address">{{merchant.address}}</text>
         <view class="merchant-actions">
           <text class="merchant-action" catchtap="callMerchant">联系门店</text>
@@ -86,6 +86,9 @@
         <text class="bar-label">{{productConfig.shareText}}</text>
       </view>
     </view>
-    <button class="buy-btn" bindtap="buyNow">{{productConfig.buyButtonText}}</button>
+    <view class="bar-right">
+      <button class="cart-btn" bindtap="addToCart">加入购物车</button>
+      <button class="buy-btn" bindtap="buyNow">{{productConfig.buyButtonText}}</button>
+    </view>
   </view>
 </view>

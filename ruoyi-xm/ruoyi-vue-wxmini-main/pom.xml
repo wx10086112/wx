@@ -225,6 +225,62 @@
                 <version>${ruoyi.version}</version>
             </dependency>
 
+            <!-- 商城公共模块 -->
+            <dependency>
+                <groupId>com.ruoyi</groupId>
+                <artifactId>ruoyi-mall-common</artifactId>
+                <version>${ruoyi.version}</version>
+            </dependency>
+
+            <!-- 商城用户模块 -->
+            <dependency>
+                <groupId>com.ruoyi</groupId>
+                <artifactId>ruoyi-mall-user</artifactId>
+                <version>${ruoyi.version}</version>
+            </dependency>
+
+            <!-- 商城商品模块 -->
+            <dependency>
+                <groupId>com.ruoyi</groupId>
+                <artifactId>ruoyi-mall-product</artifactId>
+                <version>${ruoyi.version}</version>
+            </dependency>
+
+            <!-- 商城订单模块 -->
+            <dependency>
+                <groupId>com.ruoyi</groupId>
+                <artifactId>ruoyi-mall-order</artifactId>
+                <version>${ruoyi.version}</version>
+            </dependency>
+
+            <!-- 商城商户模块 -->
+            <dependency>
+                <groupId>com.ruoyi</groupId>
+                <artifactId>ruoyi-mall-merchant</artifactId>
+                <version>${ruoyi.version}</version>
+            </dependency>
+
+            <!-- 商城财务模块 -->
+            <dependency>
+                <groupId>com.ruoyi</groupId>
+                <artifactId>ruoyi-mall-finance</artifactId>
+                <version>${ruoyi.version}</version>
+            </dependency>
+
+            <!-- 商城营销模块 -->
+            <dependency>
+                <groupId>com.ruoyi</groupId>
+                <artifactId>ruoyi-mall-marketing</artifactId>
+                <version>${ruoyi.version}</version>
+            </dependency>
+
+            <!-- 商城支付模块 -->
+            <dependency>
+                <groupId>com.ruoyi</groupId>
+                <artifactId>ruoyi-mall-pay</artifactId>
+                <version>${ruoyi.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -236,6 +292,14 @@
         <module>ruoyi-generator</module>
         <module>ruoyi-common</module>
         <module>ruoyi-wxmini</module>
+        <module>ruoyi-mall-common</module>
+        <module>ruoyi-mall-user</module>
+        <module>ruoyi-mall-product</module>
+        <module>ruoyi-mall-order</module>
+        <module>ruoyi-mall-merchant</module>
+        <module>ruoyi-mall-finance</module>
+        <module>ruoyi-mall-marketing</module>
+        <module>ruoyi-mall-pay</module>
     </modules>
     <packaging>pom</packaging>
 

@@ -9,7 +9,7 @@ import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffPermissionRequestDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStoreDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniWithdrawRequestDto;
 import com.ruoyi.wxmini.service.IMerchantMiniMockService;
-import com.ruoyi.wxmini.util.WxMiniUserContext;
+import com.ruoyi.mall.common.util.WxMiniUserContext;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;

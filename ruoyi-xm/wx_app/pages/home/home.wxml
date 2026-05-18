@@ -14,10 +14,7 @@
               {{currentMerchant.businessStatusText}}
             </view>
           </view>
-          <view class="store-rating-row">
-            <text class="rating-badge">{{currentMerchant.rating}}</text>
-            <text class="rating-stars">★★★★★</text>
-            <text>{{currentMerchant.reviewCount}}条评价</text>
+          <view class="store-sales-row">
             <text>月售{{currentMerchant.sales}}</text>
           </view>
           <view class="store-tag-row">
@@ -55,18 +52,6 @@
       <text class="search-text">{{brandInfo.searchPlaceholder}}</text>
     </view>
 
-    <swiper class="banner-swiper" indicator-dots autoplay circular interval="3200">
-      <swiper-item wx:for="{{bannerList}}" wx:key="id">
-        <view class="banner-item" bindtap="onBannerTap" data-banner="{{item}}">
-          <image src="{{item.image}}" class="banner-image" mode="aspectFill"></image>
-          <view class="banner-mask"></view>
-          <view class="banner-copy">
-            <text class="banner-title">{{item.title}}</text>
-          </view>
-        </view>
-      </swiper-item>
-    </swiper>
-
     <view class="store-tabs">
       <view
         wx:for="{{storeTabs}}"
@@ -75,30 +60,6 @@
         bindtap="onStoreTabTap"
         data-key="{{item.key}}"
         data-type="{{item.type}}"
-      >
-        {{item.label}}
-      </view>
-    </view>
-
-    <scroll-view class="category-scroll" scroll-x enable-flex show-scrollbar="{{false}}">
-      <view
-        wx:for="{{categoryList}}"
-        wx:key="id"
-        class="category-pill {{selectedCategoryId === item.id ? 'active' : ''}}"
-        bindtap="onCategoryTap"
-        data-id="{{item.id}}"
-      >
-        {{item.name}}
-      </view>
-    </scroll-view>
-
-    <view class="sort-bar">
-      <view
-        wx:for="{{sortOptions}}"
-        wx:key="value"
-        class="sort-item {{sortType === item.value ? 'active' : ''}}"
-        bindtap="onSortTap"
-        data-sort="{{item.value}}"
       >
         {{item.label}}
       </view>

@@ -11,7 +11,9 @@
     "pages/store/store",
     "pages/staff/staff",
     "pages/verify-records/verify-records",
-    "pages/finance/finance"
+    "pages/finance/finance",
+    "pages/marketing/marketing",
+    "pages/apply/apply"
   ],
   "window": {
     "navigationBarTextStyle": "white",

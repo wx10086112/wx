@@ -7,16 +7,18 @@ const merchantInfo = {
   brandSlogan: '',
   notice: '支持扫码核销、手动核销、商品上下架与单店员工权限管理',
   businessHours: '10:00-22:00',
+  businessHoursText: '周一至周日 10:00-22:00',
   phone: '010-88886601',
   address: '北京市朝阳区建国路88号嘉里中心B1',
   latitude: 39.9087,
   longitude: 116.4591,
   avatar: '/assets/images/merchant-spa.png',
   coverImage: '/assets/images/merchant-spa.png',
-  rating: 4.9,
   sales: 3260,
-  reviewCount: 865,
-  serviceTags: ['到店核销', '团购套餐', '营业中'],
+  serviceTags: ['到店核销', '服务项目', '营业中'],
+  serviceAbilityTags: ['到店核销', '可预约', '支持退款', '过期自动退'],
+  facilityTags: ['免费停车', '独立房间', '安静环境', '专业护理'],
+  albumList: ['/assets/images/merchant-spa.png', '/assets/images/merchant-neck.png', '/assets/images/merchant-spa.png'],
   bannerTitles: ['午市轻养专场', '肩颈护理次卡', '晚间舒压热卖'],
   businessStatus: true,
   supportRefund: true,
@@ -31,19 +33,21 @@ const merchantList = [
     shortName: merchantInfo.shortName,
     avatar: merchantInfo.avatar,
     coverImage: merchantInfo.coverImage,
-    rating: merchantInfo.rating,
     sales: merchantInfo.sales,
-    reviewCount: merchantInfo.reviewCount,
     address: merchantInfo.address,
     distance: '650m',
     distanceValue: 650,
     categoryId: 0,
     categoryName: '本店全部服务',
     businessHours: merchantInfo.businessHours,
+    businessHoursText: merchantInfo.businessHoursText,
     phone: merchantInfo.phone,
     latitude: merchantInfo.latitude,
     longitude: merchantInfo.longitude,
     tags: merchantInfo.serviceTags,
+    serviceAbilityTags: merchantInfo.serviceAbilityTags,
+    facilityTags: merchantInfo.facilityTags,
+    albumList: merchantInfo.albumList,
     notice: merchantInfo.notice,
     isHot: true,
     businessStatus: merchantInfo.businessStatus
@@ -67,7 +71,7 @@ const grouponList = [
     validPeriod: '2026-05-01 至 2026-06-30',
     categoryId: 2,
     categoryName: 'SPA轻养',
-    tags: ['热销', '到店核销'],
+    tags: ['热销', '到店使用'],
     description: '适合上班族下班放松，支持晚间到店。',
     contentDetail: ['90 分钟芳香舒压护理', '肩颈热敷 1 次', '草本茶饮 1 份'],
     bookingRequired: false,
@@ -162,39 +166,6 @@ const categoryList = [
   { id: 4, name: '面部护理' }
 ]
 
-const reviewList = [
-  {
-    id: 1,
-    merchantId: merchantInfo.storeId,
-    productId: 101,
-    userName: 'Mia',
-    score: 5,
-    content: '环境很安静，核销很快，护理完整度比预期高。',
-    tags: ['环境好', '服务细致'],
-    createTime: 1777910400000
-  },
-  {
-    id: 2,
-    merchantId: merchantInfo.storeId,
-    productId: 102,
-    userName: 'Lynn',
-    score: 4.8,
-    content: '中午过去基本不用排队，肩颈放松很明显。',
-    tags: ['到店即用', '性价比高'],
-    createTime: 1777824000000
-  },
-  {
-    id: 3,
-    merchantId: merchantInfo.storeId,
-    productId: 103,
-    userName: 'Aaron',
-    score: 4.9,
-    content: '护理师会先确认皮肤状态，过程很细。',
-    tags: ['专业', '讲解清楚'],
-    createTime: 1777737600000
-  }
-]
-
 const couponList = [
   {
     couponId: 1,
@@ -248,7 +219,7 @@ const favoriteList = [
     id: 2,
     type: 'merchant',
     title: merchantInfo.storeName,
-    subtitle: '团购套餐 / 到店核销 / 单店服务',
+    subtitle: '服务项目 / 到店使用 / 单店服务',
     image: merchantInfo.coverImage,
     price: 0
   }
@@ -355,6 +326,5 @@ module.exports = {
   categoryList,
   couponList,
   addressList,
-  favoriteList,
-  reviewList
+  favoriteList
 }

@@ -1,26 +1,113 @@
-.simple-page {
+.contact-page {
   min-height: 100vh;
   background: #f3f7fd;
   padding: 24rpx;
   box-sizing: border-box;
 }
 
-.simple-card {
-  padding: 28rpx;
-  border-radius: 24rpx;
-  background: #fff;
+.contact-card {
+  padding: 40rpx 30rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16rpx 40rpx rgba(20, 69, 138, 0.07);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.simple-title {
-  display: block;
+.contact-icon-wrap {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1677ff 0%, #64b1ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 16rpx 40rpx rgba(22, 119, 255, 0.2);
+}
+
+.contact-icon {
+  font-size: 56rpx;
+  color: #fff;
+}
+
+.contact-title {
+  margin-top: 28rpx;
+  font-size: 36rpx;
+  font-weight: 700;
   color: #20304a;
+}
+
+.contact-desc {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: #8a96a8;
+  text-align: center;
+}
+
+.contact-phone-row {
+  margin-top: 36rpx;
+  padding: 24rpx 36rpx;
+  background: #f4f8ff;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.contact-phone-label {
+  font-size: 26rpx;
+  color: #607089;
+  flex-shrink: 0;
+}
+
+.contact-phone {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #1677ff;
+}
+
+.contact-info-list {
+  margin-top: 36rpx;
+  width: 100%;
+}
+
+.contact-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  margin-bottom: 18rpx;
+}
+
+.info-dot {
+  margin-top: 6rpx;
+  font-size: 14rpx;
+  color: #1677ff;
+  flex-shrink: 0;
+}
+
+.info-text {
+  font-size: 26rpx;
+  color: #607089;
+  line-height: 1.5;
+}
+
+.call-btn {
+  margin-top: 40rpx;
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
+  background: linear-gradient(135deg, #1677ff 0%, #64b1ff 100%);
+  color: #fff;
   font-size: 30rpx;
   font-weight: 600;
+  border: none;
+  box-shadow: 0 16rpx 40rpx rgba(22, 119, 255, 0.2);
 }
 
-.simple-subtitle {
-  display: block;
-  margin-top: 10rpx;
-  color: #71829b;
-  font-size: 24rpx;
+.call-btn::after {
+  border: none;
 }

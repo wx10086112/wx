@@ -74,6 +74,30 @@
   width: 210rpx;
 }
 
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 8rpx;
+}
+
+.filter-tab {
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  color: #6f7d91;
+  background: #f6f9ff;
+}
+
+.filter-tab.active {
+  background: #1f6feb;
+  color: #fff;
+}
+
 .ledger-row {
   padding: 22rpx 0;
   border-bottom: 1rpx solid #edf1f5;
@@ -116,11 +140,26 @@
   font-weight: 700;
 }
 
+.ledger-fee {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #9aa6b6;
+}
+
 .ledger-status {
   display: block;
   margin-top: 8rpx;
   font-size: 22rpx;
   color: #7a8798;
+}
+
+.ledger-status.processing {
+  color: #d97706;
+}
+
+.ledger-status.done {
+  color: #059669;
 }
 
 .empty-inline {

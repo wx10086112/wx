@@ -1,5 +1,6 @@
 const mock = require('../../data/mock')
 const util = require('../../utils/util')
+const orderApi = require('../../api/order')
 
 Page({
   data: {
@@ -41,13 +42,23 @@ Page({
 
   loadOrderDetail() {
     this.setData({ loading: true })
-    setTimeout(() => {
-      const rawOrder = util.getStoredOrderList(mock.orderList).find((item) => item.orderNo === this.data.orderNo) || {}
-      this.setData({
-        order: this.formatOrder(rawOrder),
-        loading: false
+
+    orderApi
+      .getOrderDetail(this.data.orderNo)
+      .then((res) => {
+        const rawOrder = res.data || res || {}
+        this.setData({
+          order: this.formatOrder(rawOrder),
+          loading: false
+        })
       })
-    }, 120)
+      .catch(() => {
+        const rawOrder = util.getStoredOrderList(mock.orderList).find((item) => item.orderNo === this.data.orderNo) || {}
+        this.setData({
+          order: this.formatOrder(rawOrder),
+          loading: false
+        })
+      })
   },
 
   updateOrder(updateHandler, successText) {
@@ -74,12 +85,41 @@ Page({
   payOrder() {
     util.showModal('确认支付', `确认支付 ¥${this.data.order.payAmountText} 吗？`).then((confirm) => {
       if (!confirm) return
-      this.updateOrder(
-        (orders) =>
-          orders.map((item) => (item.orderNo === this.data.orderNo ? util.transitionOrderToPaidUnused(item) : item)),
-        '支付成功'
-      )
+      util.showLoading('支付中...')
+      this.tryRealPayment()
+        .then(() => {
+          util.hideLoading()
+          this.updateOrder(
+            (orders) =>
+              orders.map((item) => (item.orderNo === this.data.orderNo ? util.transitionOrderToPaidUnused(item) : item)),
+            '支付成功'
+          )
+          util.requestSubscribeMessage()
+        })
+        .catch((err) => {
+          util.hideLoading()
+          if (err && err.message !== '用户取消支付') {
+            this.updateOrder(
+              (orders) =>
+                orders.map((item) => (item.orderNo === this.data.orderNo ? util.transitionOrderToPaidUnused(item) : item)),
+              '支付成功（模拟）'
+            )
+          }
+        })
     })
+  },
+
+  tryRealPayment() {
+    const orderApi = require('../../api/order')
+    return orderApi
+      .createPayOrder({ orderNo: this.data.orderNo })
+      .then((res) => {
+        const payParams = res.data || res
+        if (payParams && payParams.timeStamp) {
+          return util.requestPayment(payParams)
+        }
+        return Promise.reject(new Error('no pay params'))
+      })
   },
 
   applyRefund() {
@@ -111,7 +151,7 @@ Page({
   },
 
   goReview() {
-    util.navigateTo(`/pages/review/review-create?orderNo=${this.data.orderNo}`)
+    util.navigateTo(`/pages/review/review?orderNo=${this.data.orderNo}`)
   },
 
   onShareAppMessage() {
