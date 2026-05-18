@@ -223,6 +223,23 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
     }
 
     @Override
+    public MerchantMiniUploadResultDto uploadGoodsImage(org.springframework.web.multipart.MultipartFile file) {
+        return uploadGoodsImage(file != null ? file.getOriginalFilename() : null, file != null ? file.getSize() : 0L);
+    }
+
+    @Override
+    public int batchUpdateGoodsStatus(List<Long> goodsIds, String status) {
+        int count = 0;
+        for (Long goodsId : goodsIds) {
+            try {
+                updateGoodsStatus(goodsId, status);
+                count++;
+            } catch (Exception ignored) {}
+        }
+        return count;
+    }
+
+    @Override
     public synchronized MerchantMiniStoreDto getStoreProfile() {
         return cloneStoreInfo(storeInfo);
     }

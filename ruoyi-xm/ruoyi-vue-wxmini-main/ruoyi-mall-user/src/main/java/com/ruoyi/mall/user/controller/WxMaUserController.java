@@ -5,9 +5,13 @@ import cn.binarywang.wx.miniapp.bean.WxMaPhoneNumberInfo;
 import cn.binarywang.wx.miniapp.bean.WxMaUserInfo;
 import cn.binarywang.wx.miniapp.util.WxMaConfigHolder;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.mall.common.config.WxMaServiceManager;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
+import com.ruoyi.mall.merchant.domain.Merchant;
+import com.ruoyi.mall.merchant.mapper.MerchantMapper;
 import com.ruoyi.mall.user.domain.UserInfo;
 import com.ruoyi.mall.user.service.IUserInfoService;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,35 +21,30 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 /**
- * 微信小程序用户接口
- *
- * @author <a href="https://github.com/binarywang">Binary Wang</a>
+ * 微信小程序用户接口（多租户）
  */
 @RestController
 @RequestMapping("/wxmini/user")
 public class WxMaUserController {
     private static final Logger log = LoggerFactory.getLogger(WxMaUserController.class);
 
-    private final WxMaService wxMaService;
+    @Resource
+    private WxMaServiceManager wxMaServiceManager;
+    @Resource
+    private MerchantMapper merchantMapper;
     @Resource
     private IUserInfoService userInfoService;
 
-    public WxMaUserController(WxMaService wxMaService) {
-        this.wxMaService = wxMaService;
-    }
-
-    /**
-     * 获取用户信息接口
-     */
     @GetMapping("/info")
     public AjaxResult info(String appid, String sessionKey,
                            String signature, String rawData, String encryptedData, String iv) {
-        if (!wxMaService.switchover(appid)) {
-            return AjaxResult.error(String.format("can not find appid=[%s] config", appid));
+        WxMaService maService = getOrLoadService(appid);
+        if (maService == null) {
+            return AjaxResult.error(String.format("未找到AppID [%s] 的配置", appid));
         }
 
         try {
-            WxMaUserInfo wxUserInfo = wxMaService.getUserService().getUserInfo(sessionKey, encryptedData, iv);
+            WxMaUserInfo wxUserInfo = maService.getUserService().getUserInfo(sessionKey, encryptedData, iv);
             UserInfo userInfo = userInfoService.selectUserInfoByUserId(WxMiniUserContext.getCurrentUserId());
             if (userInfo != null) {
                 userInfo.setAvatarUrl(wxUserInfo.getAvatarUrl());
@@ -61,19 +60,16 @@ public class WxMaUserController {
         }
     }
 
-    /**
-     * 获取用户绑定手机号信息
-     */
     @GetMapping("/phone")
     public AjaxResult phone(String appid, String sessionKey, String signature,
                             String rawData, String encryptedData, String iv) {
-        if (!wxMaService.switchover(appid)) {
-            return AjaxResult.error(String.format("can not find appid=[%s] config", appid));
+        WxMaService maService = getOrLoadService(appid);
+        if (maService == null) {
+            return AjaxResult.error(String.format("未找到AppID [%s] 的配置", appid));
         }
 
         try {
-            WxMaPhoneNumberInfo phoneNoInfo = wxMaService.getUserService().getPhoneNoInfo(sessionKey, encryptedData,
-                    iv);
+            WxMaPhoneNumberInfo phoneNoInfo = maService.getUserService().getPhoneNoInfo(sessionKey, encryptedData, iv);
             String phone = phoneNoInfo.getPhoneNumber();
             UserInfo userInfo = userInfoService.selectUserInfoByUserId(WxMiniUserContext.getCurrentUserId());
             if (userInfo != null) {
@@ -89,4 +85,14 @@ public class WxMaUserController {
         }
     }
 
+    private WxMaService getOrLoadService(String appId) {
+        WxMaService service = wxMaServiceManager.getService(appId);
+        if (service != null) return service;
+        Merchant merchant = merchantMapper.selectMerchantByCAppId(appId);
+        if (merchant != null && StringUtils.isNotBlank(merchant.getCMiniAppSecret())) {
+            wxMaServiceManager.register(appId, merchant.getCMiniAppSecret());
+            return wxMaServiceManager.getService(appId);
+        }
+        return null;
+    }
 }

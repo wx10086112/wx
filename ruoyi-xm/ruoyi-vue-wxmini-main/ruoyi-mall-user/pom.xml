@@ -16,6 +16,10 @@
             <groupId>com.ruoyi</groupId>
             <artifactId>ruoyi-mall-common</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-mall-merchant</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

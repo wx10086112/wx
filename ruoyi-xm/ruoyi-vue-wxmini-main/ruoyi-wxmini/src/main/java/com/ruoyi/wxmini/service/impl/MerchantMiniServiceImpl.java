@@ -24,8 +24,11 @@ import com.ruoyi.wxmini.dto.merchant.*;
 import com.ruoyi.wxmini.service.IMerchantMiniMockService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
@@ -95,6 +98,9 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     private WithdrawRecordMapper withdrawRecordMapper;
     @Resource
     private MallUserMapper mallUserMapper;
+
+    @org.springframework.beans.factory.annotation.Value("${ruoyi.profile}")
+    private String profilePath;
 
     // ==================== 登录 ====================
 
@@ -329,6 +335,61 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         resultDto.setSize(size == null ? 0L : size);
         resultDto.setUrl("/profile/merchant-goods/" + System.currentTimeMillis() + "_" + safeFileName);
         return resultDto;
+    }
+
+    @Override
+    public MerchantMiniUploadResultDto uploadGoodsImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("请选择要上传的图片");
+        }
+        try {
+            String subDir = "merchant-goods";
+            String uploadDir = profilePath + "/" + subDir + "/";
+            File dir = new File(uploadDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            String originalName = file.getOriginalFilename();
+            String ext = "jpg";
+            if (originalName != null && originalName.contains(".")) {
+                ext = originalName.substring(originalName.lastIndexOf(".") + 1);
+            }
+            String fileName = subDir + "/" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8) + "." + ext;
+            File dest = new File(profilePath + "/" + fileName);
+            file.transferTo(dest);
+
+            MerchantMiniUploadResultDto result = new MerchantMiniUploadResultDto();
+            result.setFileName(fileName);
+            result.setSize(file.getSize());
+            result.setUrl("/profile/" + fileName);
+            return result;
+        } catch (IOException e) {
+            throw new RuntimeException("图片上传失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public int batchUpdateGoodsStatus(List<Long> goodsIds, String status) {
+        if (goodsIds == null || goodsIds.isEmpty()) {
+            return 0;
+        }
+        if (!GOODS_STATUS_ON_SHELF.equals(status) && !GOODS_STATUS_OFF_SHELF.equals(status)) {
+            throw new IllegalArgumentException("商品状态不合法");
+        }
+        Long merchantId = getMerchantIdFromContext();
+        int dbStatus = GOODS_STATUS_ON_SHELF.equals(status) ? PRODUCT_STATUS_ON : PRODUCT_STATUS_OFF;
+        int count = 0;
+        for (Long goodsId : goodsIds) {
+            Product product = productMapper.selectProductById(goodsId);
+            if (product != null && product.getMerchantId().equals(merchantId)) {
+                Product update = new Product();
+                update.setId(goodsId);
+                update.setStatus(dbStatus);
+                productMapper.updateProduct(update);
+                count++;
+            }
+        }
+        return count;
     }
 
     // ==================== 门店 ====================

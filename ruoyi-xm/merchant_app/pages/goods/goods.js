@@ -142,10 +142,17 @@ Page({
     }
     util.showModal('批量上架', `确定上架选中的 ${this.data.selectedIds.length} 个商品吗？`).then((confirm) => {
       if (!confirm) return
-      const result = util.batchUpdateGoodsStatus(this.data.selectedIds, 'ON_SHELF')
-      util.showToast(result.message, 'success')
-      this.setData({ selectedIds: [], batchMode: false })
-      this.loadData()
+      api
+        .batchUpdateGoodsStatus(this.data.selectedIds, 'ON_SHELF')
+        .then((res) => {
+          const count = (res && res.count) || this.data.selectedIds.length
+          util.showToast(`已上架 ${count} 个商品`, 'success')
+          this.setData({ selectedIds: [], batchMode: false })
+          this.loadData()
+        })
+        .catch(() => {
+          util.showToast('批量上架失败', 'error')
+        })
     })
   },
 
@@ -156,10 +163,17 @@ Page({
     }
     util.showModal('批量下架', `确定下架选中的 ${this.data.selectedIds.length} 个商品吗？`).then((confirm) => {
       if (!confirm) return
-      const result = util.batchUpdateGoodsStatus(this.data.selectedIds, 'OFF_SHELF')
-      util.showToast(result.message, 'success')
-      this.setData({ selectedIds: [], batchMode: false })
-      this.loadData()
+      api
+        .batchUpdateGoodsStatus(this.data.selectedIds, 'OFF_SHELF')
+        .then((res) => {
+          const count = (res && res.count) || this.data.selectedIds.length
+          util.showToast(`已下架 ${count} 个商品`, 'success')
+          this.setData({ selectedIds: [], batchMode: false })
+          this.loadData()
+        })
+        .catch(() => {
+          util.showToast('批量下架失败', 'error')
+        })
     })
   }
 })

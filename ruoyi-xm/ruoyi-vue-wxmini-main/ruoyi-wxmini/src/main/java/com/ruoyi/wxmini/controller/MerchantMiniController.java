@@ -21,6 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/wxmini/merchant-mini")
@@ -141,9 +145,36 @@ public class MerchantMiniController {
         if (accessDenied != null) {
             return accessDenied;
         }
-        String fileName = file == null ? null : file.getOriginalFilename();
-        Long size = file == null ? 0L : file.getSize();
-        return AjaxResult.success(merchantMiniMockService.uploadGoodsImage(fileName, size));
+        try {
+            return AjaxResult.success(merchantMiniMockService.uploadGoodsImage(file));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    @PutMapping("/goods/batch-status")
+    public AjaxResult batchUpdateGoodsStatus(@RequestBody Map<String, Object> params) {
+        AjaxResult accessDenied = checkAccess(PERMISSION_GOODS_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        try {
+            @SuppressWarnings("unchecked")
+            List<Number> ids = (List<Number>) params.get("goodsIds");
+            String status = (String) params.get("status");
+            List<Long> goodsIds = new ArrayList<>();
+            if (ids != null) {
+                for (Number n : ids) {
+                    goodsIds.add(n.longValue());
+                }
+            }
+            int count = merchantMiniMockService.batchUpdateGoodsStatus(goodsIds, status);
+            Map<String, Object> result = new HashMap<>();
+            result.put("count", count);
+            return AjaxResult.success(result);
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
     }
 
     @GetMapping("/store/profile")

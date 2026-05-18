@@ -19,4 +19,8 @@ public interface MerchantMapper {
 
     @Select("SELECT id, name, total_income as totalIncome FROM merchant WHERE status = 1 ORDER BY total_income DESC LIMIT #{limit}")
     List<Map> selectMerchantRankByIncome(@Param("limit") int limit);
+
+    Merchant selectMerchantByCAppId(String cMiniAppId);
+
+    Merchant selectMerchantByMAppId(String mMiniAppId);
 }

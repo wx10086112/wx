@@ -20,6 +20,12 @@
         <result property="businessHours" column="business_hours"/>
         <result property="productCount" column="product_count"/>
         <result property="storeCount" column="store_count"/>
+        <result property="cMiniAppId" column="c_mini_app_id"/>
+        <result property="cMiniAppSecret" column="c_mini_app_secret"/>
+        <result property="mMiniAppId" column="m_mini_app_id"/>
+        <result property="mMiniAppSecret" column="m_mini_app_secret"/>
+        <result property="wxPayMchId" column="wx_pay_mch_id"/>
+        <result property="wxPayApiKey" column="wx_pay_api_key"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
         <result property="remark" column="remark"/>
@@ -28,7 +34,9 @@
     <sql id="selectMerchantVo">
         select id, name, logo, contact, phone, commission_rate, status, balance,
                total_income, address, avatar, description, business_hours,
-               product_count, store_count, create_time, update_time, remark
+               product_count, store_count, c_mini_app_id, c_mini_app_secret,
+               m_mini_app_id, m_mini_app_secret, wx_pay_mch_id, wx_pay_api_key,
+               create_time, update_time, remark
         from merchant
     </sql>
 
@@ -66,6 +74,12 @@
             <if test="productCount != null">product_count,</if>
             <if test="storeCount != null">store_count,</if>
             <if test="remark != null">remark,</if>
+            <if test="cMiniAppId != null">c_mini_app_id,</if>
+            <if test="cMiniAppSecret != null">c_mini_app_secret,</if>
+            <if test="mMiniAppId != null">m_mini_app_id,</if>
+            <if test="mMiniAppSecret != null">m_mini_app_secret,</if>
+            <if test="wxPayMchId != null">wx_pay_mch_id,</if>
+            <if test="wxPayApiKey != null">wx_pay_api_key,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="name != null">#{name},</if>
@@ -83,6 +97,12 @@
             <if test="productCount != null">#{productCount},</if>
             <if test="storeCount != null">#{storeCount},</if>
             <if test="remark != null">#{remark},</if>
+            <if test="cMiniAppId != null">#{cMiniAppId},</if>
+            <if test="cMiniAppSecret != null">#{cMiniAppSecret},</if>
+            <if test="mMiniAppId != null">#{mMiniAppId},</if>
+            <if test="mMiniAppSecret != null">#{mMiniAppSecret},</if>
+            <if test="wxPayMchId != null">#{wxPayMchId},</if>
+            <if test="wxPayApiKey != null">#{wxPayApiKey},</if>
         </trim>
     </insert>
 
@@ -104,9 +124,25 @@
             <if test="productCount != null">product_count = #{productCount},</if>
             <if test="storeCount != null">store_count = #{storeCount},</if>
             <if test="remark != null">remark = #{remark},</if>
+            <if test="cMiniAppId != null">c_mini_app_id = #{cMiniAppId},</if>
+            <if test="cMiniAppSecret != null">c_mini_app_secret = #{cMiniAppSecret},</if>
+            <if test="mMiniAppId != null">m_mini_app_id = #{mMiniAppId},</if>
+            <if test="mMiniAppSecret != null">m_mini_app_secret = #{mMiniAppSecret},</if>
+            <if test="wxPayMchId != null">wx_pay_mch_id = #{wxPayMchId},</if>
+            <if test="wxPayApiKey != null">wx_pay_api_key = #{wxPayApiKey},</if>
         </trim>
         where id = #{id}
     </update>
+
+    <select id="selectMerchantByCAppId" parameterType="String" resultMap="MerchantResult">
+        <include refid="selectMerchantVo"/>
+        where c_mini_app_id = #{cMiniAppId}
+    </select>
+
+    <select id="selectMerchantByMAppId" parameterType="String" resultMap="MerchantResult">
+        <include refid="selectMerchantVo"/>
+        where m_mini_app_id = #{mMiniAppId}
+    </select>
 
     <delete id="deleteMerchantById" parameterType="Long">
         delete from merchant where id = #{id}

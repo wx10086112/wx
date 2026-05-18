@@ -4,6 +4,7 @@ const app = getApp()
 const getMerchantGoodsList = (data = {}) => get('/wxmini/merchant-mini/goods/list', data)
 const saveMerchantGoods = (data) => post('/wxmini/merchant-mini/goods/save', data)
 const updateMerchantGoodsStatus = (data) => put('/wxmini/merchant-mini/goods/status', data)
+const batchUpdateGoodsStatus = (goodsIds, status) => put('/wxmini/merchant-mini/goods/batch-status', { goodsIds, status })
 const uploadMerchantGoodsImage = (filePath) => {
   return new Promise((resolve, reject) => {
     const token = wx.getStorageSync('merchantToken')
@@ -33,5 +34,6 @@ module.exports = {
   getMerchantGoodsList,
   saveMerchantGoods,
   updateMerchantGoodsStatus,
+  batchUpdateGoodsStatus,
   uploadMerchantGoodsImage
 }

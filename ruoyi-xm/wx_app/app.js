@@ -14,6 +14,8 @@ App({
 
   initEnv() {
     this.baseUrl = 'http://localhost:8080'
+    // 自动获取当前小程序AppID（每个商家部署时微信后台分配）
+    this.appId = wx.getAccountInfoSync().miniProgram.appId || 'wx6c708117ea8eaab4'
   },
 
   checkLoginStatus() {

@@ -21,6 +21,12 @@ public class Merchant extends BaseEntity {
     private String businessHours;
     private Integer productCount;
     private Integer storeCount;
+    private String cMiniAppId;
+    private String cMiniAppSecret;
+    private String mMiniAppId;
+    private String mMiniAppSecret;
+    private String wxPayMchId;
+    private String wxPayApiKey;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -52,4 +58,16 @@ public class Merchant extends BaseEntity {
     public void setProductCount(Integer productCount) { this.productCount = productCount; }
     public Integer getStoreCount() { return storeCount; }
     public void setStoreCount(Integer storeCount) { this.storeCount = storeCount; }
+    public String getCMiniAppId() { return cMiniAppId; }
+    public void setCMiniAppId(String cMiniAppId) { this.cMiniAppId = cMiniAppId; }
+    public String getCMiniAppSecret() { return cMiniAppSecret; }
+    public void setCMiniAppSecret(String cMiniAppSecret) { this.cMiniAppSecret = cMiniAppSecret; }
+    public String getMMiniAppId() { return mMiniAppId; }
+    public void setMMiniAppId(String mMiniAppId) { this.mMiniAppId = mMiniAppId; }
+    public String getMMiniAppSecret() { return mMiniAppSecret; }
+    public void setMMiniAppSecret(String mMiniAppSecret) { this.mMiniAppSecret = mMiniAppSecret; }
+    public String getWxPayMchId() { return wxPayMchId; }
+    public void setWxPayMchId(String wxPayMchId) { this.wxPayMchId = wxPayMchId; }
+    public String getWxPayApiKey() { return wxPayApiKey; }
+    public void setWxPayApiKey(String wxPayApiKey) { this.wxPayApiKey = wxPayApiKey; }
 }

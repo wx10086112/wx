@@ -15,7 +15,7 @@ import java.util.Objects;
 /**
  * @author <a href="https://github.com/binarywang">Binary Wang</a>
  */
-@RestController
+// @RestController — 已移至 ruoyi-mall-user，多租户改造后由那边的 WxPortalController 处理
 @RequestMapping("/wxmini/portal/{appid}")
 public class WxPortalController {
     private static final Logger log = LoggerFactory.getLogger(WxPortalController.class);

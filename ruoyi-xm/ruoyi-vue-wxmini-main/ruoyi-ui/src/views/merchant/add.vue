@@ -38,6 +38,44 @@
         <el-form-item label="商家简介" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入商家简介" />
         </el-form-item>
+        <el-divider content-position="left">小程序配置</el-divider>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="C端AppID">
+              <el-input v-model="form.cMiniAppId" placeholder="C端小程序AppID" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="C端Secret">
+              <el-input v-model="form.cMiniAppSecret" placeholder="C端小程序Secret" show-password />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="商家端AppID">
+              <el-input v-model="form.mMiniAppId" placeholder="商家端小程序AppID" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="商家端Secret">
+              <el-input v-model="form.mMiniAppSecret" placeholder="商家端小程序Secret" show-password />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-divider content-position="left">支付配置（预留）</el-divider>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="微信商户号">
+              <el-input v-model="form.wxPayMchId" placeholder="微信支付商户号" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="支付API密钥">
+              <el-input v-model="form.wxPayApiKey" placeholder="微信支付API密钥" show-password />
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSubmit">提交</el-button>
           <el-button @click="handleCancel">取消</el-button>
@@ -62,7 +100,13 @@ export default {
         bankName: '',
         bankAccount: '',
         address: '',
-        description: ''
+        description: '',
+        cMiniAppId: '',
+        cMiniAppSecret: '',
+        mMiniAppId: '',
+        mMiniAppSecret: '',
+        wxPayMchId: '',
+        wxPayApiKey: ''
       },
       rules: {
         name: [{ required: true, message: '请输入商家名称', trigger: 'blur' }],

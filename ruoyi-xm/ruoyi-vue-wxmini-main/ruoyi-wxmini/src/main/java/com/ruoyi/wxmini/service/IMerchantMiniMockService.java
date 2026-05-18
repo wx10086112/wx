@@ -12,6 +12,8 @@ import com.ruoyi.wxmini.dto.merchant.MerchantMiniUploadResultDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniVerifyRecordDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniWithdrawRecordDto;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 public interface IMerchantMiniMockService {
@@ -35,6 +37,10 @@ public interface IMerchantMiniMockService {
     MerchantMiniGoodsDto updateGoodsStatus(Long goodsId, String status);
 
     MerchantMiniUploadResultDto uploadGoodsImage(String fileName, Long size);
+
+    MerchantMiniUploadResultDto uploadGoodsImage(MultipartFile file);
+
+    int batchUpdateGoodsStatus(List<Long> goodsIds, String status);
 
     MerchantMiniStoreDto getStoreProfile();
 

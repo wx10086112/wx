@@ -5,7 +5,10 @@ import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
 import cn.binarywang.wx.miniapp.util.WxMaConfigHolder;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.utils.uuid.UUID;
+import com.ruoyi.mall.common.config.WxMaServiceManager;
 import com.ruoyi.mall.common.service.IWxMiniJwtService;
+import com.ruoyi.mall.merchant.domain.Merchant;
+import com.ruoyi.mall.merchant.mapper.MerchantMapper;
 import com.ruoyi.mall.user.bo.WxUserInfo;
 import com.ruoyi.mall.user.domain.UserInfo;
 import com.ruoyi.mall.user.service.IUserInfoService;
@@ -20,44 +23,49 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 /**
- * 微信小程序登录接口
- *
- * @author weijiayu
- * @date 2025/4/25 22:15
+ * 微信小程序登录接口（多租户：按AppId查商家配置）
  */
 @RestController
 @RequestMapping("/wxmini")
 public class WxLoginController {
     private static final Logger log = LoggerFactory.getLogger(WxLoginController.class);
 
-    private final WxMaService wxMaService;
-
+    @Resource
+    private WxMaServiceManager wxMaServiceManager;
+    @Resource
+    private MerchantMapper merchantMapper;
     @Resource
     private IUserInfoService userInfoService;
     @Resource
     private IWxMiniJwtService jwtService;
 
-    public WxLoginController(WxMaService wxMaService) {
-        this.wxMaService = wxMaService;
-    }
-
-    /**
-     * 登陆接口
-     */
     @GetMapping("/login")
     public AjaxResult login(String appid, String code) {
         if (StringUtils.isEmpty(code)) {
             return AjaxResult.error("empty jscode");
         }
+        if (StringUtils.isEmpty(appid)) {
+            return AjaxResult.error("empty appid");
+        }
 
-        if (!wxMaService.switchover(appid)) {
-            return AjaxResult.error(String.format("can not find appid=[%s] config", appid));
+        // 如果缓存中没有，从数据库加载
+        WxMaService maService = wxMaServiceManager.getService(appid);
+        if (maService == null) {
+            Merchant merchant = merchantMapper.selectMerchantByCAppId(appid);
+            if (merchant == null || StringUtils.isBlank(merchant.getCMiniAppSecret())) {
+                return AjaxResult.error(String.format("未找到AppID [%s] 对应的商家配置", appid));
+            }
+            wxMaServiceManager.register(appid, merchant.getCMiniAppSecret());
+            maService = wxMaServiceManager.getService(appid);
+        }
+
+        if (maService == null) {
+            return AjaxResult.error("微信服务初始化失败");
         }
 
         WxUserInfo wxUserInfo = new WxUserInfo();
         try {
-            WxMaJscode2SessionResult session = wxMaService.getUserService().getSessionInfo(code);
-            // 同步微信侧用户信息：如果已注册，返回用户信息；如果未注册，自动注册并保存用户信息
+            WxMaJscode2SessionResult session = maService.getUserService().getSessionInfo(code);
             String openId = session.getOpenid();
             UserInfo userInfo = userInfoService.selectUserInfoByOpenId(openId);
             if (userInfo == null) {
@@ -67,16 +75,12 @@ public class WxLoginController {
                 userInfo.setUnionId(session.getUnionid());
                 userInfoService.insertUserInfo(userInfo);
             }
-            // 只返回必要信息给前端
             wxUserInfo.wapper(session, userInfo);
-            // 生成令牌，用于自定义业务接口鉴权
             wxUserInfo.setApiToken(jwtService.createToken(userInfo.getUserId()));
             return AjaxResult.success(wxUserInfo);
         } catch (WxErrorException e) {
-            log.error(e.getMessage(), e);
-            return AjaxResult.error();
-        } finally {
-            WxMaConfigHolder.remove();
+            log.error("微信登录失败: appId={}, error={}", appid, e.getMessage(), e);
+            return AjaxResult.error("微信登录失败");
         }
     }
 }
