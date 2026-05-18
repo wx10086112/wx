@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.order.mapper.MallOrderMapper">
+
+    <resultMap type="com.ruoyi.mall.order.domain.MallOrder" id="MallOrderResult">
+        <result property="id" column="id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="merchantId" column="merchant_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="storeId" column="store_id"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="payAmount" column="pay_amount"/>
+        <result property="commission" column="commission"/>
+        <result property="merchantIncome" column="merchant_income"/>
+        <result property="couponId" column="coupon_id"/>
+        <result property="couponAmount" column="coupon_amount"/>
+        <result property="grouponId" column="groupon_id"/>
+        <result property="status" column="status"/>
+        <result property="writeOffCode" column="write_off_code"/>
+        <result property="payTime" column="pay_time"/>
+        <result property="useTime" column="use_time"/>
+        <result property="completeTime" column="complete_time"/>
+        <result property="cancelTime" column="cancel_time"/>
+        <result property="refundTime" column="refund_time"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectMallOrderVo">
+        select id, order_no, merchant_id, user_id, store_id, total_amount, pay_amount,
+               commission, merchant_income, coupon_id, coupon_amount, groupon_id, status,
+               write_off_code, pay_time, use_time, complete_time, cancel_time, refund_time,
+               create_time, update_time, remark
+        from mall_order
+    </sql>
+
+    <select id="selectMallOrderById" parameterType="Long" resultMap="MallOrderResult">
+        <include refid="selectMallOrderVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectMallOrderByOrderNo" parameterType="String" resultMap="MallOrderResult">
+        <include refid="selectMallOrderVo"/>
+        where order_no = #{orderNo}
+    </select>
+
+    <select id="selectMallOrderList" parameterType="com.ruoyi.mall.order.domain.MallOrder" resultMap="MallOrderResult">
+        <include refid="selectMallOrderVo"/>
+        <where>
+            <if test="orderNo != null and orderNo != ''">and order_no like concat('%', #{orderNo}, '%')</if>
+            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
+            <if test="userId != null">and user_id = #{userId}</if>
+            <if test="storeId != null">and store_id = #{storeId}</if>
+            <if test="status != null">and status = #{status}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectMallOrderByMerchantId" parameterType="Long" resultMap="MallOrderResult">
+        <include refid="selectMallOrderVo"/>
+        where merchant_id = #{merchantId}
+        order by create_time desc
+    </select>
+
+    <insert id="insertMallOrder" parameterType="com.ruoyi.mall.order.domain.MallOrder" useGeneratedKeys="true" keyProperty="id">
+        insert into mall_order
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orderNo != null">order_no,</if>
+            <if test="merchantId != null">merchant_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="storeId != null">store_id,</if>
+            <if test="totalAmount != null">total_amount,</if>
+            <if test="payAmount != null">pay_amount,</if>
+            <if test="commission != null">commission,</if>
+            <if test="merchantIncome != null">merchant_income,</if>
+            <if test="couponId != null">coupon_id,</if>
+            <if test="couponAmount != null">coupon_amount,</if>
+            <if test="grouponId != null">groupon_id,</if>
+            <if test="status != null">status,</if>
+            <if test="writeOffCode != null">write_off_code,</if>
+            <if test="payTime != null">pay_time,</if>
+            <if test="useTime != null">use_time,</if>
+            <if test="completeTime != null">complete_time,</if>
+            <if test="cancelTime != null">cancel_time,</if>
+            <if test="refundTime != null">refund_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="orderNo != null">#{orderNo},</if>
+            <if test="merchantId != null">#{merchantId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="storeId != null">#{storeId},</if>
+            <if test="totalAmount != null">#{totalAmount},</if>
+            <if test="payAmount != null">#{payAmount},</if>
+            <if test="commission != null">#{commission},</if>
+            <if test="merchantIncome != null">#{merchantIncome},</if>
+            <if test="couponId != null">#{couponId},</if>
+            <if test="couponAmount != null">#{couponAmount},</if>
+            <if test="grouponId != null">#{grouponId},</if>
+            <if test="status != null">#{status},</if>
+            <if test="writeOffCode != null">#{writeOffCode},</if>
+            <if test="payTime != null">#{payTime},</if>
+            <if test="useTime != null">#{useTime},</if>
+            <if test="completeTime != null">#{completeTime},</if>
+            <if test="cancelTime != null">#{cancelTime},</if>
+            <if test="refundTime != null">#{refundTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateMallOrder" parameterType="com.ruoyi.mall.order.domain.MallOrder">
+        update mall_order
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="orderNo != null">order_no = #{orderNo},</if>
+            <if test="merchantId != null">merchant_id = #{merchantId},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="storeId != null">store_id = #{storeId},</if>
+            <if test="totalAmount != null">total_amount = #{totalAmount},</if>
+            <if test="payAmount != null">pay_amount = #{payAmount},</if>
+            <if test="commission != null">commission = #{commission},</if>
+            <if test="merchantIncome != null">merchant_income = #{merchantIncome},</if>
+            <if test="couponId != null">coupon_id = #{couponId},</if>
+            <if test="couponAmount != null">coupon_amount = #{couponAmount},</if>
+            <if test="grouponId != null">groupon_id = #{grouponId},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="writeOffCode != null">write_off_code = #{writeOffCode},</if>
+            <if test="payTime != null">pay_time = #{payTime},</if>
+            <if test="useTime != null">use_time = #{useTime},</if>
+            <if test="completeTime != null">complete_time = #{completeTime},</if>
+            <if test="cancelTime != null">cancel_time = #{cancelTime},</if>
+            <if test="refundTime != null">refund_time = #{refundTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteMallOrderById" parameterType="Long">
+        delete from mall_order where id = #{id}
+    </delete>
+
+    <delete id="deleteMallOrderByIds" parameterType="String">
+        delete from mall_order where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="countOrderByMerchantIdAndStatus" resultType="int">
+        select count(*) from mall_order
+        where merchant_id = #{merchantId} and status = #{status}
+    </select>
+
+</mapper>
