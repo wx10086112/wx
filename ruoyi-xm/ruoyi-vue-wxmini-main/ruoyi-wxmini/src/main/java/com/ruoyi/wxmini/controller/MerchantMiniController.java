@@ -59,7 +59,7 @@ public class MerchantMiniController {
     public void resolveMerchantFromAppId(HttpServletRequest request) {
         String appId = request.getHeader("X-Merchant-AppId");
         if (StringUtils.isNotBlank(appId) && WxMiniUserContext.getAppIdMerchantId() == null) {
-            Merchant merchant = merchantMapper.selectMerchantByCAppId(appId);
+            Merchant merchant = merchantMapper.selectMerchantByMAppId(appId);
             if (merchant != null) {
                 WxMiniUserContext.setAppIdMerchantId(merchant.getId());
             }
