@@ -30,6 +30,8 @@ public class MerchantMiniStoreDto {
 
     private Boolean supportBooking;
 
+    private String merchantName;
+
     public Long getMerchantId() {
         return merchantId;
     }
@@ -132,5 +134,13 @@ public class MerchantMiniStoreDto {
 
     public void setSupportBooking(Boolean supportBooking) {
         this.supportBooking = supportBooking;
+    }
+
+    public String getMerchantName() {
+        return merchantName;
+    }
+
+    public void setMerchantName(String merchantName) {
+        this.merchantName = merchantName;
     }
 }

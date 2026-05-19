@@ -24,6 +24,8 @@ public class MerchantMiniStaffUserDto {
 
     private List<String> permissions;
 
+    private String merchantName;
+
     public String getUserId() {
         return userId;
     }
@@ -102,5 +104,13 @@ public class MerchantMiniStaffUserDto {
 
     public void setPermissions(List<String> permissions) {
         this.permissions = permissions;
+    }
+
+    public String getMerchantName() {
+        return merchantName;
+    }
+
+    public void setMerchantName(String merchantName) {
+        this.merchantName = merchantName;
     }
 }

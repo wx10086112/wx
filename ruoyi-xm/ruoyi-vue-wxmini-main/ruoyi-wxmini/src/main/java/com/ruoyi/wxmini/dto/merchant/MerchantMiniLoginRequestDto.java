@@ -2,13 +2,23 @@ package com.ruoyi.wxmini.dto.merchant;
 
 public class MerchantMiniLoginRequestDto {
 
-    private String roleKey;
+    private String username;
 
-    public String getRoleKey() {
-        return roleKey;
+    private String password;
+
+    public String getUsername() {
+        return username;
     }
 
-    public void setRoleKey(String roleKey) {
-        this.roleKey = roleKey;
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

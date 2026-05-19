@@ -13,7 +13,6 @@ const PLATFORM_RATE = 10
 const orderStatusMap = {
   PENDING_ACCEPT: { text: '待接单', className: 'orange' },
   ACCEPTED: { text: '已接单', className: 'blue' },
-  SHIPPING: { text: '配送中', className: 'blue' },
   PENDING_VERIFY: { text: '待核销', className: 'blue' },
   COMPLETED: { text: '已完成', className: 'green' },
   REJECTED: { text: '已拒单', className: 'gray' },
@@ -161,10 +160,9 @@ const buildWorkbenchStats = (orderList = [], goodsList = []) => {
     pendingVerifyCount: orderList.filter((item) => item.status === 'PENDING_VERIFY').length,
     completedCount: orderList.filter((item) => item.status === 'COMPLETED').length,
     refundingCount: orderList.filter((item) => item.status === 'REFUNDING').length,
-    shippingCount: orderList.filter((item) => item.status === 'SHIPPING').length,
     onShelfCount: goodsList.filter((item) => item.status === 'ON_SHELF').length,
     todaySalesAmount: orderList
-      .filter((item) => ['PENDING_VERIFY', 'COMPLETED', 'ACCEPTED', 'SHIPPING'].includes(item.status))
+      .filter((item) => ['PENDING_VERIFY', 'COMPLETED', 'ACCEPTED'].includes(item.status))
       .reduce((sum, item) => sum + Number(item.payAmount || 0), 0),
     abnormalCount: orderList.filter((item) => ['REFUNDING', 'REJECTED'].includes(item.status)).length
   }
@@ -328,30 +326,15 @@ const rejectOrder = (orderNo, reason = '') => {
 }
 
 /**
- * 发货/配送操作（本地）
- */
-const shipOrder = (orderNo) => {
-  const orderList = getOrderList()
-  const target = orderList.find((item) => item.orderNo === orderNo)
-  if (!target) return { success: false, message: '订单不存在' }
-  if (target.status !== 'ACCEPTED') return { success: false, message: '当前状态不可发货' }
-  const nextList = orderList.map((item) =>
-    item.orderNo === orderNo
-      ? { ...item, status: 'SHIPPING', shipTime: Date.now() }
-      : item
-  )
-  setOrderList(nextList)
-  return { success: true, message: '已发货', order: nextList.find((item) => item.orderNo === orderNo) }
-}
-
-/**
- * 确认完成（配送到达 / 本地）
+ * 确认完成（本地）
  */
 const completeOrder = (orderNo) => {
   const orderList = getOrderList()
   const target = orderList.find((item) => item.orderNo === orderNo)
   if (!target) return { success: false, message: '订单不存在' }
-  if (target.status !== 'SHIPPING') return { success: false, message: '当前状态不可确认完成' }
+  if (target.status !== 'ACCEPTED' && target.status !== 'PENDING_VERIFY') {
+    return { success: false, message: '当前状态不可确认完成' }
+  }
   const nextList = orderList.map((item) =>
     item.orderNo === orderNo
       ? { ...item, status: 'COMPLETED', completeTime: Date.now() }
@@ -577,7 +560,6 @@ module.exports = {
   verifyOrderByCode,
   acceptOrder,
   rejectOrder,
-  shipOrder,
   completeOrder,
   cancelOrder,
   approveRefundOrder,

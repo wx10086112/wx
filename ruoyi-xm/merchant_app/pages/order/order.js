@@ -9,7 +9,6 @@ Page({
       { label: '全部', value: 'ALL' },
       { label: '待接单', value: 'PENDING_ACCEPT' },
       { label: '待核销', value: 'PENDING_VERIFY' },
-      { label: '配送中', value: 'SHIPPING' },
       { label: '已完成', value: 'COMPLETED' },
       { label: '退款中', value: 'REFUNDING' }
     ],
@@ -122,28 +121,10 @@ Page({
     })
   },
 
-  handleShipOrder(e) {
-    if (!app.needPermission(['order.manage'])) return
-    const orderNo = e.currentTarget.dataset.orderno
-    util.showModal('发货确认', '确定要标记该订单为配送中吗？').then((confirm) => {
-      if (!confirm) return
-      api.shipMerchantOrder(orderNo)
-        .then(() => {
-          util.showToast('已发货', 'success')
-          this.loadData()
-        })
-        .catch(() => {
-          const result = util.shipOrder(orderNo)
-          util.showToast(result.message, result.success ? 'success' : 'none')
-          this.loadData()
-        })
-    })
-  },
-
   handleCompleteOrder(e) {
     if (!app.needPermission(['order.manage'])) return
     const orderNo = e.currentTarget.dataset.orderno
-    util.showModal('完成确认', '确定该订单已送达完成吗？').then((confirm) => {
+    util.showModal('完成确认', '确定该订单已完成吗？').then((confirm) => {
       if (!confirm) return
       api.completeMerchantOrder(orderNo)
         .then(() => {

@@ -67,8 +67,9 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
     private final List<MerchantMiniWithdrawRecordDto> withdrawRecordList = initWithdrawRecordList();
 
     @Override
-    public MerchantMiniLoginResponseDto login(String roleKey) {
-        MerchantMiniStaffUserDto staffUser = cloneStaffUser(resolveStaffUserByRoleKey(roleKey));
+    public MerchantMiniLoginResponseDto login(String username, String password) {
+        // Mock模式：忽略密码，用username当作roleKey
+        MerchantMiniStaffUserDto staffUser = cloneStaffUser(resolveStaffUserByRoleKey(username));
         MerchantMiniLoginResponseDto responseDto = new MerchantMiniLoginResponseDto();
         responseDto.setToken(jwtService.createToken(buildAuthContext(staffUser)));
         responseDto.setStaffUser(staffUser);
@@ -351,13 +352,16 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
 
     private MerchantMiniWorkbenchStatsDto buildStats() {
         MerchantMiniWorkbenchStatsDto statsDto = new MerchantMiniWorkbenchStatsDto();
+        int pendingAcceptCount = 0;
         int pendingVerifyCount = 0;
         int completedCount = 0;
         int refundingCount = 0;
         long todaySalesAmount = 0L;
 
         for (MerchantMiniOrderDto orderDto : orderList) {
-            if (STATUS_PENDING_VERIFY.equals(orderDto.getStatus())) {
+            if ("PENDING_ACCEPT".equals(orderDto.getStatus())) {
+                pendingAcceptCount++;
+            } else if (STATUS_PENDING_VERIFY.equals(orderDto.getStatus())) {
                 pendingVerifyCount++;
                 todaySalesAmount += orderDto.getPayAmount();
             } else if (STATUS_COMPLETED.equals(orderDto.getStatus())) {
@@ -368,6 +372,7 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
             }
         }
 
+        statsDto.setPendingAcceptCount(pendingAcceptCount);
         statsDto.setPendingVerifyCount(pendingVerifyCount);
         statsDto.setCompletedCount(completedCount);
         statsDto.setRefundingCount(refundingCount);
@@ -453,6 +458,7 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
         dto.setRoleName(roleName);
         dto.setStatus(STATUS_ACTIVE);
         dto.setPermissions(new ArrayList<>(permissions));
+        dto.setMerchantName("蓝屿轻养生活馆");
         return dto;
     }
 
@@ -472,6 +478,7 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
         MerchantMiniStoreDto dto = new MerchantMiniStoreDto();
         dto.setMerchantId(MERCHANT_ID);
         dto.setStoreId(STORE_ID);
+        dto.setMerchantName("蓝屿轻养生活馆");
         dto.setStoreName("蓝屿轻养·国贸旗舰店");
         dto.setBrandSlogan("单店团购到店核销运营端");
         dto.setNotice("支持扫码核销、手动核销、商品上下架与单店员工权限管理");
@@ -574,6 +581,7 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
         dto.setRoleName(source.getRoleName());
         dto.setStatus(source.getStatus());
         dto.setPermissions(new ArrayList<>(source.getPermissions()));
+        dto.setMerchantName(source.getMerchantName());
         return dto;
     }
 
@@ -581,6 +589,7 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
         MerchantMiniStoreDto dto = new MerchantMiniStoreDto();
         dto.setMerchantId(source.getMerchantId());
         dto.setStoreId(source.getStoreId());
+        dto.setMerchantName(source.getMerchantName());
         dto.setStoreName(source.getStoreName());
         dto.setBrandSlogan(source.getBrandSlogan());
         dto.setNotice(source.getNotice());

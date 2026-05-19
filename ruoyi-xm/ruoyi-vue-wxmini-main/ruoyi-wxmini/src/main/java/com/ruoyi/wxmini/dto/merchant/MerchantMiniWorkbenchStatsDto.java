@@ -2,6 +2,8 @@ package com.ruoyi.wxmini.dto.merchant;
 
 public class MerchantMiniWorkbenchStatsDto {
 
+    private Integer pendingAcceptCount;
+
     private Integer pendingVerifyCount;
 
     private Integer completedCount;
@@ -11,6 +13,14 @@ public class MerchantMiniWorkbenchStatsDto {
     private Integer onShelfCount;
 
     private Long todaySalesAmount;
+
+    public Integer getPendingAcceptCount() {
+        return pendingAcceptCount;
+    }
+
+    public void setPendingAcceptCount(Integer pendingAcceptCount) {
+        this.pendingAcceptCount = pendingAcceptCount;
+    }
 
     public Integer getPendingVerifyCount() {
         return pendingVerifyCount;

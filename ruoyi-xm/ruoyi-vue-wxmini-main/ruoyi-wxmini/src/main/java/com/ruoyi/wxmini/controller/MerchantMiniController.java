@@ -45,8 +45,9 @@ public class MerchantMiniController {
 
     @PostMapping("/auth/login")
     public AjaxResult login(@RequestBody(required = false) MerchantMiniLoginRequestDto requestDto) {
-        String roleKey = requestDto == null ? null : requestDto.getRoleKey();
-        return AjaxResult.success(merchantMiniMockService.login(roleKey));
+        String username = requestDto == null ? null : requestDto.getUsername();
+        String password = requestDto == null ? null : requestDto.getPassword();
+        return AjaxResult.success(merchantMiniMockService.login(username, password));
     }
 
     @GetMapping("/workbench/overview")

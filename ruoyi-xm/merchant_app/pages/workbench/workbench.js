@@ -29,7 +29,6 @@ Page({
           statsCardList: [
             { label: '待接单', value: response.stats.pendingAcceptCount || 0, highlight: (response.stats.pendingAcceptCount || 0) > 0 },
             { label: '待核销', value: response.stats.pendingVerifyCount || 0 },
-            { label: '配送中', value: response.stats.shippingCount || 0 },
             { label: '已完成', value: response.stats.completedCount || 0 },
             { label: '退款中', value: response.stats.refundingCount || 0, warn: (response.stats.refundingCount || 0) > 0 },
             { label: '在售套餐', value: response.stats.onShelfCount || 0 }
@@ -87,7 +86,6 @@ Page({
       statsCardList: [
         { label: '待接单', value: stats.pendingAcceptCount, highlight: stats.pendingAcceptCount > 0 },
         { label: '待核销', value: stats.pendingVerifyCount },
-        { label: '配送中', value: stats.shippingCount },
         { label: '已完成', value: stats.completedCount },
         { label: '退款中', value: stats.refundingCount, warn: stats.refundingCount > 0 },
         { label: '在售套餐', value: stats.onShelfCount }

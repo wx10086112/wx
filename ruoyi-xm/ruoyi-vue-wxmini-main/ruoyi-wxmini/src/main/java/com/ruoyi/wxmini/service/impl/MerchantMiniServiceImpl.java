@@ -105,14 +105,17 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     // ==================== 登录 ====================
 
     @Override
-    public MerchantMiniLoginResponseDto login(String roleKey) {
-        // roleKey 即商家账号用户名
-        MerchantUser merchantUser = merchantUserMapper.selectMerchantUserByUsername(roleKey);
+    public MerchantMiniLoginResponseDto login(String username, String password) {
+        MerchantUser merchantUser = merchantUserMapper.selectMerchantUserByUsername(username);
         if (merchantUser == null) {
             throw new IllegalArgumentException("商家账号不存在");
         }
         if (merchantUser.getStatus() != 1) {
             throw new IllegalArgumentException("商家账号已被禁用");
+        }
+        // BCrypt密码校验
+        if (!com.ruoyi.common.utils.SecurityUtils.matchesPassword(password, merchantUser.getPassword())) {
+            throw new IllegalArgumentException("密码错误");
         }
 
         Merchant merchant = merchantMapper.selectMerchantById(merchantUser.getMerchantId());
@@ -708,6 +711,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
 
         MerchantMiniStoreDto dto = new MerchantMiniStoreDto();
         dto.setMerchantId(merchantId);
+        dto.setMerchantName(merchant != null ? merchant.getName() : "");
         dto.setStoreName(merchant != null ? merchant.getName() : "");
         dto.setBrandSlogan(merchant != null ? merchant.getDescription() : "");
         dto.setBusinessHours(merchant != null ? merchant.getBusinessHours() : "");
@@ -772,6 +776,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
 
         int onShelfCount = productMapper.countProductByMerchantId(merchantId);
 
+        statsDto.setPendingAcceptCount(0);
         statsDto.setPendingVerifyCount(pendingVerifyCount);
         statsDto.setCompletedCount(completedCount);
         statsDto.setRefundingCount(refundingCount);
@@ -866,8 +871,8 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         dto.setRoleName(ROLE_OWNER.equals(role) ? "管理员" : "成员");
         dto.setPermissions(new ArrayList<>(buildPermissions(role)));
 
-        // 尝试获取主门店ID
         if (merchant != null) {
+            dto.setMerchantName(merchant.getName());
             List<MerchantStore> stores = merchantStoreMapper.selectMerchantStoreByMerchantId(user.getMerchantId());
             if (!stores.isEmpty()) {
                 dto.setStoreId(stores.get(0).getId());

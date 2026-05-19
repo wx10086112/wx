@@ -18,7 +18,7 @@ import java.util.List;
 
 public interface IMerchantMiniMockService {
 
-    MerchantMiniLoginResponseDto login(String roleKey);
+    MerchantMiniLoginResponseDto login(String username, String password);
 
     MerchantMiniOverviewDto getWorkbenchOverview(String currentUserId);
 

@@ -43,21 +43,13 @@
             data-orderno="{{item.orderNo}}"
           >接单</button>
 
-          <!-- 已接单：去发货 -->
+          <!-- 已接单：确认完成 -->
           <button
             wx:if="{{item.status === 'ACCEPTED'}}"
             class="primary-btn action-btn"
-            catchtap="handleShipOrder"
-            data-orderno="{{item.orderNo}}"
-          >去发货</button>
-
-          <!-- 配送中：确认完成 -->
-          <button
-            wx:if="{{item.status === 'SHIPPING'}}"
-            class="primary-btn action-btn"
             catchtap="handleCompleteOrder"
             data-orderno="{{item.orderNo}}"
-          >确认送达</button>
+          >确认完成</button>
 
           <!-- 待核销：去核销 -->
           <button
