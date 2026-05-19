@@ -6,6 +6,7 @@ import com.ruoyi.wxmini.dto.merchant.MerchantMiniGoodsDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniOrderDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniOverviewDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffPermissionRequestDto;
+import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffRequestDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffUserDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStoreDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniUploadResultDto;
@@ -28,6 +29,17 @@ public interface IMerchantMiniMockService {
 
     MerchantMiniOrderDto writeOff(String code, String currentUserId);
 
+    // 订单操作
+    MerchantMiniOrderDto acceptOrder(String orderNo);
+
+    MerchantMiniOrderDto rejectOrder(String orderNo, String reason);
+
+    MerchantMiniOrderDto cancelOrder(String orderNo, String reason);
+
+    MerchantMiniOrderDto approveRefund(String orderNo);
+
+    MerchantMiniOrderDto rejectRefund(String orderNo, String reason);
+
     List<MerchantMiniVerifyRecordDto> listVerifyRecords(String status);
 
     List<MerchantMiniGoodsDto> listGoods(String status);
@@ -47,6 +59,11 @@ public interface IMerchantMiniMockService {
     MerchantMiniStoreDto updateStoreProfile(MerchantMiniStoreDto storeDto);
 
     List<MerchantMiniStaffUserDto> listStaff();
+
+    // 员工增删改
+    MerchantMiniStaffUserDto addStaff(MerchantMiniStaffRequestDto requestDto);
+
+    MerchantMiniStaffUserDto updateStaff(MerchantMiniStaffRequestDto requestDto);
 
     List<MerchantMiniStaffUserDto> updateStaffPermission(MerchantMiniStaffPermissionRequestDto requestDto);
 

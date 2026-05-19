@@ -31,6 +31,20 @@
               <el-descriptions-item label="联系人">{{ merchant.contact }}</el-descriptions-item>
               <el-descriptions-item label="联系电话">{{ merchant.phone }}</el-descriptions-item>
               <el-descriptions-item label="入驻时间">{{ merchant.createTime }}</el-descriptions-item>
+              <el-descriptions-item label="佣金比例">{{ merchant.commissionRate }}%</el-descriptions-item>
+            </el-descriptions>
+
+            <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+              <h3 style="margin: 0;">小程序配置</h3>
+              <el-button type="primary" icon="el-icon-edit" size="small" @click="handleEditMiniApp">编辑配置</el-button>
+            </div>
+            <el-descriptions :column="2" border style="margin-top: 10px;">
+              <el-descriptions-item label="C端 AppID">{{ merchant.cMiniAppId || '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="C端 Secret">{{ merchant.cMiniAppSecret ? '******' : '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="商家端 AppID">{{ merchant.mMiniAppId || '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="商家端 Secret">{{ merchant.mMiniAppSecret ? '******' : '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="微信商户号">{{ merchant.wxPayMchId || '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="支付API密钥">{{ merchant.wxPayApiKey ? '******' : '未配置' }}</el-descriptions-item>
             </el-descriptions>
           </el-tab-pane>
 
@@ -139,6 +153,38 @@
               @current-change="handleFlowPageChange"
             />
           </el-tab-pane>
+
+          <!-- Tab 5: 账户管理 -->
+          <el-tab-pane label="账户管理" name="accounts">
+            <div class="search-bar">
+              <el-button type="success" icon="el-icon-plus" size="small" @click="handleAddAccount">新增账户</el-button>
+            </div>
+
+            <el-table v-loading="accountLoading" :data="accountList" border size="small">
+              <el-table-column label="用户名" prop="username" width="150" />
+              <el-table-column label="姓名" prop="realName" width="120" />
+              <el-table-column label="手机号" prop="phone" width="130" />
+              <el-table-column label="角色" width="100" align="center">
+                <template slot-scope="scope">
+                  <el-tag :type="scope.row.role === 'owner' ? 'warning' : 'primary'" size="mini">
+                    {{ scope.row.role === 'owner' ? '管理员' : '成员' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="状态" width="80" align="center">
+                <template slot-scope="scope">
+                  <el-tag :type="scope.row.status === 1 ? 'success' : 'info'" size="mini">{{ scope.row.status === 1 ? '正常' : '禁用' }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="最后登录" prop="lastLoginTime" width="160" />
+              <el-table-column label="操作" width="200" align="center">
+                <template slot-scope="scope">
+                  <el-button type="text" size="mini" @click="handleResetPwd(scope.row)">重置密码</el-button>
+                  <el-button type="text" size="mini" @click="handleToggleAccountStatus(scope.row)">{{ scope.row.status === 1 ? '禁用' : '启用' }}</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-tab-pane>
         </el-tabs>
       </div>
     </el-card>
@@ -188,11 +234,70 @@
         <el-button type="primary" @click="submitProductForm">确 定</el-button>
       </div>
     </el-dialog>
+
+    <!-- 新增账户弹窗 -->
+    <el-dialog title="新增账户" :visible.sync="accountDialogVisible" width="500px" append-to-body>
+      <el-form ref="accountForm" :model="accountForm" :rules="accountRules" label-width="80px">
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="accountForm.username" placeholder="请输入登录用户名" />
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="accountForm.password" type="password" placeholder="请输入密码" show-password />
+        </el-form-item>
+        <el-form-item label="姓名" prop="realName">
+          <el-input v-model="accountForm.realName" placeholder="请输入姓名" />
+        </el-form-item>
+        <el-form-item label="手机号" prop="phone">
+          <el-input v-model="accountForm.phone" placeholder="请输入手机号" />
+        </el-form-item>
+        <el-form-item label="角色" prop="role">
+          <el-select v-model="accountForm.role" placeholder="请选择角色" style="width: 100%;">
+            <el-option label="管理员" value="owner" />
+            <el-option label="成员" value="member" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="accountDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="submitAccountForm">确 定</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 编辑小程序配置弹窗 -->
+    <el-dialog title="编辑小程序配置" :visible.sync="miniAppDialogVisible" width="600px" append-to-body>
+      <el-form ref="miniAppForm" :model="miniAppForm" label-width="120px">
+        <el-divider content-position="left">C端小程序（用户下单）</el-divider>
+        <el-form-item label="C端 AppID">
+          <el-input v-model="miniAppForm.cMiniAppId" placeholder="wx开头的AppID" />
+        </el-form-item>
+        <el-form-item label="C端 Secret">
+          <el-input v-model="miniAppForm.cMiniAppSecret" placeholder="请输入Secret" />
+        </el-form-item>
+        <el-divider content-position="left">商家端小程序（管理/核销）</el-divider>
+        <el-form-item label="商家端 AppID">
+          <el-input v-model="miniAppForm.mMiniAppId" placeholder="wx开头的AppID" />
+        </el-form-item>
+        <el-form-item label="商家端 Secret">
+          <el-input v-model="miniAppForm.mMiniAppSecret" placeholder="请输入Secret" />
+        </el-form-item>
+        <el-divider content-position="left">微信支付</el-divider>
+        <el-form-item label="商户号">
+          <el-input v-model="miniAppForm.wxPayMchId" placeholder="微信支付商户号" />
+        </el-form-item>
+        <el-form-item label="API密钥">
+          <el-input v-model="miniAppForm.wxPayApiKey" placeholder="微信支付API密钥" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="miniAppDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="submitMiniAppForm">保 存</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getMerchantDetail, getProductList, addProduct, updateProduct, deleteProduct, getMerchantOrders, getMerchantFlowList, orderStatusMap } from '@/api/merchant'
+import { getMerchantDetail, getProductList, addProduct, updateProduct, deleteProduct, getMerchantOrders, getMerchantFlowList, orderStatusMap, getMerchantUserList, addMerchantUser, resetMerchantUserPwd, changeMerchantUserStatus } from '@/api/merchant'
 
 export default {
   name: 'MerchantDetail',
@@ -228,7 +333,23 @@ export default {
       flowLoading: false,
       flowList: [],
       flowTotal: 0,
-      flowQuery: { pageNum: 1, pageSize: 10 }
+      flowQuery: { pageNum: 1, pageSize: 10 },
+
+      // 账户管理
+      accountLoading: false,
+      accountList: [],
+      accountDialogVisible: false,
+      accountForm: { username: '', password: '', realName: '', phone: '', role: 'member' },
+      accountRules: {
+        username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+        password: [{ required: true, message: '请输入密码', trigger: 'blur' }, { min: 6, message: '密码至少6位', trigger: 'blur' }],
+        realName: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+        role: [{ required: true, message: '请选择角色', trigger: 'change' }]
+      },
+
+      // 小程序配置
+      miniAppDialogVisible: false,
+      miniAppForm: { cMiniAppId: '', cMiniAppSecret: '', mMiniAppId: '', mMiniAppSecret: '', wxPayMchId: '', wxPayApiKey: '' }
     }
   },
   created() {
@@ -357,6 +478,66 @@ export default {
       this.loadFlow()
     },
 
+    // ========== 账户管理 ==========
+    async loadAccounts() {
+      this.accountLoading = true
+      try {
+        const res = await getMerchantUserList({ merchantId: this.merchantId, pageNum: 1, pageSize: 100 })
+        this.accountList = res.rows || []
+      } finally {
+        this.accountLoading = false
+      }
+    },
+    handleAddAccount() {
+      this.accountForm = { username: '', password: '', realName: '', phone: '', role: 'member' }
+      this.accountDialogVisible = true
+      this.$nextTick(() => { this.$refs.accountForm && this.$refs.accountForm.clearValidate() })
+    },
+    submitAccountForm() {
+      this.$refs.accountForm.validate(async valid => {
+        if (!valid) return
+        await addMerchantUser({ ...this.accountForm, merchantId: this.merchantId, status: 1 })
+        this.$message.success('新增成功')
+        this.accountDialogVisible = false
+        this.loadAccounts()
+      })
+    },
+    handleResetPwd(row) {
+      this.$confirm(`确认将 ${row.username} 的密码重置为 123456？`, '提示', { type: 'warning' }).then(async () => {
+        await resetMerchantUserPwd(row.id, '123456')
+        this.$message.success('密码已重置为 123456')
+      }).catch(() => {})
+    },
+    handleToggleAccountStatus(row) {
+      const newStatus = row.status === 1 ? 0 : 1
+      const text = newStatus === 1 ? '启用' : '禁用'
+      this.$confirm(`确认${text}账号 ${row.username}？`, '提示', { type: 'warning' }).then(async () => {
+        await changeMerchantUserStatus(row.id, newStatus)
+        this.$message.success(`${text}成功`)
+        this.loadAccounts()
+      }).catch(() => {})
+    },
+
+    // ========== 小程序配置 ==========
+    handleEditMiniApp() {
+      this.miniAppForm = {
+        id: this.merchant.id,
+        cMiniAppId: this.merchant.cMiniAppId || '',
+        cMiniAppSecret: this.merchant.cMiniAppSecret || '',
+        mMiniAppId: this.merchant.mMiniAppId || '',
+        mMiniAppSecret: this.merchant.mMiniAppSecret || '',
+        wxPayMchId: this.merchant.wxPayMchId || '',
+        wxPayApiKey: this.merchant.wxPayApiKey || ''
+      }
+      this.miniAppDialogVisible = true
+    },
+    async submitMiniAppForm() {
+      await updateMerchant(this.miniAppForm)
+      this.$message.success('保存成功')
+      this.miniAppDialogVisible = false
+      this.fetchDetail()
+    },
+
     handleBack() {
       this.$router.push({ path: '/merchant/list' })
     },
@@ -375,6 +556,8 @@ export default {
         this.loadOrders()
       } else if (val === 'flow' && this.flowList.length === 0) {
         this.loadFlow()
+      } else if (val === 'accounts' && this.accountList.length === 0) {
+        this.loadAccounts()
       }
     }
   }

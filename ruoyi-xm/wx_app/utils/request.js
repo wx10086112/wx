@@ -1,20 +1,19 @@
 const app = getApp()
-
 const baseUrl = app.baseUrl || 'http://localhost:8080'
 
 const request = (options) => {
   return new Promise((resolve, reject) => {
     const token = wx.getStorageSync('token')
-    
+
     const header = {
       'Content-Type': 'application/json',
       ...options.header
     }
-    
+
     if (token) {
       header['Wx-Authorization'] = token
     }
-    
+
     wx.request({
       url: baseUrl + options.url,
       method: options.method || 'GET',
@@ -22,35 +21,23 @@ const request = (options) => {
       header: header,
       success: (res) => {
         if (res.statusCode === 200) {
-          if (res.data.code === 200 || res.data.code === 0) {
-            resolve(res.data)
-          } else if (res.data.code === 401) {
+          const responseData = res.data || {}
+          if (responseData.code === 200 || responseData.code === 0) {
+            resolve(responseData.data !== undefined ? responseData.data : responseData)
+          } else if (responseData.code === 401) {
             app.clearLoginInfo()
-            wx.showToast({
-              title: '登录已过期，请重新登录',
-              icon: 'none'
-            })
             reject(new Error('登录已过期'))
           } else {
-            wx.showToast({
-              title: res.data.msg || '请求失败',
-              icon: 'none'
-            })
-            reject(new Error(res.data.msg || '请求失败'))
+            reject(new Error(responseData.msg || '请求失败'))
           }
+        } else if (res.statusCode === 401) {
+          app.clearLoginInfo()
+          reject(new Error('登录已过期'))
         } else {
-          wx.showToast({
-            title: '网络错误',
-            icon: 'none'
-          })
-          reject(new Error('网络错误'))
+          reject(new Error('网络请求失败'))
         }
       },
       fail: (err) => {
-        wx.showToast({
-          title: '网络连接失败',
-          icon: 'none'
-        })
         reject(err)
       }
     })

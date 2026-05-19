@@ -88,7 +88,7 @@ Page({
     return orderApi
       .getOrderList({ status: statusParam })
       .then((res) => {
-        const orders = (res.data || res || [])
+        const orders = (res || [])
           .sort((a, b) => (b.createTime || 0) - (a.createTime || 0))
           .map((item) => this.normalizeOrder(item))
         this.setData({

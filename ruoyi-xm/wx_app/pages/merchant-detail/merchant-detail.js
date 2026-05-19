@@ -1,6 +1,7 @@
 const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
+const api = require('../../api/index')
 
 Page({
   data: {
@@ -23,9 +24,25 @@ Page({
   loadMerchantDetail() {
     this.setData({ loading: true })
 
-    setTimeout(() => {
+    Promise.all([
+      api.getMerchantDetail(this.data.merchantId).catch(() => null),
+      api.getGrouponList({ merchantId: this.data.merchantId }).catch(() => null)
+    ]).then(([merchantData, grouponResult]) => {
+      const merchant = merchantData || mock.merchantList.find((item) => item.id === this.data.merchantId) || mock.merchantList[0]
+      const grouponList = grouponResult || mock.grouponList.filter((item) => item.merchantId === merchant.merchantId)
+      const albumList = (merchant.albumList && merchant.albumList.length
+        ? merchant.albumList
+        : [merchant.coverImage, merchant.avatar, ...(grouponList.map((item) => item.image || item.imageUrl).filter(Boolean))]
+      ).slice(0, 6)
+
+      this.setData({
+        merchant,
+        albumList,
+        loading: false
+      })
+    }).catch(() => {
       const merchant = mock.merchantList.find((item) => item.id === this.data.merchantId) || mock.merchantList[0]
-      const grouponList = mock.grouponList.filter((item) => item.merchantId === merchant.id)
+      const grouponList = mock.grouponList.filter((item) => item.merchantId === merchant.merchantId)
       const albumList = (merchant.albumList && merchant.albumList.length
         ? merchant.albumList
         : [merchant.coverImage, merchant.avatar, ...grouponList.map((item) => item.image)]
@@ -36,7 +53,7 @@ Page({
         albumList,
         loading: false
       })
-    }, 180)
+    })
   },
 
   makePhoneCall() {

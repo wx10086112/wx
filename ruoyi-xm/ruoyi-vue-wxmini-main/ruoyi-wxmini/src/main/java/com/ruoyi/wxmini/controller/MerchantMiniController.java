@@ -2,25 +2,32 @@ package com.ruoyi.wxmini.controller;
 
 import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.mall.merchant.domain.Merchant;
+import com.ruoyi.mall.merchant.mapper.MerchantMapper;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniGoodsDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniGoodsStatusRequestDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniLoginRequestDto;
+import com.ruoyi.wxmini.dto.merchant.MerchantMiniReasonRequestDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffPermissionRequestDto;
+import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffRequestDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStoreDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniWithdrawRequestDto;
 import com.ruoyi.wxmini.service.IMerchantMiniMockService;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +49,22 @@ public class MerchantMiniController {
 
     @Resource
     private IMerchantMiniMockService merchantMiniMockService;
+    @Resource
+    private MerchantMapper merchantMapper;
+
+    /**
+     * 每次请求前，从AppID解析商家ID并设置上下文
+     */
+    @org.springframework.web.bind.annotation.ModelAttribute
+    public void resolveMerchantFromAppId(HttpServletRequest request) {
+        String appId = request.getHeader("X-Merchant-AppId");
+        if (StringUtils.isNotBlank(appId) && WxMiniUserContext.getAppIdMerchantId() == null) {
+            Merchant merchant = merchantMapper.selectMerchantByCAppId(appId);
+            if (merchant != null) {
+                WxMiniUserContext.setAppIdMerchantId(merchant.getId());
+            }
+        }
+    }
 
     @PostMapping("/auth/login")
     public AjaxResult login(@RequestBody(required = false) MerchantMiniLoginRequestDto requestDto) {
@@ -83,12 +106,80 @@ public class MerchantMiniController {
 
     @PostMapping("/order/write-off/{code}")
     public AjaxResult writeOff(@PathVariable String code) {
-        AjaxResult accessDenied = checkAccess(PERMISSION_VERIFY_SCAN, PERMISSION_VERIFY_MANUAL);
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_VERIFY_SCAN, PERMISSION_VERIFY_MANUAL);
         if (accessDenied != null) {
             return accessDenied;
         }
         try {
             return AjaxResult.success(merchantMiniMockService.writeOff(code, WxMiniUserContext.getCurrentUserId()));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    @PostMapping("/order/accept/{orderNo}")
+    public AjaxResult acceptOrder(@PathVariable String orderNo) {
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_ORDER_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        try {
+            return AjaxResult.success(merchantMiniMockService.acceptOrder(orderNo));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    @PostMapping("/order/reject/{orderNo}")
+    public AjaxResult rejectOrder(@PathVariable String orderNo, @RequestBody(required = false) MerchantMiniReasonRequestDto requestDto) {
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_ORDER_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        try {
+            String reason = requestDto != null ? requestDto.getReason() : null;
+            return AjaxResult.success(merchantMiniMockService.rejectOrder(orderNo, reason));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    @PostMapping("/order/cancel/{orderNo}")
+    public AjaxResult cancelOrder(@PathVariable String orderNo, @RequestBody(required = false) MerchantMiniReasonRequestDto requestDto) {
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_ORDER_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        try {
+            String reason = requestDto != null ? requestDto.getReason() : null;
+            return AjaxResult.success(merchantMiniMockService.cancelOrder(orderNo, reason));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    @PostMapping("/order/refund/approve/{orderNo}")
+    public AjaxResult approveRefund(@PathVariable String orderNo) {
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_ORDER_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        try {
+            return AjaxResult.success(merchantMiniMockService.approveRefund(orderNo));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    @PostMapping("/order/refund/reject/{orderNo}")
+    public AjaxResult rejectRefund(@PathVariable String orderNo, @RequestBody(required = false) MerchantMiniReasonRequestDto requestDto) {
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_ORDER_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        try {
+            String reason = requestDto != null ? requestDto.getReason() : null;
+            return AjaxResult.success(merchantMiniMockService.rejectRefund(orderNo, reason));
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
@@ -114,7 +205,7 @@ public class MerchantMiniController {
 
     @PostMapping("/goods/save")
     public AjaxResult saveGoods(@RequestBody(required = false) MerchantMiniGoodsDto goodsDto) {
-        AjaxResult accessDenied = checkAccess(PERMISSION_GOODS_MANAGE);
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_GOODS_MANAGE);
         if (accessDenied != null) {
             return accessDenied;
         }
@@ -127,7 +218,7 @@ public class MerchantMiniController {
 
     @PutMapping("/goods/status")
     public AjaxResult updateGoodsStatus(@RequestBody(required = false) MerchantMiniGoodsStatusRequestDto requestDto) {
-        AjaxResult accessDenied = checkAccess(PERMISSION_GOODS_MANAGE);
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_GOODS_MANAGE);
         if (accessDenied != null) {
             return accessDenied;
         }
@@ -142,7 +233,7 @@ public class MerchantMiniController {
 
     @PostMapping("/goods/image/upload")
     public AjaxResult uploadGoodsImage(@RequestParam(value = "file", required = false) MultipartFile file) {
-        AjaxResult accessDenied = checkAccess(PERMISSION_GOODS_MANAGE);
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_GOODS_MANAGE);
         if (accessDenied != null) {
             return accessDenied;
         }
@@ -155,7 +246,7 @@ public class MerchantMiniController {
 
     @PutMapping("/goods/batch-status")
     public AjaxResult batchUpdateGoodsStatus(@RequestBody Map<String, Object> params) {
-        AjaxResult accessDenied = checkAccess(PERMISSION_GOODS_MANAGE);
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_GOODS_MANAGE);
         if (accessDenied != null) {
             return accessDenied;
         }
@@ -189,7 +280,7 @@ public class MerchantMiniController {
 
     @PutMapping("/store/profile")
     public AjaxResult updateStoreProfile(@RequestBody(required = false) MerchantMiniStoreDto storeDto) {
-        AjaxResult accessDenied = checkAccess(PERMISSION_STORE_MANAGE);
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_STORE_MANAGE);
         if (accessDenied != null) {
             return accessDenied;
         }
@@ -211,12 +302,38 @@ public class MerchantMiniController {
 
     @PutMapping("/staff/permission")
     public AjaxResult updateStaffPermission(@RequestBody(required = false) MerchantMiniStaffPermissionRequestDto requestDto) {
-        AjaxResult accessDenied = checkAccess(PERMISSION_STAFF_MANAGE);
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_STAFF_MANAGE);
         if (accessDenied != null) {
             return accessDenied;
         }
         try {
             return AjaxResult.success(merchantMiniMockService.updateStaffPermission(requestDto));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    @PostMapping("/staff/add")
+    public AjaxResult addStaff(@RequestBody(required = false) MerchantMiniStaffRequestDto requestDto) {
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_STAFF_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        try {
+            return AjaxResult.success(merchantMiniMockService.addStaff(requestDto));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    @PutMapping("/staff/update")
+    public AjaxResult updateStaff(@RequestBody(required = false) MerchantMiniStaffRequestDto requestDto) {
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_STAFF_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        try {
+            return AjaxResult.success(merchantMiniMockService.updateStaff(requestDto));
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
@@ -233,7 +350,7 @@ public class MerchantMiniController {
 
     @PostMapping("/finance/withdraw")
     public AjaxResult applyWithdraw(@RequestBody(required = false) MerchantMiniWithdrawRequestDto requestDto) {
-        AjaxResult accessDenied = checkAccess(PERMISSION_FINANCE_MANAGE);
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_FINANCE_MANAGE);
         if (accessDenied != null) {
             return accessDenied;
         }
@@ -245,9 +362,91 @@ public class MerchantMiniController {
         }
     }
 
+    // ==================== 营销模块（Stub，待数据库表就绪后实现） ====================
+
+    private static final String PERMISSION_MARKETING_MANAGE = "marketing.manage";
+
+    @GetMapping("/marketing/coupon/list")
+    public AjaxResult listCoupons() {
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_MARKETING_MANAGE);
+        if (accessDenied != null) return accessDenied;
+        // TODO: coupon表未建，暂返回空列表
+        return AjaxResult.success(new ArrayList<>());
+    }
+
+    @PostMapping("/marketing/coupon/save")
+    public AjaxResult saveCoupon(@RequestBody(required = false) Map<String, Object> params) {
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_MARKETING_MANAGE);
+        if (accessDenied != null) return accessDenied;
+        // TODO: coupon表未建，暂返回成功
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", 0);
+        return AjaxResult.success(result);
+    }
+
+    @PutMapping("/marketing/coupon/status")
+    public AjaxResult updateCouponStatus(@RequestBody(required = false) Map<String, Object> params) {
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_MARKETING_MANAGE);
+        if (accessDenied != null) return accessDenied;
+        // TODO: coupon表未建，暂返回成功
+        return AjaxResult.success("ok");
+    }
+
+    @GetMapping("/marketing/promotion/list")
+    public AjaxResult listPromotions() {
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_MARKETING_MANAGE);
+        if (accessDenied != null) return accessDenied;
+        // TODO: promotion表未建，暂返回空列表
+        return AjaxResult.success(new ArrayList<>());
+    }
+
+    @PostMapping("/marketing/promotion/save")
+    public AjaxResult savePromotion(@RequestBody(required = false) Map<String, Object> params) {
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_MARKETING_MANAGE);
+        if (accessDenied != null) return accessDenied;
+        // TODO: promotion表未建，暂返回成功
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", 0);
+        return AjaxResult.success(result);
+    }
+
+    // ==================== 入驻申请（Stub，待数据库表就绪后实现） ====================
+
+    @PostMapping("/apply/submit")
+    public AjaxResult submitApply(@RequestBody(required = false) Map<String, Object> params) {
+        // TODO: 入驻申请表未建，暂返回成功
+        Map<String, Object> result = new HashMap<>();
+        result.put("applyNo", "APPLY" + System.currentTimeMillis());
+        result.put("status", "PENDING");
+        return AjaxResult.success(result);
+    }
+
+    @GetMapping("/apply/status")
+    public AjaxResult getApplyStatus() {
+        // TODO: 入驻申请表未建，暂返回空
+        return AjaxResult.success(null);
+    }
+
     private AjaxResult checkAccess(String... permissionCodes) {
+        // 通过AppID识别商家的场景：仅允许数据浏览
+        if (WxMiniUserContext.getAppIdMerchantId() != null && !WxMiniUserContext.isMerchantStaff()) {
+            return null; // AppID模式下允许访问（数据按AppID隔离）
+        }
         if (!WxMiniUserContext.isMerchantStaff()) {
             return AjaxResult.error(HttpStatus.FORBIDDEN, "仅商家员工可访问");
+        }
+        if (!WxMiniUserContext.hasAnyPermission(permissionCodes)) {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, "无权限");
+        }
+        return null;
+    }
+
+    /**
+     * 操作类接口检查：必须有登录token
+     */
+    private AjaxResult checkStaffAccess(String... permissionCodes) {
+        if (!WxMiniUserContext.isMerchantStaff()) {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, "请先登录");
         }
         if (!WxMiniUserContext.hasAnyPermission(permissionCodes)) {
             return AjaxResult.error(HttpStatus.FORBIDDEN, "无权限");

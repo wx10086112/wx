@@ -2,6 +2,28 @@
 
 本文档面向后端开发人员，说明前端小程序的全部接口调用约定、请求参数和期望的响应数据结构。
 
+## 后端对接状态（更新于 2026-05-19）
+
+| 接口 | 状态 | 说明 |
+|------|------|------|
+| `GET /wxmini/login` | 已完成 | `mall-user/WxLoginController.java` |
+| `POST /wxmini/user/phone/bind` | 路径不匹配 | 后端实现为 `GET /wxmini/user/phone`，需后端适配 |
+| `GET /wxmini/user/info` | 已完成 | `mall-user/WxMaUserController.java` |
+| `PUT /wxmini/user/info` | 待实现 | 需在 WxMaUserController 加 @PutMapping |
+| `GET /wxmini/merchant/list` | 待实现 | |
+| `GET /wxmini/merchant/detail/{id}` | 待实现 | |
+| `GET /wxmini/groupon/list` | 待实现 | |
+| `GET /wxmini/groupon/detail/{id}` | 待实现 | |
+| `POST /wxmini/order/create` | 待实现 | |
+| `POST /wxmini/pay/order/create` | 仅Stub | 需微信商户号配置 |
+| `GET /wxmini/order/list` | 待实现 | |
+| `GET /wxmini/order/detail/{orderNo}` | 待实现 | |
+| `POST /wxmini/order/cancel/{orderNo}` | 待实现 | |
+| `POST /wxmini/order/writeOff/{code}` | 路径不匹配 | 商家端已有此接口，C端路径需独立 |
+| `GET /wxmini/pay/order/query` | 仅Stub | 需微信商户号配置 |
+| `GET /wxmini/template/config` | 待实现 | DTO已建好 |
+| `POST /wxmini/common/upload` | 待实现 | 可复用已有 `/common/upload` |
+
 ## 一、通信约定
 
 ### 基础地址

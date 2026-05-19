@@ -217,7 +217,7 @@ Page({
       .createOrder(apiPayload)
       .then((res) => {
         util.hideLoading()
-        const orderNo = res.data ? res.data.orderNo : res.orderNo
+        const orderNo = res.orderNo
         if (this.data.checkoutMode === 'cart') cartService.removeSelected()
         util.showToast('订单已创建', 'success')
         util.setPendingOrderFilter('PENDING_PAY')

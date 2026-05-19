@@ -8,6 +8,7 @@ import com.ruoyi.wxmini.dto.merchant.MerchantMiniLoginResponseDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniOrderDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniOverviewDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffPermissionRequestDto;
+import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffRequestDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffUserDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStoreDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniUploadResultDto;
@@ -47,6 +48,7 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
     private static final String LEDGER_STATUS_PENDING = "PENDING";
     private static final String LEDGER_STATUS_SETTLED = "SETTLED";
     private static final String WITHDRAW_STATUS_PROCESSING = "PROCESSING";
+    private static final String ROLE_OWNER = "owner";
     private static final int MERCHANT_RATE = 90;
     private static final int PLATFORM_RATE = 10;
     private static final long DAY_MILLIS = 24L * 60L * 60L * 1000L;
@@ -348,6 +350,136 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
         recordDto.setRemark("商家端在线提现申请，等待平台/微信支付出款处理");
         withdrawRecordList.add(0, recordDto);
         return cloneWithdrawRecord(recordDto);
+    }
+
+    // ==================== 订单操作 ====================
+
+    @Override
+    public synchronized MerchantMiniOrderDto acceptOrder(String orderNo) {
+        MerchantMiniOrderDto order = findOrder(orderNo);
+        if (order == null) {
+            throw new IllegalArgumentException("订单不存在");
+        }
+        if (!STATUS_PENDING_VERIFY.equals(order.getStatus()) && !"PENDING_ACCEPT".equals(order.getStatus())) {
+            throw new IllegalArgumentException("当前订单状态不可接单");
+        }
+        order.setStatus(STATUS_PENDING_VERIFY);
+        return cloneOrder(order);
+    }
+
+    @Override
+    public synchronized MerchantMiniOrderDto rejectOrder(String orderNo, String reason) {
+        MerchantMiniOrderDto order = findOrder(orderNo);
+        if (order == null) {
+            throw new IllegalArgumentException("订单不存在");
+        }
+        if (!STATUS_PENDING_VERIFY.equals(order.getStatus()) && !"PENDING_ACCEPT".equals(order.getStatus())) {
+            throw new IllegalArgumentException("当前订单状态不可拒单");
+        }
+        order.setStatus("CANCELLED");
+        return cloneOrder(order);
+    }
+
+    @Override
+    public synchronized MerchantMiniOrderDto cancelOrder(String orderNo, String reason) {
+        MerchantMiniOrderDto order = findOrder(orderNo);
+        if (order == null) {
+            throw new IllegalArgumentException("订单不存在");
+        }
+        if (STATUS_COMPLETED.equals(order.getStatus())) {
+            throw new IllegalArgumentException("已完成订单不可取消");
+        }
+        order.setStatus("CANCELLED");
+        return cloneOrder(order);
+    }
+
+    @Override
+    public synchronized MerchantMiniOrderDto approveRefund(String orderNo) {
+        MerchantMiniOrderDto order = findOrder(orderNo);
+        if (order == null) {
+            throw new IllegalArgumentException("订单不存在");
+        }
+        if (!STATUS_REFUNDING.equals(order.getStatus())) {
+            throw new IllegalArgumentException("当前订单状态不可同意退款");
+        }
+        order.setStatus("REFUNDED");
+        return cloneOrder(order);
+    }
+
+    @Override
+    public synchronized MerchantMiniOrderDto rejectRefund(String orderNo, String reason) {
+        MerchantMiniOrderDto order = findOrder(orderNo);
+        if (order == null) {
+            throw new IllegalArgumentException("订单不存在");
+        }
+        if (!STATUS_REFUNDING.equals(order.getStatus())) {
+            throw new IllegalArgumentException("当前订单状态不可拒绝退款");
+        }
+        order.setStatus(STATUS_PENDING_VERIFY);
+        return cloneOrder(order);
+    }
+
+    // ==================== 员工增删改 ====================
+
+    @Override
+    public synchronized MerchantMiniStaffUserDto addStaff(MerchantMiniStaffRequestDto requestDto) {
+        if (requestDto == null || requestDto.getUsername() == null || requestDto.getUsername().isEmpty()) {
+            throw new IllegalArgumentException("用户名不能为空");
+        }
+        if (roleStaffMap.containsKey(requestDto.getUsername())) {
+            throw new IllegalArgumentException("用户名已存在");
+        }
+        Long newStaffId = (long) (roleStaffMap.size() + 1);
+        MerchantMiniStaffUserDto staffUser = buildStaffUser(
+                "merchant_staff_" + newStaffId,
+                newStaffId,
+                requestDto.getRealName() != null ? requestDto.getRealName() : requestDto.getUsername(),
+                requestDto.getPhone(),
+                requestDto.getUsername(),
+                ROLE_OWNER.equals(requestDto.getRole()) ? "管理员" : "成员",
+                buildPermissions(requestDto.getRole())
+        );
+        roleStaffMap.put(requestDto.getUsername(), staffUser);
+        return cloneStaffUser(staffUser);
+    }
+
+    @Override
+    public synchronized MerchantMiniStaffUserDto updateStaff(MerchantMiniStaffRequestDto requestDto) {
+        if (requestDto == null || requestDto.getStaffId() == null) {
+            throw new IllegalArgumentException("员工ID不能为空");
+        }
+        MerchantMiniStaffUserDto target = resolveStaffUserByStaffId(requestDto.getStaffId());
+        if (target == null) {
+            throw new IllegalArgumentException("员工不存在");
+        }
+        if (requestDto.getRealName() != null) {
+            target.setName(requestDto.getRealName());
+        }
+        if (requestDto.getPhone() != null) {
+            target.setPhone(requestDto.getPhone());
+        }
+        if (requestDto.getRole() != null) {
+            target.setRoleKey(requestDto.getRole());
+            target.setRoleName(ROLE_OWNER.equals(requestDto.getRole()) ? "管理员" : "成员");
+            target.setPermissions(new ArrayList<>(buildPermissions(requestDto.getRole())));
+        }
+        return cloneStaffUser(target);
+    }
+
+    private List<String> buildPermissions(String role) {
+        List<String> permissions = new ArrayList<>();
+        permissions.add("stats.view");
+        permissions.add("order.manage");
+        permissions.add("verify.scan");
+        permissions.add("verify.manual");
+        permissions.add("verify.record");
+        if (ROLE_OWNER.equals(role)) {
+            permissions.add("goods.manage");
+            permissions.add("store.manage");
+            permissions.add("staff.manage");
+            permissions.add("finance.manage");
+        }
+        return permissions;
     }
 
     private MerchantMiniWorkbenchStatsDto buildStats() {

@@ -2,6 +2,44 @@
 
 本文档面向后端开发人员，说明商家端小程序的全部接口调用约定、请求参数和期望的响应数据结构。
 
+## 后端对接状态（更新于 2026-05-19）
+
+| 接口 | 状态 | 说明 |
+|------|------|------|
+| `POST /auth/login` | 已完成 | BCrypt密码校验，返回token+permissions |
+| `GET /workbench/overview` | 已完成 | 实时DB查询 |
+| `GET /order/list` | 已完成 | |
+| `GET /order/detail/{orderNo}` | 已完成 | |
+| `POST /order/write-off/{code}` | 已完成 | |
+| `POST /order/accept/{orderNo}` | 待实现 | |
+| `POST /order/reject/{orderNo}` | 待实现 | |
+| `POST /order/ship/{orderNo}` | 待实现 | |
+| `POST /order/complete/{orderNo}` | 待实现 | |
+| `POST /order/cancel/{orderNo}` | 待实现 | |
+| `POST /order/refund/approve/{orderNo}` | 待实现 | |
+| `POST /order/refund/reject/{orderNo}` | 待实现 | |
+| `GET /verify/record/list` | 已完成 | |
+| `GET /goods/list` | 已完成 | |
+| `POST /goods/save` | 已完成 | |
+| `PUT /goods/status` | 已完成 | |
+| `PUT /goods/batch-status` | 已完成 | 批量上下架 |
+| `POST /goods/image/upload` | 已完成 | |
+| `GET /store/profile` | 已完成 | |
+| `PUT /store/profile` | 已完成 | |
+| `GET /staff/list` | 已完成 | |
+| `POST /staff/add` | 待实现 | |
+| `PUT /staff/update` | 待实现 | |
+| `PUT /staff/permission` | 已完成 | 仅支持状态切换 |
+| `GET /finance/overview` | 已完成 | |
+| `POST /finance/withdraw` | 已完成 | |
+| `GET /marketing/coupon/list` | 待实现 | |
+| `POST /marketing/coupon/save` | 待实现 | |
+| `PUT /marketing/coupon/status` | 待实现 | |
+| `GET /marketing/promotion/list` | 待实现 | |
+| `POST /marketing/promotion/save` | 待实现 | |
+| `POST /apply/submit` | 待实现 | |
+| `GET /apply/status` | 待实现 | |
+
 ## 一、通信约定
 
 ### 基础地址
@@ -71,13 +109,15 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ```json
 {
-  "roleKey": "manager"
+  "username": "merchant_admin",
+  "password": "123456"
 }
 ```
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| roleKey | string | 否 | `manager` 或 `clerk`，用于演示切换角色 |
+| username | string | 是 | 后台创建的商家账号用户名 |
+| password | string | 是 | 密码，后端BCrypt校验 |
 
 响应 `data`：
 
@@ -86,17 +126,26 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
   "staffId": 1,
   "name": "林店长",
   "phone": "13800001111",
-  "roleKey": "manager",
-  "roleName": "店长",
+  "roleKey": "owner",
+  "roleName": "管理员",
+  "merchantName": "蓝屿轻养生活馆",
   "permissions": ["stats.view", "order.manage", "verify.scan", "verify.manual", "verify.record", "goods.manage", "store.manage", "staff.manage", "finance.manage"],
-  "apiToken": "eyJhbGciOiJIUzI1NiJ9.xxxxx"
+  "token": "eyJhbGciOiJIUzI1NiJ9.xxxxx"
 }
 ```
 
 | 字段 | 说明 |
 |------|------|
-| `apiToken` | JWT token，前端存入 `merchantToken` |
+| `token` | JWT token，前端存入 `merchantToken` |
+| `merchantName` | 商家名称，由后端从merchant表获取 |
 | `permissions` | 权限码数组，前端控制页面和按钮可见性 |
+
+角色与权限对应（DB中的role字段）：
+
+| 角色 | role字段值 | 默认权限 |
+|------|-----------|----------|
+| 管理员 | `owner` | 全部 9 项 |
+| 成员 | `member` | `stats.view`、`order.manage`、`verify.scan`、`verify.manual`、`verify.record` |
 
 ---
 
@@ -110,27 +159,30 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ```json
 {
-  "pendingAcceptCount": 1,
-  "pendingVerifyCount": 2,
-  "shippingCount": 1,
-  "completedCount": 1,
-  "refundingCount": 1,
-  "onShelfCount": 3,
-  "todaySalesAmount": 87000,
-  "abnormalCount": 2
+  "stats": {
+    "pendingAcceptCount": 0,
+    "pendingVerifyCount": 2,
+    "completedCount": 1,
+    "refundingCount": 1,
+    "onShelfCount": 3,
+    "todaySalesAmount": 87000
+  },
+  "staffUser": { ... },
+  "storeInfo": { ... },
+  "pendingOrderList": [ ... ]
 }
 ```
 
+`stats` 字段说明：
+
 | 字段 | 说明 |
 |------|------|
-| `pendingAcceptCount` | 待接单数 |
-| `pendingVerifyCount` | 待核销数 |
-| `shippingCount` | 配送中数 |
-| `completedCount` | 已完成数 |
-| `refundingCount` | 退款中数 |
+| `pendingAcceptCount` | 待接单数（当前DB无PENDING_ACCEPT状态，固定返回0） |
+| `pendingVerifyCount` | 待核销数（DB状态1已支付/2已使用） |
+| `completedCount` | 已完成数（DB状态3已完成） |
+| `refundingCount` | 退款中数（DB状态4已退款） |
 | `onShelfCount` | 在售商品数 |
 | `todaySalesAmount` | 今日销售额（分） |
-| `abnormalCount` | 异常订单数（退款中 + 已拒单） |
 
 ---
 
@@ -231,7 +283,7 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ---
 
-#### `POST /wxmini/merchant-mini/order/accept/{orderNo}` — 接单
+#### `POST /wxmini/merchant-mini/order/accept/{orderNo}` — 接单 [待实现]
 
 需权限：`order.manage`
 
@@ -241,7 +293,7 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ---
 
-#### `POST /wxmini/merchant-mini/order/reject/{orderNo}` — 拒单
+#### `POST /wxmini/merchant-mini/order/reject/{orderNo}` — 拒单 [待实现]
 
 需权限：`order.manage`
 
@@ -257,7 +309,7 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ---
 
-#### `POST /wxmini/merchant-mini/order/ship/{orderNo}` — 发货
+#### `POST /wxmini/merchant-mini/order/ship/{orderNo}` — 发货 [待实现]
 
 需权限：`order.manage`
 
@@ -265,7 +317,7 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ---
 
-#### `POST /wxmini/merchant-mini/order/complete/{orderNo}` — 确认送达
+#### `POST /wxmini/merchant-mini/order/complete/{orderNo}` — 确认送达 [待实现]
 
 需权限：`order.manage`
 
@@ -273,7 +325,7 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ---
 
-#### `POST /wxmini/merchant-mini/order/cancel/{orderNo}` — 商家取消订单
+#### `POST /wxmini/merchant-mini/order/cancel/{orderNo}` — 商家取消订单 [待实现]
 
 需权限：`order.manage`
 
@@ -289,7 +341,7 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ---
 
-#### `POST /wxmini/merchant-mini/order/refund/approve/{orderNo}` — 同意退款
+#### `POST /wxmini/merchant-mini/order/refund/approve/{orderNo}` — 同意退款 [待实现]
 
 需权限：`order.manage`
 
@@ -297,7 +349,7 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ---
 
-#### `POST /wxmini/merchant-mini/order/refund/reject/{orderNo}` — 拒绝退款
+#### `POST /wxmini/merchant-mini/order/refund/reject/{orderNo}` — 拒绝退款 [待实现]
 
 需权限：`order.manage`
 
@@ -463,6 +515,29 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ---
 
+#### `PUT /wxmini/merchant-mini/goods/batch-status` — 批量上下架
+
+需权限：`goods.manage`
+
+请求体：
+
+```json
+{
+  "goodsIds": [101, 102, 103],
+  "status": "OFF_SHELF"
+}
+```
+
+响应 `data`：
+
+```json
+{
+  "count": 3
+}
+```
+
+---
+
 ### 2.6 门店设置模块
 
 #### `GET /wxmini/merchant-mini/store/profile` — 获取门店信息
@@ -531,9 +606,9 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
     "staffId": 1,
     "name": "林店长",
     "phone": "13800001111",
-    "roleKey": "manager",
-    "roleName": "店长",
-    "status": "ACTIVE",
+    "roleKey": "owner",
+    "roleName": "管理员",
+    "status": 1,
     "permissions": ["stats.view", "order.manage", "verify.scan", "verify.manual", "verify.record", "goods.manage", "store.manage", "staff.manage", "finance.manage"]
   }
 ]
@@ -541,13 +616,13 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 | 字段 | 说明 |
 |------|------|
-| `roleKey` | `manager` 店长 / `clerk` 店员 |
-| `status` | `ACTIVE` 启用 / `INACTIVE` 停用 |
+| `roleKey` | `owner` 管理员 / `member` 成员 |
+| `status` | `1` 正常 / `0` 禁用 |
 | `permissions` | 权限码数组 |
 
 ---
 
-#### `POST /wxmini/merchant-mini/staff/add` — 添加员工
+#### `POST /wxmini/merchant-mini/staff/add` — 添加员工 [待实现]
 
 需权限：`staff.manage`
 
@@ -557,14 +632,14 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 {
   "name": "新员工",
   "phone": "13800003333",
-  "roleKey": "clerk",
+  "roleKey": "member",
   "permissions": ["stats.view", "order.manage", "verify.scan", "verify.manual", "verify.record"]
 }
 ```
 
 ---
 
-#### `PUT /wxmini/merchant-mini/staff/update` — 编辑员工
+#### `PUT /wxmini/merchant-mini/staff/update` — 编辑员工 [待实现]
 
 需权限：`staff.manage`
 
@@ -575,7 +650,7 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
   "staffId": 2,
   "name": "周店员",
   "phone": "13800002222",
-  "status": "ACTIVE",
+  "status": 1,
   "permissions": ["stats.view", "order.manage", "verify.scan", "verify.manual", "verify.record"]
 }
 ```
@@ -686,9 +761,9 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ---
 
-### 2.9 营销模块
+### 2.9 营销模块 [全部待实现]
 
-#### `GET /wxmini/merchant-mini/marketing/coupon/list` — 优惠券列表
+#### `GET /wxmini/merchant-mini/marketing/coupon/list` — 优惠券列表 [待实现]
 
 响应 `data`（数组）：
 
@@ -710,7 +785,7 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ---
 
-#### `POST /wxmini/merchant-mini/marketing/coupon/save` — 创建/编辑优惠券
+#### `POST /wxmini/merchant-mini/marketing/coupon/save` — 创建/编辑优惠券 [待实现]
 
 请求体：
 
@@ -728,7 +803,7 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ---
 
-#### `PUT /wxmini/merchant-mini/marketing/coupon/status` — 启停优惠券
+#### `PUT /wxmini/merchant-mini/marketing/coupon/status` — 启停优惠券 [待实现]
 
 请求体：
 
@@ -741,29 +816,59 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ---
 
-#### `GET /wxmini/merchant-mini/marketing/promotion/list` — 满减活动列表
+#### `GET /wxmini/merchant-mini/marketing/promotion/list` — 满减活动列表 [待实现]
 
-#### `POST /wxmini/merchant-mini/marketing/promotion/save` — 创建/编辑满减活动
+#### `POST /wxmini/merchant-mini/marketing/promotion/save` — 创建/编辑满减活动 [待实现]
 
 ---
 
 ## 三、订单状态机
 
+### 实际DB状态（mall_order.status 字段）
+
+| DB值 | 商家端字符串 | 前端展示 | 已实现 |
+|------|------------|----------|--------|
+| 0 | PENDING_PAY | 待支付 | C端 |
+| 1 | PENDING_VERIFY | 待核销 | 是 |
+| 2 | PENDING_VERIFY | 待核销（已使用） | 是 |
+| 3 | COMPLETED | 已完成 | 是 |
+| 4 | REFUNDING | 退款中 | 是 |
+| 5 | CANCELLED | 已取消 | C端 |
+
+### 当前实际流转
+
+```
+    用户支付 → DB status=1(PAID)
+                 │
+         ┌───────┴───────┐
+         ▼               ▼
+    用户使用         用户申请退款
+    DB status=2      DB status=4(REFUNDED)
+         │
+         ▼
+    商家核销
+    DB status=3(COMPLETED)
+```
+
+### 完整设计状态机（部分待实现）
+
+以下为完整设计，标注 **[待实现]** 的状态流转当前后端尚未支持。
+
 ```
          ┌────────────────┐
-         │ PENDING_ACCEPT │  外卖订单用户支付后
+         │ PENDING_ACCEPT │  外卖订单用户支付后 [待实现]
          │    (待接单)     │
          └───────┬────────┘
       ┌──────────┼──────────┐
       ▼                     ▼
 ┌──────────┐          ┌──────────┐
 │ REJECTED │          │ ACCEPTED │
-│  (已拒单) │          │  (已接单) │
+│  (已拒单) │          │  (已接单) │ [待实现]
 └──────────┘          └─────┬────┘
                             ▼
                       ┌──────────┐
                       │ SHIPPING │
-                      │  (配送中) │
+                      │  (配送中) │ [待实现]
                       └─────┬────┘
                             ▼
                       ┌───────────┐
@@ -783,7 +888,7 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
            └───────────┘
 
 
-退款流程（任意已支付状态均可触发）：
+退款流程 [待实现]：
          ┌───────────┐
          │ REFUNDING │  用户申请退款
          │  (退款中)  │
@@ -796,17 +901,18 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 └──────────┘    └──────────────┘
 ```
 
-| 状态值 | 前端展示 | 前端可执行操作 |
-|--------|----------|----------------|
-| `PENDING_ACCEPT` | 待接单 | 接单、拒单 |
-| `ACCEPTED` | 已接单 | 发货 |
-| `SHIPPING` | 配送中 | 确认送达 |
-| `PENDING_VERIFY` | 待核销 | 扫码/手动核销 |
-| `COMPLETED` | 已完成 | 查看详情 |
-| `REJECTED` | 已拒单 | 查看详情 |
-| `REFUNDING` | 退款中 | 同意退款、拒绝退款 |
-| `REFUNDED` | 已退款 | 查看详情 |
-| `CANCELLED` | 已取消 | 查看详情 |
+| 状态值 | DB值 | 前端展示 | 前端可执行操作 | 实现状态 |
+|--------|------|----------|----------------|---------|
+| `PENDING_PAY` | 0 | 待支付 | 去支付、取消订单 | C端 |
+| `PENDING_ACCEPT` | — | 待接单 | 接单、拒单 | [待实现] |
+| `ACCEPTED` | — | 已接单 | 发货 | [待实现] |
+| `SHIPPING` | — | 配送中 | 确认送达 | [待实现] |
+| `PENDING_VERIFY` | 1,2 | 待核销 | 扫码/手动核销 | 已完成 |
+| `COMPLETED` | 3 | 已完成 | 查看详情 | 已完成 |
+| `REJECTED` | — | 已拒单 | 查看详情 | [待实现] |
+| `REFUNDING` | 4 | 退款中 | 同意退款、拒绝退款 | [待实现] |
+| `REFUNDED` | — | 已退款 | 查看详情 | [待实现] |
+| `CANCELLED` | 5 | 已取消 | 查看详情 | C端 |
 
 ---
 
@@ -934,11 +1040,11 @@ C 端用户                    商家端                      后端
 
 **后端对接需求：**
 
-| 接口 | 说明 |
-|------|------|
-| `POST /wxmini/merchant-mini/apply/submit` | 提交入驻申请（含图片文件上传） |
-| `GET /wxmini/merchant-mini/apply/status` | 查询审核状态 |
-| `POST /wxmini/common/upload` | 图片上传（复用通用上传接口） |
+| 接口 | 状态 | 说明 |
+|------|------|------|
+| `POST /wxmini/merchant-mini/apply/submit` | 待实现 | 提交入驻申请（含图片文件上传） |
+| `GET /wxmini/merchant-mini/apply/status` | 待实现 | 查询审核状态 |
+| `POST /wxmini/common/upload` | 待实现 | 图片上传（复用通用上传接口） |
 
 后端需在平台管理后台实现审核功能，审核通过后自动创建商家账号并通知商家。
 
@@ -960,11 +1066,12 @@ C 端用户                    商家端                      后端
 
 ## 八、开发对接顺序建议
 
-1. **登录鉴权**：实现 `POST /auth/login`，返回 `apiToken` + `permissions`
-2. **工作台**：实现 `GET /workbench/overview`，前端首页即可展示数据
-3. **订单 + 核销**：实现订单列表、详情、核销，这是核心链路
-4. **商品管理**：实现商品 CRUD + 图片上传
-5. **门店设置**：实现门店信息读写
-6. **员工管理**：实现员工 CRUD + 权限修改
-7. **财务**：实现财务概览 + 提现
-8. **营销**：实现优惠券和满减活动管理
+1. **登录鉴权**：已完成，`POST /auth/login` 返回 `token` + `permissions`
+2. **工作台**：已完成，`GET /workbench/overview` 返回实时统计数据
+3. **订单 + 核销**：已完成列表/详情/核销，待实现：接单、拒单、取消、退款操作
+4. **商品管理**：已完成 CRUD + 上下架 + 批量操作 + 图片上传
+5. **门店设置**：已完成信息读写
+6. **员工管理**：已完成列表/权限修改，待实现：添加员工、编辑员工
+7. **财务**：已完成财务概览 + 提现
+8. **营销**：待实现优惠券和满减活动管理
+9. **入驻申请**：待实现提交申请 + 查询状态

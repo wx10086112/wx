@@ -134,7 +134,7 @@ Page({
         userApi
           .login(app.appId || 'wx6c708117ea8eaab4', loginRes.code)
           .then((res) => {
-            const info = res.data || {}
+            const info = res || {}
             const userInfo = {
               userId: info.userId || '',
               openId: info.openId || '',
@@ -201,7 +201,7 @@ Page({
     userApi
       .bindPhoneByCode(phoneCode)
       .then((res) => {
-        const info = res.data || {}
+        const info = res || {}
         if (info.phone) {
           const userInfo = { ...this.data.userInfo, phone: info.phone }
           app.setLoginInfo(app.globalData.token, userInfo)

@@ -46,7 +46,7 @@ Page({
     orderApi
       .getOrderDetail(this.data.orderNo)
       .then((res) => {
-        const rawOrder = res.data || res || {}
+        const rawOrder = res || {}
         this.setData({
           order: this.formatOrder(rawOrder),
           loading: false
@@ -114,7 +114,7 @@ Page({
     return orderApi
       .createPayOrder({ orderNo: this.data.orderNo })
       .then((res) => {
-        const payParams = res.data || res
+        const payParams = res
         if (payParams && payParams.timeStamp) {
           return util.requestPayment(payParams)
         }

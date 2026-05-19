@@ -588,14 +588,167 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         return convertWithdrawToDto(record);
     }
 
+    // ==================== 订单操作 ====================
+
+    @Override
+    public MerchantMiniOrderDto acceptOrder(String orderNo) {
+        Long merchantId = getMerchantIdFromContext();
+        MallOrder order = getOrderAndCheckMerchant(orderNo, merchantId);
+        if (order.getStatus() != ORDER_STATUS_PENDING && order.getStatus() != ORDER_STATUS_PAID) {
+            throw new IllegalArgumentException("当前订单状态不可接单");
+        }
+        MallOrder update = new MallOrder();
+        update.setId(order.getId());
+        update.setStatus(ORDER_STATUS_PAID);
+        mallOrderMapper.updateMallOrder(update);
+        order.setStatus(ORDER_STATUS_PAID);
+        return convertOrderToDto(order);
+    }
+
+    @Override
+    public MerchantMiniOrderDto rejectOrder(String orderNo, String reason) {
+        Long merchantId = getMerchantIdFromContext();
+        MallOrder order = getOrderAndCheckMerchant(orderNo, merchantId);
+        if (order.getStatus() != ORDER_STATUS_PENDING && order.getStatus() != ORDER_STATUS_PAID) {
+            throw new IllegalArgumentException("当前订单状态不可拒单");
+        }
+        MallOrder update = new MallOrder();
+        update.setId(order.getId());
+        update.setStatus(ORDER_STATUS_CANCELLED);
+        mallOrderMapper.updateMallOrder(update);
+        order.setStatus(ORDER_STATUS_CANCELLED);
+        return convertOrderToDto(order);
+    }
+
+    @Override
+    public MerchantMiniOrderDto cancelOrder(String orderNo, String reason) {
+        Long merchantId = getMerchantIdFromContext();
+        MallOrder order = getOrderAndCheckMerchant(orderNo, merchantId);
+        if (order.getStatus() != ORDER_STATUS_PENDING && order.getStatus() != ORDER_STATUS_PAID) {
+            throw new IllegalArgumentException("当前订单状态不可取消");
+        }
+        MallOrder update = new MallOrder();
+        update.setId(order.getId());
+        update.setStatus(ORDER_STATUS_CANCELLED);
+        mallOrderMapper.updateMallOrder(update);
+        order.setStatus(ORDER_STATUS_CANCELLED);
+        return convertOrderToDto(order);
+    }
+
+    @Override
+    public MerchantMiniOrderDto approveRefund(String orderNo) {
+        Long merchantId = getMerchantIdFromContext();
+        MallOrder order = getOrderAndCheckMerchant(orderNo, merchantId);
+        if (order.getStatus() != ORDER_STATUS_REFUNDED && order.getStatus() != ORDER_STATUS_PAID && order.getStatus() != ORDER_STATUS_USED) {
+            throw new IllegalArgumentException("当前订单状态不可同意退款");
+        }
+        MallOrder update = new MallOrder();
+        update.setId(order.getId());
+        update.setStatus(ORDER_STATUS_REFUNDED);
+        mallOrderMapper.updateMallOrder(update);
+        order.setStatus(ORDER_STATUS_REFUNDED);
+        return convertOrderToDto(order);
+    }
+
+    @Override
+    public MerchantMiniOrderDto rejectRefund(String orderNo, String reason) {
+        Long merchantId = getMerchantIdFromContext();
+        MallOrder order = getOrderAndCheckMerchant(orderNo, merchantId);
+        if (order.getStatus() != ORDER_STATUS_REFUNDED && order.getStatus() != ORDER_STATUS_PAID && order.getStatus() != ORDER_STATUS_USED) {
+            throw new IllegalArgumentException("当前订单状态不可拒绝退款");
+        }
+        MallOrder update = new MallOrder();
+        update.setId(order.getId());
+        update.setStatus(ORDER_STATUS_PAID);
+        mallOrderMapper.updateMallOrder(update);
+        order.setStatus(ORDER_STATUS_PAID);
+        return convertOrderToDto(order);
+    }
+
+    private MallOrder getOrderAndCheckMerchant(String orderNo, Long merchantId) {
+        MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(orderNo);
+        if (order == null || !order.getMerchantId().equals(merchantId)) {
+            throw new IllegalArgumentException("订单不存在");
+        }
+        return order;
+    }
+
+    // ==================== 员工增删改 ====================
+
+    @Override
+    public MerchantMiniStaffUserDto addStaff(MerchantMiniStaffRequestDto requestDto) {
+        if (requestDto == null || StringUtils.isBlank(requestDto.getUsername())) {
+            throw new IllegalArgumentException("用户名不能为空");
+        }
+        if (StringUtils.isBlank(requestDto.getPassword())) {
+            throw new IllegalArgumentException("密码不能为空");
+        }
+        Long merchantId = getMerchantIdFromContext();
+
+        // 检查用户名是否已存在
+        MerchantUser existing = merchantUserMapper.selectMerchantUserByUsername(requestDto.getUsername());
+        if (existing != null) {
+            throw new IllegalArgumentException("用户名已存在");
+        }
+
+        MerchantUser newUser = new MerchantUser();
+        newUser.setMerchantId(merchantId);
+        newUser.setUsername(requestDto.getUsername());
+        newUser.setPassword(com.ruoyi.common.utils.SecurityUtils.encryptPassword(requestDto.getPassword()));
+        newUser.setRealName(StringUtils.isNotBlank(requestDto.getRealName()) ? requestDto.getRealName() : requestDto.getUsername());
+        newUser.setPhone(requestDto.getPhone());
+        newUser.setRole(StringUtils.isNotBlank(requestDto.getRole()) && ROLE_OWNER.equals(requestDto.getRole()) ? ROLE_OWNER : ROLE_MEMBER);
+        newUser.setStatus(1);
+        merchantUserMapper.insertMerchantUser(newUser);
+
+        return buildStaffUserFromDb(newUser, merchantMapper.selectMerchantById(merchantId));
+    }
+
+    @Override
+    public MerchantMiniStaffUserDto updateStaff(MerchantMiniStaffRequestDto requestDto) {
+        if (requestDto == null || requestDto.getStaffId() == null) {
+            throw new IllegalArgumentException("员工ID不能为空");
+        }
+        Long merchantId = getMerchantIdFromContext();
+        MerchantUser existing = merchantUserMapper.selectMerchantUserById(requestDto.getStaffId());
+        if (existing == null || !existing.getMerchantId().equals(merchantId)) {
+            throw new IllegalArgumentException("员工不存在");
+        }
+
+        MerchantUser update = new MerchantUser();
+        update.setId(requestDto.getStaffId());
+        if (StringUtils.isNotBlank(requestDto.getRealName())) {
+            update.setRealName(requestDto.getRealName());
+        }
+        if (StringUtils.isNotBlank(requestDto.getPhone())) {
+            update.setPhone(requestDto.getPhone());
+        }
+        if (StringUtils.isNotBlank(requestDto.getRole())) {
+            update.setRole(ROLE_OWNER.equals(requestDto.getRole()) ? ROLE_OWNER : ROLE_MEMBER);
+        }
+        if (StringUtils.isNotBlank(requestDto.getPassword())) {
+            update.setPassword(com.ruoyi.common.utils.SecurityUtils.encryptPassword(requestDto.getPassword()));
+        }
+        merchantUserMapper.updateMerchantUser(update);
+
+        MerchantUser updated = merchantUserMapper.selectMerchantUserById(requestDto.getStaffId());
+        return buildStaffUserFromDb(updated, merchantMapper.selectMerchantById(merchantId));
+    }
+
     // ==================== 辅助方法 ====================
 
     private Long getMerchantIdFromContext() {
+        // 优先从JWT token获取
         Long merchantId = com.ruoyi.mall.common.util.WxMiniUserContext.getCurrentMerchantId();
-        if (merchantId == null) {
-            throw new IllegalStateException("无法获取当前商家ID");
+        if (merchantId != null) {
+            return merchantId;
         }
-        return merchantId;
+        // 回退到AppID方式
+        merchantId = com.ruoyi.mall.common.util.WxMiniUserContext.getAppIdMerchantId();
+        if (merchantId != null) {
+            return merchantId;
+        }
+        throw new IllegalStateException("无法获取当前商家ID");
     }
 
     private Long getMerchantIdFromStaffId(String staffIdStr) {

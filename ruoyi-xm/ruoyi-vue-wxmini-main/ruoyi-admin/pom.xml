@@ -109,6 +109,12 @@
             <artifactId>ruoyi-mall-pay</artifactId>
         </dependency>
 
+        <!-- 微信小程序模块（商家端+C端控制器） -->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-wxmini</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

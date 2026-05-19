@@ -5,6 +5,7 @@ const request = (options) => {
     const token = wx.getStorageSync('merchantToken')
     const header = {
       'Content-Type': 'application/json',
+      'X-Merchant-AppId': app.appId || '',
       ...options.header
     }
 
@@ -18,6 +19,12 @@ const request = (options) => {
       data: options.data || {},
       header,
       success: (res) => {
+        if (res.statusCode === 401) {
+          app.clearLoginInfo()
+          wx.redirectTo({ url: '/pages/login/login' })
+          reject(new Error('登录已过期'))
+          return
+        }
         if (res.statusCode !== 200) {
           reject(new Error('网络请求失败'))
           return

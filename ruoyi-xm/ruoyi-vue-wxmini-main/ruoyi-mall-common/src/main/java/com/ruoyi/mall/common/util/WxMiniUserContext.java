@@ -14,6 +14,15 @@ import java.util.List;
 public class WxMiniUserContext {
 
     private static final ThreadLocal<WxMiniAuthContext> currentContext = new ThreadLocal<>();
+    private static final ThreadLocal<Long> appIdMerchantId = new ThreadLocal<>();
+
+    public static void setAppIdMerchantId(Long merchantId) {
+        appIdMerchantId.set(merchantId);
+    }
+
+    public static Long getAppIdMerchantId() {
+        return appIdMerchantId.get();
+    }
 
     /**
      * 设置当前用户ID
@@ -110,5 +119,6 @@ public class WxMiniUserContext {
      */
     public static void clear() {
         currentContext.remove();
+        appIdMerchantId.remove();
     }
 }

@@ -3,7 +3,7 @@
   "projectname": "merchant_app",
   "setting": {
     "compileHotReLoad": true,
-    "urlCheck": true,
+    "urlCheck": false,
     "coverView": true,
     "lazyloadPlaceholderEnable": false,
     "skylineRenderEnable": false,
