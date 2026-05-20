@@ -70,7 +70,7 @@ export default {
   name: "Login",
   data() {
     return {
-      title: "零点科技后台管理",
+      title: "零点科技后台管理系统",
       codeUrl: "",
       loginForm: {
         username: "admin",
