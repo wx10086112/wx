@@ -12,11 +12,13 @@
         <result property="name" column="name"/>
         <result property="coverImage" column="cover_image"/>
         <result property="images" column="images"/>
+        <result property="mainImage" column="main_image"/>
         <result property="price" column="price"/>
         <result property="originalPrice" column="original_price"/>
         <result property="stock" column="stock"/>
         <result property="sales" column="sales"/>
         <result property="status" column="status"/>
+        <result property="verifyType" column="verify_type"/>
         <result property="validDays" column="valid_days"/>
         <result property="description" column="description"/>
         <result property="storeIds" column="store_ids"/>
@@ -28,8 +30,8 @@
 
     <sql id="selectProductVo">
         select id, merchant_id, category_id, groupon_id, name, cover_image, images,
-               price, original_price, stock, sales, status, valid_days,
-               description, store_ids, sort, create_time, update_time, remark
+               main_image, price, original_price, stock, sales, status, verify_type,
+               valid_days, description, store_ids, sort, create_time, update_time, remark
         from product
     </sql>
 
@@ -64,11 +66,13 @@
             <if test="name != null">name,</if>
             <if test="coverImage != null">cover_image,</if>
             <if test="images != null">images,</if>
+            <if test="mainImage != null">main_image,</if>
             <if test="price != null">price,</if>
             <if test="originalPrice != null">original_price,</if>
             <if test="stock != null">stock,</if>
             <if test="sales != null">sales,</if>
             <if test="status != null">status,</if>
+            <if test="verifyType != null">verify_type,</if>
             <if test="validDays != null">valid_days,</if>
             <if test="description != null">description,</if>
             <if test="storeIds != null">store_ids,</if>
@@ -81,11 +85,13 @@
             <if test="name != null">#{name},</if>
             <if test="coverImage != null">#{coverImage},</if>
             <if test="images != null">#{images},</if>
+            <if test="mainImage != null">#{mainImage},</if>
             <if test="price != null">#{price},</if>
             <if test="originalPrice != null">#{originalPrice},</if>
             <if test="stock != null">#{stock},</if>
             <if test="sales != null">#{sales},</if>
             <if test="status != null">#{status},</if>
+            <if test="verifyType != null">#{verifyType},</if>
             <if test="validDays != null">#{validDays},</if>
             <if test="description != null">#{description},</if>
             <if test="storeIds != null">#{storeIds},</if>
@@ -102,11 +108,13 @@
             <if test="name != null">name = #{name},</if>
             <if test="coverImage != null">cover_image = #{coverImage},</if>
             <if test="images != null">images = #{images},</if>
+            <if test="mainImage != null">main_image = #{mainImage},</if>
             <if test="price != null">price = #{price},</if>
             <if test="originalPrice != null">original_price = #{originalPrice},</if>
             <if test="stock != null">stock = #{stock},</if>
             <if test="sales != null">sales = #{sales},</if>
             <if test="status != null">status = #{status},</if>
+            <if test="verifyType != null">verify_type = #{verifyType},</if>
             <if test="validDays != null">valid_days = #{validDays},</if>
             <if test="description != null">description = #{description},</if>
             <if test="storeIds != null">store_ids = #{storeIds},</if>

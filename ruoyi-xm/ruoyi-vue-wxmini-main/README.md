@@ -1,145 +1,116 @@
-# 若依框架整合微信小程序
+# SaaS 多端商家系统后端与运营后台
 
-## 依赖
+本目录是 SaaS 多端商家系统的后端主工程，同时包含平台运营后台前端 `ruoyi-ui`。
 
-+ [RuoYi-Vue 若依框架前后端分离版 v3.8.9](https://gitee.com/y_project/RuoYi-Vue)
-+ [WxJava 微信sdk](https://github.com/binarywang/WxJava)
+工程基于 RuoYi-Vue 3.8.9 扩展，使用 Spring Boot 2.5.15、MyBatis、Maven 多模块、WxJava 和微信支付能力，面向 C 端小程序、商家端小程序和平台运营后台提供统一 API。
 
-## 整合功能
+## 工程组成
 
-+ 微信小程序登录。
-+ 微信用户信息同步。
-+ 微信小程序支付。
+| 目录 | 说明 |
+|------|------|
+| `ruoyi-admin` | 后端启动模块，聚合加载若依系统接口、商城后台接口和各业务模块。 |
+| `ruoyi-ui` | 平台运营后台 Web 前端，基于 Vue 2 + Element UI。 |
+| `ruoyi-common` | 若依公共工具和基础组件。 |
+| `ruoyi-framework` | Spring Security、Web、安全过滤器、权限控制等框架能力。 |
+| `ruoyi-system` | 若依系统管理能力，如用户、角色、菜单、字典、参数配置。 |
+| `ruoyi-quartz` | 定时任务，后续用于订单关闭、核销过期、结算、消息提醒等。 |
+| `ruoyi-generator` | 若依代码生成器。 |
+| `ruoyi-wxmini` | 微信小程序接入层，包含 C 端接口、商家端接口、模板配置、上传、微信回调等。 |
+| `ruoyi-mall-common` | 商城公共能力：微信端 JWT、认证上下文、支付抽象、通用 BO/VO。 |
+| `ruoyi-mall-user` | 用户域：微信用户、用户信息、地址、购物车、收藏、优惠券。 |
+| `ruoyi-mall-merchant` | 商家域：商家主体、门店、商家员工、审核。 |
+| `ruoyi-mall-product` | 商品域：商品、分类、团购活动。 |
+| `ruoyi-mall-order` | 订单域：订单、订单项、退款/售后、统计。 |
+| `ruoyi-mall-finance` | 财务域：交易流水、平台收入、商家提现、财务报表。 |
+| `ruoyi-mall-marketing` | 营销域：Banner、优惠券等，目前以实体和规划为主。 |
+| `ruoyi-mall-pay` | 支付域：支付记录、微信支付下单、查询、回调，目前核心逻辑需继续完善。 |
+| `project-docs` | 项目文档、数据库脚本、后端接入规划和模块重构文档。 |
+| `sql` | 若依系统 SQL 和补充脚本。 |
 
-## 整体设计
+## 多端 API 边界
 
-+ 新增`微信小程序用户体系`：新增用户表，区别于若依原有的管理后台用户角色权限体系，单独用于保存微信小程序用户。小程序用户仅操作微信小程序，不登录若依后台。
-+ 新增`微信小程序后端接口鉴权体系`：新增过滤器，单独用于拦截微信小程序后端模块接口做鉴权。
-+ 新增`微信小程序后端模块`。
+| 调用方 | API 前缀 | 鉴权方式 | 说明 |
+|--------|----------|----------|------|
+| C 端小程序 `wx_app` | `/wxmini/**` | `Wx-Authorization: {token}` | 消费者登录、商家/商品浏览、下单、支付、订单、模板配置。 |
+| 商家端小程序 `merchant_app` | `/wxmini/merchant-mini/**` | `Wx-Authorization: Bearer {token}` | 商家员工登录、工作台、订单处理、核销、商品、门店、员工、财务、营销。 |
+| 运营后台 `ruoyi-ui` | `/mall/**`、`/system/**` 等 | `Authorization: Bearer {token}` | 平台运营管理、若依系统管理、商家审核、订单监管、财务管理。 |
+| 微信服务器 | `/wxmini/portal/{appid}`、`/wxmini/pay/notify` | 微信签名/回调校验 | 微信消息、支付通知等服务端回调。 |
 
-## 整合改动说明
+## 业务域关系
 
-### 项目模块改动
+```text
+平台运营后台
+  ├─ 管理商家、门店、商品、订单、售后、财务、营销、模板
+  └─ 审核入驻、审批提现、查看数据分析
 
-在根项目，新增了`ruoyi-wxmini`module模块。在根`pom.xml`文件内：
+商家端小程序
+  ├─ 商家员工登录
+  ├─ 管理本商家商品、门店、员工、营销
+  ├─ 处理本商家订单、核销和退款
+  └─ 查看本商家财务收益
 
-+ `<modules>`标签内，会自动将新增模块纳入管理。增加内容如下。
-    ```xml
-    <modules>
-        <module>ruoyi-wxmini</module>
-    </modules>
-    ```
-+ `<dependencies>`标签内，手动添加新增的模块。增加内容如下。
-   ```xml
-   <dependency>
-       <groupId>com.ruoyi</groupId>
-       <artifactId>ruoyi-wxmini</artifactId>
-       <version>${ruoyi.version}</version>
-   </dependency>
-   ```
-
-### ruoyi-admin模块改动
-
-在`ruoyi-admin`模块的`pom.xml`中，`<dependencies>`依赖中手动增加了`ruoyi-wxmini`模块依赖，使得`ruoyi-wxmini`
-模块中的`controller`控制器被加载和url生效。增加内容如下。
-
-```xml
-
-<dependency>
-    <groupId>com.ruoyi</groupId>
-    <artifactId>ruoyi-wxmini</artifactId>
-</dependency>
+C 端小程序
+  ├─ 微信用户登录
+  ├─ 浏览当前商家/门店商品
+  ├─ 下单、支付、查看订单
+  └─ 到店出示核销码、评价、售后
 ```
 
-### ruoyi-framework模块改动
+## SaaS 化建模要求
 
-修改了过滤器配置，修改`com.ruoyi.framework.config.SecurityConfig`对象的`filterChain`
-方法，追加匹配规则，对自定义的微信小程序接口url不做登录等鉴权。该部分接口鉴权将交由`ruoyi-wxmini`模块定义的过滤器处理。增加内容如下。
+后续所有新增业务应优先检查以下字段和边界：
 
-```java
-.antMatchers("/wxmini/**").permitAll()
+- 平台级数据：由后台账号管理，不绑定单一商家。
+- 商家级数据：必须带 `merchantId`。
+- 门店级数据：必须带 `storeId`，并同时能追溯 `merchantId`。
+- C 端用户数据：必须带 `userId`，订单、收藏、优惠券、地址等需按用户隔离。
+- 商家员工数据：必须带 `staffId`、`merchantId`、权限码，必要时带 `storeId`。
+- 模板配置：应支持平台默认配置、商家覆盖配置、门店级扩展配置。
+
+## 当前实现状态
+
+| 领域 | 状态 |
+|------|------|
+| 微信登录/用户 | 基础能力已具备，部分用户信息更新和手机号绑定路径仍需统一。 |
+| C 端商品/商家/订单 | 已有 Controller、DTO、mock 降级和部分真实接口。 |
+| 商家端 | 页面完整，后端已有登录、工作台、订单、核销、商品、门店、员工、财务等接口雏形，部分操作仍待实现。 |
+| 运营后台 | 页面和若依框架完整，商城业务页面存在 mock/真实接口混用。 |
+| 支付 | 前端流程已具备，后端支付模块仍需完成真实微信支付 V3 下单、回调、查询和退款。 |
+| 营销 | 优惠券、Banner 等实体已预留，业务层和接口需继续补齐。 |
+| 财务 | 流水、分账、提现、报表已有模块基础，需与支付、退款、结算联动。 |
+
+## 启动说明
+
+### 后端
+
+```bash
+cd E:\ruoyi\ruoyi-xm\ruoyi-vue-wxmini-main
+mvn clean package -DskipTests
 ```
 
-### ruoyi-system模块改动
+后端启动入口：
 
-使用了若依自带的代码生成工具，自动生成业务层代码，并放置在`ruoyi-system`模块中，对应`com.ruoyi.wxmini`包。
-
-### 数据库改动
-
-新增微信用户表，执行`sql\wx_user.sql`建表。
-
-### 项目配置文件改动
-
-在`ruoyi-admin`模块里的`application.yml`配置文件，增加了微信对接配置，示例如下。
-
-```yml
-wx:
-  miniapp:
-    configs:
-      - appid: test #微信小程序的appid
-        secret: test #微信小程序的Secret
-        token: #微信小程序消息服务器配置的token
-        aesKey: #微信小程序消息服务器配置的EncodingAESKey
-        msgDataFormat: JSON
-  # 支付配置
-  pay:
-    appId: test #微信小程序的appid
-    mchId: 110 #商户id
-    apiV3Key: test #V3密钥
-    # https://pay.weixin.qq.com/doc/v3/merchant/4012365345
-    # openssl x509 -in apiclient_cert.pem -noout -serial
-    certSerialNo: test
-    privateKeyPath: classpath:cert/apiclient_key.pem #apiclient_key.pem证书文件的绝对路径或者以classpath:开头的类路径
-    privateCertPath: classpath:cert/apiclient_cert.pem #apiclient_cert.pem证书文件的绝对路径或者以classpath:开头的类路径
+```text
+ruoyi-admin/src/main/java/com/ruoyi/RuoYiApplication.java
 ```
-在`ruoyi-admin`模块的`resources`资源文件目录下，增加`cert`目录，放置支付用的证书。
 
-## ruoyi-wxmini模块设计说明
+默认端口：`8080`。
 
-### 接口鉴权
+### 运营后台
 
-#### 请求头
-- **请求头Key**: `Wx-Authorization`
-- **Token格式**: `Bearer {JWT_TOKEN}`
-- **设计原因**: 避免与若依框架默认的`Authorization`请求头冲突，确保两套鉴权体系独立运行
+```bash
+cd E:\ruoyi\ruoyi-xm\ruoyi-vue-wxmini-main\ruoyi-ui
+npm run dev
+```
 
-#### Token生成与验证
-- **Token生成**: 用户登录成功后，通过`IWxMiniJwtService.createToken(userId)`生成JWT令牌
-- **Token验证**: 过滤器`WxMiniJwtFilter`拦截请求，验证Token的有效性和签名
-- **用户ID提取**: 从Token中解析出用户ID，用于后续业务逻辑处理
+默认访问：`http://localhost`。
 
-#### 线程上下文传递
-- **上下文工具类**: `WxMiniUserContext`使用ThreadLocal存储当前用户ID
-- **设置时机**: 在过滤器验证Token成功后，将用户ID设置到线程上下文
-- **获取方式**: 业务代码中通过`WxMiniUserContext.getCurrentUserId()`获取当前用户ID
-- **清理机制**: 在过滤器finally块中自动清理ThreadLocal，防止内存泄漏
+## 继续建设优先级
 
-#### 自定义鉴权URL配置
-- **拦截路径**: 所有以`/wxmini`开头的请求都会被拦截鉴权
-- **白名单路径**: `WxMiniJwtFilter.checkIsExcludeUri(path)`
+1. 统一 C 端、商家端、后台三套订单状态枚举和数据库状态值。
+2. 完成真实微信支付、支付回调、退款、支付记录和订单状态联动。
+3. 补齐商家端营销、员工新增编辑、入驻申请、退款审核等真实接口。
+4. 将运营后台业务页面从 mock 切换到真实 API。
+5. 增加租户隔离校验，确保所有商家端接口只能访问本商家/本门店数据。
+6. 补齐定时任务：待支付关闭、核销码过期退款、分账结算、订阅消息提醒。
 
-### 支付模板
-
-#### 核心抽象类：AbsWxPayBaseService
-- **泛型设计**: 使用泛型`<P>`支持不同类型的支付请求参数
-- **模板方法模式**: 定义了完整的支付流程，子类只需实现具体的业务逻辑
-- **并发控制**: 使用`ConcurrentHashMap`实现无锁化的资源占用控制，避免重复订单
-
-#### 支付流程
-1. **资源锁定**: 通过`getResourceId()`获取资源ID，使用原子操作避免并发创建重复订单
-2. **业务核验**: `checkBeforeCreatOrder()`进行业务前置检查
-3. **参数构建**: `buildOrderParam()`构建微信支付所需参数
-4. **订单创建**: 调用微信支付API创建订单
-5. **数据保存**: `saveOrderInfo()`保存订单信息到数据库
-6. **结果返回**: 返回支付参数给前端
-
-#### 模板优势
-- **高并发支持**: 无锁化的并发控制，避免线程阻塞
-- **业务隔离**: 通过泛型和抽象方法，支持不同业务场景的支付需求
-- **流程标准化**: 统一的支付流程，减少重复代码
-- **扩展性强**: 新增支付业务只需继承基类并实现抽象方法
-
-## 参考
-+ [微信官方文档-小程序登录](https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/login.html)
-+ [小程序对接demo](https://github.com/binarywang/weixin-java-miniapp-demo)
-+ [支付V3版本](https://github.com/binarywang/WxJava/tree/develop/spring-boot-starters/wx-java-pay-spring-boot-starter)

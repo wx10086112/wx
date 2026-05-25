@@ -1,6 +1,7 @@
 package com.ruoyi.wxmini.controller;
 
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.mall.common.util.WriteOffCodeGenerator;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
@@ -36,6 +37,8 @@ public class WxOrderController {
     private IProductService productService;
     @Resource
     private IMerchantService merchantService;
+    @Resource
+    private WriteOffCodeGenerator writeOffCodeGenerator;
 
     @PostMapping("/create")
     public AjaxResult create(@RequestBody WxOrderCreateRequestDto requestDto) {
@@ -244,12 +247,6 @@ public class WxOrderController {
     }
 
     private String generateWriteOffCode() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        StringBuilder sb = new StringBuilder();
-        Random random = new Random();
-        for (int i = 0; i < 6; i++) {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
-        }
-        return sb.toString();
+        return writeOffCodeGenerator.generate();
     }
 }

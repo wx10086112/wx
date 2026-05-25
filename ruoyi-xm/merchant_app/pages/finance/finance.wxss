@@ -49,29 +49,37 @@
   color: #7a8798;
 }
 
-.withdraw-panel,
+.account-panel,
 .section-panel {
   margin-top: 22rpx;
   padding: 28rpx;
 }
 
-.withdraw-row {
-  margin-top: 18rpx;
+.account-row {
   display: flex;
-  gap: 14rpx;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 18rpx 0 0;
 }
 
-.amount-input {
-  flex: 1;
-  height: 78rpx;
-  padding: 0 20rpx;
-  border-radius: 16rpx;
-  background: #f6f9ff;
-  font-size: 28rpx;
+.account-label {
+  color: #7a8798;
+  font-size: 24rpx;
 }
 
-.withdraw-btn {
-  width: 210rpx;
+.account-value {
+  color: #1f2a37;
+  font-size: 26rpx;
+  font-weight: 600;
+  text-align: right;
+}
+
+.account-status {
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  background: #ecfdf5;
+  color: #059669;
+  font-size: 22rpx;
 }
 
 .section-head {
@@ -160,6 +168,10 @@
 
 .ledger-status.done {
   color: #059669;
+}
+
+.ledger-status.failed {
+  color: #dc2626;
 }
 
 .empty-inline {

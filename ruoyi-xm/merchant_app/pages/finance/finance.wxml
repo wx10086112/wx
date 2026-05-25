@@ -1,8 +1,8 @@
 <view class="page-shell">
   <view class="finance-hero">
-    <text class="hero-label">可提现余额</text>
-    <text class="hero-amount">¥{{overview.withdrawableText}}</text>
-    <text class="hero-meta">已扣除平台佣金 ¥{{overview.platformFeeText}}</text>
+    <text class="hero-label">待自动到账金额</text>
+    <text class="hero-amount">¥{{overview.pendingAutoTransferText}}</text>
+    <text class="hero-meta">微信官方 {{overview.autoTransferMode || 'T+1'}} 自动打款 · 已扣除平台佣金 ¥{{overview.platformFeeText}}</text>
   </view>
 
   <view class="stats-grid">
@@ -16,25 +16,36 @@
     </view>
     <view class="stats-card panel">
       <text class="stats-value">¥{{overview.pendingSettleText}}</text>
-      <text class="stats-label">T+1待结算</text>
+      <text class="stats-label">待T+1</text>
     </view>
     <view class="stats-card panel">
-      <text class="stats-value">{{overview.completedOrderCount || 0}}</text>
-      <text class="stats-label">完成订单</text>
+      <text class="stats-value">¥{{overview.settledText}}</text>
+      <text class="stats-label">已到账</text>
     </view>
   </view>
 
-  <view class="panel withdraw-panel">
-    <text class="section-title">在线提现</text>
-    <view class="withdraw-row">
-      <input class="amount-input" type="digit" value="{{withdrawAmount}}" bindinput="handleAmountInput" placeholder="输入提现金额" />
-      <button class="primary-btn withdraw-btn" bindtap="submitWithdraw">申请提现</button>
+  <view class="panel account-panel">
+    <view class="section-head">
+      <text class="section-title">结算账户</text>
+      <text class="account-status">{{overview.settlementAccount.status || 'PENDING'}}</text>
+    </view>
+    <view class="account-row">
+      <text class="account-label">结算主体</text>
+      <text class="account-value">{{overview.settlementAccount.accountName || '-'}}</text>
+    </view>
+    <view class="account-row">
+      <text class="account-label">结算银行</text>
+      <text class="account-value">{{overview.settlementAccount.bankName || '-'}}</text>
+    </view>
+    <view class="account-row">
+      <text class="account-label">银行卡尾号</text>
+      <text class="account-value">{{overview.settlementAccount.accountNoTail || '-'}}</text>
     </view>
   </view>
 
   <view class="panel section-panel">
     <view class="section-head">
-      <text class="section-title">分账流水</text>
+      <text class="section-title">订单结算流水</text>
       <view class="filter-tabs">
         <text
           wx:for="{{filterTabs}}"
@@ -65,22 +76,22 @@
   </view>
 
   <view class="panel section-panel">
-    <text class="section-title">提现进度</text>
-    <view wx:if="{{withdrawList.length}}">
-      <view wx:for="{{withdrawList}}" wx:key="withdrawId" class="ledger-row">
+    <text class="section-title">到账记录</text>
+    <view wx:if="{{settlementRecordList.length}}">
+      <view wx:for="{{settlementRecordList}}" wx:key="settlementId" class="ledger-row">
         <view class="ledger-main">
-          <text class="ledger-title">提现申请 #{{item.withdrawId}}</text>
-          <text class="ledger-meta">{{item.applyTimeText}}</text>
+          <text class="ledger-title">{{item.title}}</text>
+          <text class="ledger-meta">{{item.orderNo || item.settlementId}} · 预计 {{item.expectedTransferTimeText}}</text>
           <text class="ledger-meta">{{item.remark}}</text>
         </view>
         <view class="ledger-side">
           <text class="ledger-amount">¥{{item.amountText}}</text>
-          <text class="ledger-status {{item.status === 'PROCESSING' ? 'processing' : 'done'}}">{{item.statusText}}</text>
+          <text class="ledger-status {{item.status === 'TRANSFERRING' ? 'processing' : item.status === 'ARRIVED' ? 'done' : item.status === 'FAILED' ? 'failed' : ''}}">{{item.statusText}}</text>
         </view>
       </view>
     </view>
     <view wx:else class="empty-inline">
-      <text class="empty-text">暂无提现记录</text>
+      <text class="empty-text">暂无到账记录</text>
     </view>
   </view>
 </view>

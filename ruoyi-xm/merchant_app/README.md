@@ -23,8 +23,8 @@
 | `PUT /store/profile` | 更新门店信息 |
 | `GET /staff/list` | 员工列表 |
 | `PUT /staff/permission` | 员工状态切换 |
-| `GET /finance/overview` | 财务概览 |
-| `POST /finance/withdraw` | 提现申请 |
+| `GET /settlement/overview` | 微信官方 T+1 自动结算概览 |
+| `GET /finance/overview` | 兼容旧版，返回同结算概览 |
 
 ### 待实现
 
@@ -93,7 +93,7 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 | `goods.manage` | 商品管理 | 商品 CRUD、上下架、图片上传 |
 | `store.manage` | 门店设置 | 门店信息读写 |
 | `staff.manage` | 员工权限 | 员工列表、权限修改 |
-| `finance.manage` | 财务收益 | 财务概览、提现申请 |
+| `finance.manage` | 结算中心 | 结算概览、到账记录、订单结算流水 |
 
 角色模板：
 
@@ -677,9 +677,9 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ---
 
-### 2.8 财务模块
+### 2.8 结算中心模块
 
-#### `GET /wxmini/merchant-mini/finance/overview` — 财务概览
+#### `GET /wxmini/merchant-mini/settlement/overview` — 微信官方 T+1 自动结算概览
 
 需权限：`finance.manage`
 
@@ -690,9 +690,32 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
   "todayIncomeAmount": 32600,
   "monthIncomeAmount": 156800,
   "pendingSettleAmount": 45000,
-  "withdrawableAmount": 111800,
+  "settledAmount": 111800,
+  "processingAmount": 12000,
+  "pendingAutoTransferAmount": 57000,
   "platformFeeAmount": 17400,
   "completedOrderCount": 8,
+  "autoTransferMode": "T+1",
+  "nextAutoTransferTime": 1778400000000,
+  "settlementAccount": {
+    "accountName": "蓝屿轻养·国贸旗舰店",
+    "bankName": "招商银行",
+    "accountNoTail": "6601",
+    "status": "VERIFIED"
+  },
+  "settlementRecordList": [
+    {
+      "settlementId": "S202605250001",
+      "orderNo": "M202605080003",
+      "title": "芳香舒压 SPA 90 分钟",
+      "amount": 16920,
+      "status": "ARRIVED",
+      "applyTime": 1778190000000,
+      "expectedTransferTime": 1778276400000,
+      "arriveTime": 1778276400000,
+      "remark": "微信已自动打款至结算卡"
+    }
+  ],
   "ledgerList": [
     {
       "ledgerId": 1,
@@ -705,15 +728,6 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
       "finishTime": 1778190000000,
       "settleTime": 1778276400000
     }
-  ],
-  "withdrawList": [
-    {
-      "withdrawId": 1,
-      "amount": 50000,
-      "status": "PROCESSING",
-      "applyTime": 1778200000000,
-      "remark": "商家端在线提现申请"
-    }
   ]
 }
 ```
@@ -722,47 +736,26 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 |------|------|
 | `todayIncomeAmount` | 今日收入（分），仅计算商家分成部分 |
 | `monthIncomeAmount` | 本月收入（分） |
-| `pendingSettleAmount` | 待结算金额（分），T+1 结算 |
-| `withdrawableAmount` | 可提现余额（分），已结算金额 - 冻结提现金额 |
+| `pendingSettleAmount` | 已完单但未到 T+1 打款时间的金额 |
+| `settledAmount` | 已到账金额 |
+| `processingAmount` | 微信已受理、尚未到账的金额 |
+| `pendingAutoTransferAmount` | 待到账总额 |
 | `platformFeeAmount` | 平台佣金累计（分） |
+| `settlementAccount.status` | `VERIFIED` / `PENDING` / `DISABLED` |
+| `settlementRecordList[].status` | `WAITING_T1` / `TRANSFERRING` / `ARRIVED` / `FAILED` |
 | `ledgerList[].merchantAmount` | 商家实收 = 订单金额 × 90% |
 | `ledgerList[].platformFeeAmount` | 平台佣金 = 订单金额 × 10% |
 | `ledgerList[].status` | `SETTLED` 已结算 / `PENDING` 待结算 |
-| `withdrawList[].status` | `PROCESSING` 处理中 / `SUCCESS` 已到账 / `FAILED` 失败 |
 
 ---
 
-#### `POST /wxmini/merchant-mini/finance/withdraw` — 申请提现
+#### `GET /wxmini/merchant-mini/finance/overview` — 兼容旧接口
 
-需权限：`finance.manage`
+短期保留，后端内部返回 `settlement/overview` 的同一套数据。
 
-请求体：
+#### `POST /wxmini/merchant-mini/finance/withdraw` — 已废弃
 
-```json
-{
-  "amount": 50000
-}
-```
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| amount | long | 提现金额（分），不能超过可提现余额 |
-
-响应 `data`：
-
-```json
-{
-  "success": true,
-  "message": "提现申请已提交",
-  "record": {
-    "withdrawId": 2,
-    "amount": 50000,
-    "status": "PROCESSING",
-    "applyTime": 1778300000000,
-    "remark": "商家端在线提现申请，等待平台/微信支付出款处理"
-  }
-}
-```
+商家端已切换为微信官方 T+1 自动结算，不再受理手动提现。后端返回提示文案：`该版本已切换为微信自动结算，无需商家手动提现`。
 
 ---
 
@@ -937,7 +930,7 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 | 商品编辑 `pages/goods-edit` | `POST /goods/save`、`POST /goods/image/upload` | localStorage |
 | 门店设置 `pages/store` | `GET /store/profile`、`PUT /store/profile` | localStorage |
 | 员工管理 `pages/staff` | `GET /staff/list`、`POST /staff/add`、`PUT /staff/update`、`PUT /staff/permission` | localStorage |
-| 财务收益 `pages/finance` | `GET /finance/overview`、`POST /finance/withdraw` | localStorage 计算 |
+| 结算中心 `pages/finance` | `GET /settlement/overview` | localStorage 计算 |
 | 营销活动 `pages/marketing` | `GET /marketing/coupon/list`、`POST /marketing/coupon/save`、`PUT /marketing/coupon/status` | localStorage |
 | **入驻申请 `pages/apply`** | `POST /apply/submit`、`GET /apply/status`、`POST /common/upload` | localStorage 状态 |
 
@@ -1077,6 +1070,6 @@ C 端用户                    商家端                      后端
 4. **商品管理**：已完成 CRUD + 上下架 + 批量操作 + 图片上传
 5. **门店设置**：已完成信息读写
 6. **员工管理**：已完成列表/权限修改，待实现：添加员工、编辑员工
-7. **财务**：已完成财务概览 + 提现
+7. **结算中心**：已切换为微信官方 T+1 自动结算展示，手动提现已废弃
 8. **营销**：待实现优惠券和满减活动管理
 9. **入驻申请**：待实现提交申请 + 查询状态

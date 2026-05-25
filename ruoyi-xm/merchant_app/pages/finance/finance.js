@@ -7,8 +7,7 @@ Page({
   data: {
     overview: {},
     ledgerList: [],
-    withdrawList: [],
-    withdrawAmount: '',
+    settlementRecordList: [],
     filterTabs: [
       { label: '全部', value: 'ALL' },
       { label: '今日', value: 'TODAY' },
@@ -24,16 +23,16 @@ Page({
 
   loadData() {
     api
-      .getFinanceOverview()
+      .getSettlementOverview()
       .then((overview = {}) => {
-        this.renderFinance(overview)
+        this.renderSettlement(overview)
       })
       .catch(() => {
         util.showToast('加载失败，请重试')
       })
   },
 
-  renderFinance(overview = {}) {
+  renderSettlement(overview = {}) {
     const filteredLedgerList = this.filterLedgerByDate(overview.ledgerList || [], this.data.currentFilter)
     const ledgerList = filteredLedgerList.slice(0, 20).map((item) => ({
       ...item,
@@ -44,11 +43,13 @@ Page({
       settleTimeText: util.formatDate(item.settleTime),
       statusText: item.status === 'SETTLED' ? '已结算' : 'T+1待结算'
     }))
-    const withdrawList = (overview.withdrawList || []).slice(0, 10).map((item) => ({
+    const settlementRecordList = (overview.settlementRecordList || []).slice(0, 20).map((item) => ({
       ...item,
       amountText: util.formatPrice(item.amount),
       applyTimeText: util.formatDate(item.applyTime),
-      statusText: item.status === 'PROCESSING' ? '处理中' : '已到账'
+      expectedTransferTimeText: util.formatDate(item.expectedTransferTime),
+      arriveTimeText: item.arriveTime ? util.formatDate(item.arriveTime) : '',
+      statusText: this.formatSettlementStatus(item.status)
     }))
 
     this.setData({
@@ -57,12 +58,24 @@ Page({
         todayIncomeText: util.formatPrice(overview.todayIncomeAmount),
         monthIncomeText: util.formatPrice(overview.monthIncomeAmount),
         pendingSettleText: util.formatPrice(overview.pendingSettleAmount),
-        withdrawableText: util.formatPrice(overview.withdrawableAmount),
+        settledText: util.formatPrice(overview.settledAmount),
+        processingText: util.formatPrice(overview.processingAmount),
+        pendingAutoTransferText: util.formatPrice(overview.pendingAutoTransferAmount),
         platformFeeText: util.formatPrice(overview.platformFeeAmount)
       },
       ledgerList,
-      withdrawList
+      settlementRecordList
     })
+  },
+
+  formatSettlementStatus(status) {
+    const statusMap = {
+      WAITING_T1: '待T+1打款',
+      TRANSFERRING: '打款中',
+      ARRIVED: '已到账',
+      FAILED: '到账失败'
+    }
+    return statusMap[status] || '待处理'
   },
 
   filterLedgerByDate(ledgerList = [], filter = 'ALL') {
@@ -85,30 +98,5 @@ Page({
     this.setData({ currentFilter: filter }, () => {
       this.loadData()
     })
-  },
-
-  handleAmountInput(e) {
-    this.setData({
-      withdrawAmount: e.detail.value
-    })
-  },
-
-  submitWithdraw() {
-    const amount = Math.round(Number(this.data.withdrawAmount || 0) * 100)
-    if (!amount) {
-      util.showToast('请输入提现金额')
-      return
-    }
-
-    api
-      .applyFinanceWithdraw({ amount })
-      .then(() => {
-        util.showToast('提现申请已提交', 'success')
-        this.setData({ withdrawAmount: '' })
-        this.loadData()
-      })
-      .catch(() => {
-        util.showToast('提交失败，请重试')
-      })
   }
 })

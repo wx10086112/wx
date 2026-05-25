@@ -350,7 +350,16 @@ public class MerchantMiniController {
         if (accessDenied != null) {
             return accessDenied;
         }
-        return AjaxResult.success(merchantMiniMockService.getFinanceOverview());
+        return AjaxResult.success(merchantMiniMockService.getSettlementOverview());
+    }
+
+    @GetMapping("/settlement/overview")
+    public AjaxResult getSettlementOverview() {
+        AjaxResult accessDenied = checkAccess(PERMISSION_FINANCE_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        return AjaxResult.success(merchantMiniMockService.getSettlementOverview());
     }
 
     @PostMapping("/finance/withdraw")
@@ -359,12 +368,7 @@ public class MerchantMiniController {
         if (accessDenied != null) {
             return accessDenied;
         }
-        try {
-            Long amount = requestDto == null ? null : requestDto.getAmount();
-            return AjaxResult.success(merchantMiniMockService.applyWithdraw(amount));
-        } catch (IllegalArgumentException e) {
-            return AjaxResult.error(e.getMessage());
-        }
+        return AjaxResult.error("该版本已切换为微信自动结算，无需商家手动提现");
     }
 
     // ==================== 营销模块（Stub，待数据库表就绪后实现） ====================

@@ -8,6 +8,7 @@ import com.ruoyi.wxmini.dto.merchant.MerchantMiniOverviewDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffPermissionRequestDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffRequestDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffUserDto;
+import com.ruoyi.wxmini.dto.merchant.MerchantMiniSettlementOverviewDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStoreDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniUploadResultDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniVerifyRecordDto;
@@ -68,6 +69,8 @@ public interface IMerchantMiniMockService {
     List<MerchantMiniStaffUserDto> updateStaffPermission(MerchantMiniStaffPermissionRequestDto requestDto);
 
     MerchantMiniFinanceOverviewDto getFinanceOverview();
+
+    MerchantMiniSettlementOverviewDto getSettlementOverview();
 
     MerchantMiniWithdrawRecordDto applyWithdraw(Long amount);
 }
