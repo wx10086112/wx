@@ -41,14 +41,30 @@ public class DashboardServiceImpl implements IDashboardService {
 
     @Override
     public Map<String, Object> selectTrendData() {
+        return selectTrendData("day");
+    }
+
+    @Override
+    public Map<String, Object> selectTrendData(String range) {
+        if (range == null || range.isEmpty()) {
+            range = "day";
+        }
+        switch (range) {
+            case "week": return selectTrendByWeek();
+            case "month": return selectTrendByMonth();
+            case "year": return selectTrendByYear();
+            default: return selectTrendByDay();
+        }
+    }
+
+    private Map<String, Object> selectTrendByDay() {
         Map<String, Object> trend = new HashMap<>();
         SimpleDateFormat sdf = new SimpleDateFormat("MM-dd");
         Calendar cal = Calendar.getInstance();
 
         List<String> dates = new ArrayList<>();
-        Map<String, Integer> countMap = new HashMap<>();
-        Map<String, BigDecimal> amountMap = new HashMap<>();
-        Map<String, Integer> completedMap = new HashMap<>();
+        Map<String, Integer> countMap = new LinkedHashMap<>();
+        Map<String, BigDecimal> amountMap = new LinkedHashMap<>();
 
         for (int i = 6; i >= 0; i--) {
             cal.setTime(new Date());
@@ -57,13 +73,13 @@ public class DashboardServiceImpl implements IDashboardService {
             dates.add(dateStr);
             countMap.put(dateStr, 0);
             amountMap.put(dateStr, BigDecimal.ZERO);
-            completedMap.put(dateStr, 0);
         }
 
-        List<Map<String, Object>> dbData = mallOrderMapper.selectDailyStatsForWeek();
+        List<Map<String, Object>> dbData = mallOrderMapper.selectTrendByDay(7);
+        SimpleDateFormat dbSdf = new SimpleDateFormat("MM-dd");
         for (Map<String, Object> row : dbData) {
             Object dateObj = row.get("date");
-            String date = sdf.format(dateObj);
+            String date = dbSdf.format(dateObj);
             if (countMap.containsKey(date)) {
                 countMap.put(date, ((Number) row.get("orderCount")).intValue());
                 amountMap.put(date, (BigDecimal) row.get("totalAmount"));
@@ -72,17 +88,74 @@ public class DashboardServiceImpl implements IDashboardService {
 
         List<Integer> orderCounts = new ArrayList<>();
         List<BigDecimal> amounts = new ArrayList<>();
-        List<Integer> completedCounts = new ArrayList<>();
         for (String d : dates) {
             orderCounts.add(countMap.get(d));
             amounts.add(amountMap.get(d));
-            completedCounts.add(completedMap.get(d));
         }
 
         trend.put("dates", dates);
         trend.put("orderCounts", orderCounts);
         trend.put("amounts", amounts);
-        trend.put("completedCounts", completedCounts);
+        return trend;
+    }
+
+    private Map<String, Object> selectTrendByWeek() {
+        Map<String, Object> trend = new HashMap<>();
+        List<String> dates = new ArrayList<>();
+        List<Integer> orderCounts = new ArrayList<>();
+        List<BigDecimal> amounts = new ArrayList<>();
+
+        List<Map<String, Object>> dbData = mallOrderMapper.selectTrendByWeek(7);
+        for (Map<String, Object> row : dbData) {
+            String week = "第" + row.get("weekNum") + "周";
+            dates.add(week);
+            orderCounts.add(((Number) row.get("orderCount")).intValue());
+            amounts.add((BigDecimal) row.get("totalAmount"));
+        }
+
+        trend.put("dates", dates);
+        trend.put("orderCounts", orderCounts);
+        trend.put("amounts", amounts);
+        return trend;
+    }
+
+    private Map<String, Object> selectTrendByMonth() {
+        Map<String, Object> trend = new HashMap<>();
+        List<String> dates = new ArrayList<>();
+        List<Integer> orderCounts = new ArrayList<>();
+        List<BigDecimal> amounts = new ArrayList<>();
+
+        List<Map<String, Object>> dbData = mallOrderMapper.selectTrendByMonth(12);
+        for (Map<String, Object> row : dbData) {
+            String month = row.get("monthNum") + "月";
+            dates.add(month);
+            orderCounts.add(((Number) row.get("orderCount")).intValue());
+            amounts.add((BigDecimal) row.get("totalAmount"));
+        }
+
+        trend.put("dates", dates);
+        trend.put("orderCounts", orderCounts);
+        trend.put("amounts", amounts);
+        return trend;
+    }
+
+    private Map<String, Object> selectTrendByYear() {
+        Map<String, Object> trend = new HashMap<>();
+        List<String> dates = new ArrayList<>();
+        List<Integer> orderCounts = new ArrayList<>();
+        List<BigDecimal> amounts = new ArrayList<>();
+
+        List<Map<String, Object>> dbData = mallOrderMapper.selectTrendByYear(5);
+        for (Map<String, Object> row : dbData) {
+            String year = row.get("yearNum") + "年";
+            dates.add(year);
+            orderCounts.add(((Number) row.get("orderCount")).intValue());
+            amounts.add((BigDecimal) row.get("totalAmount"));
+        }
+
+        trend.put("dates", dates);
+        trend.put("orderCounts", orderCounts);
+        trend.put("amounts", amounts);
         return trend;
     }
 

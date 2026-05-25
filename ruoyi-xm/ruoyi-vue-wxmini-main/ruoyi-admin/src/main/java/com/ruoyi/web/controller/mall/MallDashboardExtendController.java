@@ -36,8 +36,8 @@ public class MallDashboardExtendController extends BaseController {
      */
     @PreAuthorize("@ss.hasPermi('mall:dashboard:list')")
     @GetMapping("/trend")
-    public AjaxResult trend() {
-        return success(dashboardService.selectTrendData());
+    public AjaxResult trend(@RequestParam(defaultValue = "day") String range) {
+        return success(dashboardService.selectTrendData(range));
     }
 
     /**

@@ -60,4 +60,28 @@ public interface MallOrderMapper {
     List<Map<String, Object>> selectDailyStatsForWeek();
 
     MallOrder selectOrderByWriteOffCode(String code);
+
+    @Select("SELECT DATE(create_time) AS date, COUNT(*) AS orderCount, " +
+            "IFNULL(SUM(pay_amount), 0) AS totalAmount " +
+            "FROM mall_order WHERE DATE(create_time) >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY) " +
+            "GROUP BY DATE(create_time) ORDER BY date")
+    List<Map<String, Object>> selectTrendByDay(@Param("days") int days);
+
+    @Select("SELECT YEARWEEK(create_time, 1) AS weekNum, COUNT(*) AS orderCount, " +
+            "IFNULL(SUM(pay_amount), 0) AS totalAmount " +
+            "FROM mall_order WHERE create_time >= DATE_SUB(CURDATE(), INTERVAL #{weeks} WEEK) " +
+            "GROUP BY YEARWEEK(create_time, 1) ORDER BY weekNum")
+    List<Map<String, Object>> selectTrendByWeek(@Param("weeks") int weeks);
+
+    @Select("SELECT MONTH(create_time) AS monthNum, COUNT(*) AS orderCount, " +
+            "IFNULL(SUM(pay_amount), 0) AS totalAmount " +
+            "FROM mall_order WHERE create_time >= DATE_SUB(CURDATE(), INTERVAL #{months} MONTH) " +
+            "GROUP BY YEAR(create_time), MONTH(create_time) ORDER BY YEAR(create_time), MONTH(create_time)")
+    List<Map<String, Object>> selectTrendByMonth(@Param("months") int months);
+
+    @Select("SELECT YEAR(create_time) AS yearNum, COUNT(*) AS orderCount, " +
+            "IFNULL(SUM(pay_amount), 0) AS totalAmount " +
+            "FROM mall_order WHERE create_time >= DATE_SUB(CURDATE(), INTERVAL #{years} YEAR) " +
+            "GROUP BY YEAR(create_time) ORDER BY yearNum")
+    List<Map<String, Object>> selectTrendByYear(@Param("years") int years);
 }

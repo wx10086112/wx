@@ -6,6 +6,7 @@ import java.util.Map;
 public interface IDashboardService {
     Map<String, Object> selectDashboardStats();
     Map<String, Object> selectTrendData();
+    Map<String, Object> selectTrendData(String range);
     List<Map<String, Object>> selectOrderStatusData();
     List<Map<String, Object>> selectHotProducts();
     List<Map<String, Object>> selectMerchantRank();
