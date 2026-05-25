@@ -1,4 +1,3 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
 
 const couponStatusMap = {
@@ -20,15 +19,12 @@ Page({
   },
 
   onLoad() {
-    this.setData({
-      allCoupons: mock.couponList.map((item) => ({
         ...item,
         statusText: couponStatusMap[item.status] || '不可用',
         thresholdText: (item.thresholdAmount / 100).toFixed(0),
         amountText: (item.amount / 100).toFixed(0),
         isAvailable: item.status === 'AVAILABLE'
       }))
-    })
     this.filterCoupons()
   },
 
@@ -47,7 +43,6 @@ Page({
   },
 
   onUseCoupon(e) {
-    const coupon = e.currentTarget.dataset.coupon
     util.switchTab('/pages/home/home')
   },
 

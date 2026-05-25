@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.product.mapper.ProductImageMapper">
+
+    <resultMap type="com.ruoyi.mall.product.domain.ProductImage" id="ProductImageResult">
+        <result property="id" column="id"/>
+        <result property="productId" column="product_id"/>
+        <result property="merchantId" column="merchant_id"/>
+        <result property="imageType" column="image_type"/>
+        <result property="imageUrl" column="image_url"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="skuValue" column="sku_value"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectProductImageVo">
+        select id, product_id, merchant_id, image_type, image_url,
+               sort_order, sku_value, status, create_time, update_time
+        from product_image
+    </sql>
+
+    <select id="selectProductImageById" parameterType="Long" resultMap="ProductImageResult">
+        <include refid="selectProductImageVo"/>
+        where id = #{id} and status = 1
+    </select>
+
+    <select id="selectProductImageList" parameterType="com.ruoyi.mall.product.domain.ProductImage" resultMap="ProductImageResult">
+        <include refid="selectProductImageVo"/>
+        <where>
+            <if test="productId != null">and product_id = #{productId}</if>
+            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
+            <if test="imageType != null and imageType != ''">and image_type = #{imageType}</if>
+            <if test="status != null">and status = #{status}</if>
+        </where>
+        order by sort_order asc, create_time asc
+    </select>
+
+    <select id="selectByProductId" parameterType="Long" resultMap="ProductImageResult">
+        <include refid="selectProductImageVo"/>
+        where product_id = #{productId} and status = 1
+        order by sort_order asc, create_time asc
+    </select>
+
+    <select id="selectByProductIdAndType" resultMap="ProductImageResult">
+        <include refid="selectProductImageVo"/>
+        where product_id = #{productId}
+          and image_type = #{imageType}
+          and status = 1
+        order by sort_order asc
+    </select>
+
+    <insert id="insertProductImage" parameterType="com.ruoyi.mall.product.domain.ProductImage" useGeneratedKeys="true" keyProperty="id">
+        insert into product_image (
+            product_id, merchant_id, image_type, image_url,
+            sort_order, sku_value, status, create_by, create_time
+        ) values (
+            #{productId}, #{merchantId}, #{imageType}, #{imageUrl},
+            #{sortOrder}, #{skuValue}, #{status}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateProductImage" parameterType="com.ruoyi.mall.product.domain.ProductImage">
+        update product_image
+        <set>
+            <if test="imageType != null">image_type = #{imageType},</if>
+            <if test="imageUrl != null">image_url = #{imageUrl},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="skuValue != null">sku_value = #{skuValue},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <update id="deleteProductImageById" parameterType="Long">
+        update product_image set status = 0 where id = #{id}
+    </update>
+
+    <update id="deleteByProductId" parameterType="Long">
+        update product_image set status = 0 where product_id = #{productId}
+    </update>
+
+</mapper>
