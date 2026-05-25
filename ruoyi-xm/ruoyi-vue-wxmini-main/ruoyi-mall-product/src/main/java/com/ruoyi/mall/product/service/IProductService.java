@@ -16,4 +16,6 @@ public interface IProductService {
     int deleteProductById(Long id);
 
     int deleteProductByIds(Long[] ids);
+
+    int countProductByMerchantId(Long merchantId);
 }

@@ -36,11 +36,10 @@ Page({
     api
       .getMerchantGoodsList()
       .then((goodsList = []) => {
-        util.setGoodsList(goodsList)
         this.renderGoodsForm(goodsList)
       })
       .catch(() => {
-        this.renderGoodsForm(util.getGoodsList())
+        util.showToast('加载失败，请重试')
       })
   },
 
@@ -95,36 +94,13 @@ Page({
 
     api
       .saveMerchantGoods(nextItem)
-      .then((savedGoods) => {
-        this.syncLocalGoods(savedGoods || nextItem)
+      .then(() => {
         util.showToast('保存成功', 'success')
         this.backToList()
       })
       .catch(() => {
-        const localGoods = {
-          ...nextItem,
-          goodsId: this.data.goodsId || Date.now()
-        }
-        this.syncLocalGoods(localGoods)
-        util.showToast('后端未联通，已保存本地演示数据')
-        this.backToList()
+        util.showToast('保存失败，请重试')
       })
-  },
-
-  syncLocalGoods(goods) {
-    const currentGoodsList = util.getGoodsList()
-    const exists = currentGoodsList.some((item) => item.goodsId === goods.goodsId)
-    const nextGoodsList = exists
-      ? currentGoodsList.map((item) => (item.goodsId === goods.goodsId ? { ...item, ...goods } : item))
-      : [
-          {
-            ...goods,
-            sort: goods.sort || currentGoodsList.length + 1
-          },
-          ...currentGoodsList
-        ]
-
-    util.setGoodsList(nextGoodsList)
   },
 
   backToList() {
@@ -165,10 +141,7 @@ Page({
             util.showToast('图片已上传', 'success')
           })
           .catch(() => {
-            this.setData({
-              'form.imageUrl': filePath
-            })
-            util.showToast('后端未联通，已使用本地图片')
+            util.showToast('上传失败，请重试')
           })
       })
       .catch(() => {

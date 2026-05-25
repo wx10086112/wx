@@ -42,66 +42,8 @@ Page({
         })
       })
       .catch(() => {
-        this.loadLocalData()
+        util.showToast('加载失败，请重试')
       })
-  },
-
-  loadLocalData() {
-    const storeInfo = util.getStoreInfo()
-    const goodsList = util.getGoodsList()
-    const orderList = util.getOrderList()
-    const stats = util.buildWorkbenchStats(orderList, goodsList)
-
-    // 构建提醒列表
-    const alertList = []
-    if (stats.pendingAcceptCount > 0) {
-      alertList.push({
-        type: 'urgent',
-        text: `有 ${stats.pendingAcceptCount} 个新订单等待接单，请及时处理！`,
-        filter: 'PENDING_ACCEPT'
-      })
-    }
-    if (stats.abnormalCount > 0) {
-      alertList.push({
-        type: 'warning',
-        text: `有 ${stats.abnormalCount} 个异常订单（退款/拒单），请关注处理。`,
-        filter: 'REFUNDING'
-      })
-    }
-    const threshold = Number(storeInfo.stockAlertThreshold || 20)
-    const lowStockGoods = util.getLowStockGoods(threshold)
-    if (lowStockGoods.length > 0) {
-      alertList.push({
-        type: 'warning',
-        text: `${lowStockGoods.length} 个商品库存不足（≤${threshold}），请及时补货。`,
-        action: 'goods'
-      })
-    }
-
-    this.setData({
-      staffUser: app.globalData.staffUser || {},
-      storeInfo,
-      todaySalesText: util.formatPrice(stats.todaySalesAmount),
-      alertList,
-      statsCardList: [
-        { label: '待接单', value: stats.pendingAcceptCount, highlight: stats.pendingAcceptCount > 0 },
-        { label: '待核销', value: stats.pendingVerifyCount },
-        { label: '已完成', value: stats.completedCount },
-        { label: '退款中', value: stats.refundingCount, warn: stats.refundingCount > 0 },
-        { label: '在售套餐', value: stats.onShelfCount }
-      ],
-      quickActionList: this.buildQuickActions(),
-      pendingOrderList: orderList
-        .filter((item) => ['PENDING_ACCEPT', 'PENDING_VERIFY'].includes(item.status))
-        .sort((a, b) => (b.payTime || 0) - (a.payTime || 0))
-        .slice(0, 5)
-        .map((item) => ({
-          ...item,
-          payAmountText: util.formatPrice(item.payAmount),
-          payTimeText: util.formatDate(item.payTime),
-          statusMeta: util.getOrderStatusMeta(item.status)
-        }))
-    })
   },
 
   buildQuickActions() {
@@ -119,13 +61,7 @@ Page({
 
   toggleBusinessStatus() {
     if (!app.needPermission(['store.manage'])) return
-    const storeInfo = {
-      ...this.data.storeInfo,
-      businessStatus: !this.data.storeInfo.businessStatus
-    }
-    util.setStoreInfo(storeInfo)
-    this.setData({ storeInfo })
-    util.showToast(storeInfo.businessStatus ? '已切换为营业中' : '已切换为休息中', 'success')
+    util.showToast('请在门店设置中修改营业状态')
   },
 
   goQuickAction(e) {
@@ -156,4 +92,3 @@ Page({
     util.switchTab('/pages/order/order')
   }
 })
-

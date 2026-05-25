@@ -5,28 +5,32 @@ import cn.binarywang.wx.miniapp.bean.WxMaMessage;
 import cn.binarywang.wx.miniapp.constant.WxMaConstants;
 import cn.binarywang.wx.miniapp.message.WxMaMessageRouter;
 import cn.binarywang.wx.miniapp.util.WxMaConfigHolder;
+import com.ruoyi.mall.common.config.WxMaServiceManager;
+import com.ruoyi.mall.merchant.domain.Merchant;
+import com.ruoyi.mall.merchant.service.IMerchantService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.Objects;
 
 /**
- * @author <a href="https://github.com/binarywang">Binary Wang</a>
+ * 微信消息推送验证（多租户：URL路径带AppId）
+ * 每个商家的verifyUrl: https://yourdomain.com/wxmini/portal/{c_mini_app_id}
  */
-// @RestController — 已移至 ruoyi-mall-user，多租户改造后由那边的 WxPortalController 处理
+@RestController
 @RequestMapping("/wxmini/portal/{appid}")
 public class WxPortalController {
     private static final Logger log = LoggerFactory.getLogger(WxPortalController.class);
 
-    private final WxMaService wxMaService;
-    private final WxMaMessageRouter wxMaMessageRouter;
-
-    public WxPortalController(WxMaService wxMaService, WxMaMessageRouter wxMaMessageRouter) {
-        this.wxMaService = wxMaService;
-        this.wxMaMessageRouter = wxMaMessageRouter;
-    }
+    @Resource
+    private WxMaServiceManager wxMaServiceManager;
+    @Resource
+    private IMerchantService merchantService;
+    @Resource
+    private WxMaMessageRouter wxMaMessageRouter;
 
     @GetMapping(produces = "text/plain;charset=utf-8")
     public String authGet(@PathVariable String appid,
@@ -34,23 +38,26 @@ public class WxPortalController {
                           @RequestParam(name = "timestamp", required = false) String timestamp,
                           @RequestParam(name = "nonce", required = false) String nonce,
                           @RequestParam(name = "echostr", required = false) String echostr) {
-        log.info("\n接收到来自微信服务器的认证消息：signature = [{}], timestamp = [{}], nonce = [{}], echostr = [{}]",
-                signature, timestamp, nonce, echostr);
+        log.info("接收到来自微信服务器的认证消息：appid=[{}], signature=[{}], timestamp=[{}], nonce=[{}], echostr=[{}]",
+                appid, signature, timestamp, nonce, echostr);
 
         if (StringUtils.isAnyBlank(signature, timestamp, nonce, echostr)) {
             throw new IllegalArgumentException("请求参数非法，请核实!");
         }
 
-        if (!wxMaService.switchover(appid)) {
+        WxMaService maService = getOrLoadService(appid);
+        if (maService == null) {
             throw new IllegalArgumentException(String.format("未找到对应appid=[%s]的配置，请核实！", appid));
         }
 
-        if (wxMaService.checkSignature(timestamp, nonce, signature)) {
-            WxMaConfigHolder.remove();//清理ThreadLocal
-            return echostr;
+        try {
+            if (maService.checkSignature(timestamp, nonce, signature)) {
+                return echostr;
+            }
+            return "非法请求";
+        } finally {
+            WxMaConfigHolder.remove();
         }
-        WxMaConfigHolder.remove();//清理ThreadLocal
-        return "非法请求";
     }
 
     @PostMapping(produces = "application/xml; charset=UTF-8")
@@ -61,46 +68,49 @@ public class WxPortalController {
                        @RequestParam(name = "signature", required = false) String signature,
                        @RequestParam("timestamp") String timestamp,
                        @RequestParam("nonce") String nonce) {
-        log.info("\n接收微信请求：[msg_signature=[{}], encrypt_type=[{}], signature=[{}]," +
-                        " timestamp=[{}], nonce=[{}], requestBody=[\n{}\n] ",
-                msgSignature, encryptType, signature, timestamp, nonce, requestBody);
+        log.info("接收微信请求：appid=[{}], msg_signature=[{}], encrypt_type=[{}], signature=[{}], timestamp=[{}], nonce=[{}]",
+                appid, msgSignature, encryptType, signature, timestamp, nonce);
 
-        if (!wxMaService.switchover(appid)) {
-            throw new IllegalArgumentException(String.format("未找到对应appid=[%s]的配置，请核实！", appid));
+        WxMaService maService = getOrLoadService(appid);
+        if (maService == null) {
+            throw new IllegalArgumentException(String.format("未找到对应appid=[%s]的配置", appid));
         }
 
-        final boolean isJson = Objects.equals(wxMaService.getWxMaConfig().getMsgDataFormat(),
-                WxMaConstants.MsgDataFormat.JSON);
-        if (StringUtils.isBlank(encryptType)) {
-            // 明文传输的消息
-            WxMaMessage inMessage;
-            if (isJson) {
-                inMessage = WxMaMessage.fromJson(requestBody);
-            } else {//xml
-                inMessage = WxMaMessage.fromXml(requestBody);
+        try {
+            final boolean isJson = Objects.equals(maService.getWxMaConfig().getMsgDataFormat(),
+                    WxMaConstants.MsgDataFormat.JSON);
+            if (StringUtils.isBlank(encryptType)) {
+                WxMaMessage inMessage = isJson ? WxMaMessage.fromJson(requestBody) : WxMaMessage.fromXml(requestBody);
+                this.route(inMessage);
+                return "success";
             }
 
-            this.route(inMessage);
-            WxMaConfigHolder.remove();//清理ThreadLocal
-            return "success";
-        }
-
-        if ("aes".equals(encryptType)) {
-            // 是aes加密的消息
-            WxMaMessage inMessage;
-            if (isJson) {
-                inMessage = WxMaMessage.fromEncryptedJson(requestBody, wxMaService.getWxMaConfig());
-            } else {//xml
-                inMessage = WxMaMessage.fromEncryptedXml(requestBody, wxMaService.getWxMaConfig(),
-                        timestamp, nonce, msgSignature);
+            if ("aes".equals(encryptType)) {
+                WxMaMessage inMessage;
+                if (isJson) {
+                    inMessage = WxMaMessage.fromEncryptedJson(requestBody, maService.getWxMaConfig());
+                } else {
+                    inMessage = WxMaMessage.fromEncryptedXml(requestBody, maService.getWxMaConfig(),
+                            timestamp, nonce, msgSignature);
+                }
+                this.route(inMessage);
+                return "success";
             }
-
-            this.route(inMessage);
-            WxMaConfigHolder.remove();//清理ThreadLocal
-            return "success";
+            throw new RuntimeException("不可识别的加密类型：" + encryptType);
+        } finally {
+            WxMaConfigHolder.remove();
         }
-        WxMaConfigHolder.remove();//清理ThreadLocal
-        throw new RuntimeException("不可识别的加密类型：" + encryptType);
+    }
+
+    private WxMaService getOrLoadService(String appId) {
+        WxMaService service = wxMaServiceManager.getService(appId);
+        if (service != null) return service;
+        Merchant merchant = merchantService.selectMerchantByCAppId(appId);
+        if (merchant != null && StringUtils.isNotBlank(merchant.getCMiniAppSecret())) {
+            wxMaServiceManager.register(appId, merchant.getCMiniAppSecret());
+            return wxMaServiceManager.getService(appId);
+        }
+        return null;
     }
 
     private void route(WxMaMessage message) {
@@ -110,5 +120,4 @@ public class WxPortalController {
             log.error(e.getMessage(), e);
         }
     }
-
 }

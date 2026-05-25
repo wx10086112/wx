@@ -43,4 +43,9 @@ public class ProductServiceImpl implements IProductService {
     public int deleteProductByIds(Long[] ids) {
         return productMapper.deleteProductByIds(ids);
     }
+
+    @Override
+    public int countProductByMerchantId(Long merchantId) {
+        return productMapper.countProductByMerchantId(merchantId);
+    }
 }

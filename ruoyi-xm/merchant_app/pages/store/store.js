@@ -39,11 +39,10 @@ Page({
     api
       .getMerchantProfile()
       .then((storeInfo = {}) => {
-        util.setStoreInfo(storeInfo)
         this.renderStoreForm(storeInfo)
       })
       .catch(() => {
-        this.renderStoreForm(util.getStoreInfo())
+        util.showToast('加载失败，请重试')
       })
   },
 
@@ -97,14 +96,11 @@ Page({
     api
       .updateMerchantProfile(storeInfo)
       .then((savedStoreInfo) => {
-        util.setStoreInfo(savedStoreInfo || storeInfo)
         util.showToast('门店信息已保存', 'success')
         this.renderStoreForm(savedStoreInfo || storeInfo)
       })
       .catch(() => {
-        util.setStoreInfo(storeInfo)
-        util.showToast('后端未联通，已保存本地演示数据')
-        this.renderStoreForm(storeInfo)
+        util.showToast('保存失败，请重试')
       })
   }
 })

@@ -29,10 +29,7 @@ Page({
         })
       })
       .catch(() => {
-        const targetOrder = util.getOrderList().find((item) => item.orderNo === this.data.orderNo) || {}
-        this.setData({
-          order: this.buildOrderDisplay(targetOrder)
-        })
+        util.showToast('加载失败，请重试')
       })
   },
 
@@ -66,9 +63,7 @@ Page({
           this.loadData()
         })
         .catch(() => {
-          const result = util.acceptOrder(this.data.orderNo)
-          util.showToast(result.message, result.success ? 'success' : 'none')
-          this.loadData()
+          util.showToast('操作失败，请重试')
         })
     })
   },
@@ -83,9 +78,7 @@ Page({
           this.loadData()
         })
         .catch(() => {
-          const result = util.rejectOrder(this.data.orderNo, reason)
-          util.showToast(result.message, result.success ? 'success' : 'none')
-          this.loadData()
+          util.showToast('操作失败，请重试')
         })
     })
   },
@@ -100,9 +93,7 @@ Page({
           this.loadData()
         })
         .catch(() => {
-          const result = util.shipOrder(this.data.orderNo)
-          util.showToast(result.message, result.success ? 'success' : 'none')
-          this.loadData()
+          util.showToast('操作失败，请重试')
         })
     })
   },
@@ -117,9 +108,7 @@ Page({
           this.loadData()
         })
         .catch(() => {
-          const result = util.completeOrder(this.data.orderNo)
-          util.showToast(result.message, result.success ? 'success' : 'none')
-          this.loadData()
+          util.showToast('操作失败，请重试')
         })
     })
   },
@@ -134,9 +123,7 @@ Page({
           this.loadData()
         })
         .catch(() => {
-          const result = util.approveRefundOrder(this.data.orderNo)
-          util.showToast(result.message, result.success ? 'success' : 'none')
-          this.loadData()
+          util.showToast('操作失败，请重试')
         })
     })
   },
@@ -151,9 +138,7 @@ Page({
           this.loadData()
         })
         .catch(() => {
-          const result = util.rejectRefundOrder(this.data.orderNo, reason)
-          util.showToast(result.message, result.success ? 'success' : 'none')
-          this.loadData()
+          util.showToast('操作失败，请重试')
         })
     })
   },
@@ -168,11 +153,8 @@ Page({
           this.loadData()
         })
         .catch(() => {
-          const result = util.cancelOrder(this.data.orderNo, reason)
-          util.showToast(result.message, result.success ? 'success' : 'none')
-          this.loadData()
+          util.showToast('操作失败，请重试')
         })
     })
   }
 })
-

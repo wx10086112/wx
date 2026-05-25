@@ -76,4 +76,19 @@ public class MallOrderServiceImpl implements IMallOrderService {
         }
         return refundRecordMapper.updateRefundRecord(refundRecord);
     }
+
+    @Override
+    public MallOrder selectMallOrderByOrderNo(String orderNo) {
+        return mallOrderMapper.selectMallOrderByOrderNo(orderNo);
+    }
+
+    @Override
+    public int insertMallOrder(MallOrder mallOrder) {
+        return mallOrderMapper.insertMallOrder(mallOrder);
+    }
+
+    @Override
+    public int insertOrderItem(OrderItem orderItem) {
+        return orderItemMapper.insertOrderItem(orderItem);
+    }
 }

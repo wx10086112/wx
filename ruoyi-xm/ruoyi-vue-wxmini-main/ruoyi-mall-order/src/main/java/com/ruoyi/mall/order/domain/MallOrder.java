@@ -22,6 +22,12 @@ public class MallOrder extends BaseEntity {
     private Long grouponId;
     private Integer status;
     private String writeOffCode;
+    /** 核销状态: 0未核销 1已核销 */
+    private Integer writeOffStatus;
+    private Date writeOffTime;
+    private Long writeOffUserId;
+    /** 商品有效天数(冗余自商品表) */
+    private Integer validDays;
     private Date payTime;
     private Date useTime;
     private Date completeTime;
@@ -69,6 +75,18 @@ public class MallOrder extends BaseEntity {
 
     public String getWriteOffCode() { return writeOffCode; }
     public void setWriteOffCode(String writeOffCode) { this.writeOffCode = writeOffCode; }
+
+    public Integer getWriteOffStatus() { return writeOffStatus; }
+    public void setWriteOffStatus(Integer writeOffStatus) { this.writeOffStatus = writeOffStatus; }
+
+    public Date getWriteOffTime() { return writeOffTime; }
+    public void setWriteOffTime(Date writeOffTime) { this.writeOffTime = writeOffTime; }
+
+    public Long getWriteOffUserId() { return writeOffUserId; }
+    public void setWriteOffUserId(Long writeOffUserId) { this.writeOffUserId = writeOffUserId; }
+
+    public Integer getValidDays() { return validDays; }
+    public void setValidDays(Integer validDays) { this.validDays = validDays; }
 
     public Date getPayTime() { return payTime; }
     public void setPayTime(Date payTime) { this.payTime = payTime; }

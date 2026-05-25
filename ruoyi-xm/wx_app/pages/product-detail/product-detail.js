@@ -1,4 +1,3 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
 const cartService = require('../../services/cart')
@@ -19,7 +18,13 @@ Page({
   },
 
   onLoad(options) {
-    this.setData({ productId: parseInt(options.id || 101, 10) })
+    const id = parseInt(options.id, 10)
+    if (!id || isNaN(id)) {
+      util.showToast('商品不存在')
+      setTimeout(() => util.navigateBack(), 1500)
+      return
+    }
+    this.setData({ productId: id })
     this.loadProductDetail()
   },
 
@@ -36,11 +41,11 @@ Page({
     const productConfig = templateService.getTemplateSection('productDetail')
 
     Promise.all([
-      api.getGrouponDetail(this.data.productId).catch(() => null),
-      api.getMerchantList({}).catch(() => null)
+      api.getGrouponDetail(this.data.productId),
+      api.getMerchantList({})
     ]).then(([productData, merchantList]) => {
-      const rawProduct = productData || mock.grouponList.find((item) => item.id === this.data.productId) || mock.grouponList[0]
-      const merchants = merchantList || mock.merchantList
+      const rawProduct = productData || {}
+      const merchants = merchantList || []
       const merchant = merchants.find((item) => item.merchantId === rawProduct.merchantId) || merchants[0] || {}
       const product = this.formatProduct(rawProduct, productConfig)
 
@@ -66,20 +71,17 @@ Page({
         loading: false
       })
     }).catch(() => {
-      const rawProduct = mock.grouponList.find((item) => item.id === this.data.productId) || mock.grouponList[0]
-      const merchant = mock.merchantList.find((item) => item.id === rawProduct.merchantId) || mock.merchantList[0]
-      const product = this.formatProduct(rawProduct, productConfig)
-
       this.setData({
         productConfig,
-        product,
-        merchant,
-        otherStoreList: [merchant],
-        serviceHighlightList: rawProduct.tags || [],
+        product: {},
+        merchant: {},
+        otherStoreList: [],
+        serviceHighlightList: [],
         decisionList: [],
         ruleList: [],
         loading: false
       })
+      util.showToast('加载失败，请重试')
     })
   },
 

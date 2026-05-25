@@ -31,11 +31,10 @@ Page({
         status: this.data.currentTab === 'ALL' ? '' : this.data.currentTab
       })
       .then((recordList = []) => {
-        util.setVerifyRecordList(recordList)
         this.renderRecords(recordList)
       })
       .catch(() => {
-        this.renderRecords(util.getVerifyRecordList())
+        util.showToast('加载失败，请重试')
       })
   },
 

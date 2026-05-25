@@ -3,13 +3,12 @@ package com.ruoyi.wxmini.controller;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
 import com.ruoyi.mall.merchant.domain.Merchant;
-import com.ruoyi.mall.merchant.mapper.MerchantMapper;
+import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.OrderItem;
-import com.ruoyi.mall.order.mapper.MallOrderMapper;
-import com.ruoyi.mall.order.mapper.OrderItemMapper;
+import com.ruoyi.mall.order.service.IMallOrderService;
 import com.ruoyi.mall.product.domain.Product;
-import com.ruoyi.mall.product.mapper.ProductMapper;
+import com.ruoyi.mall.product.service.IProductService;
 import com.ruoyi.wxmini.dto.wx.WxOrderCreateRequestDto;
 import com.ruoyi.wxmini.dto.wx.WxOrderDto;
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @RestController
@@ -31,13 +31,11 @@ public class WxOrderController {
     private static final int ORDER_STATUS_CANCELLED = 5;
 
     @Resource
-    private MallOrderMapper mallOrderMapper;
+    private IMallOrderService mallOrderService;
     @Resource
-    private OrderItemMapper orderItemMapper;
+    private IProductService productService;
     @Resource
-    private ProductMapper productMapper;
-    @Resource
-    private MerchantMapper merchantMapper;
+    private IMerchantService merchantService;
 
     @PostMapping("/create")
     public AjaxResult create(@RequestBody WxOrderCreateRequestDto requestDto) {
@@ -47,7 +45,6 @@ public class WxOrderController {
 
         Long userId = Long.valueOf(WxMiniUserContext.getCurrentUserId());
 
-        // 收集要购买的商品
         List<WxOrderCreateRequestDto.OrderItemInput> itemInputs = new ArrayList<>();
         if (requestDto.getItems() != null && !requestDto.getItems().isEmpty()) {
             itemInputs = requestDto.getItems();
@@ -61,12 +58,11 @@ public class WxOrderController {
             return AjaxResult.error("至少选择一个商品");
         }
 
-        // 校验商品并计算总价
         long totalAmount = 0;
         Long merchantId = null;
         List<Product> products = new ArrayList<>();
         for (WxOrderCreateRequestDto.OrderItemInput input : itemInputs) {
-            Product product = productMapper.selectProductById(input.getProductId());
+            Product product = productService.selectProductById(input.getProductId());
             if (product == null || product.getStatus() == null || product.getStatus() != 1) {
                 return AjaxResult.error("商品不存在或已下架: " + input.getProductId());
             }
@@ -86,7 +82,6 @@ public class WxOrderController {
         String orderNo = generateOrderNo();
         String writeOffCode = generateWriteOffCode();
 
-        // 创建订单
         MallOrder order = new MallOrder();
         order.setOrderNo(orderNo);
         order.setMerchantId(merchantId);
@@ -97,9 +92,8 @@ public class WxOrderController {
         order.setCouponId(requestDto.getCouponId());
         order.setStatus(ORDER_STATUS_PENDING);
         order.setWriteOffCode(writeOffCode);
-        mallOrderMapper.insertMallOrder(order);
+        mallOrderService.insertMallOrder(order);
 
-        // 创建订单明细
         for (int i = 0; i < itemInputs.size(); i++) {
             WxOrderCreateRequestDto.OrderItemInput input = itemInputs.get(i);
             Product product = products.get(i);
@@ -116,7 +110,7 @@ public class WxOrderController {
             item.setPrice(new BigDecimal(price));
             item.setQuantity(qty);
             item.setSubtotal(new BigDecimal(price * qty));
-            orderItemMapper.insertOrderItem(item);
+            mallOrderService.insertOrderItem(item);
         }
 
         Map<String, Object> result = new HashMap<>();
@@ -133,9 +127,8 @@ public class WxOrderController {
 
         MallOrder query = new MallOrder();
         query.setUserId(userId);
-        List<MallOrder> orders = mallOrderMapper.selectMallOrderList(query);
+        List<MallOrder> orders = mallOrderService.selectMallOrderList(query);
 
-        // 缓存商家名称
         Map<Long, String> merchantNameCache = new HashMap<>();
 
         List<WxOrderDto> result = new ArrayList<>();
@@ -153,7 +146,7 @@ public class WxOrderController {
     @GetMapping("/detail/{orderNo}")
     public AjaxResult detail(@PathVariable String orderNo) {
         Long userId = Long.valueOf(WxMiniUserContext.getCurrentUserId());
-        MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(orderNo);
+        MallOrder order = mallOrderService.selectMallOrderByOrderNo(orderNo);
         if (order == null || !order.getUserId().equals(userId)) {
             return AjaxResult.error("订单不存在");
         }
@@ -163,7 +156,7 @@ public class WxOrderController {
     @PostMapping("/cancel/{orderNo}")
     public AjaxResult cancel(@PathVariable String orderNo) {
         Long userId = Long.valueOf(WxMiniUserContext.getCurrentUserId());
-        MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(orderNo);
+        MallOrder order = mallOrderService.selectMallOrderByOrderNo(orderNo);
         if (order == null || !order.getUserId().equals(userId)) {
             return AjaxResult.error("订单不存在");
         }
@@ -175,7 +168,7 @@ public class WxOrderController {
         update.setId(order.getId());
         update.setStatus(ORDER_STATUS_CANCELLED);
         update.setCancelTime(new Date());
-        mallOrderMapper.updateMallOrder(update);
+        mallOrderService.updateMallOrder(update);
 
         order.setStatus(ORDER_STATUS_CANCELLED);
         order.setCancelTime(new Date());
@@ -198,8 +191,7 @@ public class WxOrderController {
         dto.setRefundTime(order.getRefundTime() != null ? order.getRefundTime().getTime() : null);
         dto.setQuantity(1);
 
-        // 查订单明细取商品信息
-        List<OrderItem> items = orderItemMapper.selectOrderItemByOrderId(order.getId());
+        List<OrderItem> items = mallOrderService.selectOrderItemListByOrderId(order.getId());
         if (!items.isEmpty()) {
             OrderItem first = items.get(0);
             dto.setProductId(first.getProductId());
@@ -209,11 +201,10 @@ public class WxOrderController {
             dto.setQuantity(first.getQuantity());
         }
 
-        // 商家名称
         if (order.getMerchantId() != null) {
             String merchantName = merchantNameCache.get(order.getMerchantId());
             if (merchantName == null) {
-                Merchant merchant = merchantMapper.selectMerchantById(order.getMerchantId());
+                Merchant merchant = merchantService.selectMerchantById(order.getMerchantId());
                 if (merchant != null) {
                     merchantName = merchant.getName();
                     merchantNameCache.put(order.getMerchantId(), merchantName);
@@ -222,12 +213,10 @@ public class WxOrderController {
             dto.setMerchantName(merchantName);
         }
 
-        // 待支付超时时间（15分钟）
         if (order.getStatus() == ORDER_STATUS_PENDING && order.getCreateTime() != null) {
             dto.setExpireTime(order.getCreateTime().getTime() + 15 * 60 * 1000L);
         }
 
-        // 核销截止时间（支付后30天）
         if (order.getPayTime() != null) {
             dto.setWriteOffDeadline(order.getPayTime().getTime() + 30L * 24 * 60 * 60 * 1000L);
         }
@@ -249,7 +238,7 @@ public class WxOrderController {
     }
 
     private String generateOrderNo() {
-        String datePart = new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+        String datePart = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
         String randomPart = String.format("%04d", new Random().nextInt(10000));
         return "ORD" + datePart + randomPart;
     }

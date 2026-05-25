@@ -16,13 +16,11 @@
         <result property="quantity" column="quantity"/>
         <result property="subtotal" column="subtotal"/>
         <result property="createTime" column="create_time"/>
-        <result property="updateTime" column="update_time"/>
-        <result property="remark" column="remark"/>
     </resultMap>
 
     <sql id="selectOrderItemVo">
         select id, order_id, order_no, merchant_id, product_id, product_name, product_image,
-               price, quantity, subtotal, create_time, update_time, remark
+               price, quantity, subtotal, create_time
         from order_item
     </sql>
 

@@ -151,6 +151,7 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
                 || path.startsWith("/wxmini/template/config")
                 || path.startsWith("/wxmini/user/phone/bind")
                 || path.startsWith("/wxmini/merchant/list") || path.startsWith("/wxmini/merchant/detail")
+                || path.startsWith("/wxmini/merchant/home")
                 || path.startsWith("/wxmini/groupon/list") || path.startsWith("/wxmini/groupon/detail");
     }
 }

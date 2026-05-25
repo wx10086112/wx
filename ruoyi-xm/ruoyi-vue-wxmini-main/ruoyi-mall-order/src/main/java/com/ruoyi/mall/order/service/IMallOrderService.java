@@ -23,4 +23,10 @@ public interface IMallOrderService {
     RefundRecord selectRefundById(Long id);
 
     int handleRefund(Long id, Integer status, String operator, String rejectReason);
+
+    MallOrder selectMallOrderByOrderNo(String orderNo);
+
+    int insertMallOrder(MallOrder mallOrder);
+
+    int insertOrderItem(OrderItem orderItem);
 }

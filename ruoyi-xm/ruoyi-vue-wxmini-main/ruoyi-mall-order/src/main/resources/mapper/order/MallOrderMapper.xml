@@ -19,6 +19,10 @@
         <result property="grouponId" column="groupon_id"/>
         <result property="status" column="status"/>
         <result property="writeOffCode" column="write_off_code"/>
+        <result property="writeOffStatus" column="write_off_status"/>
+        <result property="writeOffTime" column="write_off_time"/>
+        <result property="writeOffUserId" column="write_off_user_id"/>
+        <result property="validDays" column="valid_days"/>
         <result property="payTime" column="pay_time"/>
         <result property="useTime" column="use_time"/>
         <result property="completeTime" column="complete_time"/>
@@ -32,7 +36,8 @@
     <sql id="selectMallOrderVo">
         select id, order_no, merchant_id, user_id, store_id, total_amount, pay_amount,
                commission, merchant_income, coupon_id, coupon_amount, groupon_id, status,
-               write_off_code, pay_time, use_time, complete_time, cancel_time, refund_time,
+               write_off_code, write_off_status, write_off_time, write_off_user_id,
+               valid_days, pay_time, use_time, complete_time, cancel_time, refund_time,
                create_time, update_time, remark
         from mall_order
     </sql>
@@ -81,6 +86,10 @@
             <if test="grouponId != null">groupon_id,</if>
             <if test="status != null">status,</if>
             <if test="writeOffCode != null">write_off_code,</if>
+            <if test="writeOffStatus != null">write_off_status,</if>
+            <if test="writeOffTime != null">write_off_time,</if>
+            <if test="writeOffUserId != null">write_off_user_id,</if>
+            <if test="validDays != null">valid_days,</if>
             <if test="payTime != null">pay_time,</if>
             <if test="useTime != null">use_time,</if>
             <if test="completeTime != null">complete_time,</if>
@@ -101,6 +110,10 @@
             <if test="grouponId != null">#{grouponId},</if>
             <if test="status != null">#{status},</if>
             <if test="writeOffCode != null">#{writeOffCode},</if>
+            <if test="writeOffStatus != null">#{writeOffStatus},</if>
+            <if test="writeOffTime != null">#{writeOffTime},</if>
+            <if test="writeOffUserId != null">#{writeOffUserId},</if>
+            <if test="validDays != null">#{validDays},</if>
             <if test="payTime != null">#{payTime},</if>
             <if test="useTime != null">#{useTime},</if>
             <if test="completeTime != null">#{completeTime},</if>
@@ -125,6 +138,10 @@
             <if test="grouponId != null">groupon_id = #{grouponId},</if>
             <if test="status != null">status = #{status},</if>
             <if test="writeOffCode != null">write_off_code = #{writeOffCode},</if>
+            <if test="writeOffStatus != null">write_off_status = #{writeOffStatus},</if>
+            <if test="writeOffTime != null">write_off_time = #{writeOffTime},</if>
+            <if test="writeOffUserId != null">write_off_user_id = #{writeOffUserId},</if>
+            <if test="validDays != null">valid_days = #{validDays},</if>
             <if test="payTime != null">pay_time = #{payTime},</if>
             <if test="useTime != null">use_time = #{useTime},</if>
             <if test="completeTime != null">complete_time = #{completeTime},</if>
@@ -148,6 +165,11 @@
     <select id="countOrderByMerchantIdAndStatus" resultType="int">
         select count(*) from mall_order
         where merchant_id = #{merchantId} and status = #{status}
+    </select>
+
+    <select id="selectOrderByWriteOffCode" parameterType="String" resultMap="MallOrderResult">
+        <include refid="selectMallOrderVo"/>
+        where write_off_code = #{code}
     </select>
 
 </mapper>

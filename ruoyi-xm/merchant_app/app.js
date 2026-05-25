@@ -1,4 +1,3 @@
-const mock = require('./data/mock')
 const util = require('./utils/util')
 
 App({
@@ -11,13 +10,12 @@ App({
 
   onLaunch() {
     this.initEnv()
-    util.initMerchantMockStorage(mock)
     this.restoreLogin()
   },
 
   initEnv() {
     this.baseUrl = 'http://localhost:8080'
-    this.appId = 'wx_merchant_test_001' // 每个商家的小程序固定一个AppID标识
+    this.appId = wx.getAccountInfoSync().miniProgram.appId || ''
   },
 
   restoreLogin() {

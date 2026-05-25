@@ -21,13 +21,12 @@
         <result property="operator" column="operator"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
-        <result property="remark" column="remark"/>
     </resultMap>
 
     <sql id="selectRefundRecordVo">
         select id, order_no, refund_no, merchant_id, user_id, payment_record_id,
                refund_amount, refund_reason, refund_type, status, audit_time,
-               refund_time, reject_reason, operator, create_time, update_time, remark
+               refund_time, reject_reason, operator, create_time, update_time
         from refund_record
     </sql>
 

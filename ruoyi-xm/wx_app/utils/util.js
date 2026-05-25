@@ -1,4 +1,3 @@
-const ORDER_STORAGE_KEY = 'o2o_order_list'
 const ORDER_FILTER_KEY = 'o2o_order_filter'
 
 const legacyImageMap = {
@@ -56,8 +55,6 @@ const formatDate = (date, fmt = 'YYYY-MM-DD HH:mm:ss') => {
 const formatTime = (date) => {
   return formatDate(date, 'YYYY-MM-DD HH:mm:ss')
 }
-
-const clone = (data) => JSON.parse(JSON.stringify(data))
 
 const normalizeImageUrl = (url = '') => {
   return legacyImageMap[url] || url
@@ -176,22 +173,6 @@ const navigateBack = (delta = 1) => {
   })
 }
 
-const getStoredOrderList = (fallback = []) => {
-  try {
-    const stored = wx.getStorageSync(ORDER_STORAGE_KEY)
-    if (Array.isArray(stored) && stored.length) {
-      return normalizeImageFields(clone(stored))
-    }
-  } catch (e) {
-    wx.removeStorageSync(ORDER_STORAGE_KEY)
-  }
-  return normalizeImageFields(clone(fallback))
-}
-
-const setStoredOrderList = (list = []) => {
-  wx.setStorageSync(ORDER_STORAGE_KEY, normalizeImageFields(clone(list)))
-}
-
 const setPendingOrderFilter = (status = '') => {
   wx.setStorageSync(ORDER_FILTER_KEY, status)
 }
@@ -200,50 +181,6 @@ const consumePendingOrderFilter = () => {
   const status = wx.getStorageSync(ORDER_FILTER_KEY)
   wx.removeStorageSync(ORDER_FILTER_KEY)
   return status || ''
-}
-
-const generateOrderNo = () => {
-  return 'ORD' + formatDate(new Date(), 'YYYYMMDDHHmmss') + Math.floor(Math.random() * 900 + 100)
-}
-
-const createWriteOffCode = () => {
-  return 'LY' + Math.floor(1000 + Math.random() * 9000)
-}
-
-const transitionOrderToCancelled = (order = {}, reason = '用户主动取消') => {
-  return {
-    ...order,
-    status: 'CANCELLED',
-    cancelTime: Date.now(),
-    cancelReason: reason
-  }
-}
-
-const transitionOrderToPaidUnused = (order = {}) => {
-  return {
-    ...order,
-    status: 'PAID_UNUSED',
-    payTime: order.payTime || Date.now(),
-    writeOffCode: order.writeOffCode || createWriteOffCode(),
-    writeOffDeadline: order.writeOffDeadline || Date.now() + 1000 * 60 * 60 * 24 * 30
-  }
-}
-
-const transitionOrderToRefunding = (order = {}, reason = '用户申请退款') => {
-  return {
-    ...order,
-    status: 'REFUNDING',
-    refundTime: Date.now(),
-    refundReason: reason
-  }
-}
-
-const transitionOrderToCompleted = (order = {}) => {
-  return {
-    ...order,
-    status: 'USED_COMPLETED',
-    writeOffTime: order.writeOffTime || Date.now()
-  }
 }
 
 const SUBSCRIBE_TMPL_IDS = [
@@ -298,7 +235,6 @@ module.exports = {
   formatPrice,
   formatOrderStatus,
   getOrderStatusMeta,
-  clone,
   normalizeImageUrl,
   normalizeImageFields,
   debounce,
@@ -311,16 +247,8 @@ module.exports = {
   redirectTo,
   switchTab,
   navigateBack,
-  getStoredOrderList,
-  setStoredOrderList,
   setPendingOrderFilter,
   consumePendingOrderFilter,
-  generateOrderNo,
-  createWriteOffCode,
-  transitionOrderToCancelled,
-  transitionOrderToPaidUnused,
-  transitionOrderToRefunding,
-  transitionOrderToCompleted,
   requestSubscribeMessage,
   requestPayment
 }

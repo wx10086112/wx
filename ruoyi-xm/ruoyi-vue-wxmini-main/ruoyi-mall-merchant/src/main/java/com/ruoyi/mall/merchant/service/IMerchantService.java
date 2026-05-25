@@ -16,4 +16,8 @@ public interface IMerchantService {
     int deleteMerchantById(Long id);
 
     int deleteMerchantByIds(Long[] ids);
+
+    Merchant selectMerchantByCAppId(String cMiniAppId);
+
+    Merchant selectMerchantByMAppId(String mMiniAppId);
 }

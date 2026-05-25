@@ -1,5 +1,5 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
+const api = require('../../api/index')
 
 const couponStatusMap = {
   AVAILABLE: '可使用',
@@ -20,15 +20,26 @@ Page({
   },
 
   onLoad() {
-    this.setData({
-      allCoupons: mock.couponList.map((item) => ({
-        ...item,
-        statusText: couponStatusMap[item.status] || '不可用',
-        thresholdText: (item.thresholdAmount / 100).toFixed(0),
-        amountText: (item.amount / 100).toFixed(0),
-        isAvailable: item.status === 'AVAILABLE'
-      }))
-    })
+    this.loadCoupons()
+  },
+
+  loadCoupons() {
+    api.getCouponList ? api.getCouponList().then((list) => {
+      this.processCoupons(list || [])
+    }).catch(() => {
+      util.showToast('加载失败，请重试')
+    }) : this.processCoupons([])
+  },
+
+  processCoupons(couponList) {
+    const allCoupons = couponList.map((item) => ({
+      ...item,
+      statusText: couponStatusMap[item.status] || '不可用',
+      thresholdText: (item.thresholdAmount / 100).toFixed(0),
+      amountText: (item.amount / 100).toFixed(0),
+      isAvailable: item.status === 'AVAILABLE'
+    }))
+    this.setData({ allCoupons })
     this.filterCoupons()
   },
 
@@ -47,7 +58,6 @@ Page({
   },
 
   onUseCoupon(e) {
-    const coupon = e.currentTarget.dataset.coupon
     util.switchTab('/pages/home/home')
   },
 

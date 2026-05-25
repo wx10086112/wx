@@ -2,43 +2,48 @@
 
 本文档面向后端开发人员，说明商家端小程序的全部接口调用约定、请求参数和期望的响应数据结构。
 
-## 后端对接状态（更新于 2026-05-19）
+## 后端对接状态（更新于 2026-05-24）
 
-| 接口 | 状态 | 说明 |
-|------|------|------|
-| `POST /auth/login` | 已完成 | BCrypt密码校验，返回token+permissions |
-| `GET /workbench/overview` | 已完成 | 实时DB查询 |
-| `GET /order/list` | 已完成 | |
-| `GET /order/detail/{orderNo}` | 已完成 | |
-| `POST /order/write-off/{code}` | 已完成 | |
-| `POST /order/accept/{orderNo}` | 待实现 | |
-| `POST /order/reject/{orderNo}` | 待实现 | |
-| `POST /order/ship/{orderNo}` | 待实现 | |
-| `POST /order/complete/{orderNo}` | 待实现 | |
-| `POST /order/cancel/{orderNo}` | 待实现 | |
-| `POST /order/refund/approve/{orderNo}` | 待实现 | |
-| `POST /order/refund/reject/{orderNo}` | 待实现 | |
-| `GET /verify/record/list` | 已完成 | |
-| `GET /goods/list` | 已完成 | |
-| `POST /goods/save` | 已完成 | |
-| `PUT /goods/status` | 已完成 | |
-| `PUT /goods/batch-status` | 已完成 | 批量上下架 |
-| `POST /goods/image/upload` | 已完成 | |
-| `GET /store/profile` | 已完成 | |
-| `PUT /store/profile` | 已完成 | |
-| `GET /staff/list` | 已完成 | |
-| `POST /staff/add` | 待实现 | |
-| `PUT /staff/update` | 待实现 | |
-| `PUT /staff/permission` | 已完成 | 仅支持状态切换 |
-| `GET /finance/overview` | 已完成 | |
-| `POST /finance/withdraw` | 已完成 | |
-| `GET /marketing/coupon/list` | 待实现 | |
-| `POST /marketing/coupon/save` | 待实现 | |
-| `PUT /marketing/coupon/status` | 待实现 | |
-| `GET /marketing/promotion/list` | 待实现 | |
-| `POST /marketing/promotion/save` | 待实现 | |
-| `POST /apply/submit` | 待实现 | |
-| `GET /apply/status` | 待实现 | |
+### 已完成
+
+| 接口 | 说明 |
+|------|------|
+| `POST /auth/login` | BCrypt密码校验，返回token+permissions |
+| `GET /workbench/overview` | 实时DB查询 |
+| `GET /order/list` | 订单列表 |
+| `GET /order/detail/{orderNo}` | 订单详情 |
+| `POST /order/write-off/{code}` | 核销订单 |
+| `GET /verify/record/list` | 核销记录 |
+| `GET /goods/list` | 商品列表 |
+| `POST /goods/save` | 新增/编辑商品 |
+| `PUT /goods/status` | 商品上下架 |
+| `PUT /goods/batch-status` | 批量上下架 |
+| `POST /goods/image/upload` | 商品图片上传 |
+| `GET /store/profile` | 门店信息 |
+| `PUT /store/profile` | 更新门店信息 |
+| `GET /staff/list` | 员工列表 |
+| `PUT /staff/permission` | 员工状态切换 |
+| `GET /finance/overview` | 财务概览 |
+| `POST /finance/withdraw` | 提现申请 |
+
+### 待实现
+
+| 接口 | 说明 |
+|------|------|
+| `POST /order/accept/{orderNo}` | 接单 |
+| `POST /order/reject/{orderNo}` | 拒单 |
+| `POST /order/cancel/{orderNo}` | 商家取消订单 |
+| `POST /order/refund/approve/{orderNo}` | 同意退款 |
+| `POST /order/refund/reject/{orderNo}` | 拒绝退款 |
+| `POST /staff/add` | 添加员工 |
+| `PUT /staff/update` | 编辑员工 |
+| `GET /marketing/coupon/list` | 优惠券列表 |
+| `POST /marketing/coupon/save` | 创建优惠券 |
+| `PUT /marketing/coupon/status` | 启停优惠券 |
+| `GET /marketing/promotion/list` | 促销列表 |
+| `POST /marketing/promotion/save` | 创建促销 |
+| `POST /apply/submit` | 入驻申请提交 |
+| `GET /apply/status` | 入驻申请状态 |
 
 ## 一、通信约定
 

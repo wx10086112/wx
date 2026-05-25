@@ -29,11 +29,10 @@ Page({
     api
       .getMerchantGoodsList()
       .then((goodsList = []) => {
-        util.setGoodsList(goodsList)
         this.renderGoods(goodsList)
       })
       .catch(() => {
-        this.renderGoods(util.getGoodsList())
+        util.showToast('加载失败，请重试')
       })
   },
 
@@ -68,8 +67,7 @@ Page({
   toggleGoodsStatus(e) {
     if (!app.needPermission(['goods.manage'])) return
     const goodsId = Number(e.currentTarget.dataset.id)
-    const currentGoodsList = util.getGoodsList()
-    const targetGoods = currentGoodsList.find((item) => item.goodsId === goodsId) || {}
+    const targetGoods = this.data.goodsList.find((item) => item.goodsId === goodsId) || {}
     const nextStatus = targetGoods.status === 'ON_SHELF' ? 'OFF_SHELF' : 'ON_SHELF'
 
     api
@@ -82,17 +80,7 @@ Page({
         this.loadData()
       })
       .catch(() => {
-        const nextGoodsList = currentGoodsList.map((item) =>
-          item.goodsId === goodsId
-            ? {
-                ...item,
-                status: nextStatus
-              }
-            : item
-        )
-        util.setGoodsList(nextGoodsList)
-        util.showToast('后端未联通，已更新本地演示数据')
-        this.loadData()
+        util.showToast('操作失败，请重试')
       })
   },
 
@@ -151,7 +139,7 @@ Page({
           this.loadData()
         })
         .catch(() => {
-          util.showToast('批量上架失败', 'error')
+          util.showToast('批量上架失败')
         })
     })
   },
@@ -172,7 +160,7 @@ Page({
           this.loadData()
         })
         .catch(() => {
-          util.showToast('批量下架失败', 'error')
+          util.showToast('批量下架失败')
         })
     })
   }

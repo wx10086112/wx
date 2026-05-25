@@ -5,16 +5,14 @@ const app = getApp()
 Page({
   data: {
     staffUser: {},
-    permissionList: [],
-    storeInfo: {}
+    permissionList: []
   },
 
   onShow() {
     if (!app.needLogin()) return
     this.setData({
       staffUser: app.globalData.staffUser || {},
-      permissionList: app.globalData.permissionCodes || [],
-      storeInfo: util.getStoreInfo()
+      permissionList: app.globalData.permissionCodes || []
     })
   },
 

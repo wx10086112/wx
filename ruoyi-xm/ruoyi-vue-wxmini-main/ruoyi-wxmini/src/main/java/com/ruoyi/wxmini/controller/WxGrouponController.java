@@ -2,9 +2,9 @@ package com.ruoyi.wxmini.controller;
 
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.mall.merchant.domain.Merchant;
-import com.ruoyi.mall.merchant.mapper.MerchantMapper;
+import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.product.domain.Product;
-import com.ruoyi.mall.product.mapper.ProductMapper;
+import com.ruoyi.mall.product.service.IProductService;
 import com.ruoyi.wxmini.dto.wx.WxGrouponItemDto;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,9 +24,9 @@ import java.util.Map;
 public class WxGrouponController {
 
     @Resource
-    private ProductMapper productMapper;
+    private IProductService productService;
     @Resource
-    private MerchantMapper merchantMapper;
+    private IMerchantService merchantService;
 
     @GetMapping("/list")
     public AjaxResult list(
@@ -36,10 +35,9 @@ public class WxGrouponController {
             @RequestParam(required = false) String keyword) {
         Product query = new Product();
         query.setMerchantId(merchantId);
-        query.setStatus(1); // 仅上架商品
-        List<Product> products = productMapper.selectProductList(query);
+        query.setStatus(1);
+        List<Product> products = productService.selectProductList(query);
 
-        // 关键词过滤
         if (StringUtils.isNotBlank(keyword)) {
             List<Product> filtered = new ArrayList<>();
             for (Product p : products) {
@@ -50,7 +48,6 @@ public class WxGrouponController {
             products = filtered;
         }
 
-        // 缓存商家名称
         Map<Long, String> merchantNameCache = new HashMap<>();
 
         List<WxGrouponItemDto> result = new ArrayList<>();
@@ -62,7 +59,7 @@ public class WxGrouponController {
 
     @GetMapping("/detail/{id}")
     public AjaxResult detail(@PathVariable Long id) {
-        Product product = productMapper.selectProductById(id);
+        Product product = productService.selectProductById(id);
         if (product == null) {
             return AjaxResult.error("商品不存在");
         }
@@ -86,10 +83,9 @@ public class WxGrouponController {
         dto.setSort(product.getSort());
         dto.setStatus(product.getStatus() != null && product.getStatus() == 1 ? "ON_SHELF" : "OFF_SHELF");
 
-        // 商家名称
         String merchantName = merchantNameCache.get(product.getMerchantId());
         if (merchantName == null && product.getMerchantId() != null) {
-            Merchant merchant = merchantMapper.selectMerchantById(product.getMerchantId());
+            Merchant merchant = merchantService.selectMerchantById(product.getMerchantId());
             if (merchant != null) {
                 merchantName = merchant.getName();
                 merchantNameCache.put(product.getMerchantId(), merchantName);
@@ -97,12 +93,10 @@ public class WxGrouponController {
         }
         dto.setMerchantName(merchantName);
 
-        // 有效期文案
         if (product.getValidDays() != null && product.getValidDays() > 0) {
             dto.setValidPeriod("购买后" + product.getValidDays() + "天内有效");
         }
 
-        // 默认标签
         List<String> tags = new ArrayList<>();
         if (product.getSales() != null && product.getSales() > 100) {
             tags.add("热销");

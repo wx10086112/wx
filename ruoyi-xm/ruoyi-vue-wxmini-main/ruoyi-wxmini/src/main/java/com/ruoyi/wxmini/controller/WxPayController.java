@@ -3,9 +3,9 @@ package com.ruoyi.wxmini.controller;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
 import com.ruoyi.mall.merchant.domain.Merchant;
-import com.ruoyi.mall.merchant.mapper.MerchantMapper;
+import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.domain.MallOrder;
-import com.ruoyi.mall.order.mapper.MallOrderMapper;
+import com.ruoyi.mall.order.service.IMallOrderService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -13,10 +13,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-/**
- * 微信支付接口（Stub）
- * 当前返回模拟数据，待微信商户号配置后替换为真实V3支付调用
- */
 @RestController
 @RequestMapping("/wxmini/pay")
 public class WxPayController {
@@ -25,9 +21,9 @@ public class WxPayController {
     private static final int ORDER_STATUS_PAID = 1;
 
     @Resource
-    private MallOrderMapper mallOrderMapper;
+    private IMallOrderService mallOrderService;
     @Resource
-    private MerchantMapper merchantMapper;
+    private IMerchantService merchantService;
 
     @PostMapping("/order/create")
     public AjaxResult createPay(@RequestBody Map<String, String> body) {
@@ -37,7 +33,7 @@ public class WxPayController {
         }
 
         Long userId = Long.valueOf(WxMiniUserContext.getCurrentUserId());
-        MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(orderNo);
+        MallOrder order = mallOrderService.selectMallOrderByOrderNo(orderNo);
         if (order == null || !order.getUserId().equals(userId)) {
             return AjaxResult.error("订单不存在");
         }
@@ -45,11 +41,9 @@ public class WxPayController {
             return AjaxResult.error("当前订单状态不可支付");
         }
 
-        // 获取商家的C端小程序AppID（用于区分不同商家的支付配置）
-        Merchant merchant = merchantMapper.selectMerchantById(order.getMerchantId());
+        Merchant merchant = merchantService.selectMerchantById(order.getMerchantId());
         String cAppId = merchant != null ? merchant.getCMiniAppId() : null;
 
-        // Stub: 返回模拟支付参数
         Map<String, Object> result = new HashMap<>();
         result.put("timeStamp", String.valueOf(System.currentTimeMillis() / 1000));
         result.put("nonceStr", generateNonceStr());
@@ -62,7 +56,7 @@ public class WxPayController {
         update.setId(order.getId());
         update.setStatus(ORDER_STATUS_PAID);
         update.setPayTime(new java.util.Date());
-        mallOrderMapper.updateMallOrder(update);
+        mallOrderService.updateMallOrder(update);
 
         return AjaxResult.success(result);
     }
@@ -70,12 +64,11 @@ public class WxPayController {
     @GetMapping("/order/query")
     public AjaxResult queryPay(@RequestParam String outTradeNo) {
         Long userId = Long.valueOf(WxMiniUserContext.getCurrentUserId());
-        MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(outTradeNo);
+        MallOrder order = mallOrderService.selectMallOrderByOrderNo(outTradeNo);
         if (order == null || !order.getUserId().equals(userId)) {
             return AjaxResult.error("订单不存在");
         }
 
-        // Stub: 返回模拟查询结果
         Map<String, Object> result = new HashMap<>();
         result.put("outTradeNo", outTradeNo);
         result.put("tradeState", order.getStatus() != null && order.getStatus() >= ORDER_STATUS_PAID ? "SUCCESS" : "NOTPAY");

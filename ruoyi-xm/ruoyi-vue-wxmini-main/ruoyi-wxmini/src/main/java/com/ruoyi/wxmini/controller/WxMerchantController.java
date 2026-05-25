@@ -3,9 +3,11 @@ package com.ruoyi.wxmini.controller;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.domain.MerchantStore;
-import com.ruoyi.mall.merchant.mapper.MerchantMapper;
 import com.ruoyi.mall.merchant.mapper.MerchantStoreMapper;
-import com.ruoyi.mall.product.mapper.ProductMapper;
+import com.ruoyi.mall.merchant.service.IMerchantService;
+import com.ruoyi.mall.product.domain.Product;
+import com.ruoyi.mall.product.service.IProductService;
+import com.ruoyi.wxmini.dto.wx.WxGrouponItemDto;
 import com.ruoyi.wxmini.dto.wx.WxMerchantItemDto;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,19 +18,60 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/wxmini/merchant")
 public class WxMerchantController {
 
     @Resource
-    private MerchantMapper merchantMapper;
+    private IMerchantService merchantService;
     @Resource
     private MerchantStoreMapper merchantStoreMapper;
     @Resource
-    private ProductMapper productMapper;
+    private IProductService productService;
+
+    @GetMapping("/home")
+    public AjaxResult home(@RequestParam String appid) {
+        Merchant merchant = merchantService.selectMerchantByCAppId(appid);
+        if (merchant == null || merchant.getStatus() == null || merchant.getStatus() != 1) {
+            merchant = merchantService.selectMerchantById(1L);
+            if (merchant == null || merchant.getStatus() == null || merchant.getStatus() != 1) {
+                return AjaxResult.error("商家不存在或已下线");
+            }
+        }
+
+        List<MerchantStore> stores = merchantStoreMapper.selectMerchantStoreByMerchantId(merchant.getId());
+        MerchantStore mainStore = null;
+        for (MerchantStore store : stores) {
+            if (store.getIsMain() != null && store.getIsMain() == 1) {
+                mainStore = store;
+                break;
+            }
+        }
+        if (mainStore == null && !stores.isEmpty()) {
+            mainStore = stores.get(0);
+        }
+
+        WxMerchantItemDto merchantDto = convertToItemDto(merchant, mainStore, null, null);
+
+        Product query = new Product();
+        query.setMerchantId(merchant.getId());
+        query.setStatus(1);
+        List<Product> products = productService.selectProductList(query);
+
+        List<WxGrouponItemDto> productList = new ArrayList<>();
+        for (Product product : products) {
+            productList.add(convertProductToDto(product, merchant.getName()));
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("merchant", merchantDto);
+        result.put("products", productList);
+        return AjaxResult.success(result);
+    }
 
     @GetMapping("/list")
     public AjaxResult list(
@@ -37,7 +80,7 @@ public class WxMerchantController {
             @RequestParam(required = false) Long categoryId) {
         Merchant query = new Merchant();
         query.setStatus(1);
-        List<Merchant> merchants = merchantMapper.selectMerchantList(query);
+        List<Merchant> merchants = merchantService.selectMerchantList(query);
 
         List<WxMerchantItemDto> result = new ArrayList<>();
         for (Merchant merchant : merchants) {
@@ -65,7 +108,7 @@ public class WxMerchantController {
         if (store == null) {
             return AjaxResult.error("门店不存在");
         }
-        Merchant merchant = merchantMapper.selectMerchantById(store.getMerchantId());
+        Merchant merchant = merchantService.selectMerchantById(store.getMerchantId());
         if (merchant == null || merchant.getStatus() == null || merchant.getStatus() != 1) {
             return AjaxResult.error("商家不存在或已下线");
         }
@@ -105,7 +148,6 @@ public class WxMerchantController {
                 dto.setAvatar(store.getAvatar());
             }
 
-            // 计算距离
             if (userLat != null && userLng != null
                     && store.getLatitude() != null && store.getLongitude() != null) {
                 double distMeters = calculateDistance(
@@ -117,11 +159,9 @@ public class WxMerchantController {
             }
         }
 
-        // 统计在售商品数作为销量
-        int productCount = productMapper.countProductByMerchantId(merchant.getId());
+        int productCount = productService.countProductByMerchantId(merchant.getId());
         dto.setSales(productCount);
 
-        // 标签
         List<String> tags = new ArrayList<>();
         if (merchant.getStatus() != null && merchant.getStatus() == 1) {
             tags.add("营业中");
@@ -135,6 +175,42 @@ public class WxMerchantController {
 
         dto.setFacilityTags(new ArrayList<>());
         dto.setAlbumList(new ArrayList<>());
+
+        return dto;
+    }
+
+    private WxGrouponItemDto convertProductToDto(Product product, String merchantName) {
+        WxGrouponItemDto dto = new WxGrouponItemDto();
+        dto.setId(product.getId());
+        dto.setGoodsId(product.getId());
+        dto.setTitle(product.getName());
+        dto.setSubtitle(product.getDescription());
+        dto.setMerchantId(product.getMerchantId());
+        dto.setMerchantName(merchantName);
+        dto.setImage(product.getCoverImage());
+        dto.setPrice(product.getPrice() != null ? product.getPrice().longValue() : 0L);
+        dto.setOriginalPrice(product.getOriginalPrice() != null ? product.getOriginalPrice().longValue() : 0L);
+        dto.setSales(product.getSales());
+        dto.setStock(product.getStock());
+        dto.setValidDays(product.getValidDays());
+        dto.setStatus(product.getStatus() != null && product.getStatus() == 1 ? "ON_SHELF" : "OFF_SHELF");
+        dto.setSort(product.getSort());
+
+        if (product.getValidDays() != null && product.getValidDays() > 0) {
+            dto.setValidPeriod("购买后" + product.getValidDays() + "天内有效");
+        }
+
+        List<String> tags = new ArrayList<>();
+        if (product.getSales() != null && product.getSales() > 100) {
+            tags.add("热销");
+        }
+        tags.add("到店使用");
+        dto.setTags(tags);
+
+        dto.setContentDetail(new ArrayList<>());
+        dto.setBookingRequired(false);
+        dto.setRefundRule("过期自动退款");
+        dto.setLimitRule("");
 
         return dto;
     }

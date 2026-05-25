@@ -1,5 +1,4 @@
 const app = getApp()
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
 const userApi = require('../../api/user')
@@ -26,7 +25,6 @@ Page({
 
   onShow() {
     this.checkLoginStatus()
-    this.loadAssets()
   },
 
   initTemplateConfig() {
@@ -39,9 +37,10 @@ Page({
         if (item.url === '/pages/coupon/coupon') return featureToggle.enableCoupon
         if (item.url === '/pages/favorite/favorite') return featureToggle.enableFavorite
         return true
-      })
-    }, () => {
-      this.loadAssets(profileConfig, featureToggle)
+      }),
+      orderEntryList: (profileConfig.orderEntries || []).map((item) => ({ ...item, badge: 0 })),
+      assetCardList: (profileConfig.assetEntries || []).map((item) => ({ ...item, count: 0 })),
+      benefitTagList: (profileConfig.benefitTips || []).slice(0, 4)
     })
   },
 
@@ -52,137 +51,46 @@ Page({
     })
   },
 
-  buildOrderCountMap(orderList = []) {
-    return {
-      PENDING_PAY: orderList.filter((item) => item.status === 'PENDING_PAY').length,
-      UNUSED: orderList.filter((item) => item.status === 'PAID_UNUSED').length,
-      AFTER_SALE: orderList.filter((item) => ['REFUNDING', 'REFUNDED'].includes(item.status)).length
-    }
-  },
-
-  buildOrderEntryList(profileConfig = {}, orderCountMap = {}) {
-    return (profileConfig.orderEntries || []).map((item) => ({
-      ...item,
-      badge: item.status ? orderCountMap[item.status] || 0 : 0
-    }))
-  },
-
-  buildBenefitTags(profileConfig = {}, counters = {}, orderCountMap = {}) {
-    const dynamicTags = []
-
-    if (counters.couponCount) {
-      dynamicTags.push(`${counters.couponCount} 张券待使用`)
-    }
-    if (orderCountMap.UNUSED) {
-      dynamicTags.push(`${orderCountMap.UNUSED} 个待核销订单`)
-    }
-    if (counters.favoriteCount) {
-      dynamicTags.push(`${counters.favoriteCount} 个收藏内容`)
-    }
-    return dynamicTags.concat(profileConfig.benefitTips || []).slice(0, 4)
-  },
-
-  loadAssets(profileConfigArg, featureToggleArg) {
-    const profileConfig =
-      profileConfigArg || (this.data.profileConfig && this.data.profileConfig.assetEntries
-        ? this.data.profileConfig
-        : templateService.getTemplateSection('profile')
-      )
-    const featureToggle =
-      featureToggleArg || (this.data.featureToggle && Object.keys(this.data.featureToggle).length
-        ? this.data.featureToggle
-        : templateService.getTemplateSection('featureToggle')
-      )
-    const storedOrderList = util.getStoredOrderList(mock.orderList)
-    const orderCountMap = this.buildOrderCountMap(storedOrderList)
-    const counters = {
-      couponCount: mock.couponList.filter((item) => item.status === 'AVAILABLE').length,
-      favoriteCount: mock.favoriteList.length
-    }
-    const assetCardList = (profileConfig.assetEntries || [])
-      .filter((item) => {
-        if (item.url === '/pages/coupon/coupon') return featureToggle.enableCoupon
-        if (item.url === '/pages/favorite/favorite') return featureToggle.enableFavorite
-        return true
-      })
-      .map((item) => ({
-        ...item,
-        count: counters[item.countField] || 0
-      }))
-
-    this.setData({
-      ...counters,
-      assetCardList,
-      orderEntryList: this.buildOrderEntryList(profileConfig, orderCountMap),
-      benefitTagList: this.buildBenefitTags(profileConfig, counters, orderCountMap)
-    })
-  },
-
   handleLogin() {
     this.setData({ loginStep: 'loading' })
     util.showLoading('登录中...')
 
-    wx.login({
-      success: (loginRes) => {
-        if (!loginRes.code) {
+    // 测试登录：直接调用测试接口，不走微信验证
+    userApi
+      .testLogin(app.appId || 'wx6c708117ea8eaab4')
+      .then((res) => {
+        const info = res || {}
+        const userInfo = {
+          userId: info.userId || '',
+          openId: info.openId || '',
+          nickName: info.userName || '微信用户',
+          avatarUrl: info.avatarUrl || '/assets/images/avatar.png',
+          phone: info.phone || ''
+        }
+        const token = info.apiToken || ''
+
+        if (!token) {
           util.hideLoading()
           util.showToast('登录失败，请重试')
           this.setData({ loginStep: 'idle' })
           return
         }
 
-        userApi
-          .login(app.appId || 'wx6c708117ea8eaab4', loginRes.code)
-          .then((res) => {
-            const info = res || {}
-            const userInfo = {
-              userId: info.userId || '',
-              openId: info.openId || '',
-              nickName: info.userName || '微信用户',
-              avatarUrl: info.avatarUrl || '/assets/images/avatar.png',
-              phone: info.phone || ''
-            }
-            const token = info.apiToken || ''
+        app.setLoginInfo(token, userInfo)
 
-            if (!token) {
-              util.hideLoading()
-              util.showToast('登录失败，请重试')
-              this.setData({ loginStep: 'idle' })
-              return
-            }
-
-            app.setLoginInfo(token, userInfo)
-
-            if (!userInfo.phone) {
-              util.hideLoading()
-              this.setData({
-                isLoggedIn: true,
-                userInfo,
-                loginStep: 'phone'
-              })
-              return
-            }
-
-            this.setData({
-              isLoggedIn: true,
-              userInfo,
-              loginStep: 'idle'
-            })
-            util.hideLoading()
-            util.showToast('登录成功', 'success')
-          })
-          .catch(() => {
-            util.hideLoading()
-            util.showToast('登录失败，请重试')
-            this.setData({ loginStep: 'idle' })
-          })
-      },
-      fail: () => {
+        this.setData({
+          isLoggedIn: true,
+          userInfo,
+          loginStep: 'idle'
+        })
+        util.hideLoading()
+        util.showToast('登录成功', 'success')
+      })
+      .catch(() => {
         util.hideLoading()
         util.showToast('登录失败，请重试')
         this.setData({ loginStep: 'idle' })
-      }
-    })
+      })
   },
 
   handlePhoneAuth(e) {

@@ -48,19 +48,7 @@ Page({
         })
       })
       .catch(() => {
-        const orderList = util
-          .getOrderList()
-          .sort((a, b) => (b.payTime || 0) - (a.payTime || 0))
-          .map((item) => ({
-            ...item,
-            statusMeta: util.getOrderStatusMeta(item.status),
-            payAmountText: util.formatPrice(item.payAmount),
-            payTimeText: util.formatDate(item.payTime || item.createTime)
-          }))
-
-        this.setData({
-          orderList: this.filterOrders(orderList, this.data.currentTab)
-        })
+        util.showToast('加载失败，请重试')
       })
   },
 
@@ -96,9 +84,7 @@ Page({
           this.loadData()
         })
         .catch(() => {
-          const result = util.acceptOrder(orderNo)
-          util.showToast(result.message, result.success ? 'success' : 'none')
-          this.loadData()
+          util.showToast('操作失败，请重试')
         })
     })
   },
@@ -114,9 +100,7 @@ Page({
           this.loadData()
         })
         .catch(() => {
-          const result = util.rejectOrder(orderNo, reason)
-          util.showToast(result.message, result.success ? 'success' : 'none')
-          this.loadData()
+          util.showToast('操作失败，请重试')
         })
     })
   },
@@ -132,9 +116,7 @@ Page({
           this.loadData()
         })
         .catch(() => {
-          const result = util.completeOrder(orderNo)
-          util.showToast(result.message, result.success ? 'success' : 'none')
-          this.loadData()
+          util.showToast('操作失败，请重试')
         })
     })
   }

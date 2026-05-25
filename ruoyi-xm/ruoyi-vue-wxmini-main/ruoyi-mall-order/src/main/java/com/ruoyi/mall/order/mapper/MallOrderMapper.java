@@ -58,4 +58,6 @@ public interface MallOrderMapper {
             "FROM mall_order WHERE DATE(create_time) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) " +
             "GROUP BY DATE(create_time) ORDER BY date")
     List<Map<String, Object>> selectDailyStatsForWeek();
+
+    MallOrder selectOrderByWriteOffCode(String code);
 }

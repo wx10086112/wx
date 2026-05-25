@@ -29,7 +29,7 @@ Page({
         this.renderFinance(overview)
       })
       .catch(() => {
-        this.renderFinance(util.buildFinanceOverview())
+        util.showToast('加载失败，请重试')
       })
   },
 
@@ -108,12 +108,7 @@ Page({
         this.loadData()
       })
       .catch(() => {
-        const result = util.applyWithdraw(amount)
-        util.showToast(result.message, result.success ? 'success' : 'none')
-        if (result.success) {
-          this.setData({ withdrawAmount: '' })
-          this.loadData()
-        }
+        util.showToast('提交失败，请重试')
       })
   }
 })

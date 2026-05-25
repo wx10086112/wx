@@ -12,8 +12,13 @@ const getMerchantAlbum = (merchantId) => {
   return get(`/wxmini/merchant/album/${merchantId}`)
 }
 
+const getMerchantHome = (appid) => {
+  return get('/wxmini/merchant/home', { appid })
+}
+
 module.exports = {
   getMerchantList,
   getMerchantDetail,
-  getMerchantAlbum
+  getMerchantAlbum,
+  getMerchantHome
 }

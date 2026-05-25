@@ -3,7 +3,8 @@ package com.ruoyi.wxmini.controller;
 import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.mall.merchant.domain.Merchant;
-import com.ruoyi.mall.merchant.mapper.MerchantMapper;
+import com.ruoyi.mall.merchant.service.IMerchantService;
+import com.ruoyi.mall.order.service.IWriteOffService;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniGoodsDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniGoodsStatusRequestDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniLoginRequestDto;
@@ -50,7 +51,9 @@ public class MerchantMiniController {
     @Resource
     private IMerchantMiniMockService merchantMiniMockService;
     @Resource
-    private MerchantMapper merchantMapper;
+    private IMerchantService merchantService;
+    @Resource
+    private IWriteOffService writeOffService;
 
     /**
      * 每次请求前，从AppID解析商家ID并设置上下文
@@ -59,7 +62,7 @@ public class MerchantMiniController {
     public void resolveMerchantFromAppId(HttpServletRequest request) {
         String appId = request.getHeader("X-Merchant-AppId");
         if (StringUtils.isNotBlank(appId) && WxMiniUserContext.getAppIdMerchantId() == null) {
-            Merchant merchant = merchantMapper.selectMerchantByMAppId(appId);
+            Merchant merchant = merchantService.selectMerchantByMAppId(appId);
             if (merchant != null) {
                 WxMiniUserContext.setAppIdMerchantId(merchant.getId());
             }
@@ -111,8 +114,10 @@ public class MerchantMiniController {
             return accessDenied;
         }
         try {
-            return AjaxResult.success(merchantMiniMockService.writeOff(code, WxMiniUserContext.getCurrentUserId()));
-        } catch (IllegalArgumentException e) {
+            Long merchantId = WxMiniUserContext.getCurrentMerchantId();
+            Long operatorId = WxMiniUserContext.getCurrentStaffId();
+            return AjaxResult.success("核销成功", writeOffService.writeOff(code, merchantId, operatorId, ""));
+        } catch (Exception e) {
             return AjaxResult.error(e.getMessage());
         }
     }

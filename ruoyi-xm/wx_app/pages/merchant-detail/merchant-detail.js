@@ -1,4 +1,3 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
 const api = require('../../api/index')
@@ -14,8 +13,14 @@ Page({
   },
 
   onLoad(options) {
+    const id = parseInt(options.id, 10)
+    if (!id || isNaN(id)) {
+      util.showToast('商家不存在')
+      setTimeout(() => util.navigateBack(), 1500)
+      return
+    }
     this.setData({
-      merchantId: parseInt(options.id || 1, 10),
+      merchantId: id,
       merchantConfig: templateService.getTemplateSection('merchantDetail')
     })
     this.loadMerchantDetail()
@@ -25,11 +30,11 @@ Page({
     this.setData({ loading: true })
 
     Promise.all([
-      api.getMerchantDetail(this.data.merchantId).catch(() => null),
-      api.getGrouponList({ merchantId: this.data.merchantId }).catch(() => null)
+      api.getMerchantDetail(this.data.merchantId),
+      api.getGrouponList({ merchantId: this.data.merchantId })
     ]).then(([merchantData, grouponResult]) => {
-      const merchant = merchantData || mock.merchantList.find((item) => item.id === this.data.merchantId) || mock.merchantList[0]
-      const grouponList = grouponResult || mock.grouponList.filter((item) => item.merchantId === merchant.merchantId)
+      const merchant = merchantData || {}
+      const grouponList = grouponResult || []
       const albumList = (merchant.albumList && merchant.albumList.length
         ? merchant.albumList
         : [merchant.coverImage, merchant.avatar, ...(grouponList.map((item) => item.image || item.imageUrl).filter(Boolean))]
@@ -41,18 +46,12 @@ Page({
         loading: false
       })
     }).catch(() => {
-      const merchant = mock.merchantList.find((item) => item.id === this.data.merchantId) || mock.merchantList[0]
-      const grouponList = mock.grouponList.filter((item) => item.merchantId === merchant.merchantId)
-      const albumList = (merchant.albumList && merchant.albumList.length
-        ? merchant.albumList
-        : [merchant.coverImage, merchant.avatar, ...grouponList.map((item) => item.image)]
-      ).slice(0, 6)
-
       this.setData({
-        merchant,
-        albumList,
+        merchant: {},
+        albumList: [],
         loading: false
       })
+      util.showToast('加载失败，请重试')
     })
   },
 

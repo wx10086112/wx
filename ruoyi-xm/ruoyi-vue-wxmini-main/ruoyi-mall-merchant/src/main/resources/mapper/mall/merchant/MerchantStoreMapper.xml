@@ -19,12 +19,11 @@
         <result property="isMain" column="is_main"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
-        <result property="remark" column="remark"/>
     </resultMap>
 
     <sql id="selectMerchantStoreVo">
         select id, merchant_id, name, contact, phone, address, longitude, latitude,
-               business_hours, avatar, status, is_main, create_time, update_time, remark
+               business_hours, avatar, status, is_main, create_time, update_time
         from merchant_store
     </sql>
 
@@ -64,7 +63,6 @@
             <if test="avatar != null">avatar,</if>
             <if test="status != null">status,</if>
             <if test="isMain != null">is_main,</if>
-            <if test="remark != null">remark,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="merchantId != null">#{merchantId},</if>
@@ -78,7 +76,6 @@
             <if test="avatar != null">#{avatar},</if>
             <if test="status != null">#{status},</if>
             <if test="isMain != null">#{isMain},</if>
-            <if test="remark != null">#{remark},</if>
         </trim>
     </insert>
 
@@ -96,7 +93,6 @@
             <if test="avatar != null">avatar = #{avatar},</if>
             <if test="status != null">status = #{status},</if>
             <if test="isMain != null">is_main = #{isMain},</if>
-            <if test="remark != null">remark = #{remark},</if>
         </trim>
         where id = #{id}
     </update>

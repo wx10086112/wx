@@ -1,18 +1,31 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
+const api = require('../../api/index')
 
 Page({
   data: {
     keyword: '',
-    hotList: ['SPA', '肩颈', '焕肤', '到店核销', '护理', '轻养'],
+    hotList: [],
     historyList: [],
-    merchantList: mock.merchantList,
-    productList: mock.grouponList
+    merchantList: [],
+    productList: []
   },
 
   onLoad() {
     const historyList = wx.getStorageSync('search_history') || []
     this.setData({ historyList })
+    this.loadSuggestions()
+  },
+
+  loadSuggestions() {
+    Promise.all([
+      api.getMerchantList({}).catch(() => []),
+      api.getGrouponList({}).catch(() => [])
+    ]).then(([merchantList, grouponList]) => {
+      this.setData({
+        merchantList: merchantList || [],
+        productList: grouponList || []
+      })
+    })
   },
 
   onKeywordInput(e) {

@@ -63,4 +63,14 @@ public class MerchantServiceImpl implements IMerchantService {
     public int deleteMerchantByIds(Long[] ids) {
         return merchantMapper.deleteMerchantByIds(ids);
     }
+
+    @Override
+    public Merchant selectMerchantByCAppId(String cMiniAppId) {
+        return merchantMapper.selectMerchantByCAppId(cMiniAppId);
+    }
+
+    @Override
+    public Merchant selectMerchantByMAppId(String mMiniAppId) {
+        return merchantMapper.selectMerchantByMAppId(mMiniAppId);
+    }
 }
