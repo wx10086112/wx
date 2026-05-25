@@ -10,12 +10,20 @@ public class GrouponActivity extends BaseEntity {
     private Long merchantId;
     private String name;
     private String coverImage;
+    /** 活动海报图 */
+    private String posterImage;
+    /** 活动详情图 JSON 数组 */
+    private String detailImages;
     private String description;
     private Date startTime;
     private Date endTime;
     private Integer status;
     private Integer totalSold;
     private Integer limitPerUser;
+    /** 排序 */
+    private Integer sort;
+    /** 创建来源：ADMIN 总后台 / MERCHANT 商家端 */
+    private String sourceType;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -28,6 +36,12 @@ public class GrouponActivity extends BaseEntity {
 
     public String getCoverImage() { return coverImage; }
     public void setCoverImage(String coverImage) { this.coverImage = coverImage; }
+
+    public String getPosterImage() { return posterImage; }
+    public void setPosterImage(String posterImage) { this.posterImage = posterImage; }
+
+    public String getDetailImages() { return detailImages; }
+    public void setDetailImages(String detailImages) { this.detailImages = detailImages; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
@@ -46,4 +60,10 @@ public class GrouponActivity extends BaseEntity {
 
     public Integer getLimitPerUser() { return limitPerUser; }
     public void setLimitPerUser(Integer limitPerUser) { this.limitPerUser = limitPerUser; }
+
+    public Integer getSort() { return sort; }
+    public void setSort(Integer sort) { this.sort = sort; }
+
+    public String getSourceType() { return sourceType; }
+    public void setSourceType(String sourceType) { this.sourceType = sourceType; }
 }

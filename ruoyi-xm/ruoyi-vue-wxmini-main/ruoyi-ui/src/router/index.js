@@ -102,6 +102,15 @@ export const constantRoutes = [
       { path: 'audit', component: () => import('@/views/merchant/audit'), name: 'MerchantAudit', meta: { title: '入驻审核' } }
     ]
   },
+  // ========== 分销商管理 ==========
+  {
+    path: '/distributor',
+    component: Layout,
+    meta: { title: '分销商管理', icon: 'peoples' },
+    children: [
+      { path: 'list', component: () => import('@/views/distributor/list'), name: 'DistributorList', meta: { title: '分销商列表' } }
+    ]
+  },
   // ========== 平台财务 ==========
   {
     path: '/finance',

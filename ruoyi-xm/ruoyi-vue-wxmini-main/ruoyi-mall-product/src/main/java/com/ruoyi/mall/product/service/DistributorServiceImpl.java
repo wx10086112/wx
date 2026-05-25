@@ -1,0 +1,75 @@
+package com.ruoyi.mall.product.service;
+
+import com.ruoyi.mall.product.domain.Distributor;
+import com.ruoyi.mall.product.mapper.DistributorMapper;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+@Service
+public class DistributorServiceImpl implements IDistributorService {
+
+    @Resource
+    private DistributorMapper distributorMapper;
+
+    private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+
+    @Override
+    public Distributor selectDistributorById(Long id) {
+        return distributorMapper.selectDistributorById(id);
+    }
+
+    @Override
+    public List<Distributor> selectDistributorList(Distributor query) {
+        return distributorMapper.selectDistributorList(query);
+    }
+
+    @Override
+    public Distributor selectByUsername(String username) {
+        return distributorMapper.selectByUsername(username);
+    }
+
+    @Override
+    public int insertDistributor(Distributor distributor) {
+        // 检查账号是否已存在
+        Distributor existing = distributorMapper.selectByUsername(distributor.getUsername());
+        if (existing != null) {
+            throw new RuntimeException("登录账号已存在");
+        }
+        // 密码加密
+        if (distributor.getPassword() != null && !distributor.getPassword().isEmpty()) {
+            distributor.setPassword(encoder.encode(distributor.getPassword()));
+        }
+        if (distributor.getStatus() == null) {
+            distributor.setStatus(1);
+        }
+        return distributorMapper.insertDistributor(distributor);
+    }
+
+    @Override
+    public int updateDistributor(Distributor distributor) {
+        // 修改时不更新密码字段
+        distributor.setPassword(null);
+        return distributorMapper.updateDistributor(distributor);
+    }
+
+    @Override
+    public int deleteDistributorById(Long id) {
+        return distributorMapper.deleteDistributorById(id);
+    }
+
+    @Override
+    public int deleteDistributorByIds(Long[] ids) {
+        return distributorMapper.deleteDistributorByIds(ids);
+    }
+
+    @Override
+    public int resetPassword(Long id, String newPassword) {
+        Distributor distributor = new Distributor();
+        distributor.setId(id);
+        distributor.setPassword(encoder.encode(newPassword));
+        return distributorMapper.updateDistributor(distributor);
+    }
+}

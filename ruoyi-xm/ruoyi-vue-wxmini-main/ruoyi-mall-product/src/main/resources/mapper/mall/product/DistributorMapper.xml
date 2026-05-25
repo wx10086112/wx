@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.product.mapper.DistributorMapper">
+
+    <resultMap type="com.ruoyi.mall.product.domain.Distributor" id="DistributorResult">
+        <result property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="contact" column="contact"/>
+        <result property="phone" column="phone"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="regionCode" column="region_code"/>
+        <result property="regionName" column="region_name"/>
+        <result property="status" column="status"/>
+        <result property="remark" column="remark"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectDistributorVo">
+        select id, name, contact, phone, username, password,
+               region_code, region_name, status, remark, create_time, update_time
+        from distributor
+    </sql>
+
+    <select id="selectDistributorById" parameterType="Long" resultMap="DistributorResult">
+        <include refid="selectDistributorVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectDistributorList" parameterType="com.ruoyi.mall.product.domain.Distributor" resultMap="DistributorResult">
+        <include refid="selectDistributorVo"/>
+        <where>
+            <if test="name != null and name != ''">and name like concat('%', #{name}, '%')</if>
+            <if test="phone != null and phone != ''">and phone like concat('%', #{phone}, '%')</if>
+            <if test="regionName != null and regionName != ''">and region_name like concat('%', #{regionName}, '%')</if>
+            <if test="status != null">and status = #{status}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectByUsername" parameterType="String" resultMap="DistributorResult">
+        <include refid="selectDistributorVo"/>
+        where username = #{username}
+    </select>
+
+    <insert id="insertDistributor" parameterType="com.ruoyi.mall.product.domain.Distributor" useGeneratedKeys="true" keyProperty="id">
+        insert into distributor
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="name != null">name,</if>
+            <if test="contact != null">contact,</if>
+            <if test="phone != null">phone,</if>
+            <if test="username != null">username,</if>
+            <if test="password != null">password,</if>
+            <if test="regionCode != null">region_code,</if>
+            <if test="regionName != null">region_name,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="name != null">#{name},</if>
+            <if test="contact != null">#{contact},</if>
+            <if test="phone != null">#{phone},</if>
+            <if test="username != null">#{username},</if>
+            <if test="password != null">#{password},</if>
+            <if test="regionCode != null">#{regionCode},</if>
+            <if test="regionName != null">#{regionName},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateDistributor" parameterType="com.ruoyi.mall.product.domain.Distributor">
+        update distributor
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null">name = #{name},</if>
+            <if test="contact != null">contact = #{contact},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="regionCode != null">region_code = #{regionCode},</if>
+            <if test="regionName != null">region_name = #{regionName},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteDistributorById" parameterType="Long">
+        delete from distributor where id = #{id}
+    </delete>
+
+    <delete id="deleteDistributorByIds" parameterType="String">
+        delete from distributor where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

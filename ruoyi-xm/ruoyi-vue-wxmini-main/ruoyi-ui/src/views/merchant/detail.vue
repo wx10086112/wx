@@ -99,7 +99,68 @@
             />
           </el-tab-pane>
 
-          <!-- Tab 3: 订单记录 -->
+          <!-- Tab 3: 团购活动 -->
+          <el-tab-pane label="团购活动" name="groupon">
+            <div class="search-bar">
+              <el-input v-model="grouponQuery.name" placeholder="活动名称" size="small" clearable style="width: 200px; margin-right: 10px;" @keyup.enter.native="loadGroupons" />
+              <el-select v-model="grouponQuery.status" placeholder="全部状态" size="small" clearable style="width: 120px; margin-right: 10px;">
+                <el-option label="未启用" :value="0" />
+                <el-option label="进行中" :value="1" />
+                <el-option label="已结束" :value="2" />
+              </el-select>
+              <el-button type="primary" icon="el-icon-search" size="small" @click="loadGroupons">搜索</el-button>
+              <el-button type="success" icon="el-icon-plus" size="small" @click="handleAddGroupon" style="margin-left: auto;">新增团购</el-button>
+            </div>
+
+            <el-table v-loading="grouponLoading" :data="grouponList" border size="small">
+              <el-table-column label="ID" prop="id" width="60" align="center" />
+              <el-table-column label="封面" width="80" align="center">
+                <template slot-scope="scope">
+                  <el-image v-if="scope.row.coverImage" :src="scope.row.coverImage" style="width: 50px; height: 50px;" fit="cover" :preview-src-list="[scope.row.coverImage]" />
+                  <span v-else style="color: #ccc;">无</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="活动名称" prop="name" min-width="130" show-overflow-tooltip />
+              <el-table-column label="活动时间" width="260" align="center">
+                <template slot-scope="scope">
+                  {{ parseTime(scope.row.startTime, '{y}-{m}-{d} {h}:{i}') }} ~ {{ parseTime(scope.row.endTime, '{y}-{m}-{d} {h}:{i}') }}
+                </template>
+              </el-table-column>
+              <el-table-column label="状态" width="80" align="center">
+                <template slot-scope="scope">
+                  <el-tag v-if="scope.row.status === 1" type="success" size="mini">进行中</el-tag>
+                  <el-tag v-else-if="scope.row.status === 2" type="info" size="mini">已结束</el-tag>
+                  <el-tag v-else type="warning" size="mini">未启用</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="已售" prop="totalSold" width="60" align="center" />
+              <el-table-column label="限购" width="70" align="center">
+                <template slot-scope="scope">{{ scope.row.limitPerUser > 0 ? scope.row.limitPerUser + '/人' : '不限' }}</template>
+              </el-table-column>
+              <el-table-column label="排序" prop="sort" width="55" align="center" />
+              <el-table-column label="操作" width="260" align="center">
+                <template slot-scope="scope">
+                  <el-button size="mini" type="text" icon="el-icon-edit" @click="handleEditGroupon(scope.row)">编辑</el-button>
+                  <el-button size="mini" type="text" :icon="scope.row.status === 1 ? 'el-icon-bottom' : 'el-icon-top'" @click="handleToggleGrouponStatus(scope.row)">{{ scope.row.status === 1 ? '下架' : '上架' }}</el-button>
+                  <el-button size="mini" type="text" icon="el-icon-goods" @click="handleManageItems(scope.row)">商品</el-button>
+                  <el-button size="mini" type="text" icon="el-icon-delete" style="color: #F56C6C;" @click="handleDeleteGroupon(scope.row)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+
+            <el-pagination
+              class="pagination"
+              :current-page="grouponQuery.pageNum"
+              :page-sizes="[10, 20]"
+              :page-size="grouponQuery.pageSize"
+              :total="grouponTotal"
+              layout="total, sizes, prev, pager, next"
+              @size-change="handleGrouponSizeChange"
+              @current-change="handleGrouponPageChange"
+            />
+          </el-tab-pane>
+
+          <!-- Tab 4: 订单记录 -->
           <el-tab-pane label="订单记录" name="orders">
             <el-table v-loading="orderLoading" :data="orderList" border size="small">
               <el-table-column label="订单号" prop="orderNo" width="180" />
@@ -127,7 +188,7 @@
             />
           </el-tab-pane>
 
-          <!-- Tab 4: 流水记录 -->
+          <!-- Tab 5: 流水记录 -->
           <el-tab-pane label="流水记录" name="flow">
             <el-table v-loading="flowLoading" :data="flowList" border size="small">
               <el-table-column label="类型" prop="type" width="100" />
@@ -154,7 +215,7 @@
             />
           </el-tab-pane>
 
-          <!-- Tab 5: 账户管理 -->
+          <!-- Tab 6: 账户管理 -->
           <el-tab-pane label="账户管理" name="accounts">
             <div class="search-bar">
               <el-button type="success" icon="el-icon-plus" size="small" @click="handleAddAccount">新增账户</el-button>
@@ -222,8 +283,20 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="图片URL" prop="image">
-          <el-input v-model="productForm.image" placeholder="请输入图片路径" />
+        <el-form-item label="商品主图" prop="mainImage">
+          <el-upload
+            class="image-uploader"
+            :action="uploadUrl"
+            :headers="uploadHeaders"
+            :show-file-list="false"
+            :on-success="handleImageSuccess"
+            :before-upload="beforeImageUpload"
+            :data="uploadData"
+          >
+            <img v-if="productForm.mainImage" :src="productForm.mainImage" class="image-preview">
+            <i v-else class="el-icon-plus image-uploader-icon"></i>
+          </el-upload>
+          <div class="upload-tip">支持 jpg/jpeg/png/webp 格式，单张不超过5MB</div>
         </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input v-model="productForm.description" type="textarea" :rows="3" placeholder="请输入商品描述" />
@@ -293,11 +366,310 @@
         <el-button type="primary" @click="submitMiniAppForm">保 存</el-button>
       </div>
     </el-dialog>
+
+    <!-- 团购新增/编辑弹窗 -->
+    <el-dialog :title="grouponDialogTitle" :visible.sync="grouponDialogVisible" width="700px" append-to-body :close-on-click-modal="false">
+      <el-form ref="grouponForm" :model="grouponForm" :rules="grouponRules" label-width="100px">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="活动名称" prop="name">
+              <el-input v-model="grouponForm.name" placeholder="请输入活动名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="排序" prop="sort">
+              <el-input-number v-model="grouponForm.sort" :min="0" :controls="false" style="width: 100%;" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="开始时间" prop="startTime">
+              <el-date-picker v-model="grouponForm.startTime" type="datetime" placeholder="选择开始时间" value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%;" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="结束时间" prop="endTime">
+              <el-date-picker v-model="grouponForm.endTime" type="datetime" placeholder="选择结束时间" value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%;" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="每人限购" prop="limitPerUser">
+              <el-input-number v-model="grouponForm.limitPerUser" :min="0" :controls="false" style="width: 100%;" placeholder="0不限" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="状态" prop="status">
+              <el-radio-group v-model="grouponForm.status">
+                <el-radio :label="0">未启用</el-radio>
+                <el-radio :label="1">进行中</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="活动封面" prop="coverImage">
+          <el-upload
+            class="image-uploader"
+            :action="grouponUploadUrl"
+            :headers="uploadHeaders"
+            :show-file-list="false"
+            :on-success="(res) => handleGrouponImageSuccess(res, 'cover')"
+            :before-upload="beforeImageUpload"
+            :data="grouponUploadData('cover')"
+          >
+            <img v-if="grouponForm.coverImage" :src="grouponForm.coverImage" class="image-preview">
+            <i v-else class="el-icon-plus image-uploader-icon"></i>
+          </el-upload>
+          <div class="upload-tip">封面图，支持 jpg/jpeg/png/webp，不超过5MB</div>
+        </el-form-item>
+        <el-form-item label="活动海报">
+          <el-upload
+            class="image-uploader"
+            :action="grouponUploadUrl"
+            :headers="uploadHeaders"
+            :show-file-list="false"
+            :on-success="(res) => handleGrouponImageSuccess(res, 'poster')"
+            :before-upload="beforeImageUpload"
+            :data="grouponUploadData('poster')"
+          >
+            <img v-if="grouponForm.posterImage" :src="grouponForm.posterImage" class="image-preview">
+            <i v-else class="el-icon-plus image-uploader-icon"></i>
+          </el-upload>
+          <div class="upload-tip">海报图，可选</div>
+        </el-form-item>
+        <el-form-item label="详情图">
+          <el-upload
+            :action="grouponUploadUrl"
+            :headers="uploadHeaders"
+            list-type="picture-card"
+            :file-list="detailFileList"
+            :on-success="handleDetailImageSuccess"
+            :before-upload="beforeImageUpload"
+            :on-remove="handleDetailImageRemove"
+            :data="grouponUploadData('detail')"
+          >
+            <i class="el-icon-plus"></i>
+          </el-upload>
+          <div class="upload-tip">详情图，可上传多张</div>
+        </el-form-item>
+        <el-form-item label="活动说明">
+          <el-input v-model="grouponForm.description" type="textarea" :rows="3" placeholder="请输入活动说明" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="grouponDialogVisible = false">取 消</el-button>
+        <el-button type="primary" :loading="grouponSubmitLoading" @click="submitGrouponForm">确 定</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 团购商品列表弹窗 -->
+    <el-dialog title="团购商品管理" :visible.sync="itemsDialogVisible" width="95%" style="max-width: 1100px;" append-to-body :close-on-click-modal="false">
+      <div class="search-bar">
+        <span style="margin-right: 12px; color: #606266;">活动：{{ currentGroupon ? currentGroupon.name : '' }}</span>
+        <el-button type="success" icon="el-icon-plus" size="small" @click="handleAddItem" style="margin-left: auto;">新增团购商品</el-button>
+      </div>
+      <el-table v-loading="itemLoading" :data="itemList" border size="small">
+        <el-table-column label="ID" prop="id" width="55" align="center" />
+        <el-table-column label="封面" width="70" align="center">
+          <template slot-scope="scope">
+            <el-image v-if="scope.row.coverImage" :src="scope.row.coverImage" style="width: 45px; height: 45px;" fit="cover" :preview-src-list="[scope.row.coverImage]" />
+            <span v-else style="color: #ccc;">无</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="商品名称" prop="name" min-width="120" show-overflow-tooltip />
+        <el-table-column label="套餐内容" prop="content" min-width="150" show-overflow-tooltip />
+        <el-table-column label="原价" width="80" align="center">
+          <template slot-scope="scope">{{ (scope.row.originalPrice / 100).toFixed(2) }}</template>
+        </el-table-column>
+        <el-table-column label="团购价" width="80" align="center">
+          <template slot-scope="scope"><span class="text-danger">{{ (scope.row.grouponPrice / 100).toFixed(2) }}</span></template>
+        </el-table-column>
+        <el-table-column label="折扣" width="65" align="center">
+          <template slot-scope="scope">{{ scope.row.discountRate ? scope.row.discountRate.toFixed(1) + '折' : '-' }}</template>
+        </el-table-column>
+        <el-table-column label="库存" prop="stock" width="55" align="center" />
+        <el-table-column label="已售" prop="sales" width="55" align="center" />
+        <el-table-column label="状态" width="70" align="center">
+          <template slot-scope="scope">
+            <el-tag :type="scope.row.status === 1 ? 'success' : 'info'" size="mini">{{ scope.row.status === 1 ? '上架' : '下架' }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="160" align="center">
+          <template slot-scope="scope">
+            <el-button size="mini" type="text" icon="el-icon-edit" @click="handleEditItem(scope.row)">编辑</el-button>
+            <el-button size="mini" type="text" :icon="scope.row.status === 1 ? 'el-icon-bottom' : 'el-icon-top'" @click="handleToggleItemStatus(scope.row)">{{ scope.row.status === 1 ? '下架' : '上架' }}</el-button>
+            <el-button size="mini" type="text" icon="el-icon-delete" style="color: #F56C6C;" @click="handleDeleteItem(scope.row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div v-if="itemList.length === 0" class="empty-tip">暂无团购商品，点击上方"新增团购商品"添加</div>
+      <div slot="footer">
+        <el-button @click="itemsDialogVisible = false">关 闭</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 团购商品新增/编辑弹窗 -->
+    <el-dialog :title="itemDialogTitle" :visible.sync="itemDialogVisible" width="750px" append-to-body :close-on-click-modal="false">
+      <el-form ref="itemForm" :model="itemForm" :rules="itemRules" label-width="100px">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="商品名称" prop="name">
+              <el-input v-model="itemForm.name" placeholder="请输入团购商品名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="展示标题" prop="title">
+              <el-input v-model="itemForm.title" placeholder="可与名称一致" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="套餐内容" prop="content">
+          <el-input v-model="itemForm.content" type="textarea" :rows="2" placeholder="请输入套餐内容/服务内容" />
+        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="原价(元)" prop="originalPriceYuan">
+              <el-input-number v-model="itemForm.originalPriceYuan" :min="0.01" :precision="2" :controls="false" style="width: 100%;" placeholder="0.00" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="团购价(元)" prop="grouponPriceYuan">
+              <el-input-number v-model="itemForm.grouponPriceYuan" :min="0.01" :precision="2" :controls="false" style="width: 100%;" placeholder="0.00" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="折扣" prop="discountRate">
+              <el-input :value="computedDiscount" disabled style="width: 100%;">
+                <template slot="append">折</template>
+              </el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="库存" prop="stock">
+              <el-input-number v-model="itemForm.stock" :min="0" :controls="false" style="width: 100%;" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="每人限购" prop="limitPerUser">
+              <el-input-number v-model="itemForm.limitPerUser" :min="0" :controls="false" style="width: 100%;" placeholder="0不限" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="有效期(天)" prop="validDays">
+              <el-input-number v-model="itemForm.validDays" :min="1" :controls="false" style="width: 100%;" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="排序" prop="sort">
+              <el-input-number v-model="itemForm.sort" :min="0" :controls="false" style="width: 100%;" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="状态" prop="status">
+              <el-radio-group v-model="itemForm.status">
+                <el-radio :label="0">下架</el-radio>
+                <el-radio :label="1">上架</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="封面图" prop="coverImage">
+          <el-upload
+            class="image-uploader"
+            :action="itemUploadUrl"
+            :headers="uploadHeaders"
+            :show-file-list="false"
+            :on-success="(res) => handleItemImageSuccess(res, 'cover')"
+            :before-upload="beforeImageUpload"
+            :data="itemUploadData('cover')"
+          >
+            <img v-if="itemForm.coverImage" :src="itemForm.coverImage" class="image-preview">
+            <i v-else class="el-icon-plus image-uploader-icon"></i>
+          </el-upload>
+          <div class="upload-tip">封面图，支持 jpg/jpeg/png/webp，不超过5MB</div>
+        </el-form-item>
+        <el-form-item label="详情图">
+          <el-upload
+            :action="itemUploadUrl"
+            :headers="uploadHeaders"
+            list-type="picture-card"
+            :file-list="itemDetailFileList"
+            :on-success="handleItemDetailImageSuccess"
+            :before-upload="beforeImageUpload"
+            :on-remove="handleItemDetailImageRemove"
+            :data="itemUploadData('detail')"
+          >
+            <i class="el-icon-plus"></i>
+          </el-upload>
+          <div class="upload-tip">详情图，可上传多张</div>
+        </el-form-item>
+
+        <!-- 菜品搭配 -->
+        <el-divider content-position="left">菜品搭配</el-divider>
+        <div class="dish-group-section">
+          <div class="dish-group-toolbar">
+            <el-button size="mini" type="primary" icon="el-icon-plus" @click="addDishGroup">添加菜品组</el-button>
+            <el-switch v-model="itemForm.directTotalPrice" active-text="直接设置菜品总价" inactive-text="" style="margin-left: 16px;" />
+            <el-input-number v-if="itemForm.directTotalPrice" v-model="itemForm.dishTotalPriceYuan" :min="0" :precision="2" :controls="false" size="small" style="width: 140px; margin-left: 10px;" placeholder="菜品总价" />
+            <span v-if="itemForm.directTotalPrice" style="margin-left: 4px; color: #909399; font-size: 12px;">元</span>
+            <span style="margin-left: auto; color: #909399; font-size: 12px;">共 {{ dishTotalCount }} 道菜品</span>
+          </div>
+
+          <div v-for="(group, gIdx) in itemForm.dishGroups" :key="gIdx" class="dish-group-card">
+            <div class="dish-group-header">
+              <el-input v-model="group.groupName" size="small" style="width: 160px;" placeholder="菜品组名称" maxlength="10" />
+              <div style="margin-left: auto; display: flex; gap: 4px;">
+                <el-button v-if="gIdx > 0" size="mini" type="text" icon="el-icon-top" @click="moveDishGroup(gIdx, -1)" />
+                <el-button v-if="gIdx < itemForm.dishGroups.length - 1" size="mini" type="text" icon="el-icon-bottom" @click="moveDishGroup(gIdx, 1)" />
+                <el-button size="mini" type="text" icon="el-icon-delete" style="color: #F56C6C;" @click="removeDishGroup(gIdx)" />
+              </div>
+            </div>
+
+            <div v-for="(dish, dIdx) in group.items" :key="dIdx" class="dish-row">
+              <el-input v-model="dish.dishName" size="small" style="width: 140px;" placeholder="菜品名称" />
+              <el-input-number v-model="dish.quantity" size="small" :min="1" :controls="false" style="width: 60px;" />
+              <el-select v-model="dish.unit" size="small" style="width: 65px;">
+                <el-option label="份" value="份" />
+                <el-option label="个" value="个" />
+                <el-option label="杯" value="杯" />
+                <el-option label="斤" value="斤" />
+                <el-option label="盒" value="盒" />
+                <el-option label="次" value="次" />
+                <el-option label="项" value="项" />
+              </el-select>
+              <el-input-number v-model="dish.priceYuan" size="small" :min="0" :precision="2" :controls="false" style="width: 90px;" placeholder="单价" />
+              <span style="color: #909399; font-size: 12px; margin-right: 4px;">元</span>
+              <el-button size="mini" type="text" icon="el-icon-delete" style="color: #F56C6C;" @click="removeDish(gIdx, dIdx)" />
+            </div>
+
+            <div class="dish-group-actions">
+              <el-button size="mini" type="text" icon="el-icon-plus" @click="addDish(gIdx)">添加</el-button>
+            </div>
+          </div>
+        </div>
+
+        <el-form-item label="商品说明">
+          <el-input v-model="itemForm.description" type="textarea" :rows="2" placeholder="请输入商品说明" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="itemDialogVisible = false">取 消</el-button>
+        <el-button type="primary" :loading="itemSubmitLoading" @click="submitItemForm">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getMerchantDetail, getProductList, addProduct, updateProduct, deleteProduct, getMerchantOrders, getMerchantFlowList, orderStatusMap, getMerchantUserList, addMerchantUser, resetMerchantUserPwd, changeMerchantUserStatus } from '@/api/merchant'
+import { getMerchantDetail, getProductList, addProduct, updateProduct, deleteProduct, getMerchantOrders, getMerchantFlowList, orderStatusMap, getMerchantUserList, addMerchantUser, resetMerchantUserPwd, changeMerchantUserStatus, updateMerchant } from '@/api/merchant'
+import { listGroupon, getGroupon, addGroupon, updateGroupon, deleteGroupon, changeGrouponStatus, listGrouponItem, addGrouponItem, updateGrouponItem, deleteGrouponItem, changeGrouponItemStatus } from '@/api/marketing/groupon'
+import { getToken } from '@/utils/auth'
 
 export default {
   name: 'MerchantDetail',
@@ -316,7 +688,7 @@ export default {
       productQuery: { name: '', status: '', pageNum: 1, pageSize: 10 },
       productDialogVisible: false,
       productDialogTitle: '新增商品',
-      productForm: { id: null, name: '', category: '', originalPrice: 0, price: 0, stock: 0, validDays: 30, image: '', description: '' },
+      productForm: { id: null, name: '', category: '', originalPrice: 0, price: 0, stock: 0, validDays: 30, mainImage: '', description: '' },
       productRules: {
         name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
         category: [{ required: true, message: '请输入分类', trigger: 'blur' }],
@@ -349,7 +721,78 @@ export default {
 
       // 小程序配置
       miniAppDialogVisible: false,
-      miniAppForm: { cMiniAppId: '', cMiniAppSecret: '', mMiniAppId: '', mMiniAppSecret: '', wxPayMchId: '', wxPayApiKey: '' }
+      miniAppForm: { cMiniAppId: '', cMiniAppSecret: '', mMiniAppId: '', mMiniAppSecret: '', wxPayMchId: '', wxPayApiKey: '' },
+
+      // 团购活动
+      grouponLoading: false,
+      grouponList: [],
+      grouponTotal: 0,
+      grouponQuery: { name: '', status: '', pageNum: 1, pageSize: 10 },
+      grouponDialogVisible: false,
+      grouponDialogTitle: '新增团购活动',
+      grouponSubmitLoading: false,
+      grouponForm: { id: null, merchantId: null, name: '', coverImage: '', posterImage: '', detailImages: '[]', description: '', startTime: null, endTime: null, limitPerUser: 0, sort: 0, status: 0 },
+      grouponRules: {
+        name: [{ required: true, message: '请输入活动名称', trigger: 'blur' }],
+        coverImage: [{ required: true, message: '请上传活动封面', trigger: 'change' }],
+        startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
+        endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }]
+      },
+      grouponUploadUrl: process.env.VUE_APP_BASE_API + '/mall/groupon/image/upload',
+      detailFileList: [],
+      // 团购商品管理
+      itemsDialogVisible: false,
+      currentGroupon: null,
+      itemLoading: false,
+      itemList: [],
+      itemDialogVisible: false,
+      itemDialogTitle: '新增团购商品',
+      itemSubmitLoading: false,
+      itemForm: { id: null, merchantId: null, grouponId: null, name: '', title: '', content: '', description: '', coverImage: '', detailImages: '[]', originalPriceYuan: 0, grouponPriceYuan: 0, stock: 0, limitPerUser: 0, validDays: 30, status: 0, sort: 0, dishGroups: [{ groupName: '', items: [{ dishName: '', quantity: 1, unit: '份', priceYuan: 0 }] }], directTotalPrice: false, dishTotalPriceYuan: 0 },
+      itemRules: {
+        name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
+        content: [{ required: true, message: '请输入套餐内容', trigger: 'blur' }],
+        coverImage: [{ required: true, message: '请上传封面图', trigger: 'change' }],
+        originalPriceYuan: [{ required: true, message: '请输入原价', trigger: 'blur' }],
+        grouponPriceYuan: [{ required: true, message: '请输入团购价', trigger: 'blur' }],
+        stock: [{ required: true, message: '请输入库存', trigger: 'blur' }],
+        validDays: [{ required: true, message: '请输入有效期', trigger: 'blur' }]
+      },
+      itemUploadUrl: process.env.VUE_APP_BASE_API + '/mall/groupon/item/image/upload',
+      itemDetailFileList: [],
+      // 图片上传
+      uploadUrl: process.env.VUE_APP_BASE_API + '/merchant/product/image/upload',
+    }
+  },
+  computed: {
+    uploadData() {
+      return {
+        merchantId: this.merchantId,
+        productId: this.productForm.id || '',
+        imageType: 'main'
+      }
+    },
+    uploadHeaders() {
+      return {
+        Authorization: 'Bearer ' + getToken()
+      }
+    },
+    computedDiscount() {
+      if (this.itemForm.originalPriceYuan > 0 && this.itemForm.grouponPriceYuan > 0) {
+        return (this.itemForm.grouponPriceYuan / this.itemForm.originalPriceYuan * 10).toFixed(1)
+      }
+      return '-'
+    },
+    dishTotalCount() {
+      if (!this.itemForm.dishGroups) return 0
+      return this.itemForm.dishGroups.reduce((sum, g) => sum + (g.items ? g.items.length : 0), 0)
+    },
+    computedDishTotalPrice() {
+      if (this.itemForm.directTotalPrice) return Math.round((this.itemForm.dishTotalPriceYuan || 0) * 100)
+      if (!this.itemForm.dishGroups) return 0
+      return this.itemForm.dishGroups.reduce((sum, g) => {
+        return sum + (g.items || []).reduce((s, d) => s + Math.round((d.priceYuan || 0) * 100) * (d.quantity || 1), 0)
+      }, 0)
     }
   },
   created() {
@@ -362,6 +805,26 @@ export default {
     this.loadProducts()
   },
   methods: {
+    // ========== 图片上传 ==========
+    beforeImageUpload(file) {
+      const isValidType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
+      const isLt5M = file.size / 1024 / 1024 < 5
+      if (!isValidType) {
+        this.$message.error('仅支持 jpg/jpeg/png/webp 格式!')
+      }
+      if (!isLt5M) {
+        this.$message.error('图片大小不能超过 5MB!')
+      }
+      return isValidType && isLt5M
+    },
+    handleImageSuccess(res) {
+      if (res.code === 200) {
+        this.productForm.mainImage = res.data.url
+        this.$message.success('图片上传成功')
+      } else {
+        this.$message.error(res.msg || '上传失败')
+      }
+    },
     async fetchDetail() {
       this.loading = true
       try {
@@ -395,7 +858,7 @@ export default {
     },
     handleAddProduct() {
       this.productDialogTitle = '新增商品'
-      this.productForm = { id: null, name: '', category: '', originalPrice: 0, price: 0, stock: 0, validDays: 30, image: '', description: '' }
+      this.productForm = { id: null, name: '', category: '', originalPrice: 0, price: 0, stock: 0, validDays: 30, mainImage: '', description: '' }
       this.productDialogVisible = true
       this.$nextTick(() => { this.$refs.productForm && this.$refs.productForm.clearValidate() })
     },
@@ -538,6 +1001,312 @@ export default {
       this.fetchDetail()
     },
 
+    // ========== 团购活动 ==========
+    async loadGroupons() {
+      this.grouponLoading = true
+      try {
+        const res = await listGroupon({ merchantId: this.merchantId, ...this.grouponQuery })
+        this.grouponList = res.rows || []
+        this.grouponTotal = res.total || 0
+      } finally {
+        this.grouponLoading = false
+      }
+    },
+    handleGrouponSizeChange(val) {
+      this.grouponQuery.pageSize = val
+      this.loadGroupons()
+    },
+    handleGrouponPageChange(val) {
+      this.grouponQuery.pageNum = val
+      this.loadGroupons()
+    },
+    handleAddGroupon() {
+      this.grouponDialogTitle = '新增团购活动'
+      this.detailFileList = []
+      this.grouponForm = {
+        id: null, merchantId: this.merchantId, name: '', coverImage: '', posterImage: '',
+        detailImages: '[]', description: '', startTime: null, endTime: null,
+        limitPerUser: 0, sort: 0, status: 0
+      }
+      this.grouponDialogVisible = true
+    },
+    handleEditGroupon(row) {
+      this.grouponDialogTitle = '编辑团购活动'
+      getGroupon(row.id).then(res => {
+        this.grouponForm = { ...res.data }
+        if (!this.grouponForm.detailImages) this.grouponForm.detailImages = '[]'
+        this.detailFileList = JSON.parse(this.grouponForm.detailImages).map(url => ({ url, name: url.split('/').pop() }))
+        this.grouponDialogVisible = true
+      })
+    },
+    submitGrouponForm() {
+      this.$refs.grouponForm.validate(valid => {
+        if (!valid) return
+        this.grouponSubmitLoading = true
+        const data = { ...this.grouponForm, merchantId: this.merchantId }
+        if (data.startTime && data.endTime && data.startTime >= data.endTime) {
+          this.$message.error('开始时间必须早于结束时间')
+          this.grouponSubmitLoading = false
+          return
+        }
+        const action = data.id ? updateGroupon : addGroupon
+        action(data).then(() => {
+          this.$message.success(data.id ? '修改成功' : '新增成功')
+          this.grouponDialogVisible = false
+          this.loadGroupons()
+        }).finally(() => {
+          this.grouponSubmitLoading = false
+        })
+      })
+    },
+    handleToggleGrouponStatus(row) {
+      const newStatus = row.status === 1 ? 0 : 1
+      const text = newStatus === 1 ? '上架' : '下架'
+      this.$confirm('确认' + text + '该活动？', '提示', { type: 'warning' }).then(() => {
+        changeGrouponStatus({ id: row.id, status: newStatus }).then(() => {
+          this.$message.success(text + '成功')
+          this.loadGroupons()
+        })
+      }).catch(() => {})
+    },
+    handleDeleteGroupon(row) {
+      this.$confirm('确认删除该活动？删除后不可恢复', '警告', { type: 'warning' }).then(() => {
+        return deleteGroupon(row.id)
+      }).then(() => {
+        this.loadGroupons()
+        this.$message.success('删除成功')
+      }).catch(() => {})
+    },
+    grouponUploadData(imageType) {
+      return {
+        merchantId: this.merchantId,
+        grouponId: this.grouponForm.id || '',
+        tempToken: this.grouponForm.id ? '' : ('temp_' + Date.now()),
+        imageType: imageType
+      }
+    },
+    handleGrouponImageSuccess(res, type) {
+      if (res.code === 200) {
+        if (type === 'cover') {
+          this.grouponForm.coverImage = res.data.url
+        } else if (type === 'poster') {
+          this.grouponForm.posterImage = res.data.url
+        }
+        this.$forceUpdate()
+      } else {
+        this.$message.error(res.msg || '上传失败')
+      }
+    },
+    handleDetailImageSuccess(res) {
+      if (res.code === 200) {
+        const list = JSON.parse(this.grouponForm.detailImages || '[]')
+        list.push(res.data.url)
+        this.grouponForm.detailImages = JSON.stringify(list)
+      } else {
+        this.$message.error(res.msg || '上传失败')
+      }
+    },
+    handleDetailImageRemove(file) {
+      const list = JSON.parse(this.grouponForm.detailImages || '[]')
+      const idx = list.indexOf(file.url)
+      if (idx > -1) {
+        list.splice(idx, 1)
+        this.grouponForm.detailImages = JSON.stringify(list)
+      }
+    },
+    // ========== 团购商品管理 ==========
+    handleManageItems(row) {
+      this.currentGroupon = row
+      this.itemsDialogVisible = true
+      this.loadItems()
+    },
+    loadItems() {
+      this.itemLoading = true
+      listGrouponItem(this.currentGroupon.id).then(res => {
+        this.itemList = res.data || []
+      }).finally(() => {
+        this.itemLoading = false
+      })
+    },
+    handleAddItem() {
+      this.itemDialogTitle = '新增团购商品'
+      this.itemDetailFileList = []
+      this.itemForm = {
+        id: null, merchantId: this.merchantId, grouponId: this.currentGroupon.id,
+        name: '', title: '', content: '', description: '',
+        coverImage: '', detailImages: '[]',
+        originalPriceYuan: 0, grouponPriceYuan: 0,
+        stock: 0, limitPerUser: 0, validDays: 30, status: 0, sort: 0,
+        dishGroups: [{ groupName: '', items: [{ dishName: '', quantity: 1, unit: '份', priceYuan: 0 }] }],
+        directTotalPrice: false, dishTotalPriceYuan: 0
+      }
+      this.itemDialogVisible = true
+    },
+    handleEditItem(row) {
+      this.itemDialogTitle = '编辑团购商品'
+      this.itemDetailFileList = []
+      let dishGroups = [{ groupName: '', items: [{ dishName: '', quantity: 1, unit: '份', priceYuan: 0 }] }]
+      if (row.dishGroups) {
+        try {
+          dishGroups = typeof row.dishGroups === 'string' ? JSON.parse(row.dishGroups) : row.dishGroups
+          dishGroups.forEach(g => {
+            g.items.forEach(d => { d.priceYuan = d.price ? d.price / 100 : 0 })
+          })
+        } catch (e) { dishGroups = [{ groupName: '', items: [{ dishName: '', quantity: 1, unit: '份', priceYuan: 0 }] }] }
+      }
+      this.itemForm = {
+        ...row,
+        originalPriceYuan: row.originalPrice ? row.originalPrice / 100 : 0,
+        grouponPriceYuan: row.grouponPrice ? row.grouponPrice / 100 : 0,
+        dishTotalPriceYuan: row.dishTotalPrice ? row.dishTotalPrice / 100 : 0,
+        directTotalPrice: !!row.directTotalPrice,
+        dishGroups: dishGroups
+      }
+      if (!this.itemForm.detailImages) this.itemForm.detailImages = '[]'
+      this.itemDetailFileList = JSON.parse(this.itemForm.detailImages).map(url => ({ url, name: url.split('/').pop() }))
+      this.itemDialogVisible = true
+    },
+    submitItemForm() {
+      this.$refs.itemForm.validate(valid => {
+        if (!valid) return
+        this.itemSubmitLoading = true
+
+        // 处理菜品组数据
+        const dishGroups = (this.itemForm.dishGroups || []).map(g => ({
+          groupName: g.groupName,
+          items: (g.items || []).map(d => ({
+            dishName: d.dishName,
+            quantity: d.quantity || 1,
+            unit: d.unit || '份',
+            price: Math.round((d.priceYuan || 0) * 100)
+          }))
+        })).filter(g => g.groupName && g.items.length > 0)
+
+        const dishCount = dishGroups.reduce((s, g) => s + g.items.length, 0)
+        const dishTotalPrice = this.itemForm.directTotalPrice
+          ? Math.round((this.itemForm.dishTotalPriceYuan || 0) * 100)
+          : dishGroups.reduce((s, g) => s + g.items.reduce((ss, d) => ss + d.price * d.quantity, 0), 0)
+
+        const data = {
+          ...this.itemForm,
+          merchantId: this.merchantId,
+          grouponId: this.currentGroupon.id,
+          originalPrice: Math.round(this.itemForm.originalPriceYuan * 100),
+          grouponPrice: Math.round(this.itemForm.grouponPriceYuan * 100),
+          dishGroups: JSON.stringify(dishGroups),
+          dishTotalPrice: dishTotalPrice,
+          directTotalPrice: this.itemForm.directTotalPrice ? 1 : 0,
+          dishCount: dishCount,
+          availableDishCount: dishCount
+        }
+        if (data.grouponPrice > data.originalPrice) {
+          this.$message.error('团购价不能大于原价')
+          this.itemSubmitLoading = false
+          return
+        }
+        delete data.originalPriceYuan
+        delete data.grouponPriceYuan
+        delete data.dishTotalPriceYuan
+        const action = data.id ? updateGrouponItem : addGrouponItem
+        action(data).then(() => {
+          this.$message.success(data.id ? '修改成功' : '新增成功')
+          this.itemDialogVisible = false
+          this.loadItems()
+        }).finally(() => {
+          this.itemSubmitLoading = false
+        })
+      })
+    },
+    handleToggleItemStatus(row) {
+      const newStatus = row.status === 1 ? 0 : 1
+      const text = newStatus === 1 ? '上架' : '下架'
+      this.$confirm('确认' + text + '该商品？', '提示', { type: 'warning' }).then(() => {
+        changeGrouponItemStatus({ id: row.id, status: newStatus }).then(() => {
+          this.$message.success(text + '成功')
+          this.loadItems()
+        })
+      }).catch(() => {})
+    },
+    handleDeleteItem(row) {
+      this.$confirm('确认删除该商品？删除后不可恢复', '警告', { type: 'warning' }).then(() => {
+        return deleteGrouponItem(row.id)
+      }).then(() => {
+        this.loadItems()
+        this.$message.success('删除成功')
+      }).catch(() => {})
+    },
+    itemUploadData(imageType) {
+      return {
+        merchantId: this.merchantId,
+        grouponId: this.currentGroupon ? this.currentGroupon.id : '',
+        itemId: this.itemForm.id || '',
+        tempToken: this.itemForm.id ? '' : ('temp_' + Date.now()),
+        imageType: imageType
+      }
+    },
+    handleItemImageSuccess(res, type) {
+      if (res.code === 200) {
+        if (type === 'cover') {
+          this.itemForm.coverImage = res.data.url
+        }
+        this.$forceUpdate()
+      } else {
+        this.$message.error(res.msg || '上传失败')
+      }
+    },
+    handleItemDetailImageSuccess(res) {
+      if (res.code === 200) {
+        const list = JSON.parse(this.itemForm.detailImages || '[]')
+        list.push(res.data.url)
+        this.itemForm.detailImages = JSON.stringify(list)
+      } else {
+        this.$message.error(res.msg || '上传失败')
+      }
+    },
+    handleItemDetailImageRemove(file) {
+      const list = JSON.parse(this.itemForm.detailImages || '[]')
+      const idx = list.indexOf(file.url)
+      if (idx > -1) {
+        list.splice(idx, 1)
+        this.itemForm.detailImages = JSON.stringify(list)
+      }
+    },
+
+    // ========== 菜品组管理 ==========
+    addDishGroup() {
+      this.itemForm.dishGroups.push({
+        groupName: '',
+        items: [{ dishName: '', quantity: 1, unit: '份', priceYuan: 0 }]
+      })
+    },
+    removeDishGroup(gIdx) {
+      if (this.itemForm.dishGroups.length <= 1) {
+        this.$message.warning('至少保留一个菜品组')
+        return
+      }
+      this.itemForm.dishGroups.splice(gIdx, 1)
+    },
+    moveDishGroup(gIdx, dir) {
+      const newIdx = gIdx + dir
+      const groups = this.itemForm.dishGroups
+      const temp = groups[gIdx]
+      this.$set(groups, gIdx, groups[newIdx])
+      this.$set(groups, newIdx, temp)
+    },
+    addDish(gIdx) {
+      this.itemForm.dishGroups[gIdx].items.push({
+        dishName: '', quantity: 1, unit: '份', priceYuan: 0
+      })
+    },
+    removeDish(gIdx, dIdx) {
+      const items = this.itemForm.dishGroups[gIdx].items
+      if (items.length <= 1) {
+        this.$message.warning('每组至少保留一道菜品')
+        return
+      }
+      items.splice(dIdx, 1)
+    },
+
     handleBack() {
       this.$router.push({ path: '/merchant/list' })
     },
@@ -552,7 +1321,9 @@ export default {
   },
   watch: {
     activeTab(val) {
-      if (val === 'orders' && this.orderList.length === 0) {
+      if (val === 'groupon' && this.grouponList.length === 0) {
+        this.loadGroupons()
+      } else if (val === 'orders' && this.orderList.length === 0) {
         this.loadOrders()
       } else if (val === 'flow' && this.flowList.length === 0) {
         this.loadFlow()
@@ -587,5 +1358,78 @@ export default {
 }
 .text-success {
   color: #67C23A;
+}
+.image-uploader .el-upload {
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.image-uploader .el-upload:hover {
+  border-color: #409EFF;
+}
+.image-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 150px;
+  height: 150px;
+  line-height: 150px;
+  text-align: center;
+}
+.image-preview {
+  width: 150px;
+  height: 150px;
+  display: block;
+  object-fit: cover;
+}
+.upload-tip {
+  font-size: 12px;
+  color: #999;
+  margin-top: 5px;
+}
+.panel-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.empty-tip {
+  color: #909399;
+  font-size: 13px;
+  text-align: center;
+  padding: 20px 0;
+}
+.dish-group-section {
+  margin-bottom: 16px;
+}
+.dish-group-toolbar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dish-group-card {
+  border: 1px solid #EBEEF5;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 10px;
+  background: #FAFAFA;
+}
+.dish-group-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.dish-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  padding-left: 12px;
+}
+.dish-group-actions {
+  padding-left: 12px;
+  margin-top: 4px;
 }
 </style>
