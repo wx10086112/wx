@@ -20,6 +20,14 @@
             <groupId>com.ruoyi</groupId>
             <artifactId>ruoyi-mall-order</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-mall-merchant</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-mall-product</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

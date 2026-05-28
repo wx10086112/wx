@@ -14,7 +14,6 @@
       </view>
       <view class="login-text">
         <text class="login-title">授权手机号</text>
-        <text class="login-desc">需要获取手机号以使用完整服务</text>
       </view>
       <button
         class="phone-auth-btn"
@@ -29,7 +28,6 @@
       </view>
       <view class="login-text">
         <text class="login-title">{{profileConfig.loginTitle}}</text>
-        <text class="login-desc">{{profileConfig.loginDesc}}</text>
       </view>
     </view>
   </view>
@@ -70,7 +68,6 @@
   <view class="benefit-section">
     <view class="benefit-card">
       <text class="benefit-title">{{profileConfig.benefitTitle}}</text>
-      <text class="benefit-desc">{{profileConfig.benefitDesc}}</text>
       <view class="benefit-tags" wx:if="{{benefitTagList.length}}">
         <text wx:for="{{benefitTagList}}" wx:key="index" class="benefit-tag">{{item}}</text>
       </view>

@@ -15,6 +15,7 @@
         <result property="avatarUrl" column="avatar_url"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
+        <result property="delFlag" column="del_flag"/>
     </resultMap>
 
     <sql id="selectUserInfoVo">
@@ -27,13 +28,15 @@
                union_id,
                avatar_url,
                create_time,
-               update_time
+               update_time,
+               del_flag
         from user_info
     </sql>
 
     <select id="selectUserInfoList" parameterType="com.ruoyi.mall.user.domain.UserInfo" resultMap="UserInfoResult">
         <include refid="selectUserInfoVo"/>
         <where>
+            and del_flag = '0'
             <if test="userId != null  and userId != ''">and user_id = #{userId}</if>
             <if test="userName != null  and userName != ''">and user_name like concat('%', #{userName}, '%')</if>
             <if test="userType != null  and userType != ''">and user_type = #{userType}</if>
@@ -46,7 +49,7 @@
 
     <select id="selectUserInfoById" parameterType="Long" resultMap="UserInfoResult">
         <include refid="selectUserInfoVo"/>
-        where id = #{id}
+        where id = #{id} and del_flag = '0'
     </select>
 
     <insert id="insertUserInfo" parameterType="com.ruoyi.mall.user.domain.UserInfo" useGeneratedKeys="true" keyProperty="id">
@@ -61,6 +64,7 @@
             <if test="avatarUrl != null">avatar_url,</if>
             <if test="createTime != null">create_time,</if>
             <if test="updateTime != null">update_time,</if>
+            del_flag,
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="userId != null and userId != ''">#{userId},</if>
@@ -72,6 +76,7 @@
             <if test="avatarUrl != null">#{avatarUrl},</if>
             <if test="createTime != null">#{createTime},</if>
             <if test="updateTime != null">#{updateTime},</if>
+            '0',
         </trim>
     </insert>
 
@@ -91,18 +96,16 @@
         where id = #{id}
     </update>
 
-    <delete id="deleteUserInfoById" parameterType="Long">
-        delete
-        from user_info
-        where id = #{id}
-    </delete>
+    <update id="deleteUserInfoById" parameterType="Long">
+        update user_info set del_flag = '2' where id = #{id}
+    </update>
 
-    <delete id="deleteUserInfoByIds" parameterType="String">
-        delete from user_info where id in
+    <update id="deleteUserInfoByIds" parameterType="String">
+        update user_info set del_flag = '2' where id in
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
-    </delete>
+    </update>
 
     <select id="selectUserInfoByOpenId" parameterType="String" resultMap="UserInfoResult">
         <include refid="selectUserInfoVo"/>

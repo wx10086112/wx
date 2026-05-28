@@ -1,7 +1,7 @@
+const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
 const cartService = require('../../services/cart')
-const api = require('../../api/index')
 
 Page({
   data: {
@@ -13,18 +13,13 @@ Page({
     decisionList: [],
     ruleList: [],
     serviceHighlightList: [],
+    productImageCropStyle: util.buildImageCropStyle(),
     loading: true,
     isCollected: false
   },
 
   onLoad(options) {
-    const id = parseInt(options.id, 10)
-    if (!id || isNaN(id)) {
-      util.showToast('商品不存在')
-      setTimeout(() => util.navigateBack(), 1500)
-      return
-    }
-    this.setData({ productId: id })
+    this.setData({ productId: parseInt(options.id || 101, 10) })
     this.loadProductDetail()
   },
 
@@ -38,51 +33,36 @@ Page({
 
   loadProductDetail() {
     this.setData({ loading: true })
-    const productConfig = templateService.getTemplateSection('productDetail')
-
-    Promise.all([
-      api.getGrouponDetail(this.data.productId),
-      api.getMerchantList({})
-    ]).then(([productData, merchantList]) => {
-      const rawProduct = productData || {}
-      const merchants = merchantList || []
-      const merchant = merchants.find((item) => item.merchantId === rawProduct.merchantId) || merchants[0] || {}
+    setTimeout(() => {
+      const productConfig = templateService.getTemplateSection('productDetail')
+      const rawProduct = mock.grouponList.find((item) => item.id === this.data.productId) || mock.grouponList[0]
+      const merchant = mock.merchantList.find((item) => item.id === rawProduct.merchantId) || mock.merchantList[0]
+      const otherStoreList = [merchant]
       const product = this.formatProduct(rawProduct, productConfig)
 
       this.setData({
         productConfig,
         product,
         merchant,
-        otherStoreList: [merchant],
+        otherStoreList,
+        productImageCropStyle: util.buildImageCropStyle(rawProduct.imageCrop),
         serviceHighlightList: rawProduct.tags || [],
         decisionList: [
-          `原价 ¥${((rawProduct.originalPrice || 0) / 100).toFixed(2)}，优惠价 ¥${((rawProduct.price || 0) / 100).toFixed(2)}`,
-          `已售 ${rawProduct.sales || 0}，库存 ${rawProduct.stock || 0}，有效期 ${rawProduct.validDays || 0} 天`,
-          `适用门店 ${merchant.name || ''}`
+          `原价 ¥${(rawProduct.originalPrice / 100).toFixed(2)}，优惠价 ¥${(rawProduct.price / 100).toFixed(2)}`,
+          `已售 ${rawProduct.sales}，库存 ${rawProduct.stock}，有效期 ${rawProduct.validDays} 天`,
+          `适用门店 ${merchant.name}，距您约 ${merchant.distance}`
         ],
         ruleList: [
-          `有效期：${rawProduct.validPeriod || ''}`,
-          productConfig.timeRangeRuleText || '',
-          `是否预约：${product.bookingRequiredText || '无需预约'}`,
-          `预约说明：${rawProduct.bookingRule || '无需预约'}`,
-          `限购说明：${rawProduct.limitRule || '不限购'}`,
-          `退款规则：${rawProduct.refundRule || '过期自动退款'}`
+          `有效期：${rawProduct.validPeriod}`,
+          productConfig.timeRangeRuleText,
+          `是否预约：${product.bookingRequiredText}`,
+          `预约说明：${rawProduct.bookingRule}`,
+          `限购说明：${rawProduct.limitRule}`,
+          `退款规则：${rawProduct.refundRule}`
         ],
         loading: false
       })
-    }).catch(() => {
-      this.setData({
-        productConfig,
-        product: {},
-        merchant: {},
-        otherStoreList: [],
-        serviceHighlightList: [],
-        decisionList: [],
-        ruleList: [],
-        loading: false
-      })
-      util.showToast('加载失败，请重试')
-    })
+    }, 150)
   },
 
   goMerchant() {

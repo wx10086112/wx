@@ -1,5 +1,6 @@
 const api = require('../../api/index')
 const { defaultTemplateConfig } = require('./default-template')
+const { mockTemplateSource } = require('./mock-template-source')
 
 const isPlainObject = (value) => {
   return Object.prototype.toString.call(value) === '[object Object]'
@@ -31,6 +32,10 @@ const mergeConfig = (baseValue, overrideValue) => {
   return overrideValue !== undefined && overrideValue !== null ? overrideValue : baseValue
 }
 
+const buildLocalTemplateConfig = () => {
+  return mergeConfig(defaultTemplateConfig, mockTemplateSource)
+}
+
 const normalizeTemplateConfig = (rawConfig = {}) => {
   return mergeConfig(defaultTemplateConfig, rawConfig)
 }
@@ -51,7 +56,7 @@ const getTemplateConfig = () => {
   if (templateConfigCache) {
     return clone(templateConfigCache)
   }
-  templateConfigCache = clone(defaultTemplateConfig)
+  templateConfigCache = buildLocalTemplateConfig()
   return clone(templateConfigCache)
 }
 
@@ -61,9 +66,14 @@ const getTemplateSection = (sectionKey) => {
 }
 
 const fetchTemplateConfig = (options = {}) => {
-  const { force = false, requestData = {} } = options
+  const { useRemote = false, force = false, requestData = {} } = options
 
   if (templateConfigCache && !force) {
+    return Promise.resolve(clone(templateConfigCache))
+  }
+
+  if (!useRemote) {
+    templateConfigCache = buildLocalTemplateConfig()
     return Promise.resolve(clone(templateConfigCache))
   }
 
@@ -73,12 +83,13 @@ const fetchTemplateConfig = (options = {}) => {
       return setTemplateConfigCache(resolveTemplateResponse(response))
     })
     .catch(() => {
-      templateConfigCache = clone(defaultTemplateConfig)
+      templateConfigCache = buildLocalTemplateConfig()
       return clone(templateConfigCache)
     })
 }
 
 module.exports = {
+  buildLocalTemplateConfig,
   normalizeTemplateConfig,
   setTemplateConfigCache,
   fetchTemplateConfig,

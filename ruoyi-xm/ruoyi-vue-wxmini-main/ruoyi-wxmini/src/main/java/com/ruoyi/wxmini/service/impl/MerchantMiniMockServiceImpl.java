@@ -21,6 +21,7 @@ import com.ruoyi.wxmini.dto.merchant.MerchantMiniWorkbenchStatsDto;
 import com.ruoyi.wxmini.service.IMerchantMiniMockService;
 import com.ruoyi.mall.common.service.IWxMiniJwtService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -34,7 +35,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// @Service  // 已被 MerchantMiniServiceImpl 替代，保留代码作为参考
+@Service
+@Profile("dev")  // 仅开发环境生效，生产环境不注册此Bean
 public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
 
     private static final Long MERCHANT_ID = 1L;
@@ -74,7 +76,7 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
     private final List<MerchantMiniWithdrawRecordDto> withdrawRecordList = initWithdrawRecordList();
 
     @Override
-    public MerchantMiniLoginResponseDto login(String username, String password) {
+    public MerchantMiniLoginResponseDto login(String username, String password, String appid) {
         // Mock模式：忽略密码，用username当作roleKey
         MerchantMiniStaffUserDto staffUser = cloneStaffUser(resolveStaffUserByRoleKey(username));
         MerchantMiniLoginResponseDto responseDto = new MerchantMiniLoginResponseDto();
@@ -167,6 +169,16 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
         }
         result.sort((a, b) -> Integer.compare(defaultInt(a.getSort()), defaultInt(b.getSort())));
         return result;
+    }
+
+    @Override
+    public synchronized MerchantMiniGoodsDto getGoodsDetail(Long id) {
+        for (MerchantMiniGoodsDto goodsDto : goodsList) {
+            if (goodsDto.getGoodsId() != null && goodsDto.getGoodsId().equals(id)) {
+                return cloneGoods(goodsDto);
+            }
+        }
+        throw new IllegalArgumentException("商品不存在");
     }
 
     @Override

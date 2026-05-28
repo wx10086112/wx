@@ -69,7 +69,6 @@
       <view class="section-title-row">
         <view>
           <text class="section-title">{{homeConfig.productSectionTitle}}</text>
-          <text class="section-subtitle">{{homeConfig.productSectionSubtitle}}</text>
         </view>
       </view>
       <product-card

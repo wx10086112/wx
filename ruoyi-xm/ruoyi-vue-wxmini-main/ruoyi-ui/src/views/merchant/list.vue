@@ -3,7 +3,7 @@
     <el-card>
       <div slot="header">
         <span>商家列表</span>
-        <el-button style="float: right; padding: 3px 0;" type="text" icon="el-icon-plus" @click="handleAdd">添加商户</el-button>
+        <el-button v-hasPermi="['mall:merchant:add']" style="float: right; padding: 3px 0;" type="text" icon="el-icon-plus" @click="handleAdd">添加商户</el-button>
       </div>
 
       <!-- 搜索表单 -->
@@ -45,7 +45,7 @@
         <el-table-column label="操作" width="180" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button type="text" size="small" icon="el-icon-view" @click="handleDetail(scope.row)">查看详情</el-button>
-            <el-button v-if="scope.row.status === 2" type="text" size="small" icon="el-icon-s-check" class="audit-btn" @click="handleAudit(scope.row)">审核</el-button>
+            <el-button v-hasPermi="['mall:merchant:audit']" v-if="scope.row.status === 2" type="text" size="small" icon="el-icon-s-check" class="audit-btn" @click="handleAudit(scope.row)">审核</el-button>
           </template>
         </el-table-column>
       </el-table>

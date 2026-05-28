@@ -1,28 +1,16 @@
 <view class="login-page">
   <view class="hero-block">
     <text class="hero-title">商家端登录</text>
-    <text class="hero-desc">输入运营后台分配的账号密码，管理订单、核销、商品和门店。</text>
   </view>
 
   <view class="login-panel">
     <view class="input-group">
-      <text class="input-label">用户名</text>
-      <input
-        class="input-field"
-        placeholder="请输入用户名"
-        value="{{username}}"
-        bindinput="handleUsernameInput"
-      />
+      <text class="panel-label">账号</text>
+      <input class="login-input" placeholder="请输入商家账号" value="{{username}}" bindinput="onUsernameInput" />
     </view>
     <view class="input-group">
-      <text class="input-label">密码</text>
-      <input
-        class="input-field"
-        type="password"
-        placeholder="请输入密码"
-        value="{{password}}"
-        bindinput="handlePasswordInput"
-      />
+      <text class="panel-label">密码</text>
+      <input class="login-input" password placeholder="请输入密码" value="{{password}}" bindinput="onPasswordInput" />
     </view>
     <button class="primary-btn login-btn" bindtap="submitLogin">登录</button>
     <view class="apply-entry" bindtap="goApply">

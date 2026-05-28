@@ -21,39 +21,42 @@
         <result property="sourceType" column="source_type"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
+        <result property="delFlag" column="del_flag"/>
     </resultMap>
 
     <sql id="selectGrouponActivityVo">
         select id, merchant_id, name, cover_image, poster_image, detail_images,
                description, start_time, end_time, status, total_sold, limit_per_user,
-               sort, source_type, create_time, update_time
+               sort, source_type, create_time, update_time, del_flag
         from groupon_activity
     </sql>
 
     <select id="selectGrouponActivityById" parameterType="Long" resultMap="GrouponActivityResult">
         <include refid="selectGrouponActivityVo"/>
-        where id = #{id}
+        where id = #{id} AND del_flag = '0'
     </select>
 
     <select id="selectGrouponActivityList" parameterType="com.ruoyi.mall.product.domain.GrouponActivity" resultMap="GrouponActivityResult">
         <include refid="selectGrouponActivityVo"/>
         <where>
+            del_flag = '0'
             <if test="name != null and name != ''">and name like concat('%', #{name}, '%')</if>
             <if test="merchantId != null">and merchant_id = #{merchantId}</if>
             <if test="status != null">and status = #{status}</if>
+            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
         </where>
         order by sort asc, create_time desc
     </select>
 
     <select id="selectByMerchantId" parameterType="Long" resultMap="GrouponActivityResult">
         <include refid="selectGrouponActivityVo"/>
-        where merchant_id = #{merchantId}
+        where merchant_id = #{merchantId} AND del_flag = '0'
         order by sort asc, create_time desc
     </select>
 
     <select id="selectActiveActivities" resultMap="GrouponActivityResult">
         <include refid="selectGrouponActivityVo"/>
-        where status = 1 and start_time &lt;= NOW() and end_time >= NOW()
+        where status = 1 and del_flag = '0' and start_time &lt;= NOW() and end_time >= NOW()
         order by sort asc, create_time desc
     </select>
 
@@ -111,15 +114,15 @@
         where id = #{id}
     </update>
 
-    <delete id="deleteGrouponActivityById" parameterType="Long">
-        delete from groupon_activity where id = #{id}
-    </delete>
+    <update id="deleteGrouponActivityById" parameterType="Long">
+        update groupon_activity set del_flag = '2' where id = #{id}
+    </update>
 
-    <delete id="deleteGrouponActivityByIds" parameterType="String">
-        delete from groupon_activity where id in
+    <update id="deleteGrouponActivityByIds" parameterType="String">
+        update groupon_activity set del_flag = '2' where id in
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
-    </delete>
+    </update>
 
 </mapper>

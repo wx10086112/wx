@@ -7,40 +7,46 @@
     <resultMap type="com.ruoyi.mall.finance.domain.TransactionRecord" id="TransactionRecordResult">
         <result property="id" column="id"/>
         <result property="merchantId" column="merchant_id"/>
+        <result property="merchantName" column="merchant_name"/>
         <result property="type" column="type"/>
         <result property="amount" column="amount"/>
         <result property="balance" column="balance"/>
         <result property="orderNo" column="order_no"/>
         <result property="description" column="description"/>
         <result property="createTime" column="create_time"/>
+        <result property="delFlag" column="del_flag"/>
     </resultMap>
 
     <sql id="selectTransactionRecordVo">
-        select id, merchant_id, type, amount, balance, order_no, description, create_time
-        from transaction_record
+        select t.id, t.merchant_id, m.name as merchant_name, t.type, t.amount, t.balance, t.order_no, t.description, t.create_time, t.del_flag
+        from transaction_record t
+        LEFT JOIN merchant m ON t.merchant_id = m.id
     </sql>
 
     <select id="selectTransactionRecordList" parameterType="com.ruoyi.mall.finance.domain.TransactionRecord" resultMap="TransactionRecordResult">
         <include refid="selectTransactionRecordVo"/>
         <where>
-            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
-            <if test="type != null and type != ''">and type = #{type}</if>
-            <if test="orderNo != null and orderNo != ''">and order_no = #{orderNo}</if>
-            <if test="params.beginTime != null">and create_time &gt;= #{params.beginTime}</if>
-            <if test="params.endTime != null">and create_time &lt;= #{params.endTime}</if>
+            and t.del_flag = '0'
+            <if test="merchantId != null">and t.merchant_id = #{merchantId}</if>
+            <if test="merchantName != null and merchantName != ''">and m.name like concat('%', #{merchantName}, '%')</if>
+            <if test="type != null and type != ''">and t.type = #{type}</if>
+            <if test="orderNo != null and orderNo != ''">and t.order_no = #{orderNo}</if>
+            <if test="params.beginTime != null">and t.create_time &gt;= #{params.beginTime}</if>
+            <if test="params.endTime != null">and t.create_time &lt;= #{params.endTime}</if>
+            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
         </where>
-        order by create_time desc
+        order by t.create_time desc
     </select>
 
     <select id="selectTransactionRecordById" parameterType="Long" resultMap="TransactionRecordResult">
         <include refid="selectTransactionRecordVo"/>
-        where id = #{id}
+        where t.id = #{id} and t.del_flag = '0'
     </select>
 
     <select id="selectTransactionRecordByMerchantId" parameterType="Long" resultMap="TransactionRecordResult">
         <include refid="selectTransactionRecordVo"/>
-        where merchant_id = #{merchantId}
-        order by create_time desc
+        where t.merchant_id = #{merchantId} and t.del_flag = '0'
+        order by t.create_time desc
     </select>
 
     <insert id="insertTransactionRecord" parameterType="com.ruoyi.mall.finance.domain.TransactionRecord" useGeneratedKeys="true" keyProperty="id">
@@ -52,6 +58,7 @@
             <if test="balance != null">balance,</if>
             <if test="orderNo != null">order_no,</if>
             <if test="description != null">description,</if>
+            del_flag,
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="merchantId != null">#{merchantId},</if>
@@ -60,6 +67,7 @@
             <if test="balance != null">#{balance},</if>
             <if test="orderNo != null">#{orderNo},</if>
             <if test="description != null">#{description},</if>
+            '0',
         </trim>
     </insert>
 
@@ -77,15 +85,15 @@
         where id = #{id}
     </update>
 
-    <delete id="deleteTransactionRecordById" parameterType="Long">
-        delete from transaction_record where id = #{id}
-    </delete>
+    <update id="deleteTransactionRecordById" parameterType="Long">
+        update transaction_record set del_flag = '2' where id = #{id}
+    </update>
 
-    <delete id="deleteTransactionRecordByIds" parameterType="String">
-        delete from transaction_record where id in
+    <update id="deleteTransactionRecordByIds" parameterType="String">
+        update transaction_record set del_flag = '2' where id in
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
-    </delete>
+    </update>
 
 </mapper>

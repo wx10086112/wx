@@ -117,3 +117,19 @@ export function deptTreeSelect(roleId) {
     method: 'get'
   })
 }
+
+// 查询分销商选项列表
+export function listDistributorOptions() {
+  return request({
+    url: '/system/role/distributorOptions',
+    method: 'get'
+  })
+}
+
+// 查询商家选项列表
+export function listMerchantOptions() {
+  return request({
+    url: '/system/role/merchantOptions',
+    method: 'get'
+  })
+}

@@ -71,6 +71,31 @@ public class LoginUser implements UserDetails
      */
     private SysUser user;
 
+    /**
+     * 账号类型 PLATFORM/DISTRIBUTOR/MERCHANT
+     */
+    private String accountType;
+
+    /**
+     * 绑定分销商ID
+     */
+    private Long distributorId;
+
+    /**
+     * 绑定商家ID
+     */
+    private Long merchantId;
+
+    /**
+     * 当前后台视角 PLATFORM/DISTRIBUTOR
+     */
+    private String activeViewType;
+
+    /**
+     * 当前正在查看的分销商ID（超管切换视角时使用）
+     */
+    private Long activeDistributorId;
+
     public LoginUser()
     {
     }
@@ -87,6 +112,17 @@ public class LoginUser implements UserDetails
         this.deptId = deptId;
         this.user = user;
         this.permissions = permissions;
+    }
+
+    public LoginUser(Long userId, Long deptId, SysUser user, Set<String> permissions, String accountType, Long distributorId, Long merchantId)
+    {
+        this.userId = userId;
+        this.deptId = deptId;
+        this.user = user;
+        this.permissions = permissions;
+        this.accountType = accountType;
+        this.distributorId = distributorId;
+        this.merchantId = merchantId;
     }
 
     public Long getUserId()
@@ -256,6 +292,56 @@ public class LoginUser implements UserDetails
     public void setUser(SysUser user)
     {
         this.user = user;
+    }
+
+    public String getAccountType()
+    {
+        return accountType;
+    }
+
+    public void setAccountType(String accountType)
+    {
+        this.accountType = accountType;
+    }
+
+    public Long getDistributorId()
+    {
+        return distributorId;
+    }
+
+    public void setDistributorId(Long distributorId)
+    {
+        this.distributorId = distributorId;
+    }
+
+    public Long getMerchantId()
+    {
+        return merchantId;
+    }
+
+    public void setMerchantId(Long merchantId)
+    {
+        this.merchantId = merchantId;
+    }
+
+    public String getActiveViewType()
+    {
+        return activeViewType;
+    }
+
+    public void setActiveViewType(String activeViewType)
+    {
+        this.activeViewType = activeViewType;
+    }
+
+    public Long getActiveDistributorId()
+    {
+        return activeDistributorId;
+    }
+
+    public void setActiveDistributorId(Long activeDistributorId)
+    {
+        this.activeDistributorId = activeDistributorId;
     }
 
     @Override

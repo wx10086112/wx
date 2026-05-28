@@ -40,11 +40,11 @@
             </div>
             <el-descriptions :column="2" border style="margin-top: 10px;">
               <el-descriptions-item label="C端 AppID">{{ merchant.cMiniAppId || '未配置' }}</el-descriptions-item>
-              <el-descriptions-item label="C端 Secret">{{ merchant.cMiniAppSecret ? '******' : '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="C端 Secret">{{ merchant.cMiniAppSecretConfigured ? '******' : '未配置' }}</el-descriptions-item>
               <el-descriptions-item label="商家端 AppID">{{ merchant.mMiniAppId || '未配置' }}</el-descriptions-item>
-              <el-descriptions-item label="商家端 Secret">{{ merchant.mMiniAppSecret ? '******' : '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="商家端 Secret">{{ merchant.mMiniAppSecretConfigured ? '******' : '未配置' }}</el-descriptions-item>
               <el-descriptions-item label="微信商户号">{{ merchant.wxPayMchId || '未配置' }}</el-descriptions-item>
-              <el-descriptions-item label="支付API密钥">{{ merchant.wxPayApiKey ? '******' : '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="支付API密钥">{{ merchant.wxPayApiKeyConfigured ? '******' : '未配置' }}</el-descriptions-item>
             </el-descriptions>
           </el-tab-pane>
 
@@ -986,11 +986,11 @@ export default {
       this.miniAppForm = {
         id: this.merchant.id,
         cMiniAppId: this.merchant.cMiniAppId || '',
-        cMiniAppSecret: this.merchant.cMiniAppSecret || '',
+        cMiniAppSecret: this.merchant.cMiniAppSecretConfigured ? '******' : '',
         mMiniAppId: this.merchant.mMiniAppId || '',
-        mMiniAppSecret: this.merchant.mMiniAppSecret || '',
+        mMiniAppSecret: this.merchant.mMiniAppSecretConfigured ? '******' : '',
         wxPayMchId: this.merchant.wxPayMchId || '',
-        wxPayApiKey: this.merchant.wxPayApiKey || ''
+        wxPayApiKey: this.merchant.wxPayApiKeyConfigured ? '******' : ''
       }
       this.miniAppDialogVisible = true
     },

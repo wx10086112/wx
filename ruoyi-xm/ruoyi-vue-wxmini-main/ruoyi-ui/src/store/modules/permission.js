@@ -32,13 +32,19 @@ const permission = {
     // 生成路由
     GenerateRoutes({ commit }) {
       return new Promise(resolve => {
-        // 使用本地静态路由（不请求后端菜单接口）
-        const sidebarRoutes = constantRoutes.filter(r => !r.hidden)
+        // 过滤有权限要求的业务路由
+        const filteredRoutes = constantRoutes.filter(route => {
+          if (route.permissions) {
+            return auth.hasPermiOr(route.permissions)
+          }
+          return true
+        })
+        const sidebarRoutes = filteredRoutes.filter(r => !r.hidden)
         const asyncRoutes = filterDynamicRoutes(dynamicRoutes)
         const rewriteRoutes = [{ path: '*', redirect: '/404', hidden: true }]
         router.addRoutes(asyncRoutes)
         commit('SET_ROUTES', rewriteRoutes)
-        commit('SET_SIDEBAR_ROUTERS', constantRoutes)
+        commit('SET_SIDEBAR_ROUTERS', filteredRoutes)
         commit('SET_DEFAULT_ROUTES', sidebarRoutes)
         commit('SET_TOPBAR_ROUTES', sidebarRoutes)
         resolve(rewriteRoutes)

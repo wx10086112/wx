@@ -6,7 +6,9 @@
   <view wx:else class="product-detail">
     <swiper class="image-swiper" indicator-dots autoplay circular interval="3000">
       <swiper-item>
-        <image src="{{product.image}}" class="product-image" mode="aspectFill"></image>
+        <view class="product-image-frame">
+          <image src="{{product.image}}" class="product-image" mode="aspectFill" style="{{productImageCropStyle}}"></image>
+        </view>
       </swiper-item>
     </swiper>
 

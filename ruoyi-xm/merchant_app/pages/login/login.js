@@ -17,11 +17,11 @@ Page({
     }
   },
 
-  handleUsernameInput(e) {
+  onUsernameInput(e) {
     this.setData({ username: e.detail.value })
   },
 
-  handlePasswordInput(e) {
+  onPasswordInput(e) {
     this.setData({ password: e.detail.value })
   },
 
@@ -30,9 +30,11 @@ Page({
   },
 
   submitLogin() {
-    const { username, password } = this.data
+    var username = (this.data.username || '').trim()
+    var password = (this.data.password || '').trim()
+
     if (!username) {
-      util.showToast('请输入用户名')
+      util.showToast('请输入账号')
       return
     }
     if (!password) {
@@ -46,24 +48,21 @@ Page({
     })
 
     api
-      .merchantLogin({ username, password })
+      .merchantLogin({
+        username: username,
+        password: password
+      })
       .then((response) => {
         app.setLoginInfo(response.token, response.staffUser)
-        const merchantName = response.staffUser.merchantName || ''
-        if (merchantName) {
-          util.showToast('欢迎回来，' + merchantName, 'success')
-        }
+        wx.switchTab({
+          url: '/pages/workbench/workbench'
+        })
       })
-      .catch(() => {
-        util.showToast('用户名或密码错误')
+      .catch((err) => {
+        util.showToast(err.message || '登录失败，请检查账号密码')
       })
       .finally(() => {
         wx.hideLoading()
-        if (app.globalData.isLoggedIn) {
-          wx.switchTab({
-            url: '/pages/workbench/workbench'
-          })
-        }
       })
   }
 })

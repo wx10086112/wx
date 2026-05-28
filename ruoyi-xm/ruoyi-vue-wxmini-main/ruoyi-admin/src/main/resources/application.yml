@@ -92,8 +92,8 @@ spring:
 token:
   # 令牌自定义标识
   header: Authorization
-  # 令牌密钥
-  secret: abcdefghijklmnopqrstuvwxyz
+  # 令牌密钥（至少32位随机字符串，生产环境请替换为独立密钥）
+  secret: RuoYiXmWxMini2026SecureKey!@#$%^&*
   # 令牌有效期（默认30分钟）
   expireTime: 30
 
@@ -138,6 +138,7 @@ wx:
         msgDataFormat: JSON
   # 支付配置
   pay:
+    stub-enabled: false
     appId: test
     mchId: 110 #商户id
     apiV3Key: test #V3密钥

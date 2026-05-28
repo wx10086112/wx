@@ -1,3 +1,4 @@
+const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const orderApi = require('../../api/order')
 
@@ -22,10 +23,12 @@ Page({
     if (status) {
       this.setData({ currentTab: status })
     }
+    this.ensureOrderStorage()
     this.loadOrders()
   },
 
   onShow() {
+    this.ensureOrderStorage()
     this.loadOrders()
   },
 
@@ -33,6 +36,17 @@ Page({
     this.loadOrders().then(() => {
       wx.stopPullDownRefresh()
     })
+  },
+
+  ensureOrderStorage() {
+    const stored = util.getStoredOrderList()
+    const validProductIds = mock.grouponList.map((item) => item.id)
+    const hasLegacyStoreOrder = stored.some((item) => {
+      return item.merchantId !== mock.merchantInfo.storeId || !validProductIds.includes(item.productId)
+    })
+    if (!stored.length || hasLegacyStoreOrder) {
+      util.setStoredOrderList(mock.orderList)
+    }
   },
 
   normalizeOrder(order) {
@@ -74,7 +88,7 @@ Page({
     return orderApi
       .getOrderList({ status: statusParam })
       .then((res) => {
-        const orders = (res || [])
+        const orders = (res.data || res || [])
           .sort((a, b) => (b.createTime || 0) - (a.createTime || 0))
           .map((item) => this.normalizeOrder(item))
         this.setData({
@@ -84,13 +98,31 @@ Page({
         })
       })
       .catch(() => {
-        this.setData({
-          orderStats: [],
-          orderList: [],
-          loading: false
-        })
-        util.showToast('加载失败，请重试')
+        this.loadOrdersLocal()
       })
+  },
+
+  loadOrdersLocal() {
+    const orders = util
+      .getStoredOrderList(mock.orderList)
+      .sort((a, b) => (b.createTime || 0) - (a.createTime || 0))
+      .map((item) => this.normalizeOrder(item))
+
+    this.setData({
+      orderStats: this.buildOrderStats(orders),
+      orderList: this.getFilteredOrders(orders),
+      loading: false
+    })
+  },
+
+  updateOrderList(updateHandler, successText) {
+    const orders = util.getStoredOrderList(mock.orderList)
+    const nextOrders = updateHandler(orders)
+    util.setStoredOrderList(nextOrders)
+    if (successText) {
+      util.showToast(successText, 'success')
+    }
+    this.loadOrders()
   },
 
   switchTab(e) {
@@ -110,20 +142,27 @@ Page({
     const order = e.detail.order
     util.showModal('取消订单', '确认取消该订单？').then((confirm) => {
       if (!confirm) return
-      orderApi.cancelOrder(order.orderNo)
-        .then(() => {
-          util.showToast('订单已取消', 'success')
-          this.loadOrders()
-        })
-        .catch(() => {
-          util.showToast('操作失败，请重试')
-        })
+      this.updateOrderList(
+        (orders) =>
+          orders.map((item) =>
+            item.orderNo === order.orderNo ? util.transitionOrderToCancelled(item) : item
+          ),
+        '订单已取消'
+      )
     })
   },
 
   onPayOrder(e) {
     const order = e.detail.order
-    util.navigateTo(`/pages/order-detail/order-detail?orderNo=${order.orderNo}`)
+    util.showModal('确认支付', `支付 ¥${((order.payAmount || order.price) / 100).toFixed(2)} 后将生成核销码`).then((confirm) => {
+      if (!confirm) return
+      this.setData({ currentTab: 'UNUSED' }, () => {
+        this.updateOrderList(
+          (orders) => orders.map((item) => (item.orderNo === order.orderNo ? util.transitionOrderToPaidUnused(item) : item)),
+          '支付成功'
+        )
+      })
+    })
   },
 
   onViewCode(e) {
@@ -136,7 +175,15 @@ Page({
 
   onRefundOrder(e) {
     const order = e.detail.order
-    util.navigateTo(`/pages/order-detail/order-detail?orderNo=${order.orderNo}`)
+    util.showModal('申请退款', '确认发起退款申请？').then((confirm) => {
+      if (!confirm) return
+      this.setData({ currentTab: 'AFTER_SALE' }, () => {
+        this.updateOrderList(
+          (orders) => orders.map((item) => (item.orderNo === order.orderNo ? util.transitionOrderToRefunding(item) : item)),
+          '退款申请已提交'
+        )
+      })
+    })
   },
 
   confirmWriteOffResult() {

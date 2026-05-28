@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Service
@@ -59,11 +60,12 @@ public class GrouponActivityItemServiceImpl implements IGrouponActivityItemServi
 
     private void calculateDiscount(GrouponActivityItem item) {
         if (item.getOriginalPrice() != null && item.getGrouponPrice() != null
-                && item.getOriginalPrice() > 0 && item.getGrouponPrice() > 0) {
-            BigDecimal original = BigDecimal.valueOf(item.getOriginalPrice());
-            BigDecimal groupon = BigDecimal.valueOf(item.getGrouponPrice());
-            // 折扣 = 团购价 / 原价 * 10，如 12900/18800*10 = 6.86
-            BigDecimal rate = groupon.divide(original, 4, BigDecimal.ROUND_HALF_UP)
+                && item.getOriginalPrice().compareTo(BigDecimal.ZERO) > 0
+                && item.getGrouponPrice().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal original = item.getOriginalPrice();
+            BigDecimal groupon = item.getGrouponPrice();
+            // 折扣 = 团购价 / 原价 * 10
+            BigDecimal rate = groupon.divide(original, 4, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.TEN);
             item.setDiscountRate(rate);
         }

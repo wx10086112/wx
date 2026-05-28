@@ -65,7 +65,13 @@ page {
   border-radius: 18rpx;
   font-size: 28rpx;
   margin: 0;
+  padding: 0 24rpx;
   border: none;
+  line-height: 1;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .primary-btn {

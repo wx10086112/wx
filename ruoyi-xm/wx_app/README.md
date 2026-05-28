@@ -2,35 +2,6 @@
 
 本文档面向后端开发人员，说明前端小程序的全部接口调用约定、请求参数和期望的响应数据结构。
 
-## 后端对接状态（更新于 2026-05-24）
-
-### 已完成
-
-| 接口 | 说明 |
-|------|------|
-| `GET /wxmini/login` | `mall-user/WxLoginController.java` |
-| `GET /wxmini/user/info` | `mall-user/WxMaUserController.java` |
-| `GET /wxmini/merchant/list` | `WxMerchantController.java` |
-| `GET /wxmini/merchant/detail/{id}` | `WxMerchantController.java` |
-| `GET /wxmini/merchant/home` | 首页概览，按 AppID 返回商家+商品（2026-05-24 新增） |
-| `GET /wxmini/groupon/list` | `WxGrouponController.java` |
-| `GET /wxmini/groupon/detail/{id}` | `WxGrouponController.java` |
-| `POST /wxmini/order/create` | `WxOrderController.java` |
-| `GET /wxmini/order/list` | `WxOrderController.java` |
-| `GET /wxmini/order/detail/{orderNo}` | `WxOrderController.java` |
-| `POST /wxmini/order/cancel/{orderNo}` | `WxOrderController.java` |
-| `GET /wxmini/template/config` | `WxTemplateController.java` |
-| `POST /wxmini/common/upload` | `WxCommonController.java` |
-
-### 待实现
-
-| 接口 | 说明 |
-|------|------|
-| `PUT /wxmini/user/info` | 更新用户昵称/头像，需在 WxMaUserController 加 @PutMapping |
-| `POST /wxmini/user/phone/bind` | 手机号绑定，后端当前为 `GET /wxmini/user/phone`，路径不匹配 |
-| `POST /wxmini/pay/order/create` | 微信支付下单，需配置商户号 |
-| `GET /wxmini/pay/order/query` | 查询支付状态，需配置商户号 |
-
 ## 一、通信约定
 
 ### 基础地址

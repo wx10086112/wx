@@ -39,6 +39,16 @@ public class SysRole extends BaseEntity
     @Excel(name = "数据范围", readConverterExp = "1=所有数据权限,2=自定义数据权限,3=本部门数据权限,4=本部门及以下数据权限,5=仅本人数据权限")
     private String dataScope;
 
+    /** 角色归属（PLATFORM：平台；DISTRIBUTOR：分销商；MERCHANT：商家） */
+    @Excel(name = "角色归属", readConverterExp = "PLATFORM=平台,DISTRIBUTOR=分销商,MERCHANT=商家")
+    private String roleScope = "PLATFORM";
+
+    /** 业务数据范围类型（ALL/DISTRIBUTOR_SELF/DISTRIBUTOR_CUSTOM/MERCHANT_SELF/MERCHANT_CUSTOM） */
+    private String dataScopeType;
+
+    /** 绑定分销商ID（分销商/商家角色） */
+    private Long distributorId;
+
     /** 菜单树选择项是否关联显示（ 0：父子不互相关联显示 1：父子互相关联显示） */
     private boolean menuCheckStrictly;
 
@@ -139,6 +149,36 @@ public class SysRole extends BaseEntity
         this.dataScope = dataScope;
     }
 
+    public String getRoleScope()
+    {
+        return roleScope;
+    }
+
+    public void setRoleScope(String roleScope)
+    {
+        this.roleScope = roleScope;
+    }
+
+    public String getDataScopeType()
+    {
+        return dataScopeType;
+    }
+
+    public void setDataScopeType(String dataScopeType)
+    {
+        this.dataScopeType = dataScopeType;
+    }
+
+    public Long getDistributorId()
+    {
+        return distributorId;
+    }
+
+    public void setDistributorId(Long distributorId)
+    {
+        this.distributorId = distributorId;
+    }
+
     public boolean isMenuCheckStrictly()
     {
         return menuCheckStrictly;
@@ -227,6 +267,9 @@ public class SysRole extends BaseEntity
             .append("roleKey", getRoleKey())
             .append("roleSort", getRoleSort())
             .append("dataScope", getDataScope())
+            .append("roleScope", getRoleScope())
+            .append("dataScopeType", getDataScopeType())
+            .append("distributorId", getDistributorId())
             .append("menuCheckStrictly", isMenuCheckStrictly())
             .append("deptCheckStrictly", isDeptCheckStrictly())
             .append("status", getStatus())

@@ -1,3 +1,4 @@
+const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const orderApi = require('../../api/order')
 
@@ -10,7 +11,7 @@ Page({
 
   onLoad(options) {
     this.setData({
-      orderNo: options.orderNo || ''
+      orderNo: options.orderNo || mock.orderList[0].orderNo
     })
     this.loadOrderDetail()
   },
@@ -45,31 +46,39 @@ Page({
     orderApi
       .getOrderDetail(this.data.orderNo)
       .then((res) => {
+        const rawOrder = res.data || res || {}
         this.setData({
-          order: this.formatOrder(res || {}),
+          order: this.formatOrder(rawOrder),
           loading: false
         })
       })
       .catch(() => {
+        const rawOrder = util.getStoredOrderList(mock.orderList).find((item) => item.orderNo === this.data.orderNo) || {}
         this.setData({
-          order: {},
+          order: this.formatOrder(rawOrder),
           loading: false
         })
-        util.showToast('加载失败，请重试')
       })
+  },
+
+  updateOrder(updateHandler, successText) {
+    const orders = util.getStoredOrderList(mock.orderList)
+    const nextOrders = updateHandler(orders)
+    util.setStoredOrderList(nextOrders)
+    if (successText) {
+      util.showToast(successText, 'success')
+    }
+    this.loadOrderDetail()
   },
 
   cancelOrder() {
     util.showModal('取消订单', '确认取消当前订单？').then((confirm) => {
       if (!confirm) return
-      orderApi.cancelOrder(this.data.orderNo)
-        .then(() => {
-          util.showToast('已取消', 'success')
-          this.loadOrderDetail()
-        })
-        .catch(() => {
-          util.showToast('操作失败，请重试')
-        })
+      this.updateOrder(
+        (orders) =>
+          orders.map((item) => (item.orderNo === this.data.orderNo ? util.transitionOrderToCancelled(item) : item)),
+        '已取消'
+      )
     })
   },
 
@@ -77,34 +86,50 @@ Page({
     util.showModal('确认支付', `确认支付 ¥${this.data.order.payAmountText} 吗？`).then((confirm) => {
       if (!confirm) return
       util.showLoading('支付中...')
-      orderApi
-        .createPayOrder({ orderNo: this.data.orderNo })
-        .then((res) => {
-          const payParams = res
-          if (payParams && payParams.timeStamp) {
-            return util.requestPayment(payParams)
-          }
-          return Promise.reject(new Error('no pay params'))
-        })
+      this.tryRealPayment()
         .then(() => {
           util.hideLoading()
-          util.showToast('支付成功', 'success')
+          this.updateOrder(
+            (orders) =>
+              orders.map((item) => (item.orderNo === this.data.orderNo ? util.transitionOrderToPaidUnused(item) : item)),
+            '支付成功'
+          )
           util.requestSubscribeMessage()
-          this.loadOrderDetail()
         })
         .catch((err) => {
           util.hideLoading()
           if (err && err.message !== '用户取消支付') {
-            util.showToast('支付失败，请重试')
+            this.updateOrder(
+              (orders) =>
+                orders.map((item) => (item.orderNo === this.data.orderNo ? util.transitionOrderToPaidUnused(item) : item)),
+              '支付成功（模拟）'
+            )
           }
         })
     })
   },
 
+  tryRealPayment() {
+    const orderApi = require('../../api/order')
+    return orderApi
+      .createPayOrder({ orderNo: this.data.orderNo })
+      .then((res) => {
+        const payParams = res.data || res
+        if (payParams && payParams.timeStamp) {
+          return util.requestPayment(payParams)
+        }
+        return Promise.reject(new Error('no pay params'))
+      })
+  },
+
   applyRefund() {
     util.showModal('申请退款', '确认申请退款？').then((confirm) => {
       if (!confirm) return
-      util.showToast('退款功能需要后端支持')
+      this.updateOrder(
+        (orders) =>
+          orders.map((item) => (item.orderNo === this.data.orderNo ? util.transitionOrderToRefunding(item) : item)),
+        '退款申请已提交'
+      )
     })
   },
 

@@ -1,5 +1,6 @@
 package com.ruoyi.mall.order.controller;
 
+import com.ruoyi.common.annotation.DataScopeBiz;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
@@ -16,6 +17,7 @@ public class MallAfterSaleController extends BaseController {
     @Autowired
     private IMallOrderService mallOrderService;
 
+    @DataScopeBiz(merchantAlias = "refund_record")
     @PreAuthorize("@ss.hasPermi('mall:order:list')")
     @GetMapping("/list")
     public TableDataInfo list(RefundRecord query) {

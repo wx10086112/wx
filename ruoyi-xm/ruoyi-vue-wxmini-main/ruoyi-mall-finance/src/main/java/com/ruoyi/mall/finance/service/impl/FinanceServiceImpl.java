@@ -9,8 +9,10 @@ import com.ruoyi.mall.finance.mapper.WithdrawRecordMapper;
 import com.ruoyi.mall.finance.service.IFinanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.*;
 
 @Service
 public class FinanceServiceImpl implements IFinanceService {
@@ -43,5 +45,40 @@ public class FinanceServiceImpl implements IFinanceService {
     @Override
     public List<TransactionRecord> selectMerchantFlowList(TransactionRecord query) {
         return transactionRecordMapper.selectTransactionRecordList(query);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean approveWithdraw(Long id, Integer status) {
+        WithdrawRecord record = withdrawRecordMapper.selectWithdrawRecordById(id);
+        if (record == null) {
+            return false;
+        }
+        record.setStatus(status);
+        record.setAuditTime(new Date());
+        withdrawRecordMapper.updateWithdrawRecord(record);
+        return true;
+    }
+
+    @Override
+    public Map<String, Object> getIncomeStats() {
+        Map<String, Object> stats = new HashMap<>();
+        BigDecimal totalCommission = platformIncomeMapper.sumTotalCommission();
+        BigDecimal todayIncome = transactionRecordMapper.sumTodayByType(1);
+        BigDecimal monthIncome = transactionRecordMapper.sumMonthByType(1);
+        BigDecimal totalWithdraw = withdrawRecordMapper.sumPaidTotal();
+        stats.put("totalCommission", totalCommission);
+        stats.put("todayIncome", todayIncome);
+        stats.put("monthIncome", monthIncome);
+        stats.put("totalWithdraw", totalWithdraw);
+        return stats;
+    }
+
+    @Override
+    public Map<String, Object> getReport() {
+        Map<String, Object> report = new HashMap<>();
+        List<Map> monthlyReport = transactionRecordMapper.selectMonthlyReport();
+        report.put("monthlyReport", monthlyReport);
+        return report;
     }
 }

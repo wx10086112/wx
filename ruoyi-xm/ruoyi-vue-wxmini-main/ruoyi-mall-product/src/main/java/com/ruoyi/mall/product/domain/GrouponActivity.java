@@ -1,5 +1,6 @@
 package com.ruoyi.mall.product.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.common.core.domain.BaseEntity;
 import java.util.Date;
 
@@ -15,7 +16,9 @@ public class GrouponActivity extends BaseEntity {
     /** 活动详情图 JSON 数组 */
     private String detailImages;
     private String description;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date startTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date endTime;
     private Integer status;
     private Integer totalSold;
@@ -24,6 +27,8 @@ public class GrouponActivity extends BaseEntity {
     private Integer sort;
     /** 创建来源：ADMIN 总后台 / MERCHANT 商家端 */
     private String sourceType;
+    /** 删除标志（0存在 2删除） */
+    private String delFlag;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -66,4 +71,7 @@ public class GrouponActivity extends BaseEntity {
 
     public String getSourceType() { return sourceType; }
     public void setSourceType(String sourceType) { this.sourceType = sourceType; }
+
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 }

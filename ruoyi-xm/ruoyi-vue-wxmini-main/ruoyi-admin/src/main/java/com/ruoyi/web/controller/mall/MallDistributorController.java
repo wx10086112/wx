@@ -1,17 +1,19 @@
 package com.ruoyi.web.controller.mall;
 
+import com.ruoyi.common.annotation.DataScopeBiz;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.utils.MallDataScopeHelper;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.mall.product.domain.Distributor;
 import com.ruoyi.mall.product.service.IDistributorService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,10 +30,16 @@ public class MallDistributorController extends BaseController {
     /**
      * 查询分销商列表
      */
+    @DataScopeBiz(distributorAlias = "distributor")
     @PreAuthorize("@ss.hasPermi('mall:distributor:list')")
     @GetMapping("/list")
     public TableDataInfo list(Distributor distributor) {
         startPage();
+        // 分销商账号只能查看自己的数据
+        String accountType = SecurityUtils.getAccountType();
+        if ("DISTRIBUTOR".equals(accountType)) {
+            distributor.setId(SecurityUtils.getDistributorId());
+        }
         List<Distributor> list = distributorService.selectDistributorList(distributor);
         return getDataTable(list);
     }
@@ -42,6 +50,10 @@ public class MallDistributorController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:distributor:query')")
     @GetMapping("/{id}")
     public AjaxResult getInfo(@PathVariable Long id) {
+        Long effId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effId != null && !effId.equals(id)) {
+            return AjaxResult.error("无权查看该分销商");
+        }
         return AjaxResult.success(distributorService.selectDistributorById(id));
     }
 
@@ -66,6 +78,10 @@ public class MallDistributorController extends BaseController {
     @Log(title = "分销商管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody Distributor distributor) {
+        Long effId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effId != null && distributor.getId() != null && !effId.equals(distributor.getId())) {
+            return AjaxResult.error("无权修改该分销商");
+        }
         return toAjax(distributorService.updateDistributor(distributor));
     }
 
@@ -76,6 +92,14 @@ public class MallDistributorController extends BaseController {
     @Log(title = "分销商管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{ids}")
     public AjaxResult remove(@PathVariable Long[] ids) {
+        Long effId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effId != null) {
+            for (Long id : ids) {
+                if (!effId.equals(id)) {
+                    return AjaxResult.error("无权删除该分销商");
+                }
+            }
+        }
         return toAjax(distributorService.deleteDistributorByIds(ids));
     }
 
@@ -86,6 +110,10 @@ public class MallDistributorController extends BaseController {
     @Log(title = "分销商状态修改", businessType = BusinessType.UPDATE)
     @PutMapping("/status")
     public AjaxResult changeStatus(@RequestBody Distributor distributor) {
+        Long effId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effId != null && distributor.getId() != null && !effId.equals(distributor.getId())) {
+            return AjaxResult.error("无权修改该分销商状态");
+        }
         return toAjax(distributorService.updateDistributor(distributor));
     }
 
@@ -97,51 +125,11 @@ public class MallDistributorController extends BaseController {
     @PutMapping("/reset-password")
     public AjaxResult resetPassword(@RequestBody Map<String, Object> params) {
         Long id = Long.valueOf(params.get("id").toString());
+        Long effId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effId != null && !effId.equals(id)) {
+            return AjaxResult.error("无权重置该分销商密码");
+        }
         String password = params.get("password") != null ? params.get("password").toString() : "123456";
         return toAjax(distributorService.resetPassword(id, password));
-    }
-
-    /**
-     * 切换为分销商视角
-     */
-    @PreAuthorize("@ss.hasPermi('mall:distributor:switch')")
-    @Log(title = "切换分销商视角", businessType = BusinessType.OTHER)
-    @PostMapping("/switch/{id}")
-    public AjaxResult switchDistributor(@PathVariable Long id) {
-        Distributor distributor = distributorService.selectDistributorById(id);
-        if (distributor == null) {
-            return AjaxResult.error("分销商不存在");
-        }
-        if (distributor.getStatus() != 1) {
-            return AjaxResult.error("该分销商已被禁用");
-        }
-        // 将视角信息存入 session
-        Map<String, Object> viewInfo = new HashMap<>();
-        viewInfo.put("viewRole", "DISTRIBUTOR_ADMIN");
-        viewInfo.put("viewDistributorId", id);
-        viewInfo.put("viewDistributorName", distributor.getName());
-        getSession().setAttribute("distributorView", viewInfo);
-        return AjaxResult.success("已切换为分销商: " + distributor.getName(), viewInfo);
-    }
-
-    /**
-     * 返回超级管理员视角
-     */
-    @PostMapping("/switch-back")
-    public AjaxResult switchBack() {
-        getSession().removeAttribute("distributorView");
-        return AjaxResult.success("已返回超级管理员视角");
-    }
-
-    /**
-     * 获取当前视角信息
-     */
-    @GetMapping("/view-info")
-    public AjaxResult getViewInfo() {
-        Object view = getSession().getAttribute("distributorView");
-        Map<String, Object> result = new HashMap<>();
-        result.put("isSwitched", view != null);
-        result.put("viewInfo", view);
-        return AjaxResult.success(result);
     }
 }

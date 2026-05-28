@@ -6,7 +6,7 @@
       <!-- 搜索表单 -->
       <el-form :inline="true" :model="queryParams" size="small" class="search-form">
         <el-form-item label="商家名称">
-          <el-input v-model="queryParams.merchantId" placeholder="请输入商家ID" clearable @keyup.enter.native="handleSearch" />
+          <el-input v-model="queryParams.merchantName" placeholder="请输入商家名称" clearable @keyup.enter.native="handleSearch" />
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="queryParams.status" placeholder="请选择" clearable>
@@ -24,7 +24,7 @@
 
       <!-- 数据表格 -->
       <el-table v-loading="loading" :data="tableList" border style="width: 100%">
-        <el-table-column prop="merchantId" label="商家名称" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="merchantName" label="商家名称" min-width="120" show-overflow-tooltip />
         <el-table-column prop="amount" label="提现金额" width="120" align="center">
           <template slot-scope="scope">
             <span class="withdraw-amount">¥{{ Number(scope.row.amount).toLocaleString() }}</span>
@@ -41,6 +41,7 @@
         <el-table-column label="操作" width="200" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button
+              v-hasPermi="['mall:finance:edit']"
               v-if="scope.row.status === 0"
               type="text"
               size="small"
@@ -49,6 +50,7 @@
               @click="handlePass(scope.row)"
             >通过</el-button>
             <el-button
+              v-hasPermi="['mall:finance:edit']"
               v-if="scope.row.status === 0"
               type="text"
               size="small"
@@ -108,7 +110,7 @@
       </el-form>
       <span slot="footer">
         <el-button @click="rejectDialogVisible = false">取 消</el-button>
-        <el-button type="danger" :loading="rejectLoading" @click="submitReject">确认拒绝</el-button>
+        <el-button v-hasPermi="['mall:finance:edit']" type="danger" :loading="rejectLoading" @click="submitReject">确认拒绝</el-button>
       </span>
     </el-dialog>
   </div>
@@ -127,7 +129,7 @@ export default {
       pageSize: 10,
       total: 0,
       queryParams: {
-        merchantId: '',
+        merchantName: '',
         status: undefined
       },
       detailDialogVisible: false,
@@ -151,9 +153,9 @@ export default {
         })
         let list = res.rows
         // 客户端筛选
-        if (this.queryParams.merchantId) {
-          const keyword = this.queryParams.merchantId.toLowerCase()
-          list = list.filter(item => item.merchantId.toLowerCase().includes(keyword))
+        if (this.queryParams.merchantName) {
+          const keyword = this.queryParams.merchantName.toLowerCase()
+          list = list.filter(item => (item.merchantName || '').toLowerCase().includes(keyword))
         }
         if (this.queryParams.status !== undefined && this.queryParams.status !== '') {
           list = list.filter(item => item.status === this.queryParams.status)
@@ -171,7 +173,7 @@ export default {
       this.fetchData()
     },
     handleReset() {
-      this.queryParams = { merchantId: '', status: undefined }
+      this.queryParams = { merchantName: '', status: undefined }
       this.pageNum = 1
       this.fetchData()
     },

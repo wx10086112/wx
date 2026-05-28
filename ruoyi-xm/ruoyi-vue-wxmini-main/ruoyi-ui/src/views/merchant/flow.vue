@@ -6,7 +6,7 @@
       <!-- 搜索表单 -->
       <el-form :inline="true" :model="queryParams" size="small" class="search-form">
         <el-form-item label="商家名称">
-          <el-input v-model="queryParams.merchantId" placeholder="请输入商家ID" clearable @keyup.enter.native="handleSearch" />
+          <el-input v-model="queryParams.merchantName" placeholder="请输入商家名称" clearable @keyup.enter.native="handleSearch" />
         </el-form-item>
         <el-form-item label="类型">
           <el-select v-model="queryParams.type" placeholder="请选择" clearable>
@@ -34,7 +34,7 @@
 
       <!-- 数据表格 -->
       <el-table v-loading="loading" :data="tableList" border style="width: 100%">
-        <el-table-column prop="merchantId" label="商家名称" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="merchantName" label="商家名称" min-width="120" show-overflow-tooltip />
         <el-table-column prop="type" label="类型" width="110" align="center">
           <template slot-scope="scope">
             <el-tag :type="flowTypeTag(scope.row.type)" size="small">{{ flowTypeText(scope.row.type) }}</el-tag>
@@ -81,7 +81,7 @@ export default {
       total: 0,
       dateRange: null,
       queryParams: {
-        merchantId: '',
+        merchantName: '',
         type: ''
       }
     }
@@ -99,9 +99,9 @@ export default {
         })
         let list = res.rows
         // 客户端筛选
-        if (this.queryParams.merchantId) {
-          const keyword = this.queryParams.merchantId.toLowerCase()
-          list = list.filter(item => item.merchantId.toLowerCase().includes(keyword))
+        if (this.queryParams.merchantName) {
+          const keyword = this.queryParams.merchantName.toLowerCase()
+          list = list.filter(item => (item.merchantName || '').toLowerCase().includes(keyword))
         }
         if (this.queryParams.type) {
           list = list.filter(item => item.type === this.queryParams.type)
@@ -126,7 +126,7 @@ export default {
       this.fetchData()
     },
     handleReset() {
-      this.queryParams = { merchantId: '', type: '' }
+      this.queryParams = { merchantName: '', type: '' }
       this.dateRange = null
       this.pageNum = 1
       this.fetchData()

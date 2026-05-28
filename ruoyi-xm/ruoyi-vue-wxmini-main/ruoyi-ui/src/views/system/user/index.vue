@@ -63,6 +63,14 @@
               <el-table-column label="用户昵称" align="center" key="nickName" prop="nickName" v-if="columns[2].visible" :show-overflow-tooltip="true" />
               <el-table-column label="部门" align="center" key="deptName" prop="dept.deptName" v-if="columns[3].visible" :show-overflow-tooltip="true" />
               <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns[4].visible" width="120" />
+              <el-table-column label="账号类型" align="center" key="accountType" prop="accountType" width="100">
+                <template slot-scope="scope">
+                  <el-tag v-if="scope.row.accountType === 'PLATFORM'" size="mini">平台</el-tag>
+                  <el-tag v-else-if="scope.row.accountType === 'DISTRIBUTOR'" type="warning" size="mini">分销商</el-tag>
+                  <el-tag v-else-if="scope.row.accountType === 'MERCHANT'" type="success" size="mini">商家</el-tag>
+                  <el-tag v-else size="mini">平台</el-tag>
+                </template>
+              </el-table-column>
               <el-table-column label="状态" align="center" key="status" v-if="columns[5].visible">
                 <template slot-scope="scope">
                   <el-switch v-model="scope.row.status" active-value="0" inactive-value="1" @change="handleStatusChange(scope.row)"></el-switch>
@@ -166,6 +174,31 @@
           </el-col>
         </el-row>
         <el-row>
+          <el-col :span="12">
+            <el-form-item label="账号类型">
+              <el-select v-model="form.accountType" placeholder="请选择账号类型" @change="handleAccountTypeChange">
+                <el-option label="平台" value="PLATFORM" />
+                <el-option label="分销商" value="DISTRIBUTOR" />
+                <el-option label="商家" value="MERCHANT" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12" v-if="form.accountType === 'DISTRIBUTOR'">
+            <el-form-item label="所属分销商">
+              <el-select v-model="form.distributorId" placeholder="请选择所属分销商" filterable>
+                <el-option v-for="item in distributorOptions" :key="item.id" :label="item.name" :value="item.id" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12" v-if="form.accountType === 'MERCHANT'">
+            <el-form-item label="所属商家">
+              <el-select v-model="form.merchantId" placeholder="请选择所属商家" filterable>
+                <el-option v-for="item in merchantOptions" :key="item.id" :label="item.name" :value="item.id" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
           <el-col :span="24">
             <el-form-item label="备注">
               <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"></el-input>
@@ -202,6 +235,7 @@
 
 <script>
 import { listUser, getUser, delUser, addUser, updateUser, resetUserPwd, changeUserStatus, deptTreeSelect } from "@/api/system/user"
+import { listDistributorOptions, listMerchantOptions } from "@/api/system/role"
 import { getToken } from "@/utils/auth"
 import Treeselect from "@riophae/vue-treeselect"
 import "@riophae/vue-treeselect/dist/vue-treeselect.css"
@@ -246,6 +280,10 @@ export default {
       postOptions: [],
       // 角色选项
       roleOptions: [],
+      // 分销商选项
+      distributorOptions: [],
+      // 商家选项
+      merchantOptions: [],
       // 表单参数
       form: {},
       defaultProps: {
@@ -386,6 +424,20 @@ export default {
       this.open = false
       this.reset()
     },
+    /** 加载分销商/商家选项 */
+    loadBizOptions() {
+      listDistributorOptions().then(response => {
+        this.distributorOptions = response.data || []
+      })
+      listMerchantOptions().then(response => {
+        this.merchantOptions = response.data || []
+      })
+    },
+    /** 账号类型变更 */
+    handleAccountTypeChange(value) {
+      this.form.distributorId = undefined
+      this.form.merchantId = undefined
+    },
     // 表单重置
     reset() {
       this.form = {
@@ -398,6 +450,9 @@ export default {
         email: undefined,
         sex: undefined,
         status: "0",
+        accountType: "PLATFORM",
+        distributorId: undefined,
+        merchantId: undefined,
         remark: undefined,
         postIds: [],
         roleIds: []
@@ -439,6 +494,7 @@ export default {
     /** 新增按钮操作 */
     handleAdd() {
       this.reset()
+      this.loadBizOptions()
       getUser().then(response => {
         this.postOptions = response.posts
         this.roleOptions = response.roles
@@ -450,6 +506,7 @@ export default {
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset()
+      this.loadBizOptions()
       const userId = row.userId || this.ids
       getUser(userId).then(response => {
         this.form = response.data

@@ -43,7 +43,7 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="商家" prop="merchantId" width="140" />
+        <el-table-column label="商家" prop="merchantName" width="140" />
         <el-table-column label="订单号" prop="orderNo" width="180" />
         <el-table-column label="平台佣金" width="120">
           <template slot-scope="scope">

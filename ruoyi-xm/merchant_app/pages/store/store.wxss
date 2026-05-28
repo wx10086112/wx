@@ -50,15 +50,6 @@
   padding-top: 18rpx;
 }
 
-.two-col {
-  display: flex;
-  gap: 14rpx;
-}
-
-.field-half {
-  flex: 1;
-}
-
 .switch-row {
   margin-top: 24rpx;
   display: flex;
@@ -77,4 +68,3 @@
 .save-btn {
   margin-top: 30rpx;
 }
-

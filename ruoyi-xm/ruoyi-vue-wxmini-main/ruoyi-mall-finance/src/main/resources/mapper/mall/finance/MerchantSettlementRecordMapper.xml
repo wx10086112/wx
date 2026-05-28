@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.finance.mapper.MerchantSettlementRecordMapper">
+
+    <resultMap type="com.ruoyi.mall.finance.domain.MerchantSettlementRecord" id="SettlementRecordResult">
+        <result property="id" column="id"/>
+        <result property="settlementNo" column="settlement_no"/>
+        <result property="merchantId" column="merchant_id"/>
+        <result property="merchantName" column="merchant_name"/>
+        <result property="distributorId" column="distributor_id"/>
+        <result property="distributorName" column="distributor_name"/>
+        <result property="storeId" column="store_id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="title" column="title"/>
+        <result property="orderAmount" column="order_amount"/>
+        <result property="merchantAmount" column="merchant_amount"/>
+        <result property="platformFeeAmount" column="platform_fee_amount"/>
+        <result property="status" column="status"/>
+        <result property="applyTime" column="apply_time"/>
+        <result property="expectedTransferTime" column="expected_transfer_time"/>
+        <result property="transferTime" column="transfer_time"/>
+        <result property="arriveTime" column="arrive_time"/>
+        <result property="failReason" column="fail_reason"/>
+        <result property="wechatBatchNo" column="wechat_batch_no"/>
+        <result property="wechatDetailNo" column="wechat_detail_no"/>
+        <result property="reverseRecordId" column="reverse_record_id"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectColumns">
+        msr.id, msr.settlement_no, msr.merchant_id, m.name as merchant_name,
+        msr.distributor_id, d.name as distributor_name, msr.store_id, msr.order_no, msr.title,
+        msr.order_amount, msr.merchant_amount, msr.platform_fee_amount, msr.status,
+        msr.apply_time, msr.expected_transfer_time, msr.transfer_time, msr.arrive_time,
+        msr.fail_reason, msr.wechat_batch_no, msr.wechat_detail_no, msr.reverse_record_id,
+        msr.del_flag, msr.create_time, msr.update_time
+    </sql>
+
+    <sql id="whereClause">
+        <where>
+            del_flag = '0'
+            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
+            <if test="orderNo != null and orderNo != ''">and order_no = #{orderNo}</if>
+            <if test="status != null and status != ''">and status = #{status}</if>
+            <if test="settlementNo != null and settlementNo != ''">and settlement_no = #{settlementNo}</if>
+            <if test="distributorId != null">and distributor_id = #{distributorId}</if>
+        </where>
+    </sql>
+
+    <select id="selectById" parameterType="Long" resultMap="SettlementRecordResult">
+        select <include refid="selectColumns"/> from merchant_settlement_record msr
+        LEFT JOIN merchant m ON msr.merchant_id = m.id
+        LEFT JOIN distributor d ON msr.distributor_id = d.id
+        where msr.id = #{id} and msr.del_flag = '0'
+    </select>
+
+    <select id="selectBySettlementNo" parameterType="String" resultMap="SettlementRecordResult">
+        select <include refid="selectColumns"/> from merchant_settlement_record msr
+        LEFT JOIN merchant m ON msr.merchant_id = m.id
+        LEFT JOIN distributor d ON msr.distributor_id = d.id
+        where msr.settlement_no = #{settlementNo} and msr.del_flag = '0'
+    </select>
+
+    <select id="selectByOrderNo" parameterType="String" resultMap="SettlementRecordResult">
+        select <include refid="selectColumns"/> from merchant_settlement_record msr
+        LEFT JOIN merchant m ON msr.merchant_id = m.id
+        LEFT JOIN distributor d ON msr.distributor_id = d.id
+        where msr.order_no = #{orderNo} and msr.del_flag = '0' limit 1
+    </select>
+
+    <select id="selectList" parameterType="com.ruoyi.mall.finance.domain.MerchantSettlementRecord" resultMap="SettlementRecordResult">
+        select <include refid="selectColumns"/> from merchant_settlement_record msr
+        LEFT JOIN merchant m ON msr.merchant_id = m.id
+        LEFT JOIN distributor d ON msr.distributor_id = d.id
+        <where>
+            msr.del_flag = '0'
+            <if test="merchantId != null">and msr.merchant_id = #{merchantId}</if>
+            <if test="orderNo != null and orderNo != ''">and msr.order_no = #{orderNo}</if>
+            <if test="status != null and status != ''">and msr.status = #{status}</if>
+            <if test="settlementNo != null and settlementNo != ''">and msr.settlement_no = #{settlementNo}</if>
+            <if test="distributorId != null">and msr.distributor_id = #{distributorId}</if>
+            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+        </where>
+        order by msr.create_time desc
+    </select>
+
+    <select id="selectByMerchantIdAndStatuses" resultMap="SettlementRecordResult">
+        select <include refid="selectColumns"/> from merchant_settlement_record msr
+        LEFT JOIN merchant m ON msr.merchant_id = m.id
+        LEFT JOIN distributor d ON msr.distributor_id = d.id
+        where msr.merchant_id = #{merchantId} and msr.del_flag = '0'
+        and msr.status in
+        <foreach item="s" collection="statuses" open="(" separator="," close=")">#{s}</foreach>
+        order by msr.create_time desc
+    </select>
+
+    <select id="selectWaitingTransfer" resultMap="SettlementRecordResult">
+        select <include refid="selectColumns"/> from merchant_settlement_record msr
+        LEFT JOIN merchant m ON msr.merchant_id = m.id
+        LEFT JOIN distributor d ON msr.distributor_id = d.id
+        where msr.status = 'WAITING_T1' and msr.del_flag = '0'
+        and msr.expected_transfer_time &lt;= NOW()
+        order by msr.expected_transfer_time asc
+        limit #{limit}
+    </select>
+
+    <insert id="insert" parameterType="com.ruoyi.mall.finance.domain.MerchantSettlementRecord" useGeneratedKeys="true" keyProperty="id">
+        insert into merchant_settlement_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            settlement_no, merchant_id, distributor_id, store_id, order_no, title,
+            order_amount, merchant_amount, platform_fee_amount, status,
+            apply_time, expected_transfer_time, del_flag,
+        </trim>
+        values
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #{settlementNo}, #{merchantId}, #{distributorId}, #{storeId}, #{orderNo}, #{title},
+            #{orderAmount}, #{merchantAmount}, #{platformFeeAmount}, #{status},
+            #{applyTime}, #{expectedTransferTime}, '0',
+        </trim>
+    </insert>
+
+    <update id="updateById" parameterType="com.ruoyi.mall.finance.domain.MerchantSettlementRecord">
+        update merchant_settlement_record
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="status != null">status = #{status},</if>
+            <if test="transferTime != null">transfer_time = #{transferTime},</if>
+            <if test="arriveTime != null">arrive_time = #{arriveTime},</if>
+            <if test="failReason != null">fail_reason = #{failReason},</if>
+            <if test="wechatBatchNo != null">wechat_batch_no = #{wechatBatchNo},</if>
+            <if test="wechatDetailNo != null">wechat_detail_no = #{wechatDetailNo},</if>
+            <if test="reverseRecordId != null">reverse_record_id = #{reverseRecordId},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <select id="sumMerchantAmountByStatus" resultType="java.math.BigDecimal">
+        select COALESCE(SUM(merchant_amount), 0) from merchant_settlement_record
+        where merchant_id = #{merchantId} and status = #{status} and del_flag = '0'
+    </select>
+
+    <select id="sumMerchantAmountToday" resultType="java.math.BigDecimal">
+        select COALESCE(SUM(merchant_amount), 0) from merchant_settlement_record
+        where merchant_id = #{merchantId} and del_flag = '0'
+        and DATE(apply_time) = CURDATE()
+    </select>
+
+    <select id="sumMerchantAmountThisMonth" resultType="java.math.BigDecimal">
+        select COALESCE(SUM(merchant_amount), 0) from merchant_settlement_record
+        where merchant_id = #{merchantId} and del_flag = '0'
+        and YEAR(apply_time) = YEAR(NOW()) and MONTH(apply_time) = MONTH(NOW())
+    </select>
+
+    <select id="countCompletedByMerchantId" resultType="java.lang.Integer">
+        select COUNT(*) from merchant_settlement_record
+        where merchant_id = #{merchantId} and del_flag = '0'
+        and status IN ('ARRIVED', 'WAITING_T1', 'TRANSFERRING')
+    </select>
+
+</mapper>

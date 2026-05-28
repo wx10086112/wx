@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -41,7 +42,7 @@ public class WxOrderController {
     private WriteOffCodeGenerator writeOffCodeGenerator;
 
     @PostMapping("/create")
-    public AjaxResult create(@RequestBody WxOrderCreateRequestDto requestDto) {
+    public AjaxResult create(@Valid @RequestBody WxOrderCreateRequestDto requestDto) {
         if (requestDto == null) {
             return AjaxResult.error("请求参数不能为空");
         }
@@ -61,7 +62,7 @@ public class WxOrderController {
             return AjaxResult.error("至少选择一个商品");
         }
 
-        long totalAmount = 0;
+        BigDecimal totalAmount = BigDecimal.ZERO;
         Long merchantId = null;
         List<Product> products = new ArrayList<>();
         for (WxOrderCreateRequestDto.OrderItemInput input : itemInputs) {
@@ -75,13 +76,22 @@ public class WxOrderController {
                 return AjaxResult.error("不同商家的商品不能合并下单");
             }
             int qty = input.getQuantity() != null && input.getQuantity() > 0 ? input.getQuantity() : 1;
-            long price = product.getPrice() != null ? product.getPrice().longValue() : 0;
-            totalAmount += price * qty;
+            BigDecimal price = product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO;
+            totalAmount = totalAmount.add(price.multiply(new BigDecimal(qty)));
             products.add(product);
         }
 
-        long couponAmount = 0;
-        long payAmount = totalAmount - couponAmount;
+        // 校验商品商家属于当前C端上下文
+        Long currentMerchantId = WxMiniUserContext.getCurrentMerchantId();
+        if (currentMerchantId == null) {
+            currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
+        }
+        if (currentMerchantId != null && !currentMerchantId.equals(merchantId)) {
+            return AjaxResult.error("商品不属于当前商家");
+        }
+
+        BigDecimal couponAmount = BigDecimal.ZERO;
+        BigDecimal payAmount = totalAmount.subtract(couponAmount);
         String orderNo = generateOrderNo();
         String writeOffCode = generateWriteOffCode();
 
@@ -89,9 +99,9 @@ public class WxOrderController {
         order.setOrderNo(orderNo);
         order.setMerchantId(merchantId);
         order.setUserId(userId);
-        order.setTotalAmount(new BigDecimal(totalAmount));
-        order.setPayAmount(new BigDecimal(payAmount));
-        order.setCouponAmount(new BigDecimal(couponAmount));
+        order.setTotalAmount(totalAmount);
+        order.setPayAmount(payAmount);
+        order.setCouponAmount(couponAmount);
         order.setCouponId(requestDto.getCouponId());
         order.setStatus(ORDER_STATUS_PENDING);
         order.setWriteOffCode(writeOffCode);
@@ -101,7 +111,7 @@ public class WxOrderController {
             WxOrderCreateRequestDto.OrderItemInput input = itemInputs.get(i);
             Product product = products.get(i);
             int qty = input.getQuantity() != null && input.getQuantity() > 0 ? input.getQuantity() : 1;
-            long price = product.getPrice() != null ? product.getPrice().longValue() : 0;
+            BigDecimal price = product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO;
 
             OrderItem item = new OrderItem();
             item.setOrderId(order.getId());
@@ -110,17 +120,17 @@ public class WxOrderController {
             item.setProductId(product.getId());
             item.setProductName(product.getName());
             item.setProductImage(product.getCoverImage());
-            item.setPrice(new BigDecimal(price));
+            item.setPrice(price);
             item.setQuantity(qty);
-            item.setSubtotal(new BigDecimal(price * qty));
+            item.setSubtotal(price.multiply(new BigDecimal(qty)));
             mallOrderService.insertOrderItem(item);
         }
 
         Map<String, Object> result = new HashMap<>();
         result.put("orderNo", orderNo);
-        result.put("orderAmount", totalAmount);
-        result.put("couponAmount", couponAmount);
-        result.put("payAmount", payAmount);
+        result.put("orderAmount", totalAmount.longValue());
+        result.put("couponAmount", couponAmount.longValue());
+        result.put("payAmount", payAmount.longValue());
         return AjaxResult.success(result);
     }
 

@@ -6,6 +6,7 @@ import com.ruoyi.mall.common.util.WxMiniUserContext;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -15,6 +16,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.reflect.Method;
 
 @Component
 public class WxMiniJwtFilter extends OncePerRequestFilter {
@@ -23,6 +25,9 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
 
     @Resource
     private IWxMiniJwtService jwtService;
+
+    @Resource
+    private ApplicationContext applicationContext;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -38,13 +43,22 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // 商家端：通过AppID识别商家，token仅用于权限控制
+            // 商家端：必须校验JWT，X-Merchant-AppId仅作租户识别
             if (path.startsWith("/wxmini/merchant-mini")) {
                 handleMerchantMiniRequest(request, response, filterChain);
                 return;
             }
 
             // C端和其他wxmini接口：需要有效token
+            // 先从X-Wx-AppId解析商家ID设置上下文（供未登录接口使用）
+            String cAppId = request.getHeader("X-Wx-AppId");
+            if (StringUtils.isNotBlank(cAppId)) {
+                Long cMerchantId = resolveMerchantIdByCAppId(cAppId);
+                if (cMerchantId != null) {
+                    WxMiniUserContext.setAppIdMerchantId(cMerchantId);
+                }
+            }
+
             String token = request.getHeader("Wx-Authorization");
             if (token == null || !token.startsWith("Bearer ")) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -84,7 +98,7 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 商家端请求处理：AppID确定商家，token确定权限
+     * 商家端请求处理：必须校验JWT，X-Merchant-AppId仅用于校验是否匹配当前商家
      */
     private void handleMerchantMiniRequest(HttpServletRequest request, HttpServletResponse response,
                                            FilterChain filterChain) throws ServletException, IOException {
@@ -94,34 +108,12 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        // 读取AppID（由商家端小程序固定传入）
-        String appId = request.getHeader("X-Merchant-AppId");
-        if (StringUtils.isNotBlank(appId)) {
-            // AppID有效，允许通过（商家ID由Controller从AppID解析并设置）
-            // 如果同时携带了有效token，也设置权限上下文
-            String token = request.getHeader("Wx-Authorization");
-            if (token != null && token.startsWith("Bearer ")) {
-                try {
-                    String jwt = token.substring(7);
-                    if (jwtService.verifyToken(jwt)) {
-                        WxMiniAuthContext authContext = jwtService.parseAuthContext(jwt);
-                        WxMiniUserContext.setCurrentUserContext(authContext);
-                    }
-                } catch (Exception e) {
-                    // token无效不影响AppID的使用，只是没有权限信息
-                    log.debug("商家端token验证失败，仅使用AppID: {}", e.getMessage());
-                }
-            }
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 没有AppID，需要token
+        // 所有其他商家端接口必须要求有效JWT
         String token = request.getHeader("Wx-Authorization");
         if (token == null || !token.startsWith("Bearer ")) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"code\":401,\"msg\":\"缺少商家标识\"}");
+            response.getWriter().write("{\"code\":401,\"msg\":\"未登录\"}");
             return;
         }
 
@@ -134,8 +126,27 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
                 return;
             }
             WxMiniAuthContext authContext = jwtService.parseAuthContext(token);
+            if (StringUtils.isEmpty(authContext.getUserId())) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"code\":401,\"msg\":\"登录已过期\"}");
+                return;
+            }
+
+            // 如果携带了 X-Merchant-AppId，查DB校验是否与token中的merchantId对应的真实AppID匹配
+            String appId = request.getHeader("X-Merchant-AppId");
+            if (StringUtils.isNotBlank(appId) && authContext.getMerchantId() != null) {
+                if (!validateMerchantAppId(authContext.getMerchantId(), appId)) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"code\":403,\"msg\":\"商家身份校验失败\"}");
+                    return;
+                }
+            }
+
             WxMiniUserContext.setCurrentUserContext(authContext);
         } catch (Exception e) {
+            log.error("商家端JWT验证失败: {}", e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write("{\"code\":401,\"msg\":\"登录已过期\"}");
@@ -145,13 +156,56 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * 通过ApplicationContext动态获取IMerchantService，校验AppID与merchantId是否匹配
+     * 使用反射避免ruoyi-mall-common对ruoyi-mall-merchant的循环依赖
+     */
+    private boolean validateMerchantAppId(Long merchantId, String appId) {
+        try {
+            Object merchantService = applicationContext.getBean("merchantServiceImpl");
+            Method selectById = merchantService.getClass().getMethod("selectMerchantById", Long.class);
+            Object merchant = selectById.invoke(merchantService, merchantId);
+            if (merchant == null) {
+                return false;
+            }
+            Method getMMiniAppId = merchant.getClass().getMethod("getMMiniAppId");
+            String dbAppId = (String) getMMiniAppId.invoke(merchant);
+            return appId.equals(dbAppId);
+        } catch (Exception e) {
+            log.error("商家AppID校验异常: merchantId={}, appId={}", merchantId, appId, e);
+            return false;
+        }
+    }
+
+    /**
+     * 通过C端小程序AppID解析商家ID
+     */
+    private Long resolveMerchantIdByCAppId(String appId) {
+        try {
+            Object merchantService = applicationContext.getBean("merchantServiceImpl");
+            Method selectByCAppId = merchantService.getClass().getMethod("selectMerchantByCAppId", String.class);
+            Object merchant = selectByCAppId.invoke(merchantService, appId);
+            if (merchant == null) {
+                return null;
+            }
+            Method getId = merchant.getClass().getMethod("getId");
+            return (Long) getId.invoke(merchant);
+        } catch (Exception e) {
+            log.error("C端AppID解析商家ID异常: appId={}", appId, e);
+            return null;
+        }
+    }
+
+    /**
+     * 白名单：仅放行登录、门户、公开数据、支付回调等无需登录的接口
+     * 注意：/wxmini/login/test 不在白名单中，需要配置开启 + token 才能访问
+     */
     private boolean checkIsExcludeUri(String path) {
-        return path.startsWith("/wxmini/login") || path.startsWith("/wxmini/portal")
+        return path.equals("/wxmini/login")
+                || path.startsWith("/wxmini/portal")
+                || path.startsWith("/wxmini/public")
                 || path.startsWith("/wxmini/pay/notify")
                 || path.startsWith("/wxmini/template/config")
-                || path.startsWith("/wxmini/user/phone/bind")
-                || path.startsWith("/wxmini/merchant/list") || path.startsWith("/wxmini/merchant/detail")
-                || path.startsWith("/wxmini/merchant/home")
-                || path.startsWith("/wxmini/groupon/list") || path.startsWith("/wxmini/groupon/detail");
+                || path.startsWith("/wxmini/merchant-mini/auth/login");
     }
 }

@@ -3,53 +3,67 @@ const api = require('../../api/index')
 
 const app = getApp()
 
+const tabs = [
+  { label: '全部', value: 'ALL' },
+  { label: '待核销', value: 'PENDING_VERIFY' },
+  { label: '已完成', value: 'COMPLETED' },
+  { label: '退款中', value: 'REFUNDING' },
+  { label: '已退款', value: 'REFUNDED' },
+  { label: '已取消', value: 'CANCELLED' }
+]
+
+const normalizeTab = (tab) => (tabs.some((item) => item.value === tab) ? tab : 'ALL')
+
 Page({
   data: {
-    tabs: [
-      { label: '全部', value: 'ALL' },
-      { label: '待接单', value: 'PENDING_ACCEPT' },
-      { label: '待核销', value: 'PENDING_VERIFY' },
-      { label: '已完成', value: 'COMPLETED' },
-      { label: '退款中', value: 'REFUNDING' }
-    ],
+    tabs,
     currentTab: 'ALL',
-    orderList: []
+    orderList: [],
+    cancelModalVisible: false,
+    cancelReason: '',
+    cancelOrderNo: ''
   },
 
   onLoad(options) {
-    const currentTab = options.tab || util.consumePendingOrderFilter()
-    if (currentTab) {
-      this.setData({ currentTab })
-    }
+    const currentTab = normalizeTab(options.tab || util.consumePendingOrderFilter())
+    this.setData({ currentTab })
   },
 
   onShow() {
     if (!app.needLogin()) return
     const currentTab = util.consumePendingOrderFilter()
     if (currentTab) {
-      this.setData({ currentTab })
+      this.setData({ currentTab: normalizeTab(currentTab) })
     }
     this.loadData()
   },
 
   loadData() {
+    const requestStatus = this.data.currentTab === 'ALL' ? '' : this.data.currentTab
     api
-      .getMerchantOrderList({
-        status: this.data.currentTab === 'ALL' ? '' : this.data.currentTab
-      })
+      .getMerchantOrderList({ status: requestStatus })
       .then((response) => {
-        this.setData({
-          orderList: (response || []).map((item) => ({
-            ...item,
-            statusMeta: util.getOrderStatusMeta(item.status),
-            payAmountText: util.formatPrice(item.payAmount),
-            payTimeText: util.formatDate(item.payTime || item.createTime)
-          }))
-        })
+        this.renderOrderList(response || [])
       })
       .catch(() => {
-        util.showToast('加载失败，请重试')
+        this.renderOrderList(util.getOrderList())
       })
+  },
+
+  renderOrderList(orderList = []) {
+    const displayList = util
+      .normalizeGrouponOrders(orderList)
+      .sort((a, b) => (b.payTime || 0) - (a.payTime || 0))
+      .map((item) => ({
+        ...item,
+        statusMeta: util.getOrderStatusMeta(item.status),
+        payAmountText: util.formatPrice(item.payAmount),
+        payTimeText: util.formatDate(item.payTime || item.createTime)
+      }))
+
+    this.setData({
+      orderList: this.filterOrders(displayList, this.data.currentTab)
+    })
   },
 
   filterOrders(orderList = [], tab = 'ALL') {
@@ -58,7 +72,7 @@ Page({
   },
 
   switchTab(e) {
-    const tab = e.currentTarget.dataset.tab
+    const tab = normalizeTab(e.currentTarget.dataset.tab)
     this.setData({ currentTab: tab }, () => {
       this.loadData()
     })
@@ -73,51 +87,51 @@ Page({
     util.navigateTo(`/pages/verify/verify?orderNo=${e.currentTarget.dataset.orderno}`)
   },
 
-  handleAcceptOrder(e) {
+  goRefundReview(e) {
+    util.navigateTo(`/pages/order-detail/order-detail?orderNo=${e.currentTarget.dataset.orderno}`)
+  },
+
+  handleCancelOrder(e) {
     if (!app.needPermission(['order.manage'])) return
     const orderNo = e.currentTarget.dataset.orderno
-    util.showModal('接单确认', '确定要接受该订单吗？').then((confirm) => {
-      if (!confirm) return
-      api.acceptMerchantOrder(orderNo)
-        .then(() => {
-          util.showToast('接单成功', 'success')
-          this.loadData()
-        })
-        .catch(() => {
-          util.showToast('操作失败，请重试')
-        })
+    this.setData({
+      cancelModalVisible: true,
+      cancelReason: '',
+      cancelOrderNo: orderNo
     })
   },
 
-  handleRejectOrder(e) {
-    if (!app.needPermission(['order.manage'])) return
-    const orderNo = e.currentTarget.dataset.orderno
-    util.showModalWithInput('拒单原因', '请输入拒绝接单的原因').then((reason) => {
-      if (reason === null) return
-      api.rejectMerchantOrder(orderNo, { reason })
-        .then(() => {
-          util.showToast('已拒单', 'success')
-          this.loadData()
-        })
-        .catch(() => {
-          util.showToast('操作失败，请重试')
-        })
+  handleCancelReasonInput(e) {
+    this.setData({
+      cancelReason: e.detail.value
     })
   },
 
-  handleCompleteOrder(e) {
-    if (!app.needPermission(['order.manage'])) return
-    const orderNo = e.currentTarget.dataset.orderno
-    util.showModal('完成确认', '确定该订单已完成吗？').then((confirm) => {
-      if (!confirm) return
-      api.completeMerchantOrder(orderNo)
-        .then(() => {
-          util.showToast('订单已完成', 'success')
-          this.loadData()
-        })
-        .catch(() => {
-          util.showToast('操作失败，请重试')
-        })
+  closeCancelModal() {
+    this.setData({
+      cancelModalVisible: false,
+      cancelReason: '',
+      cancelOrderNo: ''
     })
+  },
+
+  confirmCancelOrder() {
+    const orderNo = this.data.cancelOrderNo
+    const reason = this.data.cancelReason.trim()
+    if (!orderNo) return
+    api.cancelMerchantOrder(orderNo, { reason })
+      .then(() => {
+        util.showToast('订单已取消', 'success')
+        this.closeCancelModal()
+        this.loadData()
+      })
+      .catch(() => {
+        const result = util.cancelOrder(orderNo, reason)
+        util.showToast(result.message, result.success ? 'success' : 'none')
+        if (result.success) {
+          this.closeCancelModal()
+          this.loadData()
+        }
+      })
   }
 })

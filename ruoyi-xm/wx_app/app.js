@@ -14,12 +14,12 @@ App({
 
   initEnv() {
     this.baseUrl = 'http://localhost:8080'
-    this.appId = wx.getAccountInfoSync().miniProgram.appId || 'wx6c708117ea8eaab4'
   },
 
   checkLoginStatus() {
     const token = wx.getStorageSync('token')
     const userInfo = util.normalizeImageFields(wx.getStorageSync('userInfo'))
+    util.getStoredOrderList()
     if (token && userInfo) {
       this.globalData.token = token
       this.globalData.userInfo = userInfo

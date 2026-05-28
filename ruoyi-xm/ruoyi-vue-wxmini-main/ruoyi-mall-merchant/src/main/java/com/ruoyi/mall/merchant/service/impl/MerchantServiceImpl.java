@@ -32,7 +32,7 @@ public class MerchantServiceImpl implements IMerchantService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public int insertMerchant(Merchant merchant) {
         int rows = merchantMapper.insertMerchant(merchant);
         if (rows > 0 && merchant.getId() != null) {

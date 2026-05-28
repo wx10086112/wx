@@ -9,10 +9,10 @@
           <el-input v-model="queryParams.orderNo" placeholder="请输入订单号" clearable @keyup.enter.native="handleQuery" />
         </el-form-item>
         <el-form-item label="商家名称">
-          <el-input v-model="queryParams.merchantId" placeholder="请输入商家ID" clearable @keyup.enter.native="handleQuery" />
+          <el-input v-model="queryParams.merchantName" placeholder="请输入商家名称" clearable @keyup.enter.native="handleQuery" />
         </el-form-item>
         <el-form-item label="用户名">
-          <el-input v-model="queryParams.userId" placeholder="请输入用户ID" clearable @keyup.enter.native="handleQuery" />
+          <el-input v-model="queryParams.userName" placeholder="请输入用户名" clearable @keyup.enter.native="handleQuery" />
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="queryParams.status" placeholder="全部" clearable>
@@ -43,8 +43,8 @@
       <!-- 表格 -->
       <el-table v-loading="loading" :data="tableList" border>
         <el-table-column label="订单号" prop="orderNo" width="180" />
-        <el-table-column label="商家" prop="merchantId" width="140" />
-        <el-table-column label="用户" prop="userId" width="100" />
+        <el-table-column label="商家" prop="merchantName" width="140" />
+        <el-table-column label="用户" prop="userName" width="100" />
         <el-table-column label="订单金额" width="110">
           <template slot-scope="scope">
             <span>¥{{ scope.row.totalAmount.toFixed(2) }}</span>
@@ -102,8 +102,8 @@ export default {
       total: 0,
       queryParams: {
         orderNo: '',
-        merchantId: '',
-        userId: '',
+        merchantName: '',
+        userName: '',
         status: '',
         pageNum: 1,
         pageSize: 10
@@ -140,8 +140,8 @@ export default {
     resetQuery() {
       this.queryParams = {
         orderNo: '',
-        merchantId: '',
-        userId: '',
+        merchantName: '',
+        userName: '',
         status: '',
         pageNum: 1,
         pageSize: 10

@@ -11,6 +11,7 @@ public class MallOrder extends BaseEntity {
     private Long id;
     private String orderNo;
     private Long merchantId;
+    private Long distributorId;
     private Long userId;
     private Long storeId;
     private BigDecimal totalAmount;
@@ -33,6 +34,8 @@ public class MallOrder extends BaseEntity {
     private Date completeTime;
     private Date cancelTime;
     private Date refundTime;
+    /** 删除标志（0代表存在 2代表删除） */
+    private String delFlag = "0";
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -43,8 +46,21 @@ public class MallOrder extends BaseEntity {
     public Long getMerchantId() { return merchantId; }
     public void setMerchantId(Long merchantId) { this.merchantId = merchantId; }
 
+    public Long getDistributorId() { return distributorId; }
+    public void setDistributorId(Long distributorId) { this.distributorId = distributorId; }
+
+    /** 商家名称（LEFT JOIN） */
+    private String merchantName;
+    public String getMerchantName() { return merchantName; }
+    public void setMerchantName(String merchantName) { this.merchantName = merchantName; }
+
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
+
+    /** 用户昵称（LEFT JOIN） */
+    private String userName;
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
 
     public Long getStoreId() { return storeId; }
     public void setStoreId(Long storeId) { this.storeId = storeId; }
@@ -102,4 +118,7 @@ public class MallOrder extends BaseEntity {
 
     public Date getRefundTime() { return refundTime; }
     public void setRefundTime(Date refundTime) { this.refundTime = refundTime; }
+
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 }

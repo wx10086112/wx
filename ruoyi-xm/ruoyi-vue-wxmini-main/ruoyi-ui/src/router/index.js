@@ -92,6 +92,7 @@ export const constantRoutes = [
   {
     path: '/merchant',
     component: Layout,
+    permissions: ['mall:merchant:list'],
     meta: { title: '商家管理', icon: 'peoples' },
     children: [
       { path: 'list', component: () => import('@/views/merchant/list'), name: 'MerchantList', meta: { title: '商家列表' } },
@@ -106,6 +107,7 @@ export const constantRoutes = [
   {
     path: '/distributor',
     component: Layout,
+    permissions: ['mall:distributor:list'],
     meta: { title: '分销商管理', icon: 'peoples' },
     children: [
       { path: 'list', component: () => import('@/views/distributor/list'), name: 'DistributorList', meta: { title: '分销商列表' } }
@@ -115,6 +117,7 @@ export const constantRoutes = [
   {
     path: '/finance',
     component: Layout,
+    permissions: ['mall:finance:list', 'mall:order:list'],
     meta: { title: '平台财务', icon: 'money' },
     alwaysShow: true,
     children: [
@@ -133,6 +136,7 @@ export const constantRoutes = [
   {
     path: '/data-analysis',
     component: Layout,
+    permissions: ['mall:dashboard:list'],
     meta: { title: '数据分析', icon: 'chart' },
     children: [
       { path: 'rank', component: () => import('@/views/data-analysis/rank'), name: 'SalesRank', meta: { title: '商家销售排行' } },
@@ -144,6 +148,7 @@ export const constantRoutes = [
   {
     path: '/system',
     component: Layout,
+    permissions: ['system:menu:list'],
     meta: { title: '系统管理', icon: 'system' },
     children: [
       { path: 'role', component: () => import('@/views/system/role/index'), name: 'RolePermission', meta: { title: '角色权限' } },

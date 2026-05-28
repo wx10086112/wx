@@ -56,8 +56,7 @@
   font-weight: 600;
 }
 
-.phone,
-.login-desc {
+.phone {
   margin-top: 12rpx;
   color: rgba(255, 255, 255, 0.82);
   font-size: 24rpx;
@@ -181,14 +180,6 @@
   color: #20304a;
   font-size: 30rpx;
   font-weight: 600;
-}
-
-.benefit-desc {
-  display: block;
-  margin-top: 10rpx;
-  color: #5f728e;
-  font-size: 24rpx;
-  line-height: 1.6;
 }
 
 .benefit-tags {

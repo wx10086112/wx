@@ -1,5 +1,6 @@
 package com.ruoyi.mall.finance.controller;
 
+import com.ruoyi.common.annotation.DataScopeBiz;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.mall.finance.domain.PlatformIncome;
@@ -24,6 +25,7 @@ public class MallFinanceController extends BaseController {
     /**
      * 查询平台流水列表
      */
+    @DataScopeBiz(merchantAlias = "t")
     @PreAuthorize("@ss.hasPermi('mall:finance:list')")
     @GetMapping("/platform-flow/list")
     public TableDataInfo platformFlowList(TransactionRecord query) {
@@ -35,6 +37,7 @@ public class MallFinanceController extends BaseController {
     /**
      * 查询利润分成列表
      */
+    @DataScopeBiz(merchantAlias = "p")
     @PreAuthorize("@ss.hasPermi('mall:finance:list')")
     @GetMapping("/profit-share/list")
     public TableDataInfo profitShareList(PlatformIncome query) {
@@ -46,6 +49,7 @@ public class MallFinanceController extends BaseController {
     /**
      * 查询提现记录列表
      */
+    @DataScopeBiz(merchantAlias = "w")
     @PreAuthorize("@ss.hasPermi('mall:finance:list')")
     @GetMapping("/withdraw/list")
     public TableDataInfo withdrawList(WithdrawRecord query) {
@@ -57,6 +61,7 @@ public class MallFinanceController extends BaseController {
     /**
      * 查询商户流水列表
      */
+    @DataScopeBiz(merchantAlias = "t")
     @PreAuthorize("@ss.hasPermi('mall:finance:list')")
     @GetMapping("/merchant-flow/list")
     public TableDataInfo merchantFlowList(TransactionRecord query) {

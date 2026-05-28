@@ -1,9 +1,8 @@
+const mock = require('../../data/mock')
 const util = require('../../utils/util')
-const orderApi = require('../../api/order')
 
 Page({
   data: {
-    orderNo: '',
     order: {},
     rating: 5,
     ratingText: '非常满意',
@@ -16,25 +15,13 @@ Page({
 
   onLoad(options) {
     const orderNo = options.orderNo || ''
-    this.setData({ orderNo })
-    if (orderNo) {
-      this.loadOrder(orderNo)
-    }
-  },
-
-  loadOrder(orderNo) {
-    orderApi.getOrderDetail(orderNo)
-      .then((order) => {
-        this.setData({
-          order: {
-            ...order,
-            payAmountText: ((order.payAmount || order.price || 0) / 100).toFixed(2)
-          }
-        })
-      })
-      .catch(() => {
-        util.showToast('加载订单信息失败')
-      })
+    const order = mock.orderList.find((item) => item.orderNo === orderNo) || mock.orderList[0] || {}
+    this.setData({
+      order: {
+        ...order,
+        payAmountText: ((order.payAmount || order.price || 0) / 100).toFixed(2)
+      }
+    })
   },
 
   onStarTap(e) {
@@ -75,7 +62,7 @@ Page({
   },
 
   onSubmit() {
-    const { content, submitting } = this.data
+    const { rating, content, order, submitting } = this.data
     if (submitting) return
 
     if (!content.trim()) {

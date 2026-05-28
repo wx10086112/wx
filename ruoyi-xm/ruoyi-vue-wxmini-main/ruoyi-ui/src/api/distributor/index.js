@@ -61,26 +61,26 @@ export function resetDistributorPassword(data) {
   })
 }
 
-// 切换为分销商视角
+// 切换为分销商视角（已迁移到 /system/view）
 export function switchDistributor(id) {
   return request({
-    url: '/mall/distributor/switch/' + id,
+    url: '/system/view/switch-distributor/' + id,
     method: 'post'
   })
 }
 
-// 返回超级管理员视角
+// 返回超级管理员视角（已迁移到 /system/view）
 export function switchBackDistributor() {
   return request({
-    url: '/mall/distributor/switch-back',
+    url: '/system/view/back-platform',
     method: 'post'
   })
 }
 
-// 获取当前视角信息
+// 获取当前视角信息（已迁移到 /system/view）
 export function getViewInfo() {
   return request({
-    url: '/mall/distributor/view-info',
+    url: '/system/view/current',
     method: 'get'
   })
 }

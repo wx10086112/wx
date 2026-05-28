@@ -13,8 +13,10 @@ Page({
 
   onLoad(options) {
     if (options.orderNo) {
+      const hintOrder = util.getOrderList().find((item) => item.orderNo === options.orderNo) || {}
       this.setData({
-        'orderHint.orderNo': options.orderNo
+        orderHint: hintOrder,
+        manualCode: hintOrder.writeOffCode || ''
       })
     }
   },
@@ -38,7 +40,18 @@ Page({
         })
       })
       .catch(() => {
-        this.setData({ recentRecordList: [] })
+        const recentRecordList = util
+          .getVerifyRecordList()
+          .sort((a, b) => (b.verifyTime || 0) - (a.verifyTime || 0))
+          .slice(0, 5)
+          .map((item) => ({
+            ...item,
+            verifyTimeText: util.formatDate(item.verifyTime),
+            payAmountText: util.formatPrice(item.payAmount),
+            amountLabel: item.status === 'FAILED' ? '失败' : `¥${util.formatPrice(item.payAmount)}`
+          }))
+
+        this.setData({ recentRecordList })
       })
   },
 
@@ -85,7 +98,25 @@ Page({
         this.loadRecentRecords()
       })
       .catch(() => {
-        util.showToast('核销失败，请重试')
+        const result = util.verifyOrderByCode(code, app.globalData.staffUser || {})
+        this.setData({
+          verifyResult: result.order
+            ? {
+                ...result.order,
+                payAmountText: util.formatPrice(result.order.payAmount),
+                verifyTimeText: util.formatDate(result.order.verifyTime)
+              }
+            : null
+        })
+        util.showToast(result.message, result.success ? 'success' : 'none')
+        if (result.success) {
+          this.loadRecentRecords()
+          this.setData({
+            manualCode: ''
+          })
+        } else {
+          this.loadRecentRecords()
+        }
       })
   },
 

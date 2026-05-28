@@ -1,6 +1,7 @@
 package com.ruoyi.wxmini.controller;
 
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.mall.common.util.WxMiniUserContext;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.product.domain.Product;
@@ -33,8 +34,13 @@ public class WxGrouponController {
             @RequestParam(required = false) Long merchantId,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword) {
+        // SaaS数据隔离：强制限定为当前商家
+        Long currentMerchantId = WxMiniUserContext.getCurrentMerchantId();
+        if (currentMerchantId == null) {
+            currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
+        }
         Product query = new Product();
-        query.setMerchantId(merchantId);
+        query.setMerchantId(currentMerchantId != null ? currentMerchantId : merchantId);
         query.setStatus(1);
         List<Product> products = productService.selectProductList(query);
 
@@ -61,6 +67,14 @@ public class WxGrouponController {
     public AjaxResult detail(@PathVariable Long id) {
         Product product = productService.selectProductById(id);
         if (product == null) {
+            return AjaxResult.error("商品不存在");
+        }
+        // 校验商品属于当前商家
+        Long currentMerchantId = WxMiniUserContext.getCurrentMerchantId();
+        if (currentMerchantId == null) {
+            currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
+        }
+        if (currentMerchantId != null && !currentMerchantId.equals(product.getMerchantId())) {
             return AjaxResult.error("商品不存在");
         }
         Map<Long, String> merchantNameCache = new HashMap<>();

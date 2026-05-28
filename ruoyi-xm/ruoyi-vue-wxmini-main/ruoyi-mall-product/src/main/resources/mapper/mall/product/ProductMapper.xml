@@ -26,6 +26,7 @@
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
         <result property="remark" column="remark"/>
+        <result property="delFlag" column="del_flag"/>
     </resultMap>
 
     <sql id="selectProductVo">
@@ -38,22 +39,26 @@
     <select id="selectProductList" parameterType="com.ruoyi.mall.product.domain.Product" resultMap="ProductResult">
         <include refid="selectProductVo"/>
         <where>
+            and del_flag = '0'
             <if test="name != null and name != ''">and name like concat('%', #{name}, '%')</if>
             <if test="merchantId != null">and merchant_id = #{merchantId}</if>
             <if test="categoryId != null">and category_id = #{categoryId}</if>
             <if test="status != null">and status = #{status}</if>
+            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">
+                ${params.dataScopeBiz}
+            </if>
         </where>
         order by sort asc, create_time desc
     </select>
 
     <select id="selectProductById" parameterType="Long" resultMap="ProductResult">
         <include refid="selectProductVo"/>
-        where id = #{id}
+        where id = #{id} AND del_flag = '0'
     </select>
 
     <select id="selectProductByMerchantId" parameterType="Long" resultMap="ProductResult">
         <include refid="selectProductVo"/>
-        where merchant_id = #{merchantId}
+        where merchant_id = #{merchantId} AND del_flag = '0'
         order by sort asc, create_time desc
     </select>
 
@@ -123,19 +128,34 @@
         where id = #{id}
     </update>
 
-    <delete id="deleteProductById" parameterType="Long">
-        delete from product where id = #{id}
-    </delete>
+    <update id="deleteProductById" parameterType="Long">
+        update product set del_flag = '2' where id = #{id}
+    </update>
 
-    <delete id="deleteProductByIds" parameterType="String">
-        delete from product where id in
+    <update id="deleteProductByIds" parameterType="String">
+        update product set del_flag = '2' where id in
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
-    </delete>
+    </update>
 
     <select id="countProductByMerchantId" parameterType="Long" resultType="int">
-        select count(*) from product where merchant_id = #{merchantId}
+        select count(*) from product where merchant_id = #{merchantId} AND del_flag = '0'
     </select>
+
+    <update id="batchUpdateProductStatus">
+        UPDATE product SET status = #{status}
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND merchant_id = #{merchantId}
+        AND del_flag = '0'
+    </update>
+
+    <update id="deductStock">
+        UPDATE product SET stock = stock - #{quantity}
+        WHERE id = #{id} AND stock >= #{quantity} AND del_flag = '0' AND status = 1
+    </update>
 
 </mapper>

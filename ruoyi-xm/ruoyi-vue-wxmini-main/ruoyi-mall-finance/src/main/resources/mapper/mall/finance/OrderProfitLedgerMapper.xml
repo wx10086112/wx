@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.finance.mapper.OrderProfitLedgerMapper">
+
+    <resultMap type="com.ruoyi.mall.finance.domain.OrderProfitLedger" id="LedgerResult">
+        <result property="id" column="id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="merchantId" column="merchant_id"/>
+        <result property="merchantName" column="merchant_name"/>
+        <result property="distributorId" column="distributor_id"/>
+        <result property="distributorName" column="distributor_name"/>
+        <result property="payAmount" column="pay_amount"/>
+        <result property="merchantAmount" column="merchant_amount"/>
+        <result property="platformAmount" column="platform_amount"/>
+        <result property="distributorAmount" column="distributor_amount"/>
+        <result property="merchantRate" column="merchant_rate"/>
+        <result property="platformRate" column="platform_rate"/>
+        <result property="distributorRate" column="distributor_rate"/>
+        <result property="status" column="status"/>
+        <result property="finishTime" column="finish_time"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectColumns">
+        opl.id, opl.order_no, opl.merchant_id, m.name as merchant_name,
+        opl.distributor_id, d.name as distributor_name, opl.pay_amount, opl.merchant_amount,
+        opl.platform_amount, opl.distributor_amount, opl.merchant_rate, opl.platform_rate,
+        opl.distributor_rate, opl.status, opl.finish_time, opl.del_flag, opl.create_time, opl.update_time
+    </sql>
+
+    <select id="selectById" parameterType="Long" resultMap="LedgerResult">
+        select <include refid="selectColumns"/> from order_profit_ledger opl
+        LEFT JOIN merchant m ON opl.merchant_id = m.id
+        LEFT JOIN distributor d ON opl.distributor_id = d.id
+        where opl.id = #{id} and opl.del_flag = '0'
+    </select>
+
+    <select id="selectByOrderNo" parameterType="String" resultMap="LedgerResult">
+        select <include refid="selectColumns"/> from order_profit_ledger opl
+        LEFT JOIN merchant m ON opl.merchant_id = m.id
+        LEFT JOIN distributor d ON opl.distributor_id = d.id
+        where opl.order_no = #{orderNo} and opl.del_flag = '0' limit 1
+    </select>
+
+    <select id="selectList" parameterType="com.ruoyi.mall.finance.domain.OrderProfitLedger" resultMap="LedgerResult">
+        select <include refid="selectColumns"/> from order_profit_ledger opl
+        LEFT JOIN merchant m ON opl.merchant_id = m.id
+        LEFT JOIN distributor d ON opl.distributor_id = d.id
+        <where>
+            opl.del_flag = '0'
+            <if test="merchantId != null">and opl.merchant_id = #{merchantId}</if>
+            <if test="distributorId != null">and opl.distributor_id = #{distributorId}</if>
+            <if test="orderNo != null and orderNo != ''">and opl.order_no = #{orderNo}</if>
+            <if test="status != null and status != ''">and opl.status = #{status}</if>
+        </where>
+        order by opl.create_time desc
+    </select>
+
+    <insert id="insert" parameterType="com.ruoyi.mall.finance.domain.OrderProfitLedger" useGeneratedKeys="true" keyProperty="id">
+        insert into order_profit_ledger
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            order_no, merchant_id, distributor_id, pay_amount, merchant_amount,
+            platform_amount, distributor_amount, merchant_rate, platform_rate,
+            distributor_rate, status, finish_time, del_flag,
+        </trim>
+        values
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #{orderNo}, #{merchantId}, #{distributorId}, #{payAmount}, #{merchantAmount},
+            #{platformAmount}, #{distributorAmount}, #{merchantRate}, #{platformRate},
+            #{distributorRate}, #{status}, #{finishTime}, '0',
+        </trim>
+    </insert>
+
+    <update id="updateById" parameterType="com.ruoyi.mall.finance.domain.OrderProfitLedger">
+        update order_profit_ledger
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <select id="sumMerchantAmountByMerchantId" resultType="java.math.BigDecimal">
+        select COALESCE(SUM(merchant_amount), 0) from order_profit_ledger where merchant_id = #{merchantId} and del_flag = '0'
+    </select>
+
+    <select id="sumPlatformAmount" resultType="java.math.BigDecimal">
+        select COALESCE(SUM(platform_amount), 0) from order_profit_ledger where del_flag = '0'
+    </select>
+
+    <select id="sumDistributorAmountByDistributorId" resultType="java.math.BigDecimal">
+        select COALESCE(SUM(distributor_amount), 0) from order_profit_ledger where distributor_id = #{distributorId} and del_flag = '0'
+    </select>
+
+    <select id="countByMerchantId" resultType="java.lang.Integer">
+        select COUNT(*) from order_profit_ledger where merchant_id = #{merchantId} and del_flag = '0'
+    </select>
+
+    <select id="selectByDistributorId" resultMap="LedgerResult">
+        select <include refid="selectColumns"/> from order_profit_ledger opl
+        LEFT JOIN merchant m ON opl.merchant_id = m.id
+        LEFT JOIN distributor d ON opl.distributor_id = d.id
+        where opl.distributor_id = #{distributorId} and opl.del_flag = '0'
+        order by opl.create_time desc
+    </select>
+
+</mapper>

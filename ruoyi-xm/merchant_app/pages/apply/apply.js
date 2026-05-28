@@ -1,6 +1,7 @@
 const util = require('../../utils/util')
-
 const app = getApp()
+
+const APPLY_STATUS_KEY = 'merchant_apply_status'
 
 Page({
   data: {
@@ -15,10 +16,23 @@ Page({
       idCardBackImage: '',
       storeFrontImage: ''
     },
-    submitting: false
+    submitting: false,
+    reviewResult: null
   },
 
-  onLoad() {},
+  onLoad() {
+    this.checkApplyStatus()
+  },
+
+  checkApplyStatus() {
+    const status = wx.getStorageSync(APPLY_STATUS_KEY)
+    if (status) {
+      this.setData({
+        applyStatus: status.status || 'pending',
+        reviewResult: status.reviewResult || null
+      })
+    }
+  },
 
   onInput(e) {
     const field = e.currentTarget.dataset.field
@@ -69,12 +83,30 @@ Page({
       return
     }
 
-    util.showToast('入驻申请接口尚未实现，请联系管理员')
+    this.setData({ submitting: true })
+    util.showLoading('提交中...')
+
+    setTimeout(() => {
+      const applyData = {
+        ...form,
+        submitTime: Date.now(),
+        status: 'pending'
+      }
+      wx.setStorageSync(APPLY_STATUS_KEY, applyData)
+      this.setData({
+        applyStatus: 'pending',
+        submitting: false
+      })
+      util.hideLoading()
+      util.showToast('提交成功，等待审核', 'success')
+    }, 800)
   },
 
   onResubmit() {
+    wx.removeStorageSync(APPLY_STATUS_KEY)
     this.setData({
-      applyStatus: 'none'
+      applyStatus: 'none',
+      reviewResult: null
     })
   }
 })

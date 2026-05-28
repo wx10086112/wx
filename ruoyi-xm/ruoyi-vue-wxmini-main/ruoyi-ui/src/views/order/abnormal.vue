@@ -23,8 +23,8 @@
       <!-- 表格 -->
       <el-table v-loading="loading" :data="tableList" border>
         <el-table-column label="订单号" prop="orderNo" width="180" />
-        <el-table-column label="商家" prop="merchantId" width="140" />
-        <el-table-column label="用户" prop="userId" width="100" />
+        <el-table-column label="商家" prop="merchantName" width="140" />
+        <el-table-column label="用户" prop="userName" width="100" />
         <el-table-column label="订单金额" width="110">
           <template slot-scope="scope">
             <span>¥{{ scope.row.totalAmount.toFixed(2) }}</span>

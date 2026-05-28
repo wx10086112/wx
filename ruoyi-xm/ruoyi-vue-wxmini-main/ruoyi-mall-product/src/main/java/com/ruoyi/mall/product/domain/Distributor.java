@@ -15,9 +15,12 @@ public class Distributor extends BaseEntity {
     private String regionCode;
     private String regionName;
     private Integer status;
+    private String receiverOpenid;
+    private String receiverType;
     private String remark;
     private Date createTime;
     private Date updateTime;
+    private String delFlag = "0";
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -46,6 +49,12 @@ public class Distributor extends BaseEntity {
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
 
+    public String getReceiverOpenid() { return receiverOpenid; }
+    public void setReceiverOpenid(String receiverOpenid) { this.receiverOpenid = receiverOpenid; }
+
+    public String getReceiverType() { return receiverType; }
+    public void setReceiverType(String receiverType) { this.receiverType = receiverType; }
+
     public String getRemark() { return remark; }
     public void setRemark(String remark) { this.remark = remark; }
 
@@ -54,4 +63,6 @@ public class Distributor extends BaseEntity {
 
     public Date getUpdateTime() { return updateTime; }
     public void setUpdateTime(Date updateTime) { this.updateTime = updateTime; }
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 }

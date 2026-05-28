@@ -1,6 +1,9 @@
 package com.ruoyi.web.controller.system;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +26,7 @@ import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.framework.web.service.SysPermissionService;
 import com.ruoyi.framework.web.service.TokenService;
@@ -30,6 +34,10 @@ import com.ruoyi.system.domain.SysUserRole;
 import com.ruoyi.system.service.ISysDeptService;
 import com.ruoyi.system.service.ISysRoleService;
 import com.ruoyi.system.service.ISysUserService;
+import com.ruoyi.mall.product.domain.Distributor;
+import com.ruoyi.mall.product.mapper.DistributorMapper;
+import com.ruoyi.mall.merchant.domain.Merchant;
+import com.ruoyi.mall.merchant.mapper.MerchantMapper;
 
 /**
  * 角色信息
@@ -54,6 +62,12 @@ public class SysRoleController extends BaseController
 
     @Autowired
     private ISysDeptService deptService;
+
+    @Autowired
+    private DistributorMapper distributorMapper;
+
+    @Autowired
+    private MerchantMapper merchantMapper;
 
     @PreAuthorize("@ss.hasPermi('system:role:list')")
     @GetMapping("/list")
@@ -244,6 +258,31 @@ public class SysRoleController extends BaseController
     public AjaxResult selectAuthUserAll(Long roleId, Long[] userIds)
     {
         roleService.checkRoleDataScope(roleId);
+        // 校验用户账号类型是否匹配角色归属
+        SysRole role = roleService.selectRoleById(roleId);
+        if (role != null && role.getRoleScope() != null)
+        {
+            for (Long userId : userIds)
+            {
+                SysUser user = userService.selectUserById(userId);
+                if (user == null)
+                {
+                    return error("用户不存在");
+                }
+                if ("DISTRIBUTOR".equals(role.getRoleScope()) && !"DISTRIBUTOR".equals(user.getAccountType()))
+                {
+                    return error("分销商角色只能分配给分销商类型的账号");
+                }
+                if ("MERCHANT".equals(role.getRoleScope()) && !"MERCHANT".equals(user.getAccountType()))
+                {
+                    return error("商家角色只能分配给商家类型的账号");
+                }
+                if ("PLATFORM".equals(role.getRoleScope()) && !"PLATFORM".equals(user.getAccountType()))
+                {
+                    return error("平台角色只能分配给平台类型的账号");
+                }
+            }
+        }
         return toAjax(roleService.insertAuthUsers(roleId, userIds));
     }
 
@@ -258,5 +297,56 @@ public class SysRoleController extends BaseController
         ajax.put("checkedKeys", deptService.selectDeptListByRoleId(roleId));
         ajax.put("depts", deptService.selectDeptTreeList(new SysDept()));
         return ajax;
+    }
+
+    /**
+     * 获取分销商选项列表
+     */
+    @GetMapping("/distributorOptions")
+    public AjaxResult distributorOptions()
+    {
+        Distributor query = new Distributor();
+        // 分销商账号只能看到自己
+        String accountType = SecurityUtils.getAccountType();
+        if ("DISTRIBUTOR".equals(accountType))
+        {
+            query.setId(SecurityUtils.getDistributorId());
+        }
+        List<Distributor> list = distributorMapper.selectDistributorList(query);
+        List<Map<String, Object>> options = new ArrayList<>();
+        for (Distributor d : list)
+        {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", d.getId());
+            map.put("name", d.getName());
+            options.add(map);
+        }
+        return success(options);
+    }
+
+    /**
+     * 获取商家选项列表
+     */
+    @GetMapping("/merchantOptions")
+    public AjaxResult merchantOptions()
+    {
+        Merchant query = new Merchant();
+        // 分销商账号只能看到自己名下的商家
+        String accountType = SecurityUtils.getAccountType();
+        if ("DISTRIBUTOR".equals(accountType))
+        {
+            query.setDistributorId(SecurityUtils.getDistributorId());
+        }
+        List<Merchant> list = merchantMapper.selectMerchantList(query);
+        List<Map<String, Object>> options = new ArrayList<>();
+        for (Merchant m : list)
+        {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", m.getId());
+            map.put("name", m.getName());
+            map.put("distributorId", m.getDistributorId());
+            options.add(map);
+        }
+        return success(options);
     }
 }

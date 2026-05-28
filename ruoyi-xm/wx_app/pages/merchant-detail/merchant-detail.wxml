@@ -6,7 +6,6 @@
   <view wx:else class="detail-content">
     <view class="detail-header">
       <text class="page-title">门店详情</text>
-      <text class="page-subtitle">{{merchant.name}}</text>
     </view>
 
     <view class="detail-card">

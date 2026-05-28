@@ -19,6 +19,8 @@ public class PaymentRecord extends BaseEntity {
     private Integer payStatus;
     private Date payTime;
     private String notifyResult;
+    /** 删除标志（0存在 2删除） */
+    private String delFlag;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -42,4 +44,7 @@ public class PaymentRecord extends BaseEntity {
     public void setPayTime(Date payTime) { this.payTime = payTime; }
     public String getNotifyResult() { return notifyResult; }
     public void setNotifyResult(String notifyResult) { this.notifyResult = notifyResult; }
+
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 }

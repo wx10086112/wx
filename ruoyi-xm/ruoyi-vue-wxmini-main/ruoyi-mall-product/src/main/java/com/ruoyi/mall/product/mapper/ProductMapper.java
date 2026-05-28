@@ -24,6 +24,17 @@ public interface ProductMapper {
 
     int countProductByMerchantId(Long merchantId);
 
+    /**
+     * 批量更新商品状态（单条SQL，避免N+1）
+     */
+    int batchUpdateProductStatus(@Param("ids") List<Long> ids, @Param("status") Integer status, @Param("merchantId") Long merchantId);
+
+    /**
+     * 安全扣减库存：stock = stock - quantity WHERE id = #{id} AND stock >= #{quantity}
+     * 返回1表示成功，0表示库存不足
+     */
+    int deductStock(@Param("id") Long id, @Param("quantity") Integer quantity);
+
     @Select("SELECT p.*, m.name AS merchant_name FROM product p LEFT JOIN merchant m ON p.merchant_id = m.id WHERE p.status = 1 ORDER BY p.sales DESC LIMIT #{limit}")
     List<Map> selectHotProducts(@Param("limit") int limit);
 }

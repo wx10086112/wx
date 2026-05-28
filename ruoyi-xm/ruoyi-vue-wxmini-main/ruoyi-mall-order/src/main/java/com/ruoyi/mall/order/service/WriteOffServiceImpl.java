@@ -3,15 +3,20 @@ package com.ruoyi.mall.order.service;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.common.util.WriteOffCodeGenerator;
 import com.ruoyi.mall.order.domain.MallOrder;
+import com.ruoyi.mall.order.domain.OrderItem;
 import com.ruoyi.mall.order.domain.WriteOffRecord;
+import com.ruoyi.mall.order.event.OrderCompletedEvent;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
+import com.ruoyi.mall.order.mapper.OrderItemMapper;
 import com.ruoyi.mall.order.mapper.WriteOffRecordMapper;
 import com.ruoyi.mall.order.vo.WriteOffResultVO;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class WriteOffServiceImpl implements IWriteOffService {
@@ -22,6 +27,10 @@ public class WriteOffServiceImpl implements IWriteOffService {
     private WriteOffRecordMapper writeOffRecordMapper;
     @Resource
     private WriteOffCodeGenerator writeOffCodeGenerator;
+    @Resource
+    private OrderItemMapper orderItemMapper;
+    @Resource
+    private ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -84,7 +93,16 @@ public class WriteOffServiceImpl implements IWriteOffService {
         record.setStatus(1);
         writeOffRecordMapper.insertWriteOffRecord(record);
 
-        // 9. 返回结果
+        // 9. 发布订单完成事件，触发结算记录生成
+        String title = null;
+        List<OrderItem> items = orderItemMapper.selectOrderItemByOrderNo(order.getOrderNo());
+        if (items != null && !items.isEmpty() && items.get(0).getProductName() != null) {
+            title = items.get(0).getProductName();
+        }
+        eventPublisher.publishEvent(new OrderCompletedEvent(this,
+                order.getOrderNo(), merchantId, null, order.getStoreId(), order.getPayAmount(), title));
+
+        // 10. 返回结果
         WriteOffResultVO vo = new WriteOffResultVO();
         vo.setOrderNo(order.getOrderNo());
         vo.setPayAmount(order.getPayAmount());

@@ -1,0 +1,6 @@
+## 开发环境专用配置
+## 使用方式：在 application.yml 中设置 spring.profiles.active: druid,dev
+
+wx:
+  pay:
+    stub-enabled: true

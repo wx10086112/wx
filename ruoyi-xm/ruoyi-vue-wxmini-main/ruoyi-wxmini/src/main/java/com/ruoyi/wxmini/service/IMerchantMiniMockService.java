@@ -20,7 +20,7 @@ import java.util.List;
 
 public interface IMerchantMiniMockService {
 
-    MerchantMiniLoginResponseDto login(String username, String password);
+    MerchantMiniLoginResponseDto login(String username, String password, String appid);
 
     MerchantMiniOverviewDto getWorkbenchOverview(String currentUserId);
 
@@ -44,6 +44,8 @@ public interface IMerchantMiniMockService {
     List<MerchantMiniVerifyRecordDto> listVerifyRecords(String status);
 
     List<MerchantMiniGoodsDto> listGoods(String status);
+
+    MerchantMiniGoodsDto getGoodsDetail(Long id);
 
     MerchantMiniGoodsDto saveGoods(MerchantMiniGoodsDto goodsDto);
 

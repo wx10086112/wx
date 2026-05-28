@@ -9,6 +9,7 @@ import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.annotation.Excel.ColumnType;
 import com.ruoyi.common.annotation.Excel.Type;
 import com.ruoyi.common.annotation.Excels;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ruoyi.common.core.domain.BaseEntity;
 import com.ruoyi.common.xss.Xss;
 
@@ -53,6 +54,7 @@ public class SysUser extends BaseEntity
     private String avatar;
 
     /** 密码 */
+    @JsonIgnore
     private String password;
 
     /** 账号状态（0正常 1停用） */
@@ -88,6 +90,16 @@ public class SysUser extends BaseEntity
 
     /** 角色ID */
     private Long roleId;
+
+    /** 账号类型（PLATFORM：平台；DISTRIBUTOR：分销商；MERCHANT：商家） */
+    @Excel(name = "账号类型", readConverterExp = "PLATFORM=平台,DISTRIBUTOR=分销商,MERCHANT=商家")
+    private String accountType = "PLATFORM";
+
+    /** 绑定分销商ID */
+    private Long distributorId;
+
+    /** 绑定商家ID */
+    private Long merchantId;
 
     public SysUser()
     {
@@ -295,6 +307,36 @@ public class SysUser extends BaseEntity
     public void setRoleId(Long roleId)
     {
         this.roleId = roleId;
+    }
+
+    public String getAccountType()
+    {
+        return accountType;
+    }
+
+    public void setAccountType(String accountType)
+    {
+        this.accountType = accountType;
+    }
+
+    public Long getDistributorId()
+    {
+        return distributorId;
+    }
+
+    public void setDistributorId(Long distributorId)
+    {
+        this.distributorId = distributorId;
+    }
+
+    public Long getMerchantId()
+    {
+        return merchantId;
+    }
+
+    public void setMerchantId(Long merchantId)
+    {
+        this.merchantId = merchantId;
     }
 
     @Override

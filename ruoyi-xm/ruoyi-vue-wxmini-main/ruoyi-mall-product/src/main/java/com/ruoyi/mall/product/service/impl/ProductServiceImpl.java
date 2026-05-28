@@ -5,6 +5,7 @@ import com.ruoyi.mall.product.mapper.ProductMapper;
 import com.ruoyi.mall.product.service.IProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -25,21 +26,25 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int insertProduct(Product product) {
         return productMapper.insertProduct(product);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int updateProduct(Product product) {
         return productMapper.updateProduct(product);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int deleteProductById(Long id) {
         return productMapper.deleteProductById(id);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int deleteProductByIds(Long[] ids) {
         return productMapper.deleteProductByIds(ids);
     }

@@ -35,7 +35,7 @@ public class ResourcesConfig implements WebMvcConfigurer
 
         /** 商家商品图片上传路径 */
         registry.addResourceHandler("/profile/merchant_images/**")
-                .addResourceLocations("file:E:/ruoyi/ruoyi-xm/merchant_images/");
+                .addResourceLocations("file:" + RuoYiConfig.getProfile() + "/merchant_images/");
 
         /** swagger配置 */
         registry.addResourceHandler("/swagger-ui/**")

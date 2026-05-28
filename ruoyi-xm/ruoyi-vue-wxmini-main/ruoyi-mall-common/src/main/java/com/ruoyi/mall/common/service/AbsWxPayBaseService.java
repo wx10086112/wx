@@ -9,6 +9,7 @@ import com.github.binarywang.wxpay.exception.WxPayException;
 import com.github.binarywang.wxpay.service.WxPayService;
 import com.ruoyi.mall.common.bo.WxPayCreateOrderParam;
 import com.ruoyi.mall.common.vo.WxPayParamVo;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -28,7 +29,8 @@ public abstract class AbsWxPayBaseService<P> {
     @Resource
     private WxPayService wxPayService;
 
-    private static final String WX_PAY_NOTIFY_URL = "https://xxx.com/api/wxmini/pay/notify";
+    @Value("${wx.pay.notify-url:https://xxx.com/api/wxmini/pay/notify}")
+    private String wxPayNotifyUrl;
     // 无锁化的Map+原子操作，记录资源的"占用状态"。synchronized会让同一资源的请求串行化，虽然能保证唯一性，但高并发下会阻塞线程，影响吞吐量。
     private ConcurrentHashMap<String, Object> resourceFlagMap = new ConcurrentHashMap<>();
 
@@ -134,7 +136,7 @@ public abstract class AbsWxPayBaseService<P> {
         v3Request.setOutTradeNo(orderParam.getOrderNo());
         v3Request.setTimeExpire(orderParam.getTimeExpire());
 
-        v3Request.setNotifyUrl(WX_PAY_NOTIFY_URL);
+        v3Request.setNotifyUrl(wxPayNotifyUrl);
 
         WxPayUnifiedOrderV3Request.Amount amountObj = new WxPayUnifiedOrderV3Request.Amount();
         amountObj.setTotal(orderParam.getAmount()); // 单位分

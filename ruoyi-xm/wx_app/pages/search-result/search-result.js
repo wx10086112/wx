@@ -1,5 +1,5 @@
+const mock = require('../../data/mock')
 const util = require('../../utils/util')
-const api = require('../../api/index')
 
 const SORT_OPTIONS = [
   { label: '综合', value: 'default' },
@@ -22,21 +22,37 @@ Page({
   onLoad(options) {
     const keyword = options.keyword || ''
     this.setData({ keyword })
-    this.doSearch(keyword)
+    this.doSearch(keyword, 'default')
   },
 
-  doSearch(keyword) {
-    Promise.all([
-      api.getMerchantList({ keyword }).catch(() => []),
-      api.getGrouponList({ keyword }).catch(() => [])
-    ]).then(([merchantList, grouponList]) => {
-      merchantList = merchantList || []
-      grouponList = grouponList || []
-      this.setData({
-        productList: grouponList,
-        merchantList,
-        totalResultCount: grouponList.length + merchantList.length
-      })
+  doSearch(keyword, sortKey) {
+    let productList = mock.grouponList.filter((item) => {
+      if (!keyword) return true
+      return (
+        item.title.includes(keyword) ||
+        item.subtitle.includes(keyword) ||
+        item.categoryName.includes(keyword) ||
+        item.description.includes(keyword)
+      )
+    })
+
+    let merchantList = mock.merchantList.filter((item) => {
+      if (!keyword) return true
+      return (
+        item.name.includes(keyword) ||
+        item.shortName.includes(keyword) ||
+        (item.tags || []).some((tag) => tag.includes(keyword))
+      )
+    })
+
+    productList = this.sortList(productList, sortKey)
+    merchantList = this.sortList(merchantList, sortKey)
+
+    this.setData({
+      productList,
+      merchantList,
+      sortKey,
+      totalResultCount: productList.length + merchantList.length
     })
   },
 
@@ -59,10 +75,12 @@ Page({
   onSortTap(e) {
     const sortKey = e.currentTarget.dataset.key
     if (sortKey === 'price' && this.data.sortKey === 'price') {
-      this.setData({ priceAsc: !this.data.priceAsc })
+      this.setData({ priceAsc: !this.data.priceAsc }, () => {
+        this.doSearch(this.data.keyword, sortKey)
+      })
       return
     }
-    this.setData({ sortKey })
+    this.doSearch(this.data.keyword, sortKey)
   },
 
   onProductTap(e) {

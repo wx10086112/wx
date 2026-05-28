@@ -23,6 +23,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="updateBy"     column="update_by"    />
         <result property="updateTime"   column="update_time"  />
         <result property="remark"       column="remark"       />
+        <result property="accountType"  column="account_type" />
+        <result property="distributorId" column="distributor_id" />
+        <result property="merchantId"   column="merchant_id"  />
         <association property="dept"    javaType="SysDept"         resultMap="deptResult" />
         <collection  property="roles"   javaType="java.util.List"  resultMap="RoleResult" />
     </resultMap>
@@ -47,7 +50,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 	
 	<sql id="selectUserVo">
-        select u.user_id, u.dept_id, u.user_name, u.nick_name, u.email, u.avatar, u.phonenumber, u.password, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, 
+        select u.user_id, u.dept_id, u.user_name, u.nick_name, u.email, u.avatar, u.phonenumber, u.password, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, u.account_type, u.distributor_id, u.merchant_id, 
         d.dept_id, d.parent_id, d.ancestors, d.dept_name, d.order_num, d.leader, d.status as dept_status,
         r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.status as role_status
         from sys_user u
@@ -57,7 +60,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </sql>
     
     <select id="selectUserList" parameterType="SysUser" resultMap="SysUserResult">
-		select u.user_id, u.dept_id, u.nick_name, u.user_name, u.email, u.avatar, u.phonenumber, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, d.dept_name, d.leader from sys_user u
+		select u.user_id, u.dept_id, u.nick_name, u.user_name, u.email, u.avatar, u.phonenumber, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, u.account_type, u.distributor_id, u.merchant_id, d.dept_name, d.leader from sys_user u
 		left join sys_dept d on u.dept_id = d.dept_id
 		where u.del_flag = '0'
 		<if test="userId != null and userId != 0">
@@ -81,12 +84,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<if test="deptId != null and deptId != 0">
 			AND (u.dept_id = #{deptId} OR u.dept_id IN ( SELECT t.dept_id FROM sys_dept t WHERE find_in_set(#{deptId}, ancestors) ))
 		</if>
+		<if test="accountType != null and accountType != ''">
+			AND u.account_type = #{accountType}
+		</if>
 		<!-- 数据范围过滤 -->
 		${params.dataScope}
 	</select>
 	
 	<select id="selectAllocatedList" parameterType="SysUser" resultMap="SysUserResult">
-	    select distinct u.user_id, u.dept_id, u.user_name, u.nick_name, u.email, u.phonenumber, u.status, u.create_time
+	    select distinct u.user_id, u.dept_id, u.user_name, u.nick_name, u.email, u.phonenumber, u.status, u.create_time, u.account_type, u.distributor_id, u.merchant_id
 	    from sys_user u
 			 left join sys_dept d on u.dept_id = d.dept_id
 			 left join sys_user_role ur on u.user_id = ur.user_id
@@ -98,12 +104,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<if test="phonenumber != null and phonenumber != ''">
 			AND u.phonenumber like concat('%', #{phonenumber}, '%')
 		</if>
+		<if test="accountType != null and accountType != ''">
+			AND u.account_type = #{accountType}
+		</if>
 		<!-- 数据范围过滤 -->
 		${params.dataScope}
 	</select>
 	
 	<select id="selectUnallocatedList" parameterType="SysUser" resultMap="SysUserResult">
-	    select distinct u.user_id, u.dept_id, u.user_name, u.nick_name, u.email, u.phonenumber, u.status, u.create_time
+	    select distinct u.user_id, u.dept_id, u.user_name, u.nick_name, u.email, u.phonenumber, u.status, u.create_time, u.account_type, u.distributor_id, u.merchant_id
 	    from sys_user u
 			 left join sys_dept d on u.dept_id = d.dept_id
 			 left join sys_user_role ur on u.user_id = ur.user_id
@@ -115,6 +124,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</if>
 		<if test="phonenumber != null and phonenumber != ''">
 			AND u.phonenumber like concat('%', #{phonenumber}, '%')
+		</if>
+		<if test="accountType != null and accountType != ''">
+			AND u.account_type = #{accountType}
 		</if>
 		<!-- 数据范围过滤 -->
 		${params.dataScope}
@@ -156,6 +168,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			<if test="status != null and status != ''">status,</if>
  			<if test="createBy != null and createBy != ''">create_by,</if>
  			<if test="remark != null and remark != ''">remark,</if>
+ 			<if test="accountType != null and accountType != ''">account_type,</if>
+ 			<if test="distributorId != null">distributor_id,</if>
+ 			<if test="merchantId != null">merchant_id,</if>
  			create_time
  		)values(
  			<if test="userId != null and userId != ''">#{userId},</if>
@@ -170,6 +185,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			<if test="status != null and status != ''">#{status},</if>
  			<if test="createBy != null and createBy != ''">#{createBy},</if>
  			<if test="remark != null and remark != ''">#{remark},</if>
+ 			<if test="accountType != null and accountType != ''">#{accountType},</if>
+ 			<if test="distributorId != null">#{distributorId},</if>
+ 			<if test="merchantId != null">#{merchantId},</if>
  			sysdate()
  		)
 	</insert>
@@ -189,6 +207,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			<if test="loginDate != null">login_date = #{loginDate},</if>
  			<if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
  			<if test="remark != null">remark = #{remark},</if>
+ 			<if test="accountType != null and accountType != ''">account_type = #{accountType},</if>
+ 			<if test="distributorId != null">distributor_id = #{distributorId},</if>
+ 			<if test="merchantId != null">merchant_id = #{merchantId},</if>
  			update_time = sysdate()
  		</set>
  		where user_id = #{userId}

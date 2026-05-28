@@ -16,7 +16,10 @@
 .add-staff-btn {
   width: auto;
   height: 60rpx;
-  line-height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: normal;
   padding: 0 24rpx;
   font-size: 24rpx;
 }
@@ -85,7 +88,10 @@
   width: auto;
   min-width: 100rpx;
   height: 56rpx;
-  line-height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: normal;
   font-size: 22rpx;
   padding: 0 16rpx;
 }
@@ -181,4 +187,8 @@
 
 .modal-btn {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: normal;
 }

@@ -15,6 +15,8 @@ public class MerchantUser extends BaseEntity {
     private String role;
     private Integer status;
     private Date lastLoginTime;
+    /** 删除标志（0代表存在 2代表删除） */
+    private String delFlag = "0";
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -34,4 +36,6 @@ public class MerchantUser extends BaseEntity {
     public void setStatus(Integer status) { this.status = status; }
     public Date getLastLoginTime() { return lastLoginTime; }
     public void setLastLoginTime(Date lastLoginTime) { this.lastLoginTime = lastLoginTime; }
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 }

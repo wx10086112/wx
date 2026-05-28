@@ -1,5 +1,6 @@
 package com.ruoyi.wxmini.service.impl;
 
+import com.ruoyi.common.utils.DesensitizedUtil;
 import com.ruoyi.mall.common.bo.WxMiniAuthContext;
 import com.ruoyi.mall.common.service.IWxMiniJwtService;
 import com.ruoyi.mall.finance.domain.TransactionRecord;
@@ -23,12 +24,15 @@ import com.ruoyi.mall.user.mapper.MallUserMapper;
 import com.ruoyi.wxmini.dto.merchant.*;
 import com.ruoyi.wxmini.service.IMerchantMiniMockService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
@@ -38,6 +42,7 @@ import java.util.*;
  * 商家端小程序 - 真实数据库实现
  * 替代 MerchantMiniMockServiceImpl
  */
+@Primary
 @Service
 public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
 
@@ -107,7 +112,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     // ==================== 登录 ====================
 
     @Override
-    public MerchantMiniLoginResponseDto login(String username, String password) {
+    public MerchantMiniLoginResponseDto login(String username, String password, String appid) {
         MerchantUser merchantUser = merchantUserMapper.selectMerchantUserByUsername(username);
         if (merchantUser == null) {
             throw new IllegalArgumentException("商家账号不存在");
@@ -123,6 +128,14 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         Merchant merchant = merchantMapper.selectMerchantById(merchantUser.getMerchantId());
         if (merchant == null || merchant.getStatus() != 1) {
             throw new IllegalArgumentException("商家未审核通过或已被禁用");
+        }
+
+        // 校验appid与员工所属商家一致
+        if (StringUtils.isNotBlank(appid)) {
+            Merchant appMerchant = merchantMapper.selectMerchantByMAppId(appid);
+            if (appMerchant == null || !appMerchant.getId().equals(merchant.getId())) {
+                throw new IllegalArgumentException("该账号不属于当前小程序所属商家");
+            }
         }
 
         MerchantMiniStaffUserDto staffUser = buildStaffUserFromDb(merchantUser, merchant);
@@ -196,6 +209,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public MerchantMiniOrderDto writeOff(String code, String currentUserId) {
         Long merchantId = getMerchantIdFromStaffId(currentUserId);
 
@@ -281,6 +295,20 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     }
 
     @Override
+    public MerchantMiniGoodsDto getGoodsDetail(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("商品ID不能为空");
+        }
+        Long merchantId = getMerchantIdFromContext();
+        Product product = productMapper.selectProductById(id);
+        if (product == null || !product.getMerchantId().equals(merchantId)) {
+            throw new IllegalArgumentException("商品不存在");
+        }
+        return convertProductToDto(product);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public MerchantMiniGoodsDto saveGoods(MerchantMiniGoodsDto goodsDto) {
         if (goodsDto == null || StringUtils.isBlank(goodsDto.getTitle())) {
             throw new IllegalArgumentException("套餐名称不能为空");
@@ -347,17 +375,25 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("请选择要上传的图片");
         }
+        if (file.getSize() > 10 * 1024 * 1024) {
+            throw new IllegalArgumentException("文件大小不能超过10MB");
+        }
+        // magic byte 校验真实类型
+        String ext;
+        try {
+            ext = detectImageExtension(file.getInputStream());
+        } catch (IOException e) {
+            throw new IllegalArgumentException("文件读取失败");
+        }
+        if (ext == null) {
+            throw new IllegalArgumentException("仅支持jpg/png/webp格式");
+        }
         try {
             String subDir = "merchant-goods";
             String uploadDir = profilePath + "/" + subDir + "/";
             File dir = new File(uploadDir);
             if (!dir.exists()) {
                 dir.mkdirs();
-            }
-            String originalName = file.getOriginalFilename();
-            String ext = "jpg";
-            if (originalName != null && originalName.contains(".")) {
-                ext = originalName.substring(originalName.lastIndexOf(".") + 1);
             }
             String fileName = subDir + "/" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8) + "." + ext;
             File dest = new File(profilePath + "/" + fileName);
@@ -373,7 +409,22 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         }
     }
 
+    /**
+     * 根据 magic byte 检测图片真实类型
+     */
+    private String detectImageExtension(InputStream is) throws IOException {
+        byte[] header = new byte[12];
+        int read = is.read(header);
+        if (read < 4) return null;
+        if (header[0] == (byte) 0xFF && header[1] == (byte) 0xD8 && header[2] == (byte) 0xFF) return "jpg";
+        if (header[0] == (byte) 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47) return "png";
+        if (read >= 12 && header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46
+                && header[8] == 0x57 && header[9] == 0x45 && header[10] == 0x42 && header[11] == 0x50) return "webp";
+        return null;
+    }
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int batchUpdateGoodsStatus(List<Long> goodsIds, String status) {
         if (goodsIds == null || goodsIds.isEmpty()) {
             return 0;
@@ -383,18 +434,8 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         }
         Long merchantId = getMerchantIdFromContext();
         int dbStatus = GOODS_STATUS_ON_SHELF.equals(status) ? PRODUCT_STATUS_ON : PRODUCT_STATUS_OFF;
-        int count = 0;
-        for (Long goodsId : goodsIds) {
-            Product product = productMapper.selectProductById(goodsId);
-            if (product != null && product.getMerchantId().equals(merchantId)) {
-                Product update = new Product();
-                update.setId(goodsId);
-                update.setStatus(dbStatus);
-                productMapper.updateProduct(update);
-                count++;
-            }
-        }
-        return count;
+        // 单条SQL批量更新，消除N+1查询（原逻辑：每个ID各执行一次SELECT + UPDATE）
+        return productMapper.batchUpdateProductStatus(goodsIds, dbStatus, merchantId);
     }
 
     // ==================== 门店 ====================
@@ -406,6 +447,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public MerchantMiniStoreDto updateStoreProfile(MerchantMiniStoreDto storeDto) {
         if (storeDto == null) {
             throw new IllegalArgumentException("门店信息不能为空");
@@ -510,45 +552,44 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     public MerchantMiniSettlementOverviewDto getSettlementOverview() {
         Long merchantId = getMerchantIdFromContext();
 
-        // 查询已完成的订单构建分账列表
-        List<MallOrder> orders = mallOrderMapper.selectMallOrderByMerchantId(merchantId);
+        // SQL聚合查询各项统计（替代全量加载Java循环）
+        long completedOrderCount = mallOrderMapper.countCompletedOrdersByMerchantId(merchantId);
+        BigDecimal todayIncomeSql = mallOrderMapper.sumTodayIncomeByMerchantId(merchantId);
+        BigDecimal monthIncomeSql = mallOrderMapper.sumMonthIncomeByMerchantId(merchantId);
+        Long todayIncomeAmount = todayIncomeSql.longValue();
+        Long monthIncomeAmount = monthIncomeSql.longValue();
+
+        // 查询已完成/已使用的订单总金额，用于计算平台费和分账
+        List<Integer> completedStatuses = Arrays.asList(ORDER_STATUS_COMPLETED, ORDER_STATUS_USED);
+        BigDecimal totalPayAmount = mallOrderMapper.sumPayAmountByMerchantIdAndStatuses(merchantId, completedStatuses);
+        long totalPayAmtCents = totalPayAmount.multiply(BigDecimal.valueOf(100)).longValue();
+        BigDecimal totalMerchantBd = BigDecimal.valueOf(totalPayAmtCents)
+                .multiply(BigDecimal.valueOf(MERCHANT_RATE))
+                .divide(BigDecimal.valueOf(100), 0, RoundingMode.DOWN);
+        Long totalMerchantAmt = totalMerchantBd.longValue();
+        Long platformFeeAmount = totalPayAmtCents - totalMerchantAmt;
+
+        // 加载最近50条已完成订单构建分账明细列表
+        List<MallOrder> recentOrders = mallOrderMapper.selectRecentCompletedOrdersByMerchantId(merchantId, 50);
         List<MerchantMiniFinanceLedgerDto> ledgerList = new ArrayList<>();
         List<MerchantMiniSettlementRecordDto> settlementRecordList = new ArrayList<>();
-        Long todayIncomeAmount = 0L;
-        Long monthIncomeAmount = 0L;
         Long pendingSettleAmount = 0L;
         Long settledAmount = 0L;
-        Long platformFeeAmount = 0L;
-        int completedOrderCount = 0;
-
-        SimpleDateFormat sdfDay = new SimpleDateFormat("yyyyMMdd");
-        SimpleDateFormat sdfMonth = new SimpleDateFormat("yyyyMM");
-        String today = sdfDay.format(new Date());
-        String month = sdfMonth.format(new Date());
-
         long ledgerId = 1L;
-        for (MallOrder order : orders) {
-            if (order.getStatus() != ORDER_STATUS_COMPLETED && order.getStatus() != ORDER_STATUS_USED) {
-                continue;
-            }
-            completedOrderCount++;
-            Long payAmount = order.getPayAmount() != null ? order.getPayAmount().longValue() : 0L;
-            Long merchantAmt = payAmount * MERCHANT_RATE / 100;
-            Long platformFee = payAmount * PLATFORM_RATE / 100;
-            platformFeeAmount += platformFee;
+        long now = System.currentTimeMillis();
+
+        for (MallOrder order : recentOrders) {
+            Long payAmount = order.getPayAmount() != null ? order.getPayAmount().multiply(BigDecimal.valueOf(100)).longValue() : 0L;
+            BigDecimal payBd = BigDecimal.valueOf(payAmount);
+            BigDecimal merchantBd = payBd.multiply(BigDecimal.valueOf(MERCHANT_RATE))
+                    .divide(BigDecimal.valueOf(100), 0, RoundingMode.DOWN);
+            Long merchantAmt = merchantBd.longValue();
+            Long platformFee = payAmount - merchantAmt;
 
             Date finishDate = order.getCompleteTime() != null ? order.getCompleteTime() : order.getUseTime();
             Long finishTime = finishDate != null ? finishDate.getTime() : 0L;
-
-            if (isSameDay(finishDate, today)) {
-                todayIncomeAmount += merchantAmt;
-            }
-            if (isSameMonth(finishDate, month)) {
-                monthIncomeAmount += merchantAmt;
-            }
-
             Long settleTime = finishTime + 24 * 60 * 60 * 1000L;
-            boolean settled = settleTime <= System.currentTimeMillis();
+            boolean settled = settleTime <= now;
             if (settled) {
                 settledAmount += merchantAmt;
             } else {
@@ -576,7 +617,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         overviewDto.setProcessingAmount(0L);
         overviewDto.setPendingAutoTransferAmount(pendingSettleAmount);
         overviewDto.setPlatformFeeAmount(platformFeeAmount);
-        overviewDto.setCompletedOrderCount(completedOrderCount);
+        overviewDto.setCompletedOrderCount((int) completedOrderCount);
         overviewDto.setAutoTransferMode("T+1");
         overviewDto.setNextAutoTransferTime(nextAutoTransferTime());
         overviewDto.setSettlementAccount(buildSettlementAccount(merchantId));
@@ -593,6 +634,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     // ==================== 订单操作 ====================
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public MerchantMiniOrderDto acceptOrder(String orderNo) {
         Long merchantId = getMerchantIdFromContext();
         MallOrder order = getOrderAndCheckMerchant(orderNo, merchantId);
@@ -608,6 +650,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public MerchantMiniOrderDto rejectOrder(String orderNo, String reason) {
         Long merchantId = getMerchantIdFromContext();
         MallOrder order = getOrderAndCheckMerchant(orderNo, merchantId);
@@ -623,6 +666,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public MerchantMiniOrderDto cancelOrder(String orderNo, String reason) {
         Long merchantId = getMerchantIdFromContext();
         MallOrder order = getOrderAndCheckMerchant(orderNo, merchantId);
@@ -638,6 +682,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public MerchantMiniOrderDto approveRefund(String orderNo) {
         Long merchantId = getMerchantIdFromContext();
         MallOrder order = getOrderAndCheckMerchant(orderNo, merchantId);
@@ -653,6 +698,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public MerchantMiniOrderDto rejectRefund(String orderNo, String reason) {
         Long merchantId = getMerchantIdFromContext();
         MallOrder order = getOrderAndCheckMerchant(orderNo, merchantId);
@@ -678,6 +724,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     // ==================== 员工增删改 ====================
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public MerchantMiniStaffUserDto addStaff(MerchantMiniStaffRequestDto requestDto) {
         if (requestDto == null || StringUtils.isBlank(requestDto.getUsername())) {
             throw new IllegalArgumentException("用户名不能为空");
@@ -707,6 +754,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public MerchantMiniStaffUserDto updateStaff(MerchantMiniStaffRequestDto requestDto) {
         if (requestDto == null || requestDto.getStaffId() == null) {
             throw new IllegalArgumentException("员工ID不能为空");
@@ -797,7 +845,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         dto.setOrderNo(order.getOrderNo());
         dto.setStatus(mapOrderStatus(order.getStatus()));
         dto.setWriteOffCode(order.getWriteOffCode());
-        dto.setPayAmount(order.getPayAmount() != null ? order.getPayAmount().longValue() : 0L);
+        dto.setPayAmount(order.getPayAmount() != null ? order.getPayAmount().multiply(BigDecimal.valueOf(100)).longValue() : 0L);
         dto.setQuantity(1);
         dto.setCreateTime(order.getCreateTime() != null ? order.getCreateTime().getTime() : 0L);
         dto.setPayTime(order.getPayTime() != null ? order.getPayTime().getTime() : null);
@@ -816,7 +864,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
             MallUser mallUser = mallUserMapper.selectMallUserById(order.getUserId());
             if (mallUser != null) {
                 dto.setCustomerName(mallUser.getNickname());
-                dto.setCustomerPhone(mallUser.getPhone());
+                dto.setCustomerPhone(maskPhone(mallUser.getPhone()));
             } else {
                 dto.setCustomerName("用户" + order.getUserId());
                 dto.setCustomerPhone("");
@@ -832,8 +880,8 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         dto.setTitle(product.getName());
         dto.setSubtitle(product.getDescription());
         dto.setImageUrl(product.getCoverImage());
-        dto.setPrice(product.getPrice() != null ? product.getPrice().longValue() : 0L);
-        dto.setOriginalPrice(product.getOriginalPrice() != null ? product.getOriginalPrice().longValue() : 0L);
+        dto.setPrice(product.getPrice() != null ? product.getPrice().multiply(BigDecimal.valueOf(100)).longValue() : 0L);
+        dto.setOriginalPrice(product.getOriginalPrice() != null ? product.getOriginalPrice().multiply(BigDecimal.valueOf(100)).longValue() : 0L);
         dto.setStock(product.getStock());
         dto.setSales(product.getSales());
         dto.setStatus(product.getStatus() != null && product.getStatus() == PRODUCT_STATUS_ON
@@ -853,8 +901,8 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         product.setName(dto.getTitle());
         product.setDescription(dto.getSubtitle());
         product.setCoverImage(dto.getImageUrl());
-        product.setPrice(dto.getPrice() != null ? new BigDecimal(dto.getPrice()) : BigDecimal.ZERO);
-        product.setOriginalPrice(dto.getOriginalPrice() != null ? new BigDecimal(dto.getOriginalPrice()) : BigDecimal.ZERO);
+        product.setPrice(dto.getPrice() != null ? BigDecimal.valueOf(dto.getPrice()).divide(BigDecimal.valueOf(100)) : BigDecimal.ZERO);
+        product.setOriginalPrice(dto.getOriginalPrice() != null ? BigDecimal.valueOf(dto.getOriginalPrice()).divide(BigDecimal.valueOf(100)) : BigDecimal.ZERO);
         product.setStock(dto.getStock() != null ? dto.getStock() : 0);
         product.setSort(dto.getSort());
         return product;
@@ -899,42 +947,25 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
 
     private MerchantMiniWorkbenchStatsDto buildWorkbenchStats(Long merchantId) {
         MerchantMiniWorkbenchStatsDto statsDto = new MerchantMiniWorkbenchStatsDto();
-        int pendingVerifyCount = 0;
-        int completedCount = 0;
-        int refundingCount = 0;
-        long todaySalesAmount = 0L;
 
-        List<MallOrder> orders = mallOrderMapper.selectMallOrderByMerchantId(merchantId);
-        String today = new SimpleDateFormat("yyyyMMdd").format(new Date());
+        // 使用SQL COUNT替代全量加载（S-2优化）
+        Long pendingVerifyCount = mallOrderMapper.countByMerchantIdAndStatusIn(
+                merchantId, Arrays.asList(ORDER_STATUS_PAID, ORDER_STATUS_USED));
+        Long completedCount = mallOrderMapper.countByMerchantIdAndStatusIn(
+                merchantId, Collections.singletonList(ORDER_STATUS_COMPLETED));
+        Long refundingCount = mallOrderMapper.countByMerchantIdAndStatusIn(
+                merchantId, Collections.singletonList(ORDER_STATUS_REFUNDED));
 
-        for (MallOrder order : orders) {
-            Long amt = order.getPayAmount() != null ? order.getPayAmount().longValue() : 0L;
-            switch (order.getStatus()) {
-                case ORDER_STATUS_PAID:
-                case ORDER_STATUS_USED:
-                    pendingVerifyCount++;
-                    if (isSameDay(order.getCreateTime(), today)) {
-                        todaySalesAmount += amt;
-                    }
-                    break;
-                case ORDER_STATUS_COMPLETED:
-                    completedCount++;
-                    if (isSameDay(order.getCompleteTime(), today)) {
-                        todaySalesAmount += amt;
-                    }
-                    break;
-                case ORDER_STATUS_REFUNDED:
-                    refundingCount++;
-                    break;
-            }
-        }
+        // 今日销售额：已支付/已使用订单（按创建时间）+ 已完成订单（按完成时间）
+        BigDecimal todaySalesSql = mallOrderMapper.sumTodaySalesByMerchantId(merchantId);
+        long todaySalesAmount = todaySalesSql.longValue();
 
         int onShelfCount = productMapper.countProductByMerchantId(merchantId);
 
         statsDto.setPendingAcceptCount(0);
-        statsDto.setPendingVerifyCount(pendingVerifyCount);
-        statsDto.setCompletedCount(completedCount);
-        statsDto.setRefundingCount(refundingCount);
+        statsDto.setPendingVerifyCount(pendingVerifyCount != null ? pendingVerifyCount.intValue() : 0);
+        statsDto.setCompletedCount(completedCount != null ? completedCount.intValue() : 0);
+        statsDto.setRefundingCount(refundingCount != null ? refundingCount.intValue() : 0);
         statsDto.setOnShelfCount(onShelfCount);
         statsDto.setTodaySalesAmount(todaySalesAmount);
         return statsDto;
@@ -959,7 +990,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         dto.setOrderNo(order.getOrderNo());
         dto.setInputCode(order.getWriteOffCode());
         dto.setWriteOffCode(order.getWriteOffCode());
-        dto.setPayAmount(order.getPayAmount() != null ? order.getPayAmount().longValue() : 0L);
+        dto.setPayAmount(order.getPayAmount() != null ? order.getPayAmount().multiply(BigDecimal.valueOf(100)).longValue() : 0L);
         dto.setVerifyTime(order.getUseTime() != null ? order.getUseTime().getTime() : 0L);
         dto.setStatus(VERIFY_STATUS_SUCCESS);
         dto.setFailureReason(null);
@@ -979,7 +1010,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
             MallUser mallUser = mallUserMapper.selectMallUserById(order.getUserId());
             if (mallUser != null) {
                 dto.setCustomerName(mallUser.getNickname());
-                dto.setCustomerPhone(mallUser.getPhone());
+                dto.setCustomerPhone(maskPhone(mallUser.getPhone()));
             } else {
                 dto.setCustomerName("用户" + order.getUserId());
             }
@@ -1027,7 +1058,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     private MerchantMiniWithdrawRecordDto convertWithdrawToDto(WithdrawRecord record) {
         MerchantMiniWithdrawRecordDto dto = new MerchantMiniWithdrawRecordDto();
         dto.setWithdrawId(record.getId());
-        dto.setAmount(record.getAmount() != null ? record.getAmount().longValue() : 0L);
+        dto.setAmount(record.getAmount() != null ? record.getAmount().multiply(BigDecimal.valueOf(100)).longValue() : 0L);
         dto.setApplyTime(record.getCreateTime() != null ? record.getCreateTime().getTime() : 0L);
         dto.setFinishTime(record.getPayTime() != null ? record.getPayTime().getTime() : null);
         dto.setRemark(record.getRejectReason());
@@ -1097,6 +1128,13 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     private boolean isSameMonth(Date date, String monthStr) {
         if (date == null) return false;
         return monthStr.equals(new SimpleDateFormat("yyyyMM").format(date));
+    }
+
+    /**
+     * 手机号脱敏：138****1111
+     */
+    private String maskPhone(String phone) {
+        return DesensitizedUtil.phone(phone);
     }
 
 }

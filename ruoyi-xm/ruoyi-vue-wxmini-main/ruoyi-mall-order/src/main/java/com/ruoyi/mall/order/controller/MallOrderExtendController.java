@@ -1,5 +1,6 @@
 package com.ruoyi.mall.order.controller;
 
+import com.ruoyi.common.annotation.DataScopeBiz;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.mall.order.domain.MallOrder;
@@ -19,21 +20,27 @@ public class MallOrderExtendController extends BaseController {
     @Autowired
     private MallOrderMapper mallOrderMapper;
 
+    @DataScopeBiz(merchantAlias = "mall_order")
     @PreAuthorize("@ss.hasPermi('mall:order:list')")
     @GetMapping("/abnormal/list")
-    public TableDataInfo abnormalList() {
+    public TableDataInfo abnormalList(MallOrder query) {
         startPage();
-        MallOrder query = new MallOrder();
+        if (query == null) {
+            query = new MallOrder();
+        }
         query.setStatus(5);
         List<MallOrder> list = mallOrderMapper.selectMallOrderList(query);
         return getDataTable(list);
     }
 
+    @DataScopeBiz(merchantAlias = "mall_order")
     @PreAuthorize("@ss.hasPermi('mall:order:list')")
     @GetMapping("/after-sale/list")
-    public TableDataInfo afterSaleList() {
+    public TableDataInfo afterSaleList(MallOrder query) {
         startPage();
-        MallOrder query = new MallOrder();
+        if (query == null) {
+            query = new MallOrder();
+        }
         query.setStatus(4);
         List<MallOrder> list = mallOrderMapper.selectMallOrderList(query);
         return getDataTable(list);

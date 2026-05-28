@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.finance.mapper.PlatformTransferRecordMapper">
+
+    <resultMap type="com.ruoyi.mall.finance.domain.PlatformTransferRecord" id="TransferRecordResult">
+        <result property="id" column="id"/>
+        <result property="transferNo" column="transfer_no"/>
+        <result property="settlementNo" column="settlement_no"/>
+        <result property="targetType" column="target_type"/>
+        <result property="targetId" column="target_id"/>
+        <result property="merchantId" column="merchant_id"/>
+        <result property="distributorId" column="distributor_id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="amount" column="amount"/>
+        <result property="receiverOpenid" column="receiver_openid"/>
+        <result property="receiverName" column="receiver_name"/>
+        <result property="receiverAccountType" column="receiver_account_type"/>
+        <result property="wechatBatchNo" column="wechat_batch_no"/>
+        <result property="wechatDetailNo" column="wechat_detail_no"/>
+        <result property="status" column="status"/>
+        <result property="failReason" column="fail_reason"/>
+        <result property="applyTime" column="apply_time"/>
+        <result property="transferTime" column="transfer_time"/>
+        <result property="arriveTime" column="arrive_time"/>
+        <result property="notifyTime" column="notify_time"/>
+        <result property="notifyResult" column="notify_result"/>
+        <result property="operatorId" column="operator_id"/>
+        <result property="remark" column="remark"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="merchantName" column="merchant_name"/>
+        <result property="distributorName" column="distributor_name"/>
+    </resultMap>
+
+    <sql id="selectTransferRecordVo">
+        select t.id, t.transfer_no, t.settlement_no, t.target_type, t.target_id,
+               t.merchant_id, m.name as merchant_name,
+               t.distributor_id, d.name as distributor_name,
+               t.order_no, t.amount, t.receiver_openid, t.receiver_name,
+               t.receiver_account_type, t.wechat_batch_no, t.wechat_detail_no,
+               t.status, t.fail_reason, t.apply_time, t.transfer_time,
+               t.arrive_time, t.notify_time, t.notify_result,
+               t.operator_id, t.remark, t.del_flag, t.create_time, t.update_time
+        from platform_transfer_record t
+        LEFT JOIN merchant m ON t.merchant_id = m.id
+        LEFT JOIN distributor d ON t.distributor_id = d.id
+    </sql>
+
+    <select id="selectById" parameterType="Long" resultMap="TransferRecordResult">
+        <include refid="selectTransferRecordVo"/>
+        where t.id = #{id} AND t.del_flag = '0'
+    </select>
+
+    <select id="selectByTransferNo" parameterType="String" resultMap="TransferRecordResult">
+        <include refid="selectTransferRecordVo"/>
+        where t.transfer_no = #{transferNo} AND t.del_flag = '0'
+    </select>
+
+    <select id="selectBySettlementNo" parameterType="String" resultMap="TransferRecordResult">
+        <include refid="selectTransferRecordVo"/>
+        where t.settlement_no = #{settlementNo} AND t.del_flag = '0'
+    </select>
+
+    <select id="selectActiveBySettlementNo" parameterType="String" resultMap="TransferRecordResult">
+        <include refid="selectTransferRecordVo"/>
+        where t.settlement_no = #{settlementNo} AND t.status IN ('TRANSFERRING', 'ARRIVED') AND t.del_flag = '0'
+        LIMIT 1
+    </select>
+
+    <select id="selectList" parameterType="com.ruoyi.mall.finance.domain.PlatformTransferRecord" resultMap="TransferRecordResult">
+        <include refid="selectTransferRecordVo"/>
+        <where>
+            and t.del_flag = '0'
+            <if test="transferNo != null and transferNo != ''">and t.transfer_no like concat('%', #{transferNo}, '%')</if>
+            <if test="settlementNo != null and settlementNo != ''">and t.settlement_no = #{settlementNo}</if>
+            <if test="targetType != null and targetType != ''">and t.target_type = #{targetType}</if>
+            <if test="targetId != null">and t.target_id = #{targetId}</if>
+            <if test="merchantId != null">and t.merchant_id = #{merchantId}</if>
+            <if test="merchantName != null and merchantName != ''">and m.name like concat('%', #{merchantName}, '%')</if>
+            <if test="distributorId != null">and t.distributor_id = #{distributorId}</if>
+            <if test="orderNo != null and orderNo != ''">and t.order_no like concat('%', #{orderNo}, '%')</if>
+            <if test="status != null and status != ''">and t.status = #{status}</if>
+        </where>
+        order by t.create_time desc
+    </select>
+
+    <select id="selectTimeoutTransfers" resultMap="TransferRecordResult">
+        <include refid="selectTransferRecordVo"/>
+        where t.status = 'TRANSFERRING' AND t.del_flag = '0'
+          AND t.transfer_time &lt;= DATE_SUB(NOW(), INTERVAL #{timeoutMinutes} MINUTE)
+        order by t.transfer_time ASC
+        LIMIT #{limit}
+    </select>
+
+    <insert id="insert" parameterType="com.ruoyi.mall.finance.domain.PlatformTransferRecord" useGeneratedKeys="true" keyProperty="id">
+        insert into platform_transfer_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="transferNo != null">transfer_no,</if>
+            <if test="settlementNo != null">settlement_no,</if>
+            <if test="targetType != null">target_type,</if>
+            <if test="targetId != null">target_id,</if>
+            <if test="merchantId != null">merchant_id,</if>
+            <if test="distributorId != null">distributor_id,</if>
+            <if test="orderNo != null">order_no,</if>
+            <if test="amount != null">amount,</if>
+            <if test="receiverOpenid != null">receiver_openid,</if>
+            <if test="receiverName != null">receiver_name,</if>
+            <if test="receiverAccountType != null">receiver_account_type,</if>
+            <if test="wechatBatchNo != null">wechat_batch_no,</if>
+            <if test="wechatDetailNo != null">wechat_detail_no,</if>
+            <if test="status != null">status,</if>
+            <if test="failReason != null">fail_reason,</if>
+            <if test="applyTime != null">apply_time,</if>
+            <if test="transferTime != null">transfer_time,</if>
+            <if test="arriveTime != null">arrive_time,</if>
+            <if test="notifyTime != null">notify_time,</if>
+            <if test="notifyResult != null">notify_result,</if>
+            <if test="operatorId != null">operator_id,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="transferNo != null">#{transferNo},</if>
+            <if test="settlementNo != null">#{settlementNo},</if>
+            <if test="targetType != null">#{targetType},</if>
+            <if test="targetId != null">#{targetId},</if>
+            <if test="merchantId != null">#{merchantId},</if>
+            <if test="distributorId != null">#{distributorId},</if>
+            <if test="orderNo != null">#{orderNo},</if>
+            <if test="amount != null">#{amount},</if>
+            <if test="receiverOpenid != null">#{receiverOpenid},</if>
+            <if test="receiverName != null">#{receiverName},</if>
+            <if test="receiverAccountType != null">#{receiverAccountType},</if>
+            <if test="wechatBatchNo != null">#{wechatBatchNo},</if>
+            <if test="wechatDetailNo != null">#{wechatDetailNo},</if>
+            <if test="status != null">#{status},</if>
+            <if test="failReason != null">#{failReason},</if>
+            <if test="applyTime != null">#{applyTime},</if>
+            <if test="transferTime != null">#{transferTime},</if>
+            <if test="arriveTime != null">#{arriveTime},</if>
+            <if test="notifyTime != null">#{notifyTime},</if>
+            <if test="notifyResult != null">#{notifyResult},</if>
+            <if test="operatorId != null">#{operatorId},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateById" parameterType="com.ruoyi.mall.finance.domain.PlatformTransferRecord">
+        update platform_transfer_record
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="settlementNo != null">settlement_no = #{settlementNo},</if>
+            <if test="targetType != null">target_type = #{targetType},</if>
+            <if test="targetId != null">target_id = #{targetId},</if>
+            <if test="merchantId != null">merchant_id = #{merchantId},</if>
+            <if test="distributorId != null">distributor_id = #{distributorId},</if>
+            <if test="orderNo != null">order_no = #{orderNo},</if>
+            <if test="amount != null">amount = #{amount},</if>
+            <if test="receiverOpenid != null">receiver_openid = #{receiverOpenid},</if>
+            <if test="receiverName != null">receiver_name = #{receiverName},</if>
+            <if test="receiverAccountType != null">receiver_account_type = #{receiverAccountType},</if>
+            <if test="wechatBatchNo != null">wechat_batch_no = #{wechatBatchNo},</if>
+            <if test="wechatDetailNo != null">wechat_detail_no = #{wechatDetailNo},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="failReason != null">fail_reason = #{failReason},</if>
+            <if test="applyTime != null">apply_time = #{applyTime},</if>
+            <if test="transferTime != null">transfer_time = #{transferTime},</if>
+            <if test="arriveTime != null">arrive_time = #{arriveTime},</if>
+            <if test="notifyTime != null">notify_time = #{notifyTime},</if>
+            <if test="notifyResult != null">notify_result = #{notifyResult},</if>
+            <if test="operatorId != null">operator_id = #{operatorId},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+</mapper>

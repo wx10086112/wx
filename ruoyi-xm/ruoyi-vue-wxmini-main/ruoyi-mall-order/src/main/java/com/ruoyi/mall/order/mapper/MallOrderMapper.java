@@ -84,4 +84,23 @@ public interface MallOrderMapper {
             "FROM mall_order WHERE create_time >= DATE_SUB(CURDATE(), INTERVAL #{years} YEAR) " +
             "GROUP BY YEAR(create_time) ORDER BY yearNum")
     List<Map<String, Object>> selectTrendByYear(@Param("years") int years);
+
+    // ---- S-2: SQL aggregation for settlement overview ----
+
+    Long countCompletedOrdersByMerchantId(@Param("merchantId") Long merchantId);
+
+    BigDecimal sumTodayIncomeByMerchantId(@Param("merchantId") Long merchantId);
+
+    BigDecimal sumMonthIncomeByMerchantId(@Param("merchantId") Long merchantId);
+
+    BigDecimal sumPayAmountByMerchantIdAndStatuses(@Param("merchantId") Long merchantId,
+                                                    @Param("statuses") List<Integer> statuses);
+
+    List<MallOrder> selectRecentCompletedOrdersByMerchantId(@Param("merchantId") Long merchantId,
+                                                             @Param("limit") int limit);
+
+    Long countByMerchantIdAndStatusIn(@Param("merchantId") Long merchantId,
+                                      @Param("statuses") List<Integer> statuses);
+
+    BigDecimal sumTodaySalesByMerchantId(@Param("merchantId") Long merchantId);
 }

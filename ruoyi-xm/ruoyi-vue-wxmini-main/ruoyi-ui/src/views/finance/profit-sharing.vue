@@ -6,7 +6,7 @@
       <!-- 搜索区域 -->
       <el-form :inline="true" :model="queryParams" size="small" class="search-form">
         <el-form-item label="商家名称">
-          <el-input v-model="queryParams.merchantId" placeholder="请输入商家ID" clearable @keyup.enter.native="handleQuery" />
+          <el-input v-model="queryParams.merchantName" placeholder="请输入商家名称" clearable @keyup.enter.native="handleQuery" />
         </el-form-item>
         <el-form-item label="结算状态">
           <el-select v-model="queryParams.status" placeholder="全部" clearable>
@@ -22,7 +22,7 @@
 
       <!-- 表格 -->
       <el-table v-loading="loading" :data="tableList" border>
-        <el-table-column label="商家" prop="merchantId" width="140" />
+        <el-table-column label="商家" prop="merchantName" width="140" />
         <el-table-column label="订单号" prop="orderNo" width="180" />
         <el-table-column label="订单金额" width="120">
           <template slot-scope="scope">
@@ -78,7 +78,7 @@ export default {
       tableList: [],
       total: 0,
       queryParams: {
-        merchantId: '',
+        merchantName: '',
         status: '',
         pageNum: 1,
         pageSize: 10
@@ -105,7 +105,7 @@ export default {
     },
     resetQuery() {
       this.queryParams = {
-        merchantId: '',
+        merchantName: '',
         status: '',
         pageNum: 1,
         pageSize: 10

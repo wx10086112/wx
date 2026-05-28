@@ -26,10 +26,10 @@
     <!-- 操作按钮 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="primary" icon="el-icon-plus" size="mini" @click="handleAdd">新增分销商</el-button>
+        <el-button v-hasPermi="['mall:distributor:add']" type="primary" icon="el-icon-plus" size="mini" @click="handleAdd">新增分销商</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="danger" icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete">批量删除</el-button>
+        <el-button v-hasPermi="['mall:distributor:remove']" type="danger" icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete">批量删除</el-button>
       </el-col>
     </el-row>
 
@@ -53,11 +53,11 @@
       </el-table-column>
       <el-table-column label="操作" width="300" align="center" fixed="right">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button size="mini" type="text" icon="el-icon-key" @click="handleResetPwd(scope.row)">重置密码</el-button>
-          <el-button size="mini" type="text" @click="handleToggleStatus(scope.row)">{{ scope.row.status === 1 ? '禁用' : '启用' }}</el-button>
-          <el-button size="mini" type="text" icon="el-icon-view" @click="handleSwitch(scope.row)">切换为分销商</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" style="color: #F56C6C;" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button v-hasPermi="['mall:distributor:edit']" size="mini" type="text" icon="el-icon-edit" @click="handleEdit(scope.row)">编辑</el-button>
+          <el-button v-hasPermi="['mall:distributor:edit']" size="mini" type="text" icon="el-icon-key" @click="handleResetPwd(scope.row)">重置密码</el-button>
+          <el-button v-hasPermi="['mall:distributor:edit']" size="mini" type="text" @click="handleToggleStatus(scope.row)">{{ scope.row.status === 1 ? '禁用' : '启用' }}</el-button>
+          <el-button v-if="isSuperAdmin" size="mini" type="text" icon="el-icon-view" @click="handleSwitch(scope.row)">切换视角</el-button>
+          <el-button v-hasPermi="['mall:distributor:remove']" size="mini" type="text" icon="el-icon-delete" style="color: #F56C6C;" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -166,6 +166,11 @@ export default {
   },
   created() {
     this.getList()
+  },
+  computed: {
+    isSuperAdmin() {
+      return this.$store.getters.roles.includes('admin')
+    }
   },
   methods: {
     getList() {

@@ -6,12 +6,14 @@ const app = getApp()
 Page({
   data: {
     overview: {},
-    ledgerList: [],
+    settlementAccount: {},
     settlementRecordList: [],
+    ledgerList: [],
     filterTabs: [
       { label: '全部', value: 'ALL' },
-      { label: '今日', value: 'TODAY' },
-      { label: '本月', value: 'MONTH' }
+      { label: '待到账', value: 'WAITING' },
+      { label: '已到账', value: 'ARRIVED' },
+      { label: '失败', value: 'FAILED' }
     ],
     currentFilter: 'ALL'
   },
@@ -28,29 +30,38 @@ Page({
         this.renderSettlement(overview)
       })
       .catch(() => {
-        util.showToast('加载失败，请重试')
+        this.renderSettlement(util.buildFinanceOverview())
       })
   },
 
   renderSettlement(overview = {}) {
-    const filteredLedgerList = this.filterLedgerByDate(overview.ledgerList || [], this.data.currentFilter)
-    const ledgerList = filteredLedgerList.slice(0, 20).map((item) => ({
-      ...item,
-      orderAmountText: util.formatPrice(item.orderAmount),
-      merchantAmountText: util.formatPrice(item.merchantAmount),
-      platformFeeAmountText: util.formatPrice(item.platformFeeAmount),
-      finishTimeText: util.formatDate(item.finishTime),
-      settleTimeText: util.formatDate(item.settleTime),
-      statusText: item.status === 'SETTLED' ? '已结算' : 'T+1待结算'
-    }))
-    const settlementRecordList = (overview.settlementRecordList || []).slice(0, 20).map((item) => ({
-      ...item,
-      amountText: util.formatPrice(item.amount),
-      applyTimeText: util.formatDate(item.applyTime),
-      expectedTransferTimeText: util.formatDate(item.expectedTransferTime),
-      arriveTimeText: item.arriveTime ? util.formatDate(item.arriveTime) : '',
-      statusText: this.formatSettlementStatus(item.status)
-    }))
+    const settlementAccount = {
+      ...(overview.settlementAccount || {})
+    }
+    const settlementRecordList = this.filterSettlementRecords(
+      overview.settlementRecordList || overview.withdrawList || [],
+      this.data.currentFilter
+    )
+      .slice(0, 20)
+      .map((item) => ({
+        ...item,
+        amountText: util.formatPrice(item.amount),
+        applyTimeText: util.formatDate(item.applyTime),
+        expectedTransferTimeText: util.formatDate(item.expectedTransferTime),
+        arriveTimeText: item.arriveTime ? util.formatDate(item.arriveTime) : '',
+        statusText: this.getSettlementStatusText(item.status)
+      }))
+
+    const ledgerList = (overview.ledgerList || [])
+      .slice(0, 20)
+      .map((item) => ({
+        ...item,
+        merchantAmountText: util.formatPrice(item.merchantAmount),
+        platformFeeAmountText: util.formatPrice(item.platformFeeAmount),
+        finishTimeText: util.formatDate(item.finishTime),
+        settleTimeText: util.formatDate(item.settleTime),
+        statusText: item.status === 'SETTLED' ? '已进入到账记录' : '等待 T+1 自动打款'
+      }))
 
     this.setData({
       overview: {
@@ -58,39 +69,38 @@ Page({
         todayIncomeText: util.formatPrice(overview.todayIncomeAmount),
         monthIncomeText: util.formatPrice(overview.monthIncomeAmount),
         pendingSettleText: util.formatPrice(overview.pendingSettleAmount),
-        settledText: util.formatPrice(overview.settledAmount),
-        processingText: util.formatPrice(overview.processingAmount),
+        settledAmountText: util.formatPrice(overview.settledAmount),
+        processingAmountText: util.formatPrice(overview.processingAmount),
         pendingAutoTransferText: util.formatPrice(overview.pendingAutoTransferAmount),
-        platformFeeText: util.formatPrice(overview.platformFeeAmount)
+        platformFeeText: util.formatPrice(overview.platformFeeAmount),
+        nextAutoTransferTimeText: util.formatDate(overview.nextAutoTransferTime)
       },
-      ledgerList,
-      settlementRecordList
+      settlementAccount,
+      settlementRecordList,
+      ledgerList
     })
   },
 
-  formatSettlementStatus(status) {
-    const statusMap = {
-      WAITING_T1: '待T+1打款',
-      TRANSFERRING: '打款中',
-      ARRIVED: '已到账',
-      FAILED: '到账失败'
+  filterSettlementRecords(recordList = [], filter = 'ALL') {
+    if (filter === 'ALL') return recordList
+    if (filter === 'WAITING') {
+      return recordList.filter((item) => ['WAITING_T1', 'TRANSFERRING'].includes(item.status))
     }
-    return statusMap[status] || '待处理'
+    if (filter === 'ARRIVED') {
+      return recordList.filter((item) => item.status === 'ARRIVED')
+    }
+    if (filter === 'FAILED') {
+      return recordList.filter((item) => item.status === 'FAILED')
+    }
+    return recordList
   },
 
-  filterLedgerByDate(ledgerList = [], filter = 'ALL') {
-    if (filter === 'ALL') return ledgerList
-    const now = new Date()
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
-
-    if (filter === 'TODAY') {
-      return ledgerList.filter((item) => (item.finishTime || 0) >= todayStart)
-    }
-    if (filter === 'MONTH') {
-      return ledgerList.filter((item) => (item.finishTime || 0) >= monthStart)
-    }
-    return ledgerList
+  getSettlementStatusText(status) {
+    if (status === 'WAITING_T1') return 'T+1 待打款'
+    if (status === 'TRANSFERRING') return '微信处理中'
+    if (status === 'ARRIVED') return '已到账'
+    if (status === 'FAILED') return '到账失败'
+    return '处理中'
   },
 
   switchFilter(e) {

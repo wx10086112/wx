@@ -15,7 +15,6 @@
   <view wx:else class="form-wrap">
     <view class="form-header">
       <text class="form-title">商家入驻申请</text>
-      <text class="form-desc">提交资质信息，审核通过后即可开通店铺运营权限</text>
     </view>
 
     <view class="form-section">

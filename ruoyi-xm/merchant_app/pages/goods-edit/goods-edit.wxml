@@ -1,12 +1,61 @@
 <view class="page-shell">
   <view class="form-panel panel">
-    <view class="image-uploader" bindtap="chooseGoodsImage">
-      <image wx:if="{{form.imageUrl}}" class="goods-image-preview" src="{{form.imageUrl}}" mode="aspectFill"></image>
-      <view wx:else class="image-placeholder">
-        <text class="image-plus">+</text>
-        <text class="image-tip">上传套餐图片</text>
+    <view wx:if="{{form.imageUrl}}" class="image-editor">
+      <view class="image-editor-head">
+        <view>
+          <text class="image-editor-title">套餐封面</text>
+        </view>
+        <button class="image-change-btn" bindtap="chooseGoodsImage">换图</button>
+      </view>
+
+      <view
+        class="crop-frame"
+        catchtouchstart="handleCropTouchStart"
+        catchtouchmove="handleCropTouchMove"
+        catchtouchend="handleCropTouchEnd"
+        catchtouchcancel="handleCropTouchEnd"
+      >
+        <image class="crop-image" src="{{form.imageUrl}}" mode="aspectFill" style="{{imageCropStyle}}"></image>
+        <view class="crop-grid">
+          <view class="grid-line vertical left"></view>
+          <view class="grid-line vertical right"></view>
+          <view class="grid-line horizontal top"></view>
+          <view class="grid-line horizontal bottom"></view>
+        </view>
+      </view>
+
+      <view class="crop-toolbar">
+        <view class="scale-row">
+          <text class="scale-label">缩放</text>
+          <slider
+            class="scale-slider"
+            min="100"
+            max="220"
+            step="1"
+            value="{{cropScaleValue}}"
+            activeColor="#1f6feb"
+            backgroundColor="#dbe7f6"
+            block-size="20"
+            bindchanging="handleCropScaleChanging"
+            bindchange="handleCropScaleChanging"
+          ></slider>
+        </view>
+        <view class="crop-actions">
+          <button class="crop-action-btn" data-delta="-0.1" bindtap="adjustCropScale">缩小</button>
+          <button class="crop-action-btn" data-delta="0.1" bindtap="adjustCropScale">放大</button>
+          <button class="crop-action-btn reset" bindtap="resetImageCrop">居中</button>
+        </view>
       </view>
     </view>
+
+    <view wx:else class="image-uploader" bindtap="chooseGoodsImage">
+      <view class="image-placeholder">
+        <text class="image-plus">+</text>
+        <text class="image-tip">上传套餐图片</text>
+        <text class="image-subtip">建议上传横图，保存后用户端按 16:9 展示</text>
+      </view>
+    </view>
+
     <view class="field">
       <text class="field-label">套餐名称</text>
       <input class="field-input" value="{{form.title}}" data-key="title" bindinput="handleInput" placeholder="请输入套餐名称" />

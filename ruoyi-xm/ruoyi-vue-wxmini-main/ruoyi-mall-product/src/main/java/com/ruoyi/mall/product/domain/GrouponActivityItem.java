@@ -16,8 +16,8 @@ public class GrouponActivityItem extends BaseEntity {
     private String description;
     private String coverImage;
     private String detailImages;
-    private Long originalPrice;
-    private Long grouponPrice;
+    private BigDecimal originalPrice;
+    private BigDecimal grouponPrice;
     private BigDecimal discountRate;
     private Integer stock;
     private Integer sales;
@@ -38,6 +38,8 @@ public class GrouponActivityItem extends BaseEntity {
     private Integer sort;
     private Date createTime;
     private Date updateTime;
+    /** 删除标志（0存在 2删除） */
+    private String delFlag;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -66,11 +68,11 @@ public class GrouponActivityItem extends BaseEntity {
     public String getDetailImages() { return detailImages; }
     public void setDetailImages(String detailImages) { this.detailImages = detailImages; }
 
-    public Long getOriginalPrice() { return originalPrice; }
-    public void setOriginalPrice(Long originalPrice) { this.originalPrice = originalPrice; }
+    public BigDecimal getOriginalPrice() { return originalPrice; }
+    public void setOriginalPrice(BigDecimal originalPrice) { this.originalPrice = originalPrice; }
 
-    public Long getGrouponPrice() { return grouponPrice; }
-    public void setGrouponPrice(Long grouponPrice) { this.grouponPrice = grouponPrice; }
+    public BigDecimal getGrouponPrice() { return grouponPrice; }
+    public void setGrouponPrice(BigDecimal grouponPrice) { this.grouponPrice = grouponPrice; }
 
     public BigDecimal getDiscountRate() { return discountRate; }
     public void setDiscountRate(BigDecimal discountRate) { this.discountRate = discountRate; }
@@ -116,4 +118,7 @@ public class GrouponActivityItem extends BaseEntity {
 
     public Date getUpdateTime() { return updateTime; }
     public void setUpdateTime(Date updateTime) { this.updateTime = updateTime; }
+
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 }

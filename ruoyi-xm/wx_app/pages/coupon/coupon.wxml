@@ -1,7 +1,6 @@
 <view class="coupon-page">
   <view class="coupon-header">
     <text class="coupon-title">我的优惠券</text>
-    <text class="coupon-subtitle">到店消费可使用优惠券抵扣</text>
   </view>
 
   <view class="coupon-tabs">
