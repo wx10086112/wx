@@ -3,7 +3,7 @@
     <el-card>
       <div slot="header">
         <span>商家列表</span>
-        <el-button style="float: right; padding: 3px 0;" type="text" icon="el-icon-plus" @click="handleAdd">添加商户</el-button>
+        <el-button v-hasPermi="['mall:merchant:add']" style="float: right; padding: 3px 0;" type="text" icon="el-icon-plus" @click="handleAdd">添加商户</el-button>
       </div>
 
       <!-- 搜索表单 -->
@@ -28,6 +28,11 @@
       <el-table v-loading="loading" :data="tableList" border style="width: 100%">
         <el-table-column prop="id" label="ID" width="60" align="center" />
         <el-table-column prop="name" label="商家名称" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="distributorName" label="所属分销商" width="120" align="center" show-overflow-tooltip>
+          <template slot-scope="scope">
+            <span>{{ scope.row.distributorName || '-' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="contact" label="联系人" width="90" align="center" />
         <el-table-column prop="phone" label="联系电话" width="130" align="center" />
         <el-table-column prop="status" label="状态" width="90" align="center">
@@ -42,10 +47,12 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="入驻时间" width="110" align="center" />
-        <el-table-column label="操作" width="180" align="center" fixed="right">
+        <el-table-column label="操作" width="220" align="center" fixed="right">
           <template slot-scope="scope">
-            <el-button type="text" size="small" icon="el-icon-view" @click="handleDetail(scope.row)">查看详情</el-button>
-            <el-button v-if="scope.row.status === 2" type="text" size="small" icon="el-icon-s-check" class="audit-btn" @click="handleAudit(scope.row)">审核</el-button>
+            <el-button type="text" size="small" icon="el-icon-view" @click="handleDetail(scope.row)">详情</el-button>
+            <el-button v-hasPermi="['mall:merchant:audit']" v-if="scope.row.status === 2" type="text" size="small" icon="el-icon-s-check" class="audit-btn" @click="handleAudit(scope.row)">审核</el-button>
+            <el-button v-if="isPlatform" v-hasPermi="['mall:merchant:edit']" type="text" size="small" icon="el-icon-connection" @click="handleAssign(scope.row)">分配</el-button>
+            <el-button v-hasPermi="['mall:merchant:remove']" type="text" size="small" icon="el-icon-delete" class="text-danger" @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -87,11 +94,34 @@
         <el-button v-if="auditAction === 'reject'" type="danger" :loading="auditLoading" @click="submitAudit(0)">确认拒绝</el-button>
       </span>
     </el-dialog>
+
+    <!-- 分配分销商弹窗 -->
+    <el-dialog title="分配分销商" :visible.sync="assignDialogVisible" width="450px" :close-on-click-modal="false">
+      <el-form label-width="100px">
+        <el-form-item label="当前商家">
+          <span>{{ assignRow.name }}</span>
+        </el-form-item>
+        <el-form-item label="当前归属">
+          <span>{{ assignRow.distributorName || '无（平台直属）' }}</span>
+        </el-form-item>
+        <el-form-item label="分配给">
+          <el-select v-model="assignDistributorId" placeholder="请选择分销商" clearable filterable style="width: 100%;">
+            <el-option label="无（平台直属）" :value="null" />
+            <el-option v-for="d in distributorOptions" :key="d.id" :label="d.name" :value="d.id" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button @click="assignDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="assignLoading" @click="submitAssign">确认分配</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getMerchantList, auditMerchant } from '@/api/merchant'
+import { getMerchantList, auditMerchant, deleteMerchant, updateMerchant } from '@/api/merchant'
+import { listDistributor } from '@/api/distributor'
 
 export default {
   name: 'MerchantList',
@@ -110,7 +140,17 @@ export default {
       auditRow: {},
       auditAction: '',
       rejectReason: '',
-      auditLoading: false
+      auditLoading: false,
+      assignDialogVisible: false,
+      assignRow: {},
+      assignDistributorId: null,
+      assignLoading: false,
+      distributorOptions: []
+    }
+  },
+  computed: {
+    isPlatform() {
+      return this.$store.state.user.accountType !== 'DISTRIBUTOR'
     }
   },
   created() {
@@ -122,18 +162,11 @@ export default {
       try {
         const res = await getMerchantList({
           pageNum: this.pageNum,
-          pageSize: this.pageSize
+          pageSize: this.pageSize,
+          name: this.queryParams.name || undefined,
+          status: this.queryParams.status !== '' && this.queryParams.status !== undefined ? this.queryParams.status : undefined
         })
-        let list = res.rows
-        // 客户端筛选
-        if (this.queryParams.name) {
-          const keyword = this.queryParams.name.toLowerCase()
-          list = list.filter(item => item.name.toLowerCase().includes(keyword))
-        }
-        if (this.queryParams.status !== undefined && this.queryParams.status !== '') {
-          list = list.filter(item => item.status === this.queryParams.status)
-        }
-        this.tableList = list
+        this.tableList = res.rows
         this.total = res.total
       } catch (e) {
         this.$message.error('获取商家列表失败')
@@ -202,6 +235,40 @@ export default {
     statusTagType(status) {
       const map = { 0: 'info', 1: 'success', 2: 'warning' }
       return map[status] || 'info'
+    },
+    handleDelete(row) {
+      this.$modal.confirm('确认删除商家「' + row.name + '」？删除后该商家将不再出现在正常列表中，其关联数据按当前系统删除策略处理。').then(async () => {
+        await deleteMerchant(row.id)
+        this.$modal.msgSuccess('删除成功')
+        this.fetchData()
+      }).catch(() => {})
+    },
+    async loadDistributors() {
+      try {
+        const res = await listDistributor({ pageSize: 500 })
+        this.distributorOptions = res.rows || []
+      } catch (e) {
+        this.distributorOptions = []
+      }
+    },
+    handleAssign(row) {
+      this.assignRow = { ...row }
+      this.assignDistributorId = row.distributorId || null
+      this.loadDistributors()
+      this.assignDialogVisible = true
+    },
+    async submitAssign() {
+      this.assignLoading = true
+      try {
+        await updateMerchant({ id: this.assignRow.id, distributorId: this.assignDistributorId })
+        this.$modal.msgSuccess('分配成功')
+        this.assignDialogVisible = false
+        this.fetchData()
+      } catch (e) {
+        this.$modal.msgError('分配失败')
+      } finally {
+        this.assignLoading = false
+      }
     }
   }
 }
@@ -228,5 +295,8 @@ export default {
 }
 .reject-reason {
   margin-top: 10px;
+}
+.text-danger {
+  color: #F56C6C;
 }
 </style>

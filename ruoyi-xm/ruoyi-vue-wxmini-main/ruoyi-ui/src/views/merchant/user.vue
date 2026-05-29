@@ -3,7 +3,7 @@
     <el-card>
       <div slot="header">
         <span>商家用户管理</span>
-        <el-button style="float: right; padding: 3px 0;" type="text" icon="el-icon-plus" @click="handleAdd">新增用户</el-button>
+        <el-button v-hasPermi="['mall:merchant:add']" style="float: right; padding: 3px 0;" type="text" icon="el-icon-plus" @click="handleAdd">新增用户</el-button>
       </div>
 
       <!-- 搜索表单 -->
@@ -64,9 +64,9 @@
         <el-table-column prop="createTime" label="创建时间" width="160" align="center" />
         <el-table-column label="操作" width="220" align="center" fixed="right">
           <template slot-scope="scope">
-            <el-button type="text" size="small" icon="el-icon-edit" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button type="text" size="small" icon="el-icon-key" @click="handleResetPwd(scope.row)">重置密码</el-button>
-            <el-button v-if="scope.row.role !== 'owner'" type="text" size="small" icon="el-icon-delete" class="danger-btn" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button v-hasPermi="['mall:merchant:edit']" type="text" size="small" icon="el-icon-edit" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button v-hasPermi="['mall:merchant:edit']" type="text" size="small" icon="el-icon-key" @click="handleResetPwd(scope.row)">重置密码</el-button>
+            <el-button v-hasPermi="['mall:merchant:remove']" v-if="scope.row.role !== 'owner'" type="text" size="small" icon="el-icon-delete" class="danger-btn" @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -139,7 +139,7 @@
       </el-form>
       <span slot="footer">
         <el-button @click="resetPwdDialogVisible = false">取 消</el-button>
-        <el-button type="primary" :loading="resetPwdLoading" @click="submitResetPwd">确 定</el-button>
+        <el-button v-hasPermi="['mall:merchant:edit']" type="primary" :loading="resetPwdLoading" @click="submitResetPwd">确 定</el-button>
       </span>
     </el-dialog>
   </div>

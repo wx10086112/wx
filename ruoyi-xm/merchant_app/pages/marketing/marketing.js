@@ -10,6 +10,10 @@ const getLocalCoupons = () => JSON.parse(JSON.stringify(wx.getStorageSync(COUPON
 const setLocalCoupons = (list) => wx.setStorageSync(COUPON_KEY, JSON.parse(JSON.stringify(list)))
 const getLocalPromotions = () => JSON.parse(JSON.stringify(wx.getStorageSync(PROMOTION_KEY) || []))
 const setLocalPromotions = (list) => wx.setStorageSync(PROMOTION_KEY, JSON.parse(JSON.stringify(list)))
+<<<<<<< HEAD
+=======
+const centsToYuanInput = (value) => util.formatPrice(value).replace(/\.00$/, '')
+>>>>>>> 苏
 
 Page({
   data: {
@@ -23,6 +27,7 @@ Page({
     showCouponForm: false,
     showPromotionForm: false,
     couponForm: {
+      couponId: null,
       name: '',
       discountAmount: '',
       minOrderAmount: '',
@@ -30,6 +35,7 @@ Page({
       validDays: '30'
     },
     promotionForm: {
+      promotionId: null,
       name: '',
       fullAmount: '',
       reduceAmount: ''
@@ -152,7 +158,27 @@ Page({
   openCouponForm() {
     this.setData({
       showCouponForm: true,
-      couponForm: { name: '', discountAmount: '', minOrderAmount: '', totalCount: '', validDays: '30' }
+      couponForm: { couponId: null, name: '', discountAmount: '', minOrderAmount: '', totalCount: '', validDays: '30' }
+    })
+  },
+
+  openCouponEdit(e) {
+    const couponId = Number(e.currentTarget.dataset.id)
+    const coupon = getLocalCoupons().find((item) => item.couponId === couponId)
+    if (!coupon) {
+      util.showToast('未找到优惠券')
+      return
+    }
+    this.setData({
+      showCouponForm: true,
+      couponForm: {
+        couponId,
+        name: coupon.name || '',
+        discountAmount: centsToYuanInput(coupon.discountAmount),
+        minOrderAmount: centsToYuanInput(coupon.minOrderAmount),
+        totalCount: String(coupon.totalCount || ''),
+        validDays: String(coupon.validDays || 30)
+      }
     })
   },
 
@@ -177,14 +203,19 @@ Page({
       validDays: Number(f.validDays || 30)
     }
 
-    api.saveCoupon(couponData)
+    const request = f.couponId
+      ? api.updateCoupon({ couponId: f.couponId, ...couponData })
+      : api.saveCoupon(couponData)
+
+    request
       .then(() => {
-        util.showToast('优惠券已创建', 'success')
+        util.showToast(f.couponId ? '优惠券已保存' : '优惠券已创建', 'success')
         this.setData({ showCouponForm: false })
         this.loadData()
       })
       .catch(() => {
         const list = getLocalCoupons()
+<<<<<<< HEAD
         const maxId = list.reduce((max, item) => Math.max(max, item.couponId || 0), 0)
         list.unshift({
           couponId: maxId + 1,
@@ -197,6 +228,28 @@ Page({
         util.showToast('已本地创建优惠券', 'success')
         this.setData({ showCouponForm: false })
         this.renderCoupons(list)
+=======
+        const nextList = f.couponId
+          ? list.map((item) =>
+              item.couponId === f.couponId
+                ? { ...item, ...couponData }
+                : item
+            )
+          : [
+              {
+                couponId: list.reduce((max, item) => Math.max(max, item.couponId || 0), 0) + 1,
+                ...couponData,
+                usedCount: 0,
+                status: 'ACTIVE',
+                createTime: Date.now()
+              },
+              ...list
+            ]
+        setLocalCoupons(nextList)
+        util.showToast(f.couponId ? '已本地保存优惠券' : '已本地创建优惠券', 'success')
+        this.setData({ showCouponForm: false })
+        this.renderCoupons(nextList)
+>>>>>>> 苏
       })
   },
 
@@ -217,7 +270,25 @@ Page({
   openPromotionForm() {
     this.setData({
       showPromotionForm: true,
-      promotionForm: { name: '', fullAmount: '', reduceAmount: '' }
+      promotionForm: { promotionId: null, name: '', fullAmount: '', reduceAmount: '' }
+    })
+  },
+
+  openPromotionEdit(e) {
+    const promotionId = Number(e.currentTarget.dataset.id)
+    const promotion = getLocalPromotions().find((item) => item.promotionId === promotionId)
+    if (!promotion) {
+      util.showToast('未找到满减活动')
+      return
+    }
+    this.setData({
+      showPromotionForm: true,
+      promotionForm: {
+        promotionId,
+        name: promotion.name || '',
+        fullAmount: centsToYuanInput(promotion.fullAmount),
+        reduceAmount: centsToYuanInput(promotion.reduceAmount)
+      }
     })
   },
 
@@ -240,14 +311,19 @@ Page({
       reduceAmount: Math.round(Number(f.reduceAmount) * 100)
     }
 
-    api.savePromotion(promoData)
+    const request = f.promotionId
+      ? api.updatePromotion({ promotionId: f.promotionId, ...promoData })
+      : api.savePromotion(promoData)
+
+    request
       .then(() => {
-        util.showToast('满减活动已创建', 'success')
+        util.showToast(f.promotionId ? '满减活动已保存' : '满减活动已创建', 'success')
         this.setData({ showPromotionForm: false })
         this.loadData()
       })
       .catch(() => {
         const list = getLocalPromotions()
+<<<<<<< HEAD
         const maxId = list.reduce((max, item) => Math.max(max, item.promotionId || 0), 0)
         list.unshift({
           promotionId: maxId + 1,
@@ -259,6 +335,27 @@ Page({
         util.showToast('已本地创建满减活动', 'success')
         this.setData({ showPromotionForm: false })
         this.renderPromotions(list)
+=======
+        const nextList = f.promotionId
+          ? list.map((item) =>
+              item.promotionId === f.promotionId
+                ? { ...item, ...promoData }
+                : item
+            )
+          : [
+              {
+                promotionId: list.reduce((max, item) => Math.max(max, item.promotionId || 0), 0) + 1,
+                ...promoData,
+                status: 'ACTIVE',
+                createTime: Date.now()
+              },
+              ...list
+            ]
+        setLocalPromotions(nextList)
+        util.showToast(f.promotionId ? '已本地保存满减活动' : '已本地创建满减活动', 'success')
+        this.setData({ showPromotionForm: false })
+        this.renderPromotions(nextList)
+>>>>>>> 苏
       })
   },
 

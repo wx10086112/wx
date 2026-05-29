@@ -7,6 +7,9 @@ import com.ruoyi.wxmini.dto.merchant.MerchantMiniGoodsDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniLoginResponseDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniOrderDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniOverviewDto;
+import com.ruoyi.wxmini.dto.merchant.MerchantMiniSettlementAccountDto;
+import com.ruoyi.wxmini.dto.merchant.MerchantMiniSettlementOverviewDto;
+import com.ruoyi.wxmini.dto.merchant.MerchantMiniSettlementRecordDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffPermissionRequestDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffRequestDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffUserDto;
@@ -18,6 +21,7 @@ import com.ruoyi.wxmini.dto.merchant.MerchantMiniWorkbenchStatsDto;
 import com.ruoyi.wxmini.service.IMerchantMiniMockService;
 import com.ruoyi.mall.common.service.IWxMiniJwtService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -31,7 +35,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// @Service  // 已被 MerchantMiniServiceImpl 替代，保留代码作为参考
+@Service
+@Profile("dev")  // 仅开发环境生效，生产环境不注册此Bean
 public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
 
     private static final Long MERCHANT_ID = 1L;
@@ -47,6 +52,8 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
     private static final String VERIFY_STATUS_FAILED = "FAILED";
     private static final String LEDGER_STATUS_PENDING = "PENDING";
     private static final String LEDGER_STATUS_SETTLED = "SETTLED";
+    private static final String SETTLEMENT_STATUS_WAITING_T1 = "WAITING_T1";
+    private static final String SETTLEMENT_STATUS_ARRIVED = "ARRIVED";
     private static final String WITHDRAW_STATUS_PROCESSING = "PROCESSING";
     private static final String ROLE_OWNER = "owner";
     private static final int MERCHANT_RATE = 90;
@@ -69,7 +76,7 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
     private final List<MerchantMiniWithdrawRecordDto> withdrawRecordList = initWithdrawRecordList();
 
     @Override
-    public MerchantMiniLoginResponseDto login(String username, String password) {
+    public MerchantMiniLoginResponseDto login(String username, String password, String appid) {
         // Mock模式：忽略密码，用username当作roleKey
         MerchantMiniStaffUserDto staffUser = cloneStaffUser(resolveStaffUserByRoleKey(username));
         MerchantMiniLoginResponseDto responseDto = new MerchantMiniLoginResponseDto();
@@ -162,6 +169,16 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
         }
         result.sort((a, b) -> Integer.compare(defaultInt(a.getSort()), defaultInt(b.getSort())));
         return result;
+    }
+
+    @Override
+    public synchronized MerchantMiniGoodsDto getGoodsDetail(Long id) {
+        for (MerchantMiniGoodsDto goodsDto : goodsList) {
+            if (goodsDto.getGoodsId() != null && goodsDto.getGoodsId().equals(id)) {
+                return cloneGoods(goodsDto);
+            }
+        }
+        throw new IllegalArgumentException("商品不存在");
     }
 
     @Override
@@ -291,13 +308,29 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
 
     @Override
     public synchronized MerchantMiniFinanceOverviewDto getFinanceOverview() {
+        MerchantMiniSettlementOverviewDto settlementOverview = getSettlementOverview();
+        MerchantMiniFinanceOverviewDto overviewDto = new MerchantMiniFinanceOverviewDto();
+        overviewDto.setTodayIncomeAmount(settlementOverview.getTodayIncomeAmount());
+        overviewDto.setMonthIncomeAmount(settlementOverview.getMonthIncomeAmount());
+        overviewDto.setPendingSettleAmount(settlementOverview.getPendingSettleAmount());
+        overviewDto.setWithdrawableAmount(settlementOverview.getSettledAmount());
+        overviewDto.setPlatformFeeAmount(settlementOverview.getPlatformFeeAmount());
+        overviewDto.setCompletedOrderCount(settlementOverview.getCompletedOrderCount());
+        overviewDto.setLedgerList(settlementOverview.getLedgerList());
+        overviewDto.setWithdrawList(new ArrayList<>());
+        return overviewDto;
+    }
+
+    @Override
+    public synchronized MerchantMiniSettlementOverviewDto getSettlementOverview() {
         List<MerchantMiniFinanceLedgerDto> ledgerList = buildFinanceLedgerList();
         Long todayIncomeAmount = 0L;
         Long monthIncomeAmount = 0L;
         Long pendingSettleAmount = 0L;
-        Long withdrawableAmount = 0L;
+        Long settledAmount = 0L;
         Long platformFeeAmount = 0L;
         int completedOrderCount = 0;
+        List<MerchantMiniSettlementRecordDto> settlementRecordList = new ArrayList<>();
 
         for (MerchantMiniFinanceLedgerDto ledgerDto : ledgerList) {
             completedOrderCount++;
@@ -311,45 +344,31 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
             if (LEDGER_STATUS_PENDING.equals(ledgerDto.getStatus())) {
                 pendingSettleAmount += defaultLong(ledgerDto.getMerchantAmount());
             } else {
-                withdrawableAmount += defaultLong(ledgerDto.getMerchantAmount());
+                settledAmount += defaultLong(ledgerDto.getMerchantAmount());
             }
+            settlementRecordList.add(buildSettlementRecord(ledgerDto));
         }
 
-        Long frozenWithdrawAmount = 0L;
-        for (MerchantMiniWithdrawRecordDto withdrawRecordDto : withdrawRecordList) {
-            frozenWithdrawAmount += defaultLong(withdrawRecordDto.getAmount());
-        }
-        withdrawableAmount = Math.max(0L, withdrawableAmount - frozenWithdrawAmount);
-
-        MerchantMiniFinanceOverviewDto overviewDto = new MerchantMiniFinanceOverviewDto();
+        MerchantMiniSettlementOverviewDto overviewDto = new MerchantMiniSettlementOverviewDto();
         overviewDto.setTodayIncomeAmount(todayIncomeAmount);
         overviewDto.setMonthIncomeAmount(monthIncomeAmount);
         overviewDto.setPendingSettleAmount(pendingSettleAmount);
-        overviewDto.setWithdrawableAmount(withdrawableAmount);
+        overviewDto.setSettledAmount(settledAmount);
+        overviewDto.setProcessingAmount(0L);
+        overviewDto.setPendingAutoTransferAmount(pendingSettleAmount);
         overviewDto.setPlatformFeeAmount(platformFeeAmount);
         overviewDto.setCompletedOrderCount(completedOrderCount);
+        overviewDto.setAutoTransferMode("T+1");
+        overviewDto.setNextAutoTransferTime(nextAutoTransferTime());
+        overviewDto.setSettlementAccount(buildSettlementAccount());
+        overviewDto.setSettlementRecordList(settlementRecordList);
         overviewDto.setLedgerList(ledgerList);
-        overviewDto.setWithdrawList(cloneWithdrawRecordList());
         return overviewDto;
     }
 
     @Override
     public synchronized MerchantMiniWithdrawRecordDto applyWithdraw(Long amount) {
-        if (amount == null || amount <= 0) {
-            throw new IllegalArgumentException("提现金额不能为空");
-        }
-        Long withdrawableAmount = getFinanceOverview().getWithdrawableAmount();
-        if (amount > withdrawableAmount) {
-            throw new IllegalArgumentException("提现金额超过可提现余额");
-        }
-        MerchantMiniWithdrawRecordDto recordDto = new MerchantMiniWithdrawRecordDto();
-        recordDto.setWithdrawId(nextWithdrawId());
-        recordDto.setAmount(amount);
-        recordDto.setStatus(WITHDRAW_STATUS_PROCESSING);
-        recordDto.setApplyTime(System.currentTimeMillis());
-        recordDto.setRemark("商家端在线提现申请，等待平台/微信支付出款处理");
-        withdrawRecordList.add(0, recordDto);
-        return cloneWithdrawRecord(recordDto);
+        throw new IllegalArgumentException("该版本已切换为微信自动结算，无需商家手动提现");
     }
 
     // ==================== 订单操作 ====================
@@ -933,6 +952,41 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
         }
         result.sort(Comparator.comparing(MerchantMiniFinanceLedgerDto::getFinishTime, Comparator.nullsLast(Long::compareTo)).reversed());
         return result;
+    }
+
+    private MerchantMiniSettlementAccountDto buildSettlementAccount() {
+        MerchantMiniSettlementAccountDto dto = new MerchantMiniSettlementAccountDto();
+        dto.setAccountName(storeInfo.getStoreName());
+        dto.setBankName("招商银行");
+        dto.setAccountNoTail("6601");
+        dto.setStatus("VERIFIED");
+        return dto;
+    }
+
+    private MerchantMiniSettlementRecordDto buildSettlementRecord(MerchantMiniFinanceLedgerDto ledgerDto) {
+        MerchantMiniSettlementRecordDto dto = new MerchantMiniSettlementRecordDto();
+        dto.setSettlementId("S" + ledgerDto.getOrderNo());
+        dto.setOrderNo(ledgerDto.getOrderNo());
+        dto.setTitle(ledgerDto.getTitle());
+        dto.setAmount(ledgerDto.getMerchantAmount());
+        dto.setApplyTime(ledgerDto.getFinishTime());
+        dto.setExpectedTransferTime(ledgerDto.getSettleTime());
+        if (LEDGER_STATUS_SETTLED.equals(ledgerDto.getStatus())) {
+            dto.setStatus(SETTLEMENT_STATUS_ARRIVED);
+            dto.setArriveTime(ledgerDto.getSettleTime());
+            dto.setRemark("微信已自动打款至结算卡");
+        } else {
+            dto.setStatus(SETTLEMENT_STATUS_WAITING_T1);
+            dto.setRemark("订单完成后进入 T+1 自动打款队列");
+        }
+        return dto;
+    }
+
+    private Long nextAutoTransferTime() {
+        long now = System.currentTimeMillis();
+        long todayStart = now - (now + 8 * 60 * 60 * 1000L) % DAY_MILLIS;
+        long next = todayStart + DAY_MILLIS + 10 * 60 * 60 * 1000L;
+        return next <= now ? next + DAY_MILLIS : next;
     }
 
     private List<MerchantMiniWithdrawRecordDto> initWithdrawRecordList() {

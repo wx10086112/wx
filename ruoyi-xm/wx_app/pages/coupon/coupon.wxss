@@ -21,13 +21,6 @@
   font-weight: 600;
 }
 
-.coupon-subtitle {
-  display: block;
-  margin-top: 10rpx;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 24rpx;
-}
-
 .coupon-tabs {
   display: flex;
   gap: 14rpx;

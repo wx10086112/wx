@@ -7,7 +7,7 @@ Page({
     tabs: [
       { label: '全部', value: 'ALL' },
       { label: '待支付', value: 'PENDING_PAY' },
-      { label: '待使用', value: 'UNUSED' },
+      { label: '待使用', value: 'PAID_UNUSED' },
       { label: '退款/售后', value: 'AFTER_SALE' }
     ],
     currentTab: 'ALL',
@@ -74,7 +74,7 @@ Page({
     const tab = this.data.currentTab
     if (tab === 'ALL') return list
     if (tab === 'PENDING_PAY') return list.filter((item) => item.status === 'PENDING_PAY')
-    if (tab === 'UNUSED') return list.filter((item) => item.status === 'PAID_UNUSED')
+    if (tab === 'PAID_UNUSED') return list.filter((item) => item.status === 'PAID_UNUSED')
     if (tab === 'AFTER_SALE') {
       return list.filter((item) => ['REFUNDING', 'REFUNDED'].includes(item.status))
     }
@@ -98,7 +98,15 @@ Page({
         })
       })
       .catch(() => {
+<<<<<<< HEAD
         this.loadOrdersLocal()
+=======
+        this.setData({
+          orderList: [],
+          orderStats: this.buildOrderStats([]),
+          loading: false
+        })
+>>>>>>> 苏
       })
   },
 
@@ -142,6 +150,7 @@ Page({
     const order = e.detail.order
     util.showModal('取消订单', '确认取消该订单？').then((confirm) => {
       if (!confirm) return
+<<<<<<< HEAD
       this.updateOrderList(
         (orders) =>
           orders.map((item) =>
@@ -149,6 +158,16 @@ Page({
           ),
         '订单已取消'
       )
+=======
+      orderApi.cancelOrder(order.orderNo)
+        .then(() => {
+          util.showToast('订单已取消', 'success')
+          this.loadOrders()
+        })
+        .catch((err) => {
+          util.showToast(err && err.msg ? err.msg : '取消失败')
+        })
+>>>>>>> 苏
     })
   },
 

@@ -21,14 +21,19 @@
     </view>
 
     <!-- 批量操作栏 -->
-    <view wx:if="{{batchMode}}" class="batch-bar panel">
-      <view class="batch-left">
-        <text class="batch-text" bindtap="selectAll">{{selectedIds.length === goodsList.length ? '取消全选' : '全选'}}</text>
-        <text class="batch-count">已选 {{selectedIds.length}} 项</text>
+    <view wx:if="{{batchMode}}" class="batch-panel panel">
+      <view class="batch-summary">
+        <view class="batch-info">
+          <text class="batch-title">批量管理</text>
+          <text class="batch-count">已选 {{selectedIds.length}} / {{goodsList.length}} 项</text>
+        </view>
+        <button class="ghost-btn select-btn" bindtap="selectAll">
+          {{selectedIds.length === goodsList.length ? '取消全选' : '全选'}}
+        </button>
       </view>
       <view class="batch-actions">
-        <button class="ghost-btn mini-btn" bindtap="batchOnShelf">批量上架</button>
-        <button class="ghost-btn mini-btn" bindtap="batchOffShelf">批量下架</button>
+        <button class="ghost-btn batch-action-btn" bindtap="batchOnShelf">批量上架</button>
+        <button class="ghost-btn batch-action-btn danger" bindtap="batchOffShelf">批量下架</button>
       </view>
     </view>
 
@@ -39,7 +44,7 @@
       </view>
       <view class="goods-body">
         <view class="goods-cover {{item.imageUrl ? '' : 'empty'}}">
-          <image wx:if="{{item.imageUrl}}" src="{{item.imageUrl}}" mode="aspectFill"></image>
+          <image wx:if="{{item.imageUrl}}" class="goods-cover-image" src="{{item.imageUrl}}" mode="aspectFill" style="{{item.imageCropStyle}}"></image>
           <text wx:else>暂无图片</text>
         </view>
         <view class="goods-top">
@@ -70,5 +75,16 @@
 
   <view wx:else class="empty-state">
     <text class="empty-text">当前账号没有商品管理权限</text>
+  </view>
+
+  <view wx:if="{{confirmModalVisible}}" class="confirm-modal-mask">
+    <view class="confirm-modal-card">
+      <text class="confirm-modal-title">{{confirmModal.title}}</text>
+      <text class="confirm-modal-desc">{{confirmModal.desc}}</text>
+      <view class="confirm-modal-actions">
+        <button class="confirm-modal-btn secondary" bindtap="closeConfirmModal">取消</button>
+        <button class="confirm-modal-btn primary" bindtap="confirmBatchAction">确认</button>
+      </view>
+    </view>
   </view>
 </view>

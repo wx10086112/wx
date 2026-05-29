@@ -24,20 +24,21 @@
       <!-- 表格 -->
       <el-table v-loading="loading" :data="tableList" border>
         <el-table-column label="订单号" prop="orderNo" width="180" />
-        <el-table-column label="商家" prop="merchantId" width="140" />
-        <el-table-column label="用户" prop="userId" width="100" />
+        <el-table-column label="商家" prop="merchantName" width="140" />
+        <el-table-column label="用户" prop="userName" width="100" />
         <el-table-column label="退款原因" prop="refundReason" min-width="160" show-overflow-tooltip />
         <el-table-column label="退款金额" width="110">
           <template slot-scope="scope">
-            <span class="text-danger">¥{{ scope.row.refundAmount.toFixed(2) }}</span>
+            <span class="text-danger">¥{{ (scope.row.refundAmount || 0).toFixed(2) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="申请时间" prop="createTime" width="160" />
         <el-table-column label="状态" width="100" align="center">
           <template slot-scope="scope">
-            <el-tag :type="statusMap[scope.row.status].type" size="small">
+            <el-tag v-if="statusMap[scope.row.status]" :type="statusMap[scope.row.status].type" size="small">
               {{ statusMap[scope.row.status].text }}
             </el-tag>
+            <el-tag v-else type="info" size="small">未知</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="120" align="center">
@@ -68,7 +69,7 @@
           <el-descriptions-item label="订单号">{{ currentRow.orderNo }}</el-descriptions-item>
           <el-descriptions-item label="商家">{{ currentRow.merchantId }}</el-descriptions-item>
           <el-descriptions-item label="退款原因">{{ currentRow.refundReason }}</el-descriptions-item>
-          <el-descriptions-item label="退款金额">¥{{ currentRow.refundAmount.toFixed(2) }}</el-descriptions-item>
+          <el-descriptions-item label="退款金额">¥{{ (currentRow.refundAmount || 0).toFixed(2) }}</el-descriptions-item>
         </el-descriptions>
         <el-form :model="processForm" label-width="80px" style="margin-top: 16px;">
           <el-form-item label="处理方式">
@@ -160,7 +161,7 @@ export default {
       this.processDialogVisible = true
     },
     handleView(row) {
-      this.$router.push({ path: '/finance/detail/' + row.id })
+      this.$router.push({ name: 'OrderDetail', params: { id: row.id } })
     },
     submitProcess() {
       this.$message.success('处理成功')

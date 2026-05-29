@@ -1,5 +1,6 @@
 package com.ruoyi.mall.merchant.controller;
 
+import com.ruoyi.common.annotation.DataScopeBiz;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
@@ -20,6 +21,7 @@ public class MallMerchantAuditController extends BaseController {
     @Autowired
     private IMerchantService merchantService;
 
+    @DataScopeBiz(distributorAlias = "m")
     @PreAuthorize("@ss.hasPermi('mall:merchant:audit')")
     @GetMapping("/audit/list")
     public TableDataInfo auditList(Merchant merchant) {

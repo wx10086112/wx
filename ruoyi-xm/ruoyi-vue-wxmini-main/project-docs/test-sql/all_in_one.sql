@@ -2,7 +2,7 @@
 -- 零点科技多商家SaaS团购商城 - 一键建表+数据(合并版)
 -- 数据库: ruoyi-cs
 -- 执行这一个文件即可，会先删除旧表再重建
--- 共24张业务表
+-- 共30张业务表
 -- ============================================
 
 USE `ruoyi-cs`;
@@ -15,6 +15,7 @@ USE `ruoyi-cs`;
 DROP TABLE IF EXISTS `merchant`;
 CREATE TABLE `merchant` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '商家ID',
+  `distributor_id` BIGINT DEFAULT NULL COMMENT '所属分销商ID',
   `name` VARCHAR(100) NOT NULL COMMENT '商家名称',
   `logo` VARCHAR(255) DEFAULT '' COMMENT '商家Logo',
   `contact` VARCHAR(50) DEFAULT '' COMMENT '联系人',
@@ -34,8 +35,10 @@ CREATE TABLE `merchant` (
   `update_by` VARCHAR(64) DEFAULT '' COMMENT '更新者',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `remark` VARCHAR(500) DEFAULT '' COMMENT '备注',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
-  KEY `idx_status` (`status`)
+  KEY `idx_status` (`status`),
+  KEY `idx_distributor_id` (`distributor_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商家主表';
 
 -- 2. 商家门店表
@@ -55,6 +58,7 @@ CREATE TABLE `merchant_store` (
   `is_main` TINYINT DEFAULT 0 COMMENT '是否主门店(0否 1是)',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_merchant_id` (`merchant_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商家门店表';
@@ -76,6 +80,7 @@ CREATE TABLE `merchant_user` (
   `update_by` VARCHAR(64) DEFAULT '' COMMENT '更新者',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `remark` VARCHAR(500) DEFAULT '' COMMENT '备注',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_username` (`username`),
   KEY `idx_merchant_id` (`merchant_id`)
@@ -94,6 +99,7 @@ CREATE TABLE `product_category` (
   `update_by` VARCHAR(64) DEFAULT '' COMMENT '更新者',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `remark` VARCHAR(500) DEFAULT '' COMMENT '备注',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_merchant_id` (`merchant_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品分类表';
@@ -113,6 +119,7 @@ CREATE TABLE `groupon_activity` (
   `limit_per_user` INT DEFAULT 0 COMMENT '每人限购(0不限)',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_merchant_id` (`merchant_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='团购活动表';
@@ -141,6 +148,7 @@ CREATE TABLE `product` (
   `update_by` VARCHAR(64) DEFAULT '' COMMENT '更新者',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `remark` VARCHAR(500) DEFAULT '' COMMENT '备注',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_merchant_id` (`merchant_id`),
   KEY `idx_category_id` (`category_id`),
@@ -185,6 +193,7 @@ CREATE TABLE `coupon` (
   `status` TINYINT DEFAULT 1 COMMENT '状态(0禁用 1正常)',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_merchant_id` (`merchant_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优惠券模板表';
@@ -200,6 +209,7 @@ CREATE TABLE `user_coupon` (
   `use_time` DATETIME DEFAULT NULL COMMENT '使用时间',
   `order_no` VARCHAR(32) DEFAULT '' COMMENT '关联订单号',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '领取时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_user_id` (`user_id`),
   KEY `idx_coupon_id` (`coupon_id`)
@@ -213,6 +223,7 @@ CREATE TABLE `user_favorite` (
   `target_type` TINYINT NOT NULL COMMENT '收藏类型(1商品 2商家)',
   `target_id` BIGINT NOT NULL COMMENT '目标ID(商品ID或商家ID)',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户收藏表';
@@ -231,6 +242,7 @@ CREATE TABLE `user_address` (
   `is_default` TINYINT DEFAULT 0 COMMENT '是否默认(0否 1是)',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户收货地址表';
@@ -262,6 +274,7 @@ CREATE TABLE `mall_order` (
   `update_by` VARCHAR(64) DEFAULT '' COMMENT '更新者',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `remark` VARCHAR(500) DEFAULT '' COMMENT '备注',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_order_no` (`order_no`),
   KEY `idx_merchant_id` (`merchant_id`),
@@ -285,10 +298,12 @@ CREATE TABLE `order_item` (
   `quantity` INT NOT NULL DEFAULT 1 COMMENT '数量',
   `subtotal` DECIMAL(10,2) DEFAULT 0.00 COMMENT '小计',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_order_id` (`order_id`),
   KEY `idx_order_no` (`order_no`),
-  KEY `idx_product_id` (`product_id`)
+  KEY `idx_product_id` (`product_id`),
+  KEY `idx_merchant_id` (`merchant_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单商品明细表';
 
 -- 13. 资金流水表
@@ -302,6 +317,7 @@ CREATE TABLE `transaction_record` (
   `order_no` VARCHAR(32) DEFAULT '' COMMENT '关联订单号',
   `description` VARCHAR(255) DEFAULT '' COMMENT '描述',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_merchant_id` (`merchant_id`),
   KEY `idx_type` (`type`),
@@ -326,6 +342,7 @@ CREATE TABLE `withdraw_record` (
   `update_by` VARCHAR(64) DEFAULT '' COMMENT '更新者',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `remark` VARCHAR(500) DEFAULT '' COMMENT '备注',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_merchant_id` (`merchant_id`),
   KEY `idx_status` (`status`)
@@ -341,6 +358,7 @@ CREATE TABLE `platform_income` (
   `commission_rate` DECIMAL(5,2) DEFAULT 0.00 COMMENT '抽成比例(%)',
   `commission` DECIMAL(10,2) DEFAULT 0.00 COMMENT '佣金金额',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_merchant_id` (`merchant_id`),
   KEY `idx_order_no` (`order_no`)
@@ -363,6 +381,7 @@ CREATE TABLE `merchant_bill` (
   `settle_time` DATETIME DEFAULT NULL COMMENT '结算时间',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_bill_no` (`bill_no`),
   KEY `idx_merchant_id` (`merchant_id`)
@@ -383,6 +402,7 @@ CREATE TABLE `operation_log` (
   `error_msg` VARCHAR(2000) DEFAULT '' COMMENT '错误消息',
   `cost_time` INT DEFAULT 0 COMMENT '耗时(毫秒)',
   `oper_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_operator` (`operator`),
   KEY `idx_oper_time` (`oper_time`)
@@ -400,6 +420,7 @@ CREATE TABLE `mall_login_log` (
   `status` TINYINT DEFAULT 0 COMMENT '状态(0成功 1失败)',
   `msg` VARCHAR(255) DEFAULT '' COMMENT '提示消息',
   `login_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '登录时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_user_name` (`user_name`),
   KEY `idx_login_time` (`login_time`)
@@ -419,6 +440,7 @@ CREATE TABLE `mall_oper_log` (
   `error_msg` VARCHAR(2000) DEFAULT '' COMMENT '错误消息',
   `cost_time` INT DEFAULT 0 COMMENT '耗时(毫秒)',
   `oper_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_operator` (`operator`),
   KEY `idx_oper_time` (`oper_time`)
@@ -435,6 +457,7 @@ CREATE TABLE `cart` (
   `checked` TINYINT DEFAULT 1 COMMENT '是否选中(0否 1是)',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_user_product` (`user_id`, `product_id`),
   KEY `idx_user_id` (`user_id`),
@@ -459,6 +482,7 @@ CREATE TABLE `banner` (
   `update_by` VARCHAR(64) DEFAULT '' COMMENT '更新者',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `remark` VARCHAR(500) DEFAULT '' COMMENT '备注',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_status` (`status`),
   KEY `idx_position` (`position`)
@@ -480,6 +504,7 @@ CREATE TABLE `payment_record` (
   `notify_result` VARCHAR(50) DEFAULT '' COMMENT '回调结果(success/fail)',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_order_no` (`order_no`),
   KEY `idx_merchant_id` (`merchant_id`),
@@ -505,6 +530,7 @@ CREATE TABLE `refund_record` (
   `operator` VARCHAR(64) DEFAULT '' COMMENT '操作人',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '申请时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_refund_no` (`refund_no`),
   KEY `idx_order_no` (`order_no`),
@@ -513,15 +539,185 @@ CREATE TABLE `refund_record` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='退款记录表';
 
+-- 24. 核销记录表
+DROP TABLE IF EXISTS `write_off_record`;
+CREATE TABLE `write_off_record` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '记录ID',
+  `order_id` BIGINT NOT NULL COMMENT '订单ID',
+  `order_no` VARCHAR(64) NOT NULL COMMENT '订单号',
+  `write_off_code` VARCHAR(32) NOT NULL COMMENT '核销码',
+  `merchant_id` BIGINT NOT NULL COMMENT '商家ID',
+  `store_id` BIGINT DEFAULT NULL COMMENT '核销门店ID',
+  `operator_id` BIGINT NOT NULL COMMENT '操作员ID(商家用户表ID)',
+  `operator_name` VARCHAR(64) DEFAULT '' COMMENT '操作员姓名',
+  `write_off_type` TINYINT DEFAULT 1 COMMENT '核销方式: 1扫码核销 2手动核销',
+  `write_off_time` DATETIME NOT NULL COMMENT '核销时间',
+  `product_name` VARCHAR(200) DEFAULT '' COMMENT '商品名称(冗余)',
+  `product_amount` DECIMAL(10,2) DEFAULT 0.00 COMMENT '商品金额(冗余)',
+  `remark` VARCHAR(500) DEFAULT '' COMMENT '备注',
+  `status` TINYINT DEFAULT 1 COMMENT '状态: 1有效 0作废',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_write_off_code` (`write_off_code`),
+  KEY `idx_order_id` (`order_id`),
+  KEY `idx_order_no` (`order_no`),
+  KEY `idx_merchant_id` (`merchant_id`),
+  KEY `idx_operator_id` (`operator_id`),
+  KEY `idx_write_off_time` (`write_off_time`),
+  KEY `idx_merchant_time` (`merchant_id`, `write_off_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='核销记录表';
+
+-- 25. 团购商品明细表
+DROP TABLE IF EXISTS `groupon_activity_item`;
+CREATE TABLE `groupon_activity_item` (
+  `id`              BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `merchant_id`     BIGINT       NOT NULL COMMENT '商家ID',
+  `distributor_id`  BIGINT       DEFAULT NULL COMMENT '分销商ID',
+  `groupon_id`      BIGINT       NOT NULL COMMENT '所属团购活动ID',
+  `name`            VARCHAR(200) NOT NULL COMMENT '团购商品名称',
+  `title`           VARCHAR(200) DEFAULT NULL COMMENT '展示标题',
+  `content`         TEXT         DEFAULT NULL COMMENT '套餐内容/服务内容',
+  `description`     VARCHAR(500) DEFAULT NULL COMMENT '商品说明',
+  `cover_image`     VARCHAR(500) DEFAULT NULL COMMENT '封面图URL',
+  `detail_images`   TEXT         DEFAULT NULL COMMENT '详情图JSON数组',
+  `original_price`  DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '原价，单位元',
+  `groupon_price`   DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '团购价/现价，单位元',
+  `discount_rate`   DECIMAL(5,2) DEFAULT NULL COMMENT '折扣，如7.5表示7.5折',
+  `stock`           INT          NOT NULL DEFAULT 0 COMMENT '团购库存',
+  `sales`           INT          NOT NULL DEFAULT 0 COMMENT '团购销量',
+  `limit_per_user`  INT          NOT NULL DEFAULT 0 COMMENT '每人限购，0不限',
+  `valid_days`      INT          NOT NULL DEFAULT 30 COMMENT '购买后有效天数',
+  `store_ids`       VARCHAR(500) DEFAULT NULL COMMENT '可用门店ID JSON数组',
+  `status`          INT          NOT NULL DEFAULT 0 COMMENT '状态：0下架 1上架',
+  `sort`            INT          NOT NULL DEFAULT 0 COMMENT '排序值，越大越靠前',
+  `del_flag`        CHAR(1)      DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
+  `create_time`     DATETIME     DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time`     DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_groupon_id` (`groupon_id`),
+  KEY `idx_merchant_id` (`merchant_id`),
+  KEY `idx_distributor_id` (`distributor_id`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='团购商品明细表';
+
+-- 26. 分销商表
+DROP TABLE IF EXISTS `distributor`;
+CREATE TABLE `distributor` (
+  `id`              BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `name`            VARCHAR(200) NOT NULL COMMENT '分销商名称',
+  `contact`         VARCHAR(100) DEFAULT NULL COMMENT '联系人',
+  `phone`           VARCHAR(20)  DEFAULT NULL COMMENT '联系电话',
+  `username`        VARCHAR(100) NOT NULL COMMENT '登录账号',
+  `password`        VARCHAR(200) NOT NULL COMMENT '登录密码 BCrypt',
+  `region_code`     VARCHAR(50)  DEFAULT NULL COMMENT '区域编码',
+  `region_name`     VARCHAR(100) DEFAULT NULL COMMENT '区域名称',
+  `status`          INT          NOT NULL DEFAULT 1 COMMENT '状态：0禁用 1正常',
+  `remark`          VARCHAR(500) DEFAULT NULL COMMENT '备注',
+  `create_time`     DATETIME     DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time`     DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_username` (`username`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='分销商表';
+
+-- 27. 商家结算记录表
+DROP TABLE IF EXISTS `merchant_settlement_record`;
+CREATE TABLE `merchant_settlement_record` (
+  `id`                        BIGINT       NOT NULL AUTO_INCREMENT COMMENT '结算记录ID',
+  `settlement_no`             VARCHAR(64)  NOT NULL COMMENT '结算单号',
+  `merchant_id`               BIGINT       NOT NULL COMMENT '商家ID',
+  `distributor_id`            BIGINT       DEFAULT NULL COMMENT '分销商ID',
+  `store_id`                  BIGINT       DEFAULT NULL COMMENT '门店ID',
+  `order_no`                  VARCHAR(64)  DEFAULT NULL COMMENT '关联订单号',
+  `title`                     VARCHAR(255) DEFAULT NULL COMMENT '结算标题/商品名称',
+  `order_amount`              DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '订单金额，单位元',
+  `merchant_amount`           DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '商家结算金额，单位元',
+  `platform_fee_amount`       DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '平台佣金，单位元',
+  `status`                    VARCHAR(32)  NOT NULL DEFAULT 'WAITING_T1' COMMENT 'WAITING_T1/TRANSFERRING/ARRIVED/FAILED/CANCELLED/REFUND_PROCESSING/REVERSED',
+  `apply_time`                DATETIME     DEFAULT NULL COMMENT '进入结算链路时间',
+  `expected_transfer_time`    DATETIME     DEFAULT NULL COMMENT '预计打款时间',
+  `transfer_time`             DATETIME     DEFAULT NULL COMMENT '发起打款时间',
+  `arrive_time`               DATETIME     DEFAULT NULL COMMENT '到账时间',
+  `fail_reason`               VARCHAR(500) DEFAULT NULL COMMENT '失败原因',
+  `wechat_batch_no`           VARCHAR(128) DEFAULT NULL COMMENT '微信批次号',
+  `wechat_detail_no`          VARCHAR(128) DEFAULT NULL COMMENT '微信明细单号',
+  `reverse_record_id`         BIGINT       DEFAULT NULL COMMENT '逆向/负向记录ID',
+  `del_flag`                  CHAR(1)      DEFAULT '0' COMMENT '删除标志（0存在 2删除）',
+  `create_time`               DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  `update_time`               DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_settlement_no` (`settlement_no`),
+  KEY `idx_merchant_status` (`merchant_id`, `status`),
+  KEY `idx_order_no` (`order_no`),
+  KEY `idx_expected_transfer_time` (`expected_transfer_time`),
+  KEY `idx_distributor_id` (`distributor_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商家结算记录表';
+
+-- 28. 订单三方分账流水表
+DROP TABLE IF EXISTS `order_profit_ledger`;
+CREATE TABLE `order_profit_ledger` (
+  `id`               BIGINT       NOT NULL AUTO_INCREMENT,
+  `order_no`         VARCHAR(64)  NOT NULL COMMENT '订单号',
+  `merchant_id`      BIGINT       NOT NULL COMMENT '商家ID',
+  `distributor_id`   BIGINT       DEFAULT NULL COMMENT '分销商ID',
+  `pay_amount`       DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '用户实付金额，单位元',
+  `merchant_amount`  DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '商家应得金额，单位元',
+  `platform_amount`  DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '平台抽成金额，单位元',
+  `distributor_amount` DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '分销商佣金金额，单位元',
+  `merchant_rate`    DECIMAL(5,2)  DEFAULT NULL COMMENT '商家比例, 如85.00',
+  `platform_rate`    DECIMAL(5,2)  DEFAULT NULL COMMENT '平台比例, 如10.00',
+  `distributor_rate` DECIMAL(5,2)  DEFAULT NULL COMMENT '分销商比例, 如5.00',
+  `status`           VARCHAR(32)  NOT NULL DEFAULT 'WAITING_SETTLEMENT' COMMENT 'WAITING_SETTLEMENT/SETTLED/REFUND_REVERSED',
+  `finish_time`      DATETIME     DEFAULT NULL COMMENT '订单完成时间',
+  `del_flag`         CHAR(1)      DEFAULT '0' COMMENT '删除标志（0存在 2删除）',
+  `create_time`      DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  `update_time`      DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_order_no` (`order_no`),
+  KEY `idx_merchant_id` (`merchant_id`),
+  KEY `idx_distributor_id` (`distributor_id`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单三方分账流水表';
+
+-- 29. 分销商佣金结算记录表
+DROP TABLE IF EXISTS `distributor_settlement_record`;
+CREATE TABLE `distributor_settlement_record` (
+  `id`                        BIGINT       NOT NULL AUTO_INCREMENT,
+  `settlement_no`             VARCHAR(64)  NOT NULL COMMENT '结算单号',
+  `distributor_id`            BIGINT       NOT NULL COMMENT '分销商ID',
+  `merchant_id`               BIGINT       DEFAULT NULL COMMENT '关联商家ID',
+  `order_no`                  VARCHAR(64)  DEFAULT NULL COMMENT '关联订单号',
+  `amount`                    DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '佣金金额，单位元',
+  `rate`                      DECIMAL(5,2)  DEFAULT NULL COMMENT '佣金比例',
+  `status`                    VARCHAR(32)  NOT NULL DEFAULT 'WAITING_SETTLEMENT' COMMENT 'WAITING_SETTLEMENT/TRANSFERRING/ARRIVED/FAILED/CANCELLED/REVERSED',
+  `settlement_period_start`   DATE         DEFAULT NULL COMMENT '结算周期开始',
+  `settlement_period_end`     DATE         DEFAULT NULL COMMENT '结算周期结束',
+  `expected_transfer_time`    DATETIME     DEFAULT NULL COMMENT '预计打款时间',
+  `transfer_time`             DATETIME     DEFAULT NULL COMMENT '发起打款时间',
+  `arrive_time`               DATETIME     DEFAULT NULL COMMENT '到账时间',
+  `fail_reason`               VARCHAR(500) DEFAULT NULL COMMENT '失败原因',
+  `reverse_record_id`         BIGINT       DEFAULT NULL COMMENT '逆向记录ID',
+  `del_flag`                  CHAR(1)      DEFAULT '0' COMMENT '删除标志（0存在 2删除）',
+  `create_time`               DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  `update_time`               DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_settlement_no` (`settlement_no`),
+  KEY `idx_distributor_id` (`distributor_id`),
+  KEY `idx_merchant_id` (`merchant_id`),
+  KEY `idx_order_no` (`order_no`),
+  KEY `idx_status` (`status`),
+  KEY `idx_expected_transfer_time` (`expected_transfer_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='分销商佣金结算记录表';
+
 -- ============================================================
 -- 第二部分: 测试数据
 -- ============================================================
 
 -- 1. 商家（抽成比例直接在商家表上,后台可动态调整）
-INSERT INTO `merchant` (`id`, `name`, `logo`, `contact`, `phone`, `commission_rate`, `status`, `balance`, `total_income`, `address`, `avatar`, `description`, `business_hours`, `product_count`, `store_count`) VALUES
-(1, '鲜果园水果店', '/profile/upload/merchant/fruit_logo.png', '张三', '13800001111', 5.00, 1, 12580.50, 58320.00, '北京市朝阳区建国路88号', '/profile/upload/merchant/fruit_cover.png', '新鲜水果,产地直供,品质保证', '08:00-22:00', 6, 2),
-(2, '好味烘焙坊', '/profile/upload/merchant/bakery_logo.png', '李四', '13800002222', 8.00, 1, 8960.00, 35600.00, '北京市海淀区中关村大街12号', '/profile/upload/merchant/bakery_cover.png', '手工烘焙,现做现卖,甜蜜每一天', '07:00-21:00', 5, 1),
-(3, '川味小厨', '/profile/upload/merchant/chuan_logo.png', '王五', '13800003333', 12.00, 1, 5200.00, 18900.00, '北京市西城区西单北大街56号', '/profile/upload/merchant/chuan_cover.png', '正宗川菜,麻辣鲜香,地道风味', '10:00-23:00', 5, 1);
+INSERT INTO `merchant` (`id`, `distributor_id`, `name`, `logo`, `contact`, `phone`, `commission_rate`, `status`, `balance`, `total_income`, `address`, `avatar`, `description`, `business_hours`, `product_count`, `store_count`) VALUES
+(1, NULL, '鲜果园水果店', '/profile/upload/merchant/fruit_logo.png', '张三', '13800001111', 5.00, 1, 12580.50, 58320.00, '北京市朝阳区建国路88号', '/profile/upload/merchant/fruit_cover.png', '新鲜水果,产地直供,品质保证', '08:00-22:00', 6, 2),
+(2, NULL, '好味烘焙坊', '/profile/upload/merchant/bakery_logo.png', '李四', '13800002222', 8.00, 1, 8960.00, 35600.00, '北京市海淀区中关村大街12号', '/profile/upload/merchant/bakery_cover.png', '手工烘焙,现做现卖,甜蜜每一天', '07:00-21:00', 5, 1),
+(3, NULL, '川味小厨', '/profile/upload/merchant/chuan_logo.png', '王五', '13800003333', 12.00, 1, 5200.00, 18900.00, '北京市西城区西单北大街56号', '/profile/upload/merchant/chuan_cover.png', '正宗川菜,麻辣鲜香,地道风味', '10:00-23:00', 5, 1);
 
 -- 2. 商家登录账号（密码统一为 123456，BCrypt加密）
 INSERT INTO `merchant_user` (`id`, `merchant_id`, `username`, `password`, `real_name`, `phone`, `role`, `status`) VALUES

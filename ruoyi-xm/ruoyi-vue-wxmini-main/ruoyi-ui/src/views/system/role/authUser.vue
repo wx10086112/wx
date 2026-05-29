@@ -1,9 +1,9 @@
 <template>
   <div class="app-container">
      <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch">
-      <el-form-item label="用户名称" prop="userId">
+      <el-form-item label="用户名称" prop="userName">
         <el-input
-          v-model="queryParams.userId"
+          v-model="queryParams.userName"
           placeholder="请输入用户名称"
           clearable
           style="width: 240px"
@@ -18,6 +18,13 @@
           style="width: 240px"
           @keyup.enter.native="handleQuery"
         />
+      </el-form-item>
+      <el-form-item label="账号类型" prop="accountType">
+        <el-select v-model="queryParams.accountType" placeholder="全部类型" clearable style="width: 240px">
+          <el-option label="平台" value="PLATFORM" />
+          <el-option label="分销商" value="DISTRIBUTOR" />
+          <el-option label="商家" value="MERCHANT" />
+        </el-select>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -34,7 +41,7 @@
           size="mini"
           @click="openSelectUser"
           v-hasPermi="['system:role:add']"
-        >添加用户</el-button>
+        >添加后台账号</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -61,8 +68,16 @@
 
     <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="用户名称" prop="userId" :show-overflow-tooltip="true" />
+      <el-table-column label="用户名称" prop="userName" :show-overflow-tooltip="true" />
       <el-table-column label="用户昵称" prop="nickName" :show-overflow-tooltip="true" />
+      <el-table-column label="账号类型" prop="accountType" width="100" align="center">
+        <template slot-scope="scope">
+          <el-tag v-if="scope.row.accountType === 'PLATFORM'" type="primary" size="small">平台</el-tag>
+          <el-tag v-else-if="scope.row.accountType === 'DISTRIBUTOR'" type="warning" size="small">分销商</el-tag>
+          <el-tag v-else-if="scope.row.accountType === 'MERCHANT'" type="success" size="small">商家</el-tag>
+          <el-tag v-else type="info" size="small">平台</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="邮箱" prop="email" :show-overflow-tooltip="true" />
       <el-table-column label="手机" prop="phonenumber" :show-overflow-tooltip="true" />
       <el-table-column label="状态" align="center" prop="status">
@@ -127,7 +142,8 @@ export default {
         pageSize: 10,
         roleId: undefined,
         userName: undefined,
-        phonenumber: undefined
+        phonenumber: undefined,
+        accountType: undefined
       }
     }
   },

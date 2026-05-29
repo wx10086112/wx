@@ -1,7 +1,6 @@
 <view class="favorite-page">
   <view class="favorite-header">
     <text class="favorite-title">我的收藏</text>
-    <text class="favorite-subtitle">收藏的商品和门店</text>
   </view>
 
   <view class="favorite-list" wx:if="{{!isEmpty}}">

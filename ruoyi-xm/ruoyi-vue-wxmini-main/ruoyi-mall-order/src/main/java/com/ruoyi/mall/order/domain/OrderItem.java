@@ -17,6 +17,8 @@ public class OrderItem extends BaseEntity {
     private BigDecimal price;
     private Integer quantity;
     private BigDecimal subtotal;
+    /** 删除标志（0代表存在 2代表删除） */
+    private String delFlag = "0";
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -29,6 +31,11 @@ public class OrderItem extends BaseEntity {
 
     public Long getMerchantId() { return merchantId; }
     public void setMerchantId(Long merchantId) { this.merchantId = merchantId; }
+
+    /** 商家名称（LEFT JOIN） */
+    private String merchantName;
+    public String getMerchantName() { return merchantName; }
+    public void setMerchantName(String merchantName) { this.merchantName = merchantName; }
 
     public Long getProductId() { return productId; }
     public void setProductId(Long productId) { this.productId = productId; }
@@ -47,4 +54,7 @@ public class OrderItem extends BaseEntity {
 
     public BigDecimal getSubtotal() { return subtotal; }
     public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
+
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 }

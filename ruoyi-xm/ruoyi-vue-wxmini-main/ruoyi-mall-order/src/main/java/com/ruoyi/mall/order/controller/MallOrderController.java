@@ -1,8 +1,10 @@
 package com.ruoyi.mall.order.controller;
 
+import com.ruoyi.common.annotation.DataScopeBiz;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.common.utils.MallDataScopeHelper;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.OrderItem;
 import com.ruoyi.mall.order.service.IMallOrderService;
@@ -21,6 +23,7 @@ public class MallOrderController extends BaseController {
     @Autowired
     private IMallOrderService mallOrderService;
 
+    @DataScopeBiz(merchantAlias = "mall_order")
     @PreAuthorize("@ss.hasPermi('mall:order:list')")
     @GetMapping("/list")
     public TableDataInfo list(MallOrder query) {
@@ -33,6 +36,18 @@ public class MallOrderController extends BaseController {
     @GetMapping("/{id}")
     public AjaxResult getInfo(@PathVariable Long id) {
         MallOrder order = mallOrderService.selectMallOrderById(id);
+        if (order == null) {
+            return AjaxResult.error("订单不存在");
+        }
+        // 归属校验
+        Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        if (effMerchantId != null && !effMerchantId.equals(order.getMerchantId())) {
+            return AjaxResult.error("无权限查看该订单");
+        }
+        Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effDistributorId != null && order.getDistributorId() != null && !effDistributorId.equals(order.getDistributorId())) {
+            return AjaxResult.error("无权限查看该订单");
+        }
         List<OrderItem> items = mallOrderService.selectOrderItemListByOrderId(id);
         Map<String, Object> data = new HashMap<>();
         data.put("order", order);

@@ -1,5 +1,10 @@
 const mock = require('../../data/mock')
 const util = require('../../utils/util')
+<<<<<<< HEAD
+=======
+const merchantApi = require('../../api/merchant')
+const productApi = require('../../api/product')
+>>>>>>> 苏
 
 const SORT_OPTIONS = [
   { label: '综合', value: 'default' },
@@ -16,7 +21,8 @@ Page({
     priceAsc: true,
     productList: [],
     merchantList: [],
-    totalResultCount: 0
+    totalResultCount: 0,
+    loading: true
   },
 
   onLoad(options) {
@@ -25,6 +31,7 @@ Page({
     this.doSearch(keyword, 'default')
   },
 
+<<<<<<< HEAD
   doSearch(keyword, sortKey) {
     let productList = mock.grouponList.filter((item) => {
       if (!keyword) return true
@@ -53,6 +60,40 @@ Page({
       merchantList,
       sortKey,
       totalResultCount: productList.length + merchantList.length
+=======
+  doSearch(keyword) {
+    this.setData({ loading: true })
+
+    Promise.all([
+      productApi.getGrouponList({ keyword }).catch(() => ({ data: [] })),
+      merchantApi.getMerchantList({ keyword }).catch(() => ({ data: [] }))
+    ]).then(([productRes, merchantRes]) => {
+      let productList = (productRes.data || productRes || [])
+      let merchantList = (merchantRes.data || merchantRes || [])
+
+      if (keyword) {
+        productList = productList.filter((item) =>
+          (item.title || '').includes(keyword) ||
+          (item.subtitle || '').includes(keyword) ||
+          (item.merchantName || '').includes(keyword)
+        )
+        merchantList = merchantList.filter((item) =>
+          (item.name || '').includes(keyword) ||
+          (item.shortName || '').includes(keyword) ||
+          (item.tags || []).some((tag) => tag.includes(keyword))
+        )
+      }
+
+      productList = this.sortList(productList, this.data.sortKey)
+      merchantList = this.sortList(merchantList, this.data.sortKey)
+
+      this.setData({
+        productList,
+        merchantList,
+        totalResultCount: productList.length + merchantList.length,
+        loading: false
+      })
+>>>>>>> 苏
     })
   },
 
@@ -76,11 +117,21 @@ Page({
     const sortKey = e.currentTarget.dataset.key
     if (sortKey === 'price' && this.data.sortKey === 'price') {
       this.setData({ priceAsc: !this.data.priceAsc }, () => {
+<<<<<<< HEAD
         this.doSearch(this.data.keyword, sortKey)
       })
       return
     }
     this.doSearch(this.data.keyword, sortKey)
+=======
+        this.doSearch(this.data.keyword)
+      })
+      return
+    }
+    this.setData({ sortKey }, () => {
+      this.doSearch(this.data.keyword)
+    })
+>>>>>>> 苏
   },
 
   onProductTap(e) {

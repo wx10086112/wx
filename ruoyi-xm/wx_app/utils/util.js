@@ -82,6 +82,15 @@ const normalizeImageFields = (data) => {
   return normalized
 }
 
+const buildImageCropStyle = (crop = {}) => {
+  const scale = Math.min(Math.max(Number(crop.scale || 1), 1), 2.2)
+  const renderedPercent = 130 * scale
+  const limit = ((renderedPercent - 100) / (renderedPercent * 2)) * 100
+  const x = Math.min(Math.max(Number(crop.x || 0), -limit), limit)
+  const y = Math.min(Math.max(Number(crop.y || 0), -limit), limit)
+  return `transform: translate(${x}%, ${y}%) scale(${scale});`
+}
+
 const formatPrice = (price) => {
   if (price === null || price === undefined) return '0.00'
   return (Number(price) / 100).toFixed(2)
@@ -278,7 +287,7 @@ const requestPayment = (payParams) => {
       timeStamp: payParams.timeStamp,
       nonceStr: payParams.nonceStr,
       package: payParams.package,
-      signType: payParams.signType || 'RSA',
+      signType: payParams.signType || 'HMAC-SHA256',
       paySign: payParams.paySign,
       success: () => resolve(true),
       fail: (err) => {
@@ -301,6 +310,7 @@ module.exports = {
   clone,
   normalizeImageUrl,
   normalizeImageFields,
+  buildImageCropStyle,
   debounce,
   throttle,
   showLoading,

@@ -8,7 +8,9 @@
         <result property="id" column="id"/>
         <result property="orderNo" column="order_no"/>
         <result property="merchantId" column="merchant_id"/>
+        <result property="merchantName" column="merchant_name"/>
         <result property="userId" column="user_id"/>
+        <result property="userName" column="user_name"/>
         <result property="storeId" column="store_id"/>
         <result property="totalAmount" column="total_amount"/>
         <result property="payAmount" column="pay_amount"/>
@@ -31,43 +33,51 @@
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
         <result property="remark" column="remark"/>
+        <result property="delFlag" column="del_flag"/>
     </resultMap>
 
     <sql id="selectMallOrderVo">
-        select id, order_no, merchant_id, user_id, store_id, total_amount, pay_amount,
-               commission, merchant_income, coupon_id, coupon_amount, groupon_id, status,
-               write_off_code, write_off_status, write_off_time, write_off_user_id,
-               valid_days, pay_time, use_time, complete_time, cancel_time, refund_time,
-               create_time, update_time, remark
-        from mall_order
+        select o.id, o.order_no, o.merchant_id, m.name as merchant_name,
+               o.user_id, u.nickname as user_name, o.store_id, o.total_amount, o.pay_amount,
+               o.commission, o.merchant_income, o.coupon_id, o.coupon_amount, o.groupon_id, o.status,
+               o.write_off_code, o.write_off_status, o.write_off_time, o.write_off_user_id,
+               o.valid_days, o.pay_time, o.use_time, o.complete_time, o.cancel_time, o.refund_time,
+               o.create_time, o.update_time, o.remark
+        from mall_order o
+        LEFT JOIN merchant m ON o.merchant_id = m.id
+        LEFT JOIN mall_user u ON o.user_id = u.id
     </sql>
 
     <select id="selectMallOrderById" parameterType="Long" resultMap="MallOrderResult">
         <include refid="selectMallOrderVo"/>
-        where id = #{id}
+        where o.id = #{id} AND o.del_flag = '0'
     </select>
 
     <select id="selectMallOrderByOrderNo" parameterType="String" resultMap="MallOrderResult">
         <include refid="selectMallOrderVo"/>
-        where order_no = #{orderNo}
+        where o.order_no = #{orderNo} AND o.del_flag = '0'
     </select>
 
     <select id="selectMallOrderList" parameterType="com.ruoyi.mall.order.domain.MallOrder" resultMap="MallOrderResult">
         <include refid="selectMallOrderVo"/>
         <where>
-            <if test="orderNo != null and orderNo != ''">and order_no like concat('%', #{orderNo}, '%')</if>
-            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
-            <if test="userId != null">and user_id = #{userId}</if>
-            <if test="storeId != null">and store_id = #{storeId}</if>
-            <if test="status != null">and status = #{status}</if>
+            and o.del_flag = '0'
+            <if test="orderNo != null and orderNo != ''">and o.order_no like concat('%', #{orderNo}, '%')</if>
+            <if test="merchantId != null">and o.merchant_id = #{merchantId}</if>
+            <if test="merchantName != null and merchantName != ''">and m.name like concat('%', #{merchantName}, '%')</if>
+            <if test="userId != null">and o.user_id = #{userId}</if>
+            <if test="userName != null and userName != ''">and u.nickname like concat('%', #{userName}, '%')</if>
+            <if test="storeId != null">and o.store_id = #{storeId}</if>
+            <if test="status != null">and o.status = #{status}</if>
+            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
         </where>
-        order by create_time desc
+        order by o.create_time desc
     </select>
 
     <select id="selectMallOrderByMerchantId" parameterType="Long" resultMap="MallOrderResult">
         <include refid="selectMallOrderVo"/>
-        where merchant_id = #{merchantId}
-        order by create_time desc
+        where o.merchant_id = #{merchantId} AND o.del_flag = '0'
+        order by o.create_time desc
     </select>
 
     <insert id="insertMallOrder" parameterType="com.ruoyi.mall.order.domain.MallOrder" useGeneratedKeys="true" keyProperty="id">
@@ -151,25 +161,119 @@
         where id = #{id}
     </update>
 
-    <delete id="deleteMallOrderById" parameterType="Long">
-        delete from mall_order where id = #{id}
-    </delete>
+    <update id="deleteMallOrderById" parameterType="Long">
+        update mall_order set del_flag = '2' where id = #{id}
+    </update>
 
-    <delete id="deleteMallOrderByIds" parameterType="String">
-        delete from mall_order where id in
+    <update id="deleteMallOrderByIds" parameterType="String">
+        update mall_order set del_flag = '2' where id in
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
-    </delete>
+    </update>
 
     <select id="countOrderByMerchantIdAndStatus" resultType="int">
         select count(*) from mall_order
-        where merchant_id = #{merchantId} and status = #{status}
+        where merchant_id = #{merchantId} and status = #{status} AND del_flag = '0'
     </select>
 
     <select id="selectOrderByWriteOffCode" parameterType="String" resultMap="MallOrderResult">
         <include refid="selectMallOrderVo"/>
-        where write_off_code = #{code}
+        where o.write_off_code = #{code} AND o.del_flag = '0'
+    </select>
+
+    <!-- S-2: SQL aggregation for settlement overview -->
+    <select id="countCompletedOrdersByMerchantId" parameterType="Long" resultType="Long">
+        SELECT COUNT(*) FROM mall_order
+        WHERE merchant_id = #{merchantId} AND del_flag = '0'
+          AND status IN (2, 3)
+    </select>
+
+    <select id="sumTodayIncomeByMerchantId" parameterType="Long" resultType="java.math.BigDecimal">
+        SELECT IFNULL(SUM(ROUND(pay_amount * 0.9, 2)), 0) FROM mall_order
+        WHERE merchant_id = #{merchantId} AND del_flag = '0'
+          AND status IN (2, 3)
+          AND DATE(COALESCE(complete_time, use_time)) = CURDATE()
+    </select>
+
+    <select id="sumMonthIncomeByMerchantId" parameterType="Long" resultType="java.math.BigDecimal">
+        SELECT IFNULL(SUM(ROUND(pay_amount * 0.9, 2)), 0) FROM mall_order
+        WHERE merchant_id = #{merchantId} AND del_flag = '0'
+          AND status IN (2, 3)
+          AND DATE(COALESCE(complete_time, use_time)) >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+    </select>
+
+    <select id="sumPayAmountByMerchantIdAndStatuses" resultType="java.math.BigDecimal">
+        SELECT IFNULL(SUM(pay_amount), 0) FROM mall_order
+        WHERE merchant_id = #{merchantId} AND del_flag = '0'
+          AND status IN
+        <foreach item="status" collection="statuses" open="(" separator="," close=")">
+            #{status}
+        </foreach>
+    </select>
+
+    <select id="selectRecentCompletedOrdersByMerchantId" resultMap="MallOrderResult">
+        <include refid="selectMallOrderVo"/>
+        WHERE o.merchant_id = #{merchantId} AND o.del_flag = '0'
+          AND o.status IN (2, 3)
+        ORDER BY COALESCE(o.complete_time, o.use_time) DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="countByMerchantIdAndStatusIn" resultType="Long">
+        SELECT COUNT(*) FROM mall_order
+        WHERE merchant_id = #{merchantId} AND del_flag = '0'
+          AND status IN
+        <foreach item="status" collection="statuses" open="(" separator="," close=")">
+            #{status}
+        </foreach>
+    </select>
+
+    <select id="sumTodaySalesByMerchantId" parameterType="Long" resultType="java.math.BigDecimal">
+        SELECT IFNULL(SUM(pay_amount), 0) FROM mall_order
+        WHERE merchant_id = #{merchantId} AND del_flag = '0'
+          AND (
+            (status IN (1, 2) AND DATE(create_time) = CURDATE())
+            OR
+            (status = 3 AND DATE(COALESCE(complete_time, use_time)) = CURDATE())
+          )
+    </select>
+
+    <!-- 数据分析：商家排行 -->
+    <select id="selectMerchantRankForAnalysis" resultType="java.util.LinkedHashMap">
+        SELECT m.id, m.name,
+            IFNULL(SUM(o.pay_amount), 0) AS sales,
+            COUNT(*) AS orders,
+            SUM(CASE WHEN o.status IN (2, 3) THEN 1 ELSE 0 END) AS completedOrders,
+            IFNULL(SUM(CASE WHEN o.status = 4 THEN o.pay_amount ELSE 0 END), 0) AS refundAmount
+        FROM merchant m
+        INNER JOIN mall_order o ON o.merchant_id = m.id AND o.del_flag = '0' AND o.status NOT IN (0, 5)
+        WHERE m.status = 1 AND m.del_flag = '0'
+        <if test="keyword != null and keyword != ''">
+            AND m.name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="distributorId != null">
+            AND m.distributor_id = #{distributorId}
+        </if>
+        GROUP BY m.id, m.name
+        <choose>
+            <when test="sortBy == 'orders'">ORDER BY orders DESC</when>
+            <otherwise>ORDER BY sales DESC</otherwise>
+        </choose>
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <select id="countMerchantRankForAnalysis" resultType="int">
+        SELECT COUNT(DISTINCT m.id)
+        FROM merchant m
+        INNER JOIN mall_order o ON o.merchant_id = m.id AND o.del_flag = '0' AND o.status NOT IN (0, 5)
+        WHERE m.status = 1 AND m.del_flag = '0'
+        <if test="keyword != null and keyword != ''">
+            AND m.name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="distributorId != null">
+            AND m.distributor_id = #{distributorId}
+        </if>
     </select>
 
 </mapper>

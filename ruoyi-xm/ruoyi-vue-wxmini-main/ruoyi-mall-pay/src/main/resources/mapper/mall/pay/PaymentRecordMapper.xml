@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.pay.mapper.PaymentRecordMapper">
+
+    <resultMap type="com.ruoyi.mall.pay.domain.PaymentRecord" id="PaymentRecordResult">
+        <result property="id" column="id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="merchantId" column="merchant_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="amount" column="amount"/>
+        <result property="payType" column="pay_type"/>
+        <result property="transactionId" column="transaction_id"/>
+        <result property="outTradeNo" column="out_trade_no"/>
+        <result property="payStatus" column="pay_status"/>
+        <result property="payTime" column="pay_time"/>
+        <result property="notifyResult" column="notify_result"/>
+        <result property="createTime" column="create_time"/>
+        <result property="delFlag" column="del_flag"/>
+    </resultMap>
+
+    <sql id="selectPaymentRecordVo">
+        select id, order_no, merchant_id, user_id, amount, pay_type, transaction_id,
+               out_trade_no, pay_status, pay_time, notify_result, create_time, del_flag
+        from payment_record
+    </sql>
+
+    <select id="selectById" parameterType="Long" resultMap="PaymentRecordResult">
+        <include refid="selectPaymentRecordVo"/>
+        where id = #{id} and del_flag = '0'
+    </select>
+
+    <select id="selectByOrderNo" parameterType="String" resultMap="PaymentRecordResult">
+        <include refid="selectPaymentRecordVo"/>
+        where order_no = #{orderNo} and del_flag = '0'
+        limit 1
+    </select>
+
+    <select id="selectByOutTradeNo" parameterType="String" resultMap="PaymentRecordResult">
+        <include refid="selectPaymentRecordVo"/>
+        where out_trade_no = #{outTradeNo} and del_flag = '0'
+        limit 1
+    </select>
+
+    <select id="selectList" parameterType="com.ruoyi.mall.pay.domain.PaymentRecord" resultMap="PaymentRecordResult">
+        <include refid="selectPaymentRecordVo"/>
+        <where>
+            and del_flag = '0'
+            <if test="orderNo != null and orderNo != ''">and order_no like concat('%', #{orderNo}, '%')</if>
+            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
+            <if test="userId != null">and user_id = #{userId}</if>
+            <if test="payStatus != null">and pay_status = #{payStatus}</if>
+            <if test="payType != null and payType != ''">and pay_type = #{payType}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <insert id="insert" parameterType="com.ruoyi.mall.pay.domain.PaymentRecord" useGeneratedKeys="true" keyProperty="id">
+        insert into payment_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orderNo != null">order_no,</if>
+            <if test="merchantId != null">merchant_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="amount != null">amount,</if>
+            <if test="payType != null">pay_type,</if>
+            <if test="transactionId != null">transaction_id,</if>
+            <if test="outTradeNo != null">out_trade_no,</if>
+            <if test="payStatus != null">pay_status,</if>
+            <if test="payTime != null">pay_time,</if>
+            <if test="notifyResult != null">notify_result,</if>
+            del_flag,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="orderNo != null">#{orderNo},</if>
+            <if test="merchantId != null">#{merchantId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="amount != null">#{amount},</if>
+            <if test="payType != null">#{payType},</if>
+            <if test="transactionId != null">#{transactionId},</if>
+            <if test="outTradeNo != null">#{outTradeNo},</if>
+            <if test="payStatus != null">#{payStatus},</if>
+            <if test="payTime != null">#{payTime},</if>
+            <if test="notifyResult != null">#{notifyResult},</if>
+            '0',
+        </trim>
+    </insert>
+
+    <update id="updateById" parameterType="com.ruoyi.mall.pay.domain.PaymentRecord">
+        update payment_record
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="orderNo != null">order_no = #{orderNo},</if>
+            <if test="merchantId != null">merchant_id = #{merchantId},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="amount != null">amount = #{amount},</if>
+            <if test="payType != null">pay_type = #{payType},</if>
+            <if test="transactionId != null">transaction_id = #{transactionId},</if>
+            <if test="outTradeNo != null">out_trade_no = #{outTradeNo},</if>
+            <if test="payStatus != null">pay_status = #{payStatus},</if>
+            <if test="payTime != null">pay_time = #{payTime},</if>
+            <if test="notifyResult != null">notify_result = #{notifyResult},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <update id="deleteById" parameterType="Long">
+        update payment_record set del_flag = '2' where id = #{id}
+    </update>
+
+    <update id="deleteByIds" parameterType="String">
+        update payment_record set del_flag = '2' where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

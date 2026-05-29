@@ -16,6 +16,7 @@ public class MallUser extends BaseEntity {
     private Integer status;
     private Integer totalOrders;
     private BigDecimal totalAmount;
+    private String delFlag = "0";
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -37,4 +38,6 @@ public class MallUser extends BaseEntity {
     public void setTotalOrders(Integer totalOrders) { this.totalOrders = totalOrders; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 }

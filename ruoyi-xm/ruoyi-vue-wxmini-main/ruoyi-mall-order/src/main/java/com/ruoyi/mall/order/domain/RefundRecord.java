@@ -8,6 +8,13 @@ import java.util.Date;
 public class RefundRecord extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
+    /** 退款状态常量 */
+    public static final int STATUS_PENDING = 1;        // 待审核
+    public static final int STATUS_APPROVED = 2;       // 已通过（审批通过，待微信退款）
+    public static final int STATUS_REJECTED = 3;       // 已拒绝
+    public static final int STATUS_REFUNDED = 4;       // 退款完成（微信确认）
+    public static final int STATUS_ABNORMAL = 5;       // 退款异常
+
     private Long id;
     private String orderNo;
     private String refundNo;
@@ -22,6 +29,8 @@ public class RefundRecord extends BaseEntity {
     private Date refundTime;
     private String rejectReason;
     private String operator;
+    /** 删除标志（0代表存在 2代表删除） */
+    private String delFlag = "0";
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -35,8 +44,18 @@ public class RefundRecord extends BaseEntity {
     public Long getMerchantId() { return merchantId; }
     public void setMerchantId(Long merchantId) { this.merchantId = merchantId; }
 
+    /** 商家名称（LEFT JOIN） */
+    private String merchantName;
+    public String getMerchantName() { return merchantName; }
+    public void setMerchantName(String merchantName) { this.merchantName = merchantName; }
+
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
+
+    /** 用户昵称（LEFT JOIN） */
+    private String userName;
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
 
     public Long getPaymentRecordId() { return paymentRecordId; }
     public void setPaymentRecordId(Long paymentRecordId) { this.paymentRecordId = paymentRecordId; }
@@ -64,4 +83,7 @@ public class RefundRecord extends BaseEntity {
 
     public String getOperator() { return operator; }
     public void setOperator(String operator) { this.operator = operator; }
+
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 }

@@ -133,6 +133,7 @@ CREATE TABLE `mall_user` (
   `update_by` VARCHAR(64) DEFAULT '' COMMENT '更新者',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `remark` VARCHAR(500) DEFAULT '' COMMENT '备注',
+  `del_flag` CHAR(1) DEFAULT '0' COMMENT '删除标志(0存在 2删除)',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_open_id` (`open_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
@@ -201,6 +202,7 @@ CREATE TABLE `transaction_record` (
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_by` VARCHAR(64) DEFAULT '' COMMENT '更新者',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `del_flag` CHAR(1) DEFAULT '0' COMMENT '删除标志(0存在 2删除)',
   PRIMARY KEY (`id`),
   KEY `idx_merchant_id` (`merchant_id`),
   KEY `idx_type` (`type`),
@@ -245,6 +247,7 @@ CREATE TABLE `platform_income` (
   `update_by` VARCHAR(64) DEFAULT '' COMMENT '更新者',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `remark` VARCHAR(500) DEFAULT '' COMMENT '备注',
+  `del_flag` CHAR(1) DEFAULT '0' COMMENT '删除标志(0存在 2删除)',
   PRIMARY KEY (`id`),
   KEY `idx_merchant_id` (`merchant_id`),
   KEY `idx_order_no` (`order_no`)

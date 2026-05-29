@@ -16,6 +16,7 @@ Page({
   },
 
   loadFavorites() {
+<<<<<<< HEAD
     const favoriteList = mock.favoriteList.map((item) => ({
       ...item,
       priceText: item.price ? (item.price / 100).toFixed(2) : ''
@@ -46,6 +47,9 @@ Page({
       this.loadFavorites()
       util.showToast('已取消收藏', 'success')
     })
+=======
+    this.setData({ favoriteList: [], isEmpty: true })
+>>>>>>> 苏
   },
 
   goShopping() {

@@ -1,9 +1,23 @@
+const util = require('../../utils/util')
+
 Component({
   properties: {
     product: {
       type: Object,
       value: {}
     }
+  },
+
+  observers: {
+    product(nextProduct = {}) {
+      this.setData({
+        imageCropStyle: util.buildImageCropStyle(nextProduct.imageCrop)
+      })
+    }
+  },
+
+  data: {
+    imageCropStyle: util.buildImageCropStyle()
   },
 
   methods: {

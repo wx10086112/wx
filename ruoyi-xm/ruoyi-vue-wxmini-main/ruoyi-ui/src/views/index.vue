@@ -41,13 +41,29 @@
     <el-row :gutter="20" class="chart-row">
       <el-col :xs="24" :sm="24" :lg="14">
         <el-card>
-          <div slot="header"><span>近7天订单趋势</span></div>
+          <div slot="header" class="chart-header">
+            <span>订单趋势</span>
+            <el-select v-model="orderRange" size="small" style="width: 100px;" @change="onRangeChange('order')">
+              <el-option label="按日" value="day" />
+              <el-option label="按周" value="week" />
+              <el-option label="按月" value="month" />
+              <el-option label="按年" value="year" />
+            </el-select>
+          </div>
           <div ref="orderTrendChart" style="height: 320px;" />
         </el-card>
       </el-col>
       <el-col :xs="24" :sm="24" :lg="10">
         <el-card>
-          <div slot="header"><span>近7天营收趋势</span></div>
+          <div slot="header" class="chart-header">
+            <span>营收趋势</span>
+            <el-select v-model="revenueRange" size="small" style="width: 100px;" @change="onRangeChange('revenue')">
+              <el-option label="按日" value="day" />
+              <el-option label="按周" value="week" />
+              <el-option label="按月" value="month" />
+              <el-option label="按年" value="year" />
+            </el-select>
+          </div>
           <div ref="revenueChart" style="height: 320px;" />
         </el-card>
       </el-col>
@@ -115,8 +131,10 @@ export default {
       trendData: { dates: [], orderCounts: [], completedCounts: [], revenues: [] },
       orderStatus: [],
       hotProducts: [],
+      orderRange: 'day',
+      revenueRange: 'day',
       shortcuts: [
-        { title: '用户管理', desc: '管理小程序用户', icon: 'peoples', path: '/system/user' },
+        { title: '用户管理', desc: '管理商家账号', icon: 'peoples', path: '/merchant/user' },
         { title: '订单管理', desc: '查看团购订单', icon: 'shopping', path: '/finance/all' },
         { title: '商家管理', desc: '入驻商家信息', icon: 'skill', path: '/merchant/list' },
         { title: '数据统计', desc: '运营数据分析', icon: 'chart', path: '/data-analysis/rank' }
@@ -326,6 +344,88 @@ export default {
       }
       return days
     },
+    getRangeLabels(range) {
+      const labels = []
+      const now = new Date()
+      if (range === 'day') {
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(now)
+          d.setDate(d.getDate() - i)
+          labels.push((d.getMonth() + 1) + '/' + d.getDate())
+        }
+      } else if (range === 'week') {
+        for (let i = 7; i >= 1; i--) {
+          labels.push('第' + i + '周')
+        }
+      } else if (range === 'month') {
+        for (let i = 11; i >= 0; i--) {
+          const d = new Date(now)
+          d.setMonth(d.getMonth() - i)
+          labels.push((d.getMonth() + 1) + '月')
+        }
+      } else if (range === 'year') {
+        for (let i = 4; i >= 0; i--) {
+          labels.push((now.getFullYear() - i) + '年')
+        }
+      }
+      return labels
+    },
+    generateMockData(range) {
+      const labels = this.getRangeLabels(range)
+      const count = labels.length
+      return {
+        dates: labels,
+        orderCounts: Array.from({ length: count }, () => Math.floor(Math.random() * 200 + 200)),
+        completedCounts: Array.from({ length: count }, () => Math.floor(Math.random() * 150 + 150)),
+        revenues: Array.from({ length: count }, () => Math.floor(Math.random() * 20000 + 30000))
+      }
+    },
+    async onRangeChange(type) {
+      const range = type === 'order' ? this.orderRange : this.revenueRange
+      try {
+        const res = await getTrendData(range)
+        if (res.data) {
+          const data = {
+            dates: res.data.dates || [],
+            orderCounts: res.data.orderCounts || [],
+            revenues: res.data.amounts || []
+          }
+          if (type === 'order') {
+            this.trendData = data
+            this.updateOrderTrendChart(data)
+          } else {
+            this.trendData.revenues = data.revenues
+            this.updateRevenueChart(data)
+          }
+        }
+      } catch (e) {
+        const data = this.generateMockData(range)
+        if (type === 'order') {
+          this.updateOrderTrendChart(data)
+        } else {
+          this.updateRevenueChart(data)
+        }
+      }
+    },
+    updateOrderTrendChart(data) {
+      const chart = this.charts[0]
+      if (!chart) return
+      chart.setOption({
+        xAxis: { data: data.dates },
+        series: [
+          { data: data.orderCounts },
+          { data: data.completedCounts }
+        ]
+      })
+    },
+    updateRevenueChart(data) {
+      const chart = this.charts[1]
+      if (!chart) return
+      chart.setOption({
+        xAxis: { data: data.dates },
+        series: [{ data: data.revenues }]
+      })
+    },
     handleShortcut(item) {
       this.$router.push(item.path).catch(() => {})
     }
@@ -404,6 +504,12 @@ export default {
 
 .chart-row {
   margin-bottom: 20px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .shortcut-row {

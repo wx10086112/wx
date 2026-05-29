@@ -1,10 +1,13 @@
 const util = require('../../utils/util')
+<<<<<<< HEAD
 
 const couponStatusMap = {
   AVAILABLE: '可使用',
   USED: '已使用',
   EXPIRED: '已过期'
 }
+=======
+>>>>>>> 苏
 
 Page({
   data: {
@@ -19,6 +22,7 @@ Page({
   },
 
   onLoad() {
+<<<<<<< HEAD
         ...item,
         statusText: couponStatusMap[item.status] || '不可用',
         thresholdText: (item.thresholdAmount / 100).toFixed(0),
@@ -33,16 +37,18 @@ Page({
     this.setData({
       couponList: this.data.allCoupons.filter((item) => item.status === tab)
     })
+=======
+    this.setData({ allCoupons: [], couponList: [] })
+>>>>>>> 苏
   },
 
   switchTab(e) {
     const tab = e.currentTarget.dataset.tab
     if (this.data.currentTab === tab) return
     this.setData({ currentTab: tab })
-    this.filterCoupons()
   },
 
-  onUseCoupon(e) {
+  onUseCoupon() {
     util.switchTab('/pages/home/home')
   },
 

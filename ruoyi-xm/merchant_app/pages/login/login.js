@@ -29,10 +29,19 @@ Page({
     }
   },
 
+<<<<<<< HEAD
   handleRoleTap(e) {
     this.setData({
       selectedRoleKey: e.currentTarget.dataset.role
     })
+=======
+  onUsernameInput(e) {
+    this.setData({ username: e.detail.value })
+  },
+
+  onPasswordInput(e) {
+    this.setData({ password: e.detail.value })
+>>>>>>> 苏
   },
 
   goApply() {
@@ -40,6 +49,21 @@ Page({
   },
 
   submitLogin() {
+<<<<<<< HEAD
+=======
+    var username = (this.data.username || '').trim()
+    var password = (this.data.password || '').trim()
+
+    if (!username) {
+      util.showToast('请输入账号')
+      return
+    }
+    if (!password) {
+      util.showToast('请输入密码')
+      return
+    }
+
+>>>>>>> 苏
     wx.showLoading({
       title: '登录中',
       mask: true
@@ -47,6 +71,7 @@ Page({
 
     api
       .merchantLogin({
+<<<<<<< HEAD
         roleKey: this.data.selectedRoleKey
       })
       .then((response) => {
@@ -62,6 +87,22 @@ Page({
         wx.switchTab({
           url: '/pages/workbench/workbench'
         })
+=======
+        username: username,
+        password: password
+      })
+      .then((response) => {
+        app.setLoginInfo(response.token, response.staffUser)
+        wx.switchTab({
+          url: '/pages/workbench/workbench'
+        })
+      })
+      .catch((err) => {
+        util.showToast(err.message || '登录失败，请检查账号密码')
+      })
+      .finally(() => {
+        wx.hideLoading()
+>>>>>>> 苏
       })
   }
 })

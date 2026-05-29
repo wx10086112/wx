@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.product.mapper.DistributorMapper">
+
+    <resultMap type="com.ruoyi.mall.product.domain.Distributor" id="DistributorResult">
+        <result property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="contact" column="contact"/>
+        <result property="phone" column="phone"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="regionCode" column="region_code"/>
+        <result property="regionName" column="region_name"/>
+        <result property="status" column="status"/>
+        <result property="receiverOpenid" column="receiver_openid"/>
+        <result property="receiverType" column="receiver_type"/>
+        <result property="remark" column="remark"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="merchantCount" column="merchant_count"/>
+    </resultMap>
+
+    <sql id="selectDistributorVo">
+        select id, name, contact, phone, username, password,
+               region_code, region_name, status, receiver_openid, receiver_type,
+               remark, create_time, update_time, del_flag
+        from distributor
+    </sql>
+
+    <sql id="selectDistributorWithCountVo">
+        select d.id, d.name, d.contact, d.phone, d.username, d.password,
+               d.region_code, d.region_name, d.status, d.receiver_openid, d.receiver_type,
+               d.remark, d.create_time, d.update_time, d.del_flag,
+               (select count(*) from merchant m where m.distributor_id = d.id and m.del_flag = '0') as merchant_count
+        from distributor d
+    </sql>
+
+    <select id="selectDistributorById" parameterType="Long" resultMap="DistributorResult">
+        <include refid="selectDistributorVo"/>
+        where id = #{id} and del_flag = '0'
+    </select>
+
+    <select id="selectDistributorList" parameterType="com.ruoyi.mall.product.domain.Distributor" resultMap="DistributorResult">
+        <include refid="selectDistributorWithCountVo"/>
+        <where>
+            and d.del_flag = '0'
+            <if test="id != null">and d.id = #{id}</if>
+            <if test="name != null and name != ''">and d.name like concat('%', #{name}, '%')</if>
+            <if test="phone != null and phone != ''">and d.phone like concat('%', #{phone}, '%')</if>
+            <if test="regionName != null and regionName != ''">and d.region_name like concat('%', #{regionName}, '%')</if>
+            <if test="status != null">and d.status = #{status}</if>
+            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+        </where>
+        order by d.create_time desc
+    </select>
+
+    <select id="selectByUsername" parameterType="String" resultMap="DistributorResult">
+        <include refid="selectDistributorVo"/>
+        where username = #{username} and del_flag = '0'
+    </select>
+
+    <insert id="insertDistributor" parameterType="com.ruoyi.mall.product.domain.Distributor" useGeneratedKeys="true" keyProperty="id">
+        insert into distributor
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="name != null">name,</if>
+            <if test="contact != null">contact,</if>
+            <if test="phone != null">phone,</if>
+            <if test="username != null">username,</if>
+            <if test="password != null">password,</if>
+            <if test="regionCode != null">region_code,</if>
+            <if test="regionName != null">region_name,</if>
+            <if test="status != null">status,</if>
+            <if test="receiverOpenid != null">receiver_openid,</if>
+            <if test="receiverType != null">receiver_type,</if>
+            <if test="remark != null">remark,</if>
+            del_flag,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="name != null">#{name},</if>
+            <if test="contact != null">#{contact},</if>
+            <if test="phone != null">#{phone},</if>
+            <if test="username != null">#{username},</if>
+            <if test="password != null">#{password},</if>
+            <if test="regionCode != null">#{regionCode},</if>
+            <if test="regionName != null">#{regionName},</if>
+            <if test="status != null">#{status},</if>
+            <if test="receiverOpenid != null">#{receiverOpenid},</if>
+            <if test="receiverType != null">#{receiverType},</if>
+            <if test="remark != null">#{remark},</if>
+            '0',
+        </trim>
+    </insert>
+
+    <update id="updateDistributor" parameterType="com.ruoyi.mall.product.domain.Distributor">
+        update distributor
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null">name = #{name},</if>
+            <if test="contact != null">contact = #{contact},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="regionCode != null">region_code = #{regionCode},</if>
+            <if test="regionName != null">region_name = #{regionName},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="receiverOpenid != null">receiver_openid = #{receiverOpenid},</if>
+            <if test="receiverType != null">receiver_type = #{receiverType},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <update id="deleteDistributorById" parameterType="Long">
+        update distributor set del_flag = '2' where id = #{id}
+    </update>
+
+    <update id="deleteDistributorByIds" parameterType="String">
+        update distributor set del_flag = '2' where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

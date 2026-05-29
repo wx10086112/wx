@@ -1,7 +1,6 @@
 <view class="page-shell">
   <view class="verify-hero panel">
     <text class="section-title">到店核销</text>
-    <text class="section-desc">支持扫码核销和手动输入核销码，完成后订单会自动进入已完成状态。</text>
     <view wx:if="{{orderHint.orderNo}}" class="hint-order">
       <text class="hint-title">{{orderHint.title}}</text>
       <text class="hint-meta">订单号 {{orderHint.orderNo}} · 推荐直接核销码 {{orderHint.writeOffCode}}</text>

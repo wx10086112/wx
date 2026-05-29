@@ -1,5 +1,6 @@
 package com.ruoyi.mall.merchant.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ruoyi.common.core.domain.BaseEntity;
 import java.math.BigDecimal;
 
@@ -7,6 +8,7 @@ public class Merchant extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
     private Long id;
+    private Long distributorId;
     private String name;
     private String logo;
     private String contact;
@@ -22,14 +24,27 @@ public class Merchant extends BaseEntity {
     private Integer productCount;
     private Integer storeCount;
     private String cMiniAppId;
+    @JsonIgnore
     private String cMiniAppSecret;
     private String mMiniAppId;
+    @JsonIgnore
     private String mMiniAppSecret;
     private String wxPayMchId;
+    @JsonIgnore
     private String wxPayApiKey;
+    private String receiverOpenid;
+    private String receiverType;
+    /** 删除标志（0代表存在 2代表删除） */
+    private String delFlag = "0";
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public Long getDistributorId() { return distributorId; }
+    public void setDistributorId(Long distributorId) { this.distributorId = distributorId; }
+    /** 分销商名称（LEFT JOIN） */
+    private String distributorName;
+    public String getDistributorName() { return distributorName; }
+    public void setDistributorName(String distributorName) { this.distributorName = distributorName; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getLogo() { return logo; }
@@ -70,4 +85,10 @@ public class Merchant extends BaseEntity {
     public void setWxPayMchId(String wxPayMchId) { this.wxPayMchId = wxPayMchId; }
     public String getWxPayApiKey() { return wxPayApiKey; }
     public void setWxPayApiKey(String wxPayApiKey) { this.wxPayApiKey = wxPayApiKey; }
+    public String getReceiverOpenid() { return receiverOpenid; }
+    public void setReceiverOpenid(String receiverOpenid) { this.receiverOpenid = receiverOpenid; }
+    public String getReceiverType() { return receiverType; }
+    public void setReceiverType(String receiverType) { this.receiverType = receiverType; }
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 }

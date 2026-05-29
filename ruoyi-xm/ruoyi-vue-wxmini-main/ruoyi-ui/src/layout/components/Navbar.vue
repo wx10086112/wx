@@ -7,6 +7,13 @@
 
     <div class="right-menu">
       <template v-if="device!=='mobile'">
+        <!-- 当前视角提示 -->
+        <div class="view-indicator right-menu-item">
+          <span class="view-label">当前视角：</span>
+          <span class="view-text">{{ viewText }}</span>
+          <el-button v-if="showBackButton" type="warning" size="mini" plain class="back-btn" @click="backToPlatform">返回平台视角</el-button>
+        </div>
+
         <search id="header-search" class="right-menu-item" />
 
         <el-tooltip content="源码地址" effect="dark" placement="bottom">
@@ -48,6 +55,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import { getCurrentView, backPlatformView } from '@/api/system/view'
 import Breadcrumb from '@/components/Breadcrumb'
 import TopNav from '@/components/TopNav'
 import Hamburger from '@/components/Hamburger'
@@ -68,11 +76,19 @@ export default {
     RuoYiGit,
     RuoYiDoc
   },
+  data() {
+    return {
+      activeViewType: '',
+      activeDistributorId: null,
+      activeDistributorName: ''
+    }
+  },
   computed: {
     ...mapGetters([
       'sidebar',
       'avatar',
-      'device'
+      'device',
+      'accountType'
     ]),
     setting: {
       get() {
@@ -89,7 +105,28 @@ export default {
       get() {
         return this.$store.state.settings.topNav
       }
+    },
+    viewText() {
+      if (this.accountType === 'PLATFORM' && this.activeViewType === 'DISTRIBUTOR') {
+        return '分销商 - ' + (this.activeDistributorName || this.activeDistributorId)
+      }
+      if (this.accountType === 'PLATFORM') {
+        return '平台总后台'
+      }
+      if (this.accountType === 'DISTRIBUTOR') {
+        return '我的分销商后台'
+      }
+      if (this.accountType === 'MERCHANT') {
+        return '商家后台'
+      }
+      return '平台总后台'
+    },
+    showBackButton() {
+      return this.accountType === 'PLATFORM' && this.activeViewType === 'DISTRIBUTOR'
     }
+  },
+  created() {
+    this.fetchCurrentView()
   },
   methods: {
     toggleSideBar() {
@@ -105,6 +142,24 @@ export default {
           location.href = '/index'
         })
       }).catch(() => {})
+    },
+    fetchCurrentView() {
+      getCurrentView().then(res => {
+        if (res.data) {
+          this.activeViewType = res.data.activeViewType || ''
+          this.activeDistributorId = res.data.activeDistributorId
+          this.activeDistributorName = res.data.activeDistributorName || ''
+        }
+      }).catch(() => {})
+    },
+    backToPlatform() {
+      backPlatformView().then(() => {
+        this.$message.success('已返回平台视角')
+        // 重新获取用户信息并刷新页面
+        this.$store.dispatch('GetInfo').then(() => {
+          location.reload()
+        })
+      })
     }
   }
 }
@@ -152,6 +207,27 @@ export default {
 
     &:focus {
       outline: none;
+    }
+
+    .view-indicator {
+      display: inline-flex;
+      align-items: center;
+      height: 100%;
+      font-size: 13px;
+
+      .view-label {
+        color: #909399;
+      }
+
+      .view-text {
+        color: #409EFF;
+        font-weight: 500;
+        margin-right: 8px;
+      }
+
+      .back-btn {
+        margin-left: 4px;
+      }
     }
 
     .right-menu-item {

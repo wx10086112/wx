@@ -11,7 +11,7 @@
       </view>
     </view>
     <view class="hero-sales-row">
-      <view>
+      <view class="hero-sales-main">
         <text class="hero-sales-label">今日流水</text>
         <text class="hero-sales-value">¥{{todaySalesText}}</text>
       </view>
@@ -60,7 +60,6 @@
   <!-- 待处理订单 -->
   <view class="section panel">
     <text class="section-title">待处理订单</text>
-    <text class="section-desc">优先处理待接单和待核销订单</text>
     <view wx:if="{{pendingOrderList.length}}">
       <view wx:for="{{pendingOrderList}}" wx:key="orderNo" class="pending-row" bindtap="goOrderDetail" data-orderno="{{item.orderNo}}">
         <view class="pending-main">

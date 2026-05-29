@@ -2,12 +2,31 @@ const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const api = require('../../api/index')
 
+<<<<<<< HEAD
+=======
+const PERMISSION_OPTIONS = [
+  { label: '查看经营数据', value: 'stats.view' },
+  { label: '订单处理', value: 'order.manage' },
+  { label: '扫码核销', value: 'verify.scan' },
+  { label: '手动核销', value: 'verify.manual' },
+  { label: '核销记录', value: 'verify.record' },
+  { label: '商品管理', value: 'goods.manage' },
+  { label: '门店设置', value: 'store.manage' },
+  { label: '员工权限', value: 'staff.manage' },
+  { label: '结算中心', value: 'finance.manage' }
+]
+
+>>>>>>> 苏
 const app = getApp()
 
 Page({
   data: {
     canManageStaff: false,
+<<<<<<< HEAD
     permissionOptions: mock.permissionOptions,
+=======
+    permissionOptions: PERMISSION_OPTIONS,
+>>>>>>> 苏
     roleOptions: [
       { label: '店长', value: 'manager' },
       { label: '店员', value: 'clerk' }

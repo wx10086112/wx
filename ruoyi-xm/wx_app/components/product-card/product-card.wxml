@@ -1,6 +1,6 @@
 <view class="product-card" bindtap="onTap">
   <view class="product-image">
-    <image src="{{product.image}}" mode="aspectFill" class="image" lazy-load></image>
+    <image src="{{product.image}}" mode="aspectFill" class="image" style="{{imageCropStyle}}" lazy-load></image>
   </view>
   <view class="product-info">
     <view wx:if="{{product.tags && product.tags.length > 0}}" class="tags">

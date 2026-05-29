@@ -1,7 +1,6 @@
 <view class="order-page">
   <view class="order-header-card">
     <text class="order-title">订单中心</text>
-    <text class="order-subtitle">待支付、待使用、退款售后统一处理</text>
     <view class="order-stats">
       <view wx:for="{{orderStats}}" wx:key="label" class="order-stat-card">
         <text class="order-stat-value">{{item.value}}</text>

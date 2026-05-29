@@ -21,13 +21,13 @@
       </view>
       <text class="order-title">{{item.title}}</text>
       <text class="order-meta">{{item.customerName}} · {{item.customerPhone}} · {{item.payTimeText}}</text>
-      <text wx:if="{{item.deliveryAddress}}" class="order-delivery">📍 {{item.deliveryAddress}}</text>
-      <text wx:if="{{item.remark}}" class="order-remark">💬 {{item.remark}}</text>
+      <text wx:if="{{item.remark}}" class="order-remark">{{item.remark}}</text>
       <view class="order-bottom">
         <view>
           <text class="order-amount">¥{{item.payAmountText}}</text>
           <text wx:if="{{item.writeOffCode}}" class="order-code">核销码 {{item.writeOffCode}}</text>
         </view>
+<<<<<<< HEAD
         <view class="order-actions" catchtap="">
           <!-- 待接单：接单 / 拒单 -->
           <button
@@ -60,12 +60,27 @@
           >确认送达</button>
 
           <!-- 待核销：去核销 -->
+=======
+        <view class="order-actions">
+>>>>>>> 苏
           <button
             wx:if="{{item.status === 'PENDING_VERIFY'}}"
-            class="ghost-btn action-btn"
+            class="ghost-btn action-btn cancel-btn"
+            catchtap="handleCancelOrder"
+            data-orderno="{{item.orderNo}}"
+          >取消订单</button>
+          <button
+            wx:if="{{item.status === 'PENDING_VERIFY'}}"
+            class="primary-btn action-btn"
             catchtap="goVerify"
             data-orderno="{{item.orderNo}}"
           >去核销</button>
+          <button
+            wx:if="{{item.status === 'REFUNDING'}}"
+            class="primary-btn action-btn refund-btn"
+            catchtap="goRefundReview"
+            data-orderno="{{item.orderNo}}"
+          >退款审核</button>
         </view>
       </view>
     </view>
@@ -73,5 +88,24 @@
 
   <view wx:else class="empty-state">
     <text class="empty-text">当前筛选条件下没有订单</text>
+  </view>
+
+  <view wx:if="{{cancelModalVisible}}" class="cancel-modal-mask">
+    <view class="cancel-modal-card">
+      <text class="cancel-modal-title">取消订单</text>
+      <text class="cancel-modal-desc">请填写取消原因，便于后续对账和售后查看。</text>
+      <textarea
+        class="cancel-reason-input"
+        value="{{cancelReason}}"
+        bindinput="handleCancelReasonInput"
+        placeholder="例如：客户临时无法到店"
+        maxlength="80"
+        auto-focus
+      ></textarea>
+      <view class="cancel-modal-actions">
+        <button class="cancel-modal-btn secondary" bindtap="closeCancelModal">再想想</button>
+        <button class="cancel-modal-btn primary" bindtap="confirmCancelOrder">确认取消</button>
+      </view>
+    </view>
   </view>
 </view>

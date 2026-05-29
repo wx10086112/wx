@@ -3,6 +3,11 @@ const util = require('../../utils/util')
 const templateService = require('../../services/template')
 const cartService = require('../../services/cart')
 const orderApi = require('../../api/order')
+<<<<<<< HEAD
+=======
+const productApi = require('../../api/product')
+const merchantApi = require('../../api/merchant')
+>>>>>>> 苏
 const app = getApp()
 
 Page({
@@ -34,7 +39,11 @@ Page({
       const cartIds = options.cartIds.split(',').map(Number)
       this.setData({ checkoutMode: 'cart', cartIds })
     } else {
+<<<<<<< HEAD
       this.setData({ checkoutMode: 'single', productId: parseInt(options.id || 101, 10) })
+=======
+      this.setData({ checkoutMode: 'single', productId: parseInt(options.id, 10) })
+>>>>>>> 苏
     }
     this.loadData()
   },
@@ -69,6 +78,7 @@ Page({
         () => { this.syncCouponState() }
       )
     } else {
+<<<<<<< HEAD
       const product = mock.grouponList.find((item) => item.id === this.data.productId) || mock.grouponList[0]
       const merchant = mock.merchantList.find((item) => item.id === product.merchantId) || mock.merchantList[0]
 
@@ -90,6 +100,49 @@ Page({
         },
         () => { this.syncCouponState() }
       )
+=======
+      productApi.getGrouponDetail(this.data.productId)
+        .then((res) => {
+          const product = res.data || res || {}
+          const merchantId = product.merchantId
+
+          const ruleList = [
+            `有效期：${product.validPeriod || '购买后有效'}`,
+            `预约说明：${product.bookingRule || '无需预约'}`,
+            `退款规则：${product.refundRule || '过期自动退款'}`
+          ]
+
+          const applyMerchant = (merchantData) => {
+            this.setData(
+              {
+                checkoutConfig,
+                product,
+                merchant: merchantData || {},
+                useRuleList: ruleList,
+                couponList: [],
+                phone,
+                couponIndex: 0,
+                selectedCouponId: null,
+                selectedCoupon: null
+              },
+              () => { this.syncCouponState() }
+            )
+          }
+
+          if (merchantId) {
+            merchantApi.getMerchantDetail(merchantId)
+              .then((merchantRes) => {
+                applyMerchant(merchantRes.data || merchantRes || {})
+              })
+              .catch(() => { applyMerchant() })
+          } else {
+            applyMerchant()
+          }
+        })
+        .catch(() => {
+          util.showToast('商品加载失败')
+        })
+>>>>>>> 苏
     }
   },
 
@@ -97,7 +150,7 @@ Page({
     if (this.data.checkoutMode === 'cart') {
       return this.data.cartItemList.reduce((sum, item) => sum + item.price * item.quantity, 0)
     }
-    return this.data.product.price * this.data.quantity
+    return (this.data.product.price || 0) * this.data.quantity
   },
 
   getCouponOptionLabel(coupon, baseAmount) {
@@ -182,6 +235,7 @@ Page({
     this.setData({ phone: e.detail.value })
   },
 
+<<<<<<< HEAD
   buildOrder(product, merchant, quantity) {
     return {
       id: Date.now() + Math.random(),
@@ -203,6 +257,8 @@ Page({
     }
   },
 
+=======
+>>>>>>> 苏
   submitOrder() {
     if (!app.needLogin()) return
     if (!this.data.phone) {
@@ -225,8 +281,14 @@ Page({
           util.redirectTo(`/pages/order-detail/order-detail?orderNo=${orderNo}`)
         }, 400)
       })
+<<<<<<< HEAD
       .catch(() => {
         this.submitOrderLocal()
+=======
+      .catch((err) => {
+        util.hideLoading()
+        util.showToast(err && err.msg ? err.msg : '提交失败，请重试')
+>>>>>>> 苏
       })
   },
 
@@ -247,6 +309,7 @@ Page({
       phone: this.data.phone,
       couponId: this.data.selectedCoupon ? this.data.selectedCoupon.couponId : null
     }
+<<<<<<< HEAD
   },
 
   submitOrderLocal() {
@@ -287,5 +350,7 @@ Page({
     setTimeout(() => {
       util.redirectTo(`/pages/order-detail/order-detail?orderNo=${firstOrderNo}`)
     }, 400)
+=======
+>>>>>>> 苏
   }
 })

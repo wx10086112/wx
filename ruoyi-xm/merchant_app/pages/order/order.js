@@ -3,8 +3,20 @@ const api = require('../../api/index')
 
 const app = getApp()
 
+const tabs = [
+  { label: '全部', value: 'ALL' },
+  { label: '待核销', value: 'PENDING_VERIFY' },
+  { label: '已完成', value: 'COMPLETED' },
+  { label: '退款中', value: 'REFUNDING' },
+  { label: '已退款', value: 'REFUNDED' },
+  { label: '已取消', value: 'CANCELLED' }
+]
+
+const normalizeTab = (tab) => (tabs.some((item) => item.value === tab) ? tab : 'ALL')
+
 Page({
   data: {
+<<<<<<< HEAD
     tabs: [
       { label: '全部', value: 'ALL' },
       { label: '待接单', value: 'PENDING_ACCEPT' },
@@ -13,42 +25,39 @@ Page({
       { label: '已完成', value: 'COMPLETED' },
       { label: '退款中', value: 'REFUNDING' }
     ],
+=======
+    tabs,
+>>>>>>> 苏
     currentTab: 'ALL',
-    orderList: []
+    orderList: [],
+    cancelModalVisible: false,
+    cancelReason: '',
+    cancelOrderNo: ''
   },
 
   onLoad(options) {
-    const currentTab = options.tab || util.consumePendingOrderFilter()
-    if (currentTab) {
-      this.setData({ currentTab })
-    }
+    const currentTab = normalizeTab(options.tab || util.consumePendingOrderFilter())
+    this.setData({ currentTab })
   },
 
   onShow() {
     if (!app.needLogin()) return
     const currentTab = util.consumePendingOrderFilter()
     if (currentTab) {
-      this.setData({ currentTab })
+      this.setData({ currentTab: normalizeTab(currentTab) })
     }
     this.loadData()
   },
 
   loadData() {
+    const requestStatus = this.data.currentTab === 'ALL' ? '' : this.data.currentTab
     api
-      .getMerchantOrderList({
-        status: this.data.currentTab === 'ALL' ? '' : this.data.currentTab
-      })
+      .getMerchantOrderList({ status: requestStatus })
       .then((response) => {
-        this.setData({
-          orderList: (response || []).map((item) => ({
-            ...item,
-            statusMeta: util.getOrderStatusMeta(item.status),
-            payAmountText: util.formatPrice(item.payAmount),
-            payTimeText: util.formatDate(item.payTime || item.createTime)
-          }))
-        })
+        this.renderOrderList(response || [])
       })
       .catch(() => {
+<<<<<<< HEAD
         const orderList = util
           .getOrderList()
           .sort((a, b) => (b.payTime || 0) - (a.payTime || 0))
@@ -62,7 +71,26 @@ Page({
         this.setData({
           orderList: this.filterOrders(orderList, this.data.currentTab)
         })
+=======
+        this.renderOrderList(util.getOrderList())
+>>>>>>> 苏
       })
+  },
+
+  renderOrderList(orderList = []) {
+    const displayList = util
+      .normalizeGrouponOrders(orderList)
+      .sort((a, b) => (b.payTime || 0) - (a.payTime || 0))
+      .map((item) => ({
+        ...item,
+        statusMeta: util.getOrderStatusMeta(item.status),
+        payAmountText: util.formatPrice(item.payAmount),
+        payTimeText: util.formatDate(item.payTime || item.createTime)
+      }))
+
+    this.setData({
+      orderList: this.filterOrders(displayList, this.data.currentTab)
+    })
   },
 
   filterOrders(orderList = [], tab = 'ALL') {
@@ -71,7 +99,7 @@ Page({
   },
 
   switchTab(e) {
-    const tab = e.currentTarget.dataset.tab
+    const tab = normalizeTab(e.currentTarget.dataset.tab)
     this.setData({ currentTab: tab }, () => {
       this.loadData()
     })
@@ -86,9 +114,14 @@ Page({
     util.navigateTo(`/pages/verify/verify?orderNo=${e.currentTarget.dataset.orderno}`)
   },
 
-  handleAcceptOrder(e) {
+  goRefundReview(e) {
+    util.navigateTo(`/pages/order-detail/order-detail?orderNo=${e.currentTarget.dataset.orderno}`)
+  },
+
+  handleCancelOrder(e) {
     if (!app.needPermission(['order.manage'])) return
     const orderNo = e.currentTarget.dataset.orderno
+<<<<<<< HEAD
     util.showModal('接单确认', '确定要接受该订单吗？').then((confirm) => {
       if (!confirm) return
       api.acceptMerchantOrder(orderNo)
@@ -155,6 +188,46 @@ Page({
           util.showToast(result.message, result.success ? 'success' : 'none')
           this.loadData()
         })
+=======
+    this.setData({
+      cancelModalVisible: true,
+      cancelReason: '',
+      cancelOrderNo: orderNo
     })
+  },
+
+  handleCancelReasonInput(e) {
+    this.setData({
+      cancelReason: e.detail.value
+    })
+  },
+
+  closeCancelModal() {
+    this.setData({
+      cancelModalVisible: false,
+      cancelReason: '',
+      cancelOrderNo: ''
+>>>>>>> 苏
+    })
+  },
+
+  confirmCancelOrder() {
+    const orderNo = this.data.cancelOrderNo
+    const reason = this.data.cancelReason.trim()
+    if (!orderNo) return
+    api.cancelMerchantOrder(orderNo, { reason })
+      .then(() => {
+        util.showToast('订单已取消', 'success')
+        this.closeCancelModal()
+        this.loadData()
+      })
+      .catch(() => {
+        const result = util.cancelOrder(orderNo, reason)
+        util.showToast(result.message, result.success ? 'success' : 'none')
+        if (result.success) {
+          this.closeCancelModal()
+          this.loadData()
+        }
+      })
   }
 })

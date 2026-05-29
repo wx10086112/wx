@@ -64,13 +64,6 @@
   font-weight: 700;
 }
 
-.form-desc {
-  display: block;
-  margin-top: 10rpx;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 24rpx;
-}
-
 .form-section {
   margin-bottom: 22rpx;
   padding: 24rpx;

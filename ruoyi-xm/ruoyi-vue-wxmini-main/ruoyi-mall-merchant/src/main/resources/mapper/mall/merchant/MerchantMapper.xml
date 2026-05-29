@@ -6,6 +6,8 @@
 
     <resultMap type="com.ruoyi.mall.merchant.domain.Merchant" id="MerchantResult">
         <result property="id" column="id"/>
+        <result property="distributorId" column="distributor_id"/>
+        <result property="distributorName" column="distributor_name"/>
         <result property="name" column="name"/>
         <result property="logo" column="logo"/>
         <result property="contact" column="contact"/>
@@ -26,39 +28,49 @@
         <result property="mMiniAppSecret" column="m_mini_app_secret"/>
         <result property="wxPayMchId" column="wx_pay_mch_id"/>
         <result property="wxPayApiKey" column="wx_pay_api_key"/>
+        <result property="receiverOpenid" column="receiver_openid"/>
+        <result property="receiverType" column="receiver_type"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
         <result property="remark" column="remark"/>
+        <result property="delFlag" column="del_flag"/>
     </resultMap>
 
     <sql id="selectMerchantVo">
-        select id, name, logo, contact, phone, commission_rate, status, balance,
-               total_income, address, avatar, description, business_hours,
-               product_count, store_count, c_mini_app_id, c_mini_app_secret,
-               m_mini_app_id, m_mini_app_secret, wx_pay_mch_id, wx_pay_api_key,
-               create_time, update_time, remark
-        from merchant
+        select m.id, m.distributor_id, m.name, m.logo, m.contact, m.phone, m.commission_rate, m.status, m.balance,
+               m.total_income, m.address, m.avatar, m.description, m.business_hours,
+               m.product_count, m.store_count, m.c_mini_app_id, m.c_mini_app_secret,
+               m.m_mini_app_id, m.m_mini_app_secret, m.wx_pay_mch_id, m.wx_pay_api_key,
+               m.receiver_openid, m.receiver_type,
+               m.create_time, m.update_time, m.remark,
+               d.name as distributor_name
+        from merchant m
+        left join distributor d on d.id = m.distributor_id and d.del_flag = '0'
     </sql>
 
     <select id="selectMerchantList" parameterType="com.ruoyi.mall.merchant.domain.Merchant" resultMap="MerchantResult">
         <include refid="selectMerchantVo"/>
         <where>
-            <if test="name != null and name != ''">and name like concat('%', #{name}, '%')</if>
-            <if test="contact != null and contact != ''">and contact like concat('%', #{contact}, '%')</if>
-            <if test="phone != null and phone != ''">and phone = #{phone}</if>
-            <if test="status != null">and status = #{status}</if>
+            and m.del_flag = '0'
+            <if test="distributorId != null">and m.distributor_id = #{distributorId}</if>
+            <if test="name != null and name != ''">and m.name like concat('%', #{name}, '%')</if>
+            <if test="contact != null and contact != ''">and m.contact like concat('%', #{contact}, '%')</if>
+            <if test="phone != null and phone != ''">and m.phone = #{phone}</if>
+            <if test="status != null">and m.status = #{status}</if>
+            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
         </where>
-        order by id desc
+        order by m.id desc
     </select>
 
     <select id="selectMerchantById" parameterType="Long" resultMap="MerchantResult">
         <include refid="selectMerchantVo"/>
-        where id = #{id}
+        where m.id = #{id} AND m.del_flag = '0'
     </select>
 
     <insert id="insertMerchant" parameterType="com.ruoyi.mall.merchant.domain.Merchant" useGeneratedKeys="true" keyProperty="id">
         insert into merchant
         <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="distributorId != null">distributor_id,</if>
             <if test="name != null">name,</if>
             <if test="logo != null">logo,</if>
             <if test="contact != null">contact,</if>
@@ -80,8 +92,11 @@
             <if test="mMiniAppSecret != null">m_mini_app_secret,</if>
             <if test="wxPayMchId != null">wx_pay_mch_id,</if>
             <if test="wxPayApiKey != null">wx_pay_api_key,</if>
+            <if test="receiverOpenid != null">receiver_openid,</if>
+            <if test="receiverType != null">receiver_type,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="distributorId != null">#{distributorId},</if>
             <if test="name != null">#{name},</if>
             <if test="logo != null">#{logo},</if>
             <if test="contact != null">#{contact},</if>
@@ -103,12 +118,15 @@
             <if test="mMiniAppSecret != null">#{mMiniAppSecret},</if>
             <if test="wxPayMchId != null">#{wxPayMchId},</if>
             <if test="wxPayApiKey != null">#{wxPayApiKey},</if>
+            <if test="receiverOpenid != null">#{receiverOpenid},</if>
+            <if test="receiverType != null">#{receiverType},</if>
         </trim>
     </insert>
 
     <update id="updateMerchant" parameterType="com.ruoyi.mall.merchant.domain.Merchant">
         update merchant
         <trim prefix="SET" suffixOverrides=",">
+            <if test="distributorId != null">distributor_id = #{distributorId},</if>
             <if test="name != null">name = #{name},</if>
             <if test="logo != null">logo = #{logo},</if>
             <if test="contact != null">contact = #{contact},</if>
@@ -130,29 +148,31 @@
             <if test="mMiniAppSecret != null">m_mini_app_secret = #{mMiniAppSecret},</if>
             <if test="wxPayMchId != null">wx_pay_mch_id = #{wxPayMchId},</if>
             <if test="wxPayApiKey != null">wx_pay_api_key = #{wxPayApiKey},</if>
+            <if test="receiverOpenid != null">receiver_openid = #{receiverOpenid},</if>
+            <if test="receiverType != null">receiver_type = #{receiverType},</if>
         </trim>
         where id = #{id}
     </update>
 
     <select id="selectMerchantByCAppId" parameterType="String" resultMap="MerchantResult">
         <include refid="selectMerchantVo"/>
-        where c_mini_app_id = #{cMiniAppId}
+        where m.c_mini_app_id = #{cMiniAppId} AND m.del_flag = '0'
     </select>
 
     <select id="selectMerchantByMAppId" parameterType="String" resultMap="MerchantResult">
         <include refid="selectMerchantVo"/>
-        where m_mini_app_id = #{mMiniAppId}
+        where m.m_mini_app_id = #{mMiniAppId} AND m.del_flag = '0'
     </select>
 
-    <delete id="deleteMerchantById" parameterType="Long">
-        delete from merchant where id = #{id}
-    </delete>
+    <update id="deleteMerchantById" parameterType="Long">
+        update merchant set del_flag = '2' where id = #{id}
+    </update>
 
-    <delete id="deleteMerchantByIds" parameterType="String">
-        delete from merchant where id in
+    <update id="deleteMerchantByIds" parameterType="String">
+        update merchant set del_flag = '2' where id in
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
-    </delete>
+    </update>
 
 </mapper>

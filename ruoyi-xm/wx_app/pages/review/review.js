@@ -15,6 +15,7 @@ Page({
 
   onLoad(options) {
     const orderNo = options.orderNo || ''
+<<<<<<< HEAD
     const order = mock.orderList.find((item) => item.orderNo === orderNo) || mock.orderList[0] || {}
     this.setData({
       order: {
@@ -22,6 +23,23 @@ Page({
         payAmountText: ((order.payAmount || order.price || 0) / 100).toFixed(2)
       }
     })
+=======
+    if (orderNo) {
+      orderApi.getOrderDetail(orderNo)
+        .then((res) => {
+          const order = res.data || res || {}
+          this.setData({
+            order: {
+              ...order,
+              payAmountText: ((order.payAmount || order.price || 0) / 100).toFixed(2)
+            }
+          })
+        })
+        .catch(() => {
+          this.setData({ order: {} })
+        })
+    }
+>>>>>>> 苏
   },
 
   onStarTap(e) {
@@ -76,8 +94,8 @@ Page({
     setTimeout(() => {
       this.setData({ submitting: false, submitted: true })
       util.hideLoading()
-      util.showToast('评价成功', 'success')
-    }, 600)
+      util.showToast('评价功能暂未开放', 'none')
+    }, 500)
   },
 
   onDone() {

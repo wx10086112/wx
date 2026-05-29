@@ -12,6 +12,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,11 +42,18 @@ public class WxMiniJwtServiceImpl implements IWxMiniJwtService {
     private static final String JWT_KEY_PERMISSION_CODES = "permissionCodes";
 
     // jwt密钥
-    @Value("${token.secret:asd}")
+    @Value("${token.secret}")
     private String key;
     // jwt有效期。单位分钟
     @Value("${token.expireTime:60}")
     private int expireTime;
+
+    @PostConstruct
+    public void checkSecret() {
+        if (StringUtils.isBlank(key) || "asd".equals(key) || "test".equals(key) || "123456".equals(key) || key.length() < 32) {
+            throw new IllegalStateException("token.secret 未配置或强度不足（至少32位随机字符串）");
+        }
+    }
 
     @Override
     public String createToken(String userId) {
@@ -77,16 +86,15 @@ public class WxMiniJwtServiceImpl implements IWxMiniJwtService {
         payload.put(JWT_KEY_ROLE_CODES, joinList(authContext.getRoleCodes()));
         payload.put(JWT_KEY_PERMISSION_CODES, joinList(authContext.getPermissionCodes()));
         payload.put(JWTPayload.EXPIRES_AT, DateTime.now().offset(DateField.MINUTE, expireTime));
-        return JWTUtil.createToken(payload, key.getBytes());
+        return JWTUtil.createToken(payload, key.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
     public Boolean verifyToken(String token) {
         JWT jwt = JWTUtil.parseToken(token);
-        jwt.setKey(key.getBytes());
-        // 校验有效期和签名
-//        return jwt.verify();
-        return jwt.validate(0);
+        jwt.setKey(key.getBytes(StandardCharsets.UTF_8));
+        // 校验签名和有效期
+        return jwt.verify() && jwt.validate(0);
     }
 
     @Override

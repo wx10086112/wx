@@ -4,7 +4,8 @@ App({
   globalData: {
     userInfo: null,
     token: null,
-    isLoggedIn: false
+    isLoggedIn: false,
+    appId: ''
   },
 
   onLaunch() {
@@ -14,6 +15,13 @@ App({
 
   initEnv() {
     this.baseUrl = 'http://localhost:8080'
+<<<<<<< HEAD
+=======
+    const accountInfo = wx.getAccountInfoSync()
+    if (accountInfo && accountInfo.miniProgram) {
+      this.globalData.appId = accountInfo.miniProgram.appId || ''
+    }
+>>>>>>> 苏
   },
 
   checkLoginStatus() {

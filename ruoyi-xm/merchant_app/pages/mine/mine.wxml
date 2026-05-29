@@ -1,35 +1,59 @@
-<view class="page-shell">
-  <view class="user-card">
-    <text class="user-name">{{staffUser.name}}</text>
-    <text class="user-meta">{{staffUser.roleName}} · {{staffUser.phone}}</text>
-    <text class="user-store">{{storeInfo.storeName}}</text>
-  </view>
-
-  <view class="panel permission-panel">
-    <text class="section-title">当前权限</text>
-    <view class="permission-tags">
-      <text wx:for="{{permissionList}}" wx:key="index" class="permission-tag">{{item}}</text>
+<view class="page-shell mine-page">
+  <view class="profile-card">
+    <view class="profile-top">
+      <view class="avatar-mark">{{staffUser.roleName === '店长' ? '长' : '员'}}</view>
+      <view class="profile-main">
+        <view class="name-row">
+          <text class="user-name">{{staffUser.name}}</text>
+          <text class="role-pill">{{staffUser.roleName}}</text>
+        </view>
+        <text class="user-meta">{{staffUser.phone}}</text>
+      </view>
+      <view class="status-pill">{{storeInfo.businessStatus ? '营业中' : '休息中'}}</view>
+    </view>
+    <view class="store-block">
+      <text class="store-name">{{storeInfo.storeName}}</text>
+      <text class="store-desc">{{storeInfo.businessHours}} · {{storeInfo.shortName}}</text>
     </view>
   </view>
 
-  <view class="panel menu-panel">
-    <view class="menu-item" bindtap="goStore">
-      <text class="menu-label">门店设置</text>
-      <text class="menu-arrow">›</text>
+  <view wx:if="{{operationList.length}}" class="panel section-card">
+    <view class="section-head">
+      <text class="section-title">日常操作</text>
     </view>
-    <view class="menu-item" bindtap="goStaff">
-      <text class="menu-label">员工权限</text>
-      <text class="menu-arrow">›</text>
-    </view>
-    <view class="menu-item" bindtap="goVerifyRecords">
-      <text class="menu-label">核销记录</text>
-      <text class="menu-arrow">›</text>
-    </view>
-    <view wx:if="{{permissionList.indexOf('finance.manage') > -1}}" class="menu-item" bindtap="goFinance">
-      <text class="menu-label">财务收益</text>
+    <view
+      wx:for="{{operationList}}"
+      wx:key="title"
+      class="menu-item"
+      bindtap="goMenu"
+      data-url="{{item.url}}"
+      data-istab="{{item.isTab}}"
+    >
+      <view class="menu-main">
+        <text class="menu-label">{{item.title}}</text>
+      </view>
       <text class="menu-arrow">›</text>
     </view>
   </view>
 
-  <button class="ghost-btn logout-btn" bindtap="logout">退出登录</button>
+  <view wx:if="{{managementList.length}}" class="panel section-card">
+    <view class="section-head">
+      <text class="section-title">门店管理</text>
+    </view>
+    <view
+      wx:for="{{managementList}}"
+      wx:key="title"
+      class="menu-item"
+      bindtap="goMenu"
+      data-url="{{item.url}}"
+      data-istab="{{item.isTab}}"
+    >
+      <view class="menu-main">
+        <text class="menu-label">{{item.title}}</text>
+      </view>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <button class="logout-btn" bindtap="logout">退出登录</button>
 </view>

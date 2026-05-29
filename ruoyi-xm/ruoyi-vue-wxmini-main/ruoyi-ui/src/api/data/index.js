@@ -9,10 +9,11 @@ export function getDashboardStats() {
 }
 
 // 趋势数据
-export function getTrendData() {
+export function getTrendData(range) {
   return request({
     url: '/mall/dashboard/trend',
-    method: 'get'
+    method: 'get',
+    params: { range: range || 'day' }
   })
 }
 

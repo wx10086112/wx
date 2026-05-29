@@ -2,6 +2,14 @@ const util = require('../../utils/util')
 const api = require('../../api/index')
 
 const app = getApp()
+const buildImageCropStyle = (crop = {}) => {
+  const scale = Math.min(Math.max(Number(crop.scale || 1), 1), 2.2)
+  const renderedPercent = 130 * scale
+  const limit = ((renderedPercent - 100) / (renderedPercent * 2)) * 100
+  const x = Math.min(Math.max(Number(crop.x || 0), -limit), limit)
+  const y = Math.min(Math.max(Number(crop.y || 0), -limit), limit)
+  return `transform: translate(${x}%, ${y}%) scale(${scale});`
+}
 
 Page({
   data: {
@@ -14,7 +22,13 @@ Page({
     currentTab: 'ALL',
     goodsList: [],
     batchMode: false,
-    selectedIds: []
+    selectedIds: [],
+    confirmModalVisible: false,
+    confirmModal: {
+      title: '',
+      desc: '',
+      action: ''
+    }
   },
 
   onShow() {
@@ -44,6 +58,7 @@ Page({
         ...item,
         priceText: util.formatPrice(item.price),
         originalPriceText: util.formatPrice(item.originalPrice),
+        imageCropStyle: buildImageCropStyle(item.imageCrop),
         selected: this.data.selectedIds.includes(item.goodsId),
         lowStock: item.status === 'ON_SHELF' && Number(item.stock || 0) <= 20
       }))
@@ -140,12 +155,19 @@ Page({
       util.showToast('请先选择商品')
       return
     }
+<<<<<<< HEAD
     util.showModal('批量上架', `确定上架选中的 ${this.data.selectedIds.length} 个商品吗？`).then((confirm) => {
       if (!confirm) return
       const result = util.batchUpdateGoodsStatus(this.data.selectedIds, 'ON_SHELF')
       util.showToast(result.message, 'success')
       this.setData({ selectedIds: [], batchMode: false })
       this.loadData()
+=======
+    this.openConfirmModal({
+      title: '批量上架',
+      desc: `确定上架选中的 ${this.data.selectedIds.length} 个商品吗？`,
+      action: 'ON_SHELF'
+>>>>>>> 苏
     })
   },
 
@@ -154,12 +176,50 @@ Page({
       util.showToast('请先选择商品')
       return
     }
+<<<<<<< HEAD
     util.showModal('批量下架', `确定下架选中的 ${this.data.selectedIds.length} 个商品吗？`).then((confirm) => {
       if (!confirm) return
       const result = util.batchUpdateGoodsStatus(this.data.selectedIds, 'OFF_SHELF')
       util.showToast(result.message, 'success')
       this.setData({ selectedIds: [], batchMode: false })
       this.loadData()
+=======
+    this.openConfirmModal({
+      title: '批量下架',
+      desc: `确定下架选中的 ${this.data.selectedIds.length} 个商品吗？`,
+      action: 'OFF_SHELF'
+>>>>>>> 苏
     })
+  },
+
+  openConfirmModal(confirmModal) {
+    this.setData({
+      confirmModalVisible: true,
+      confirmModal
+    })
+  },
+
+  closeConfirmModal() {
+    this.setData({
+      confirmModalVisible: false,
+      confirmModal: {
+        title: '',
+        desc: '',
+        action: ''
+      }
+    })
+  },
+
+  confirmBatchAction() {
+    const status = this.data.confirmModal.action
+    if (!status) return
+    const result = util.batchUpdateGoodsStatus(this.data.selectedIds, status)
+    util.showToast(result.message, 'success')
+    this.setData({
+      selectedIds: [],
+      batchMode: false
+    })
+    this.closeConfirmModal()
+    this.loadData()
   }
 })

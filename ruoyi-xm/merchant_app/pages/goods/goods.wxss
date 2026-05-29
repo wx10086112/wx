@@ -30,39 +30,71 @@
 
 .toolbar-btn {
   flex: 1;
+  min-width: 0;
+  font-weight: 600;
 }
 
 /* 批量操作栏 */
-.batch-bar {
+.batch-panel {
   margin-top: 14rpx;
-  padding: 18rpx 24rpx;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 22rpx;
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border: 2rpx solid #93c5fd;
 }
 
-.batch-left {
+.batch-summary {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 16rpx;
+  gap: 18rpx;
 }
 
-.batch-text {
-  font-size: 26rpx;
-  color: #1f6feb;
-  font-weight: 600;
+.batch-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.batch-title {
+  display: block;
+  font-size: 28rpx;
+  color: #1f2a37;
+  font-weight: 700;
 }
 
 .batch-count {
+  display: block;
+  margin-top: 6rpx;
   font-size: 24rpx;
-  color: #7a8798;
+  color: #6f7d91;
+}
+
+.select-btn {
+  width: 164rpx;
+  height: 60rpx;
+  flex-shrink: 0;
+  border-radius: 999rpx;
+  font-size: 24rpx;
 }
 
 .batch-actions {
-  display: flex;
-  gap: 10rpx;
+  margin-top: 18rpx;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14rpx;
+}
+
+.batch-action-btn {
+  width: 100%;
+  height: 68rpx;
+  min-width: 0;
+  border-radius: 16rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.batch-action-btn.danger {
+  background: #fff0f0;
+  color: #d93025;
 }
 
 /* 商品卡片 */
@@ -103,16 +135,21 @@
 }
 
 .goods-cover {
-  height: 220rpx;
+  position: relative;
   margin-bottom: 20rpx;
+  height: 230rpx;
   border-radius: 16rpx;
   overflow: hidden;
   background: #eef4ff;
 }
 
-.goods-cover image {
-  width: 100%;
-  height: 100%;
+.goods-cover-image {
+  position: absolute;
+  left: -15%;
+  top: -15%;
+  width: 130%;
+  height: 130%;
+  will-change: transform;
 }
 
 .goods-cover.empty {
@@ -180,6 +217,81 @@
 .mini-btn {
   flex: 1;
   height: 68rpx;
-  line-height: 68rpx;
+  min-width: 0;
   font-size: 24rpx;
+  border-radius: 16rpx;
+  padding: 0 18rpx;
+}
+
+.confirm-modal-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+  background: rgba(15, 23, 42, 0.38);
+  box-sizing: border-box;
+}
+
+.confirm-modal-card {
+  width: 100%;
+  padding: 34rpx;
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-shadow: 0 30rpx 80rpx rgba(15, 23, 42, 0.18);
+  box-sizing: border-box;
+}
+
+.confirm-modal-title {
+  display: block;
+  font-size: 34rpx;
+  color: #111827;
+  font-weight: 700;
+}
+
+.confirm-modal-desc {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.confirm-modal-actions {
+  margin-top: 28rpx;
+  display: flex;
+  gap: 16rpx;
+}
+
+.confirm-modal-btn {
+  flex: 1;
+  height: 78rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: normal;
+  font-size: 28rpx;
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.confirm-modal-btn::after {
+  border: none;
+}
+
+.confirm-modal-btn.secondary {
+  background: #eef2f7;
+  color: #334155;
+}
+
+.confirm-modal-btn.primary {
+  background: #1f6feb;
+  color: #ffffff;
 }

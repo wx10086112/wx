@@ -1,11 +1,14 @@
 package com.ruoyi.wxmini.controller;
 
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.mall.common.util.WriteOffCodeGenerator;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.OrderItem;
+import com.ruoyi.mall.order.domain.RefundRecord;
+import com.ruoyi.mall.order.mapper.RefundRecordMapper;
 import com.ruoyi.mall.order.service.IMallOrderService;
 import com.ruoyi.mall.product.domain.Product;
 import com.ruoyi.mall.product.service.IProductService;
@@ -15,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -33,12 +37,16 @@ public class WxOrderController {
     @Resource
     private IMallOrderService mallOrderService;
     @Resource
+    private RefundRecordMapper refundRecordMapper;
+    @Resource
     private IProductService productService;
     @Resource
     private IMerchantService merchantService;
+    @Resource
+    private WriteOffCodeGenerator writeOffCodeGenerator;
 
     @PostMapping("/create")
-    public AjaxResult create(@RequestBody WxOrderCreateRequestDto requestDto) {
+    public AjaxResult create(@Valid @RequestBody WxOrderCreateRequestDto requestDto) {
         if (requestDto == null) {
             return AjaxResult.error("请求参数不能为空");
         }
@@ -58,7 +66,7 @@ public class WxOrderController {
             return AjaxResult.error("至少选择一个商品");
         }
 
-        long totalAmount = 0;
+        BigDecimal totalAmount = BigDecimal.ZERO;
         Long merchantId = null;
         List<Product> products = new ArrayList<>();
         for (WxOrderCreateRequestDto.OrderItemInput input : itemInputs) {
@@ -72,13 +80,22 @@ public class WxOrderController {
                 return AjaxResult.error("不同商家的商品不能合并下单");
             }
             int qty = input.getQuantity() != null && input.getQuantity() > 0 ? input.getQuantity() : 1;
-            long price = product.getPrice() != null ? product.getPrice().longValue() : 0;
-            totalAmount += price * qty;
+            BigDecimal price = product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO;
+            totalAmount = totalAmount.add(price.multiply(new BigDecimal(qty)));
             products.add(product);
         }
 
-        long couponAmount = 0;
-        long payAmount = totalAmount - couponAmount;
+        // 校验商品商家属于当前C端上下文
+        Long currentMerchantId = WxMiniUserContext.getCurrentMerchantId();
+        if (currentMerchantId == null) {
+            currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
+        }
+        if (currentMerchantId != null && !currentMerchantId.equals(merchantId)) {
+            return AjaxResult.error("商品不属于当前商家");
+        }
+
+        BigDecimal couponAmount = BigDecimal.ZERO;
+        BigDecimal payAmount = totalAmount.subtract(couponAmount);
         String orderNo = generateOrderNo();
         String writeOffCode = generateWriteOffCode();
 
@@ -86,9 +103,9 @@ public class WxOrderController {
         order.setOrderNo(orderNo);
         order.setMerchantId(merchantId);
         order.setUserId(userId);
-        order.setTotalAmount(new BigDecimal(totalAmount));
-        order.setPayAmount(new BigDecimal(payAmount));
-        order.setCouponAmount(new BigDecimal(couponAmount));
+        order.setTotalAmount(totalAmount);
+        order.setPayAmount(payAmount);
+        order.setCouponAmount(couponAmount);
         order.setCouponId(requestDto.getCouponId());
         order.setStatus(ORDER_STATUS_PENDING);
         order.setWriteOffCode(writeOffCode);
@@ -98,7 +115,7 @@ public class WxOrderController {
             WxOrderCreateRequestDto.OrderItemInput input = itemInputs.get(i);
             Product product = products.get(i);
             int qty = input.getQuantity() != null && input.getQuantity() > 0 ? input.getQuantity() : 1;
-            long price = product.getPrice() != null ? product.getPrice().longValue() : 0;
+            BigDecimal price = product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO;
 
             OrderItem item = new OrderItem();
             item.setOrderId(order.getId());
@@ -107,17 +124,17 @@ public class WxOrderController {
             item.setProductId(product.getId());
             item.setProductName(product.getName());
             item.setProductImage(product.getCoverImage());
-            item.setPrice(new BigDecimal(price));
+            item.setPrice(price);
             item.setQuantity(qty);
-            item.setSubtotal(new BigDecimal(price * qty));
+            item.setSubtotal(price.multiply(new BigDecimal(qty)));
             mallOrderService.insertOrderItem(item);
         }
 
         Map<String, Object> result = new HashMap<>();
         result.put("orderNo", orderNo);
-        result.put("orderAmount", totalAmount);
-        result.put("couponAmount", couponAmount);
-        result.put("payAmount", payAmount);
+        result.put("orderAmount", totalAmount.longValue());
+        result.put("couponAmount", couponAmount.longValue());
+        result.put("payAmount", payAmount.longValue());
         return AjaxResult.success(result);
     }
 
@@ -180,7 +197,6 @@ public class WxOrderController {
         dto.setId(order.getId());
         dto.setOrderNo(order.getOrderNo());
         dto.setMerchantId(order.getMerchantId());
-        dto.setStatus(mapDbStatus(order.getStatus()));
         dto.setWriteOffCode(order.getWriteOffCode());
         dto.setOrderAmount(order.getTotalAmount() != null ? order.getTotalAmount().longValue() : 0L);
         dto.setCouponAmount(order.getCouponAmount() != null ? order.getCouponAmount().longValue() : 0L);
@@ -190,6 +206,31 @@ public class WxOrderController {
         dto.setWriteOffTime(order.getUseTime() != null ? order.getUseTime().getTime() : null);
         dto.setRefundTime(order.getRefundTime() != null ? order.getRefundTime().getTime() : null);
         dto.setQuantity(1);
+
+        // 查询退款记录：覆盖状态 + 填充退款原因
+        String wxStatus = mapDbStatus(order.getStatus());
+        RefundRecord latestRefund = null;
+        try {
+            RefundRecord refundQuery = new RefundRecord();
+            refundQuery.setOrderNo(order.getOrderNo());
+            List<RefundRecord> refunds = refundRecordMapper.selectRefundRecordList(refundQuery);
+            if (refunds != null && !refunds.isEmpty()) {
+                refunds.sort((a, b) -> {
+                    long idA = a.getId() != null ? a.getId() : 0L;
+                    long idB = b.getId() != null ? b.getId() : 0L;
+                    return Long.compare(idB, idA);
+                });
+                latestRefund = refunds.get(0);
+            }
+        } catch (Exception ignored) {}
+        if (latestRefund != null && latestRefund.getStatus() != null
+                && (latestRefund.getStatus() == 1 || latestRefund.getStatus() == 2)) {
+            wxStatus = "REFUNDING";
+        }
+        if (latestRefund != null && latestRefund.getRefundReason() != null) {
+            dto.setRefundReason(latestRefund.getRefundReason());
+        }
+        dto.setStatus(wxStatus);
 
         List<OrderItem> items = mallOrderService.selectOrderItemListByOrderId(order.getId());
         if (!items.isEmpty()) {
@@ -228,8 +269,8 @@ public class WxOrderController {
         if (dbStatus == null) return "PENDING_PAY";
         switch (dbStatus) {
             case ORDER_STATUS_PENDING: return "PENDING_PAY";
-            case ORDER_STATUS_PAID:
-            case ORDER_STATUS_USED: return "PAID_UNUSED";
+            case ORDER_STATUS_PAID: return "PAID_UNUSED";
+            case ORDER_STATUS_USED: return "USED_COMPLETED";
             case ORDER_STATUS_COMPLETED: return "USED_COMPLETED";
             case ORDER_STATUS_REFUNDED: return "REFUNDED";
             case ORDER_STATUS_CANCELLED: return "CANCELLED";
@@ -244,12 +285,6 @@ public class WxOrderController {
     }
 
     private String generateWriteOffCode() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        StringBuilder sb = new StringBuilder();
-        Random random = new Random();
-        for (int i = 0; i < 6; i++) {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
-        }
-        return sb.toString();
+        return writeOffCodeGenerator.generate();
     }
 }

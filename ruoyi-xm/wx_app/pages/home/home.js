@@ -1,6 +1,11 @@
 const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
+<<<<<<< HEAD
+=======
+const merchantApi = require('../../api/merchant')
+const productApi = require('../../api/product')
+>>>>>>> 苏
 
 Page({
   data: {
@@ -41,6 +46,7 @@ Page({
     return this.getUserLocation()
       .then((userLocation) => {
         const templateConfig = templateService.getTemplateConfig()
+<<<<<<< HEAD
         const merchantList = this.buildLocatedMerchantList(mock.merchantList, userLocation)
         const filteredData = this.buildFilteredLists({
           merchantList,
@@ -59,6 +65,45 @@ Page({
           loading: false
         })
       })
+=======
+
+        const merchantParams = {}
+        if (userLocation) {
+          merchantParams.latitude = userLocation.latitude
+          merchantParams.longitude = userLocation.longitude
+        }
+
+        return Promise.all([
+          merchantApi.getMerchantList(merchantParams),
+          productApi.getGrouponList()
+        ]).then(([merchantRes, grouponRes]) => {
+          const merchantList = (merchantRes.data || merchantRes || []).map((m) => ({
+            ...m,
+            businessStatusText: m.businessStatus ? '营业中' : '休息中',
+            bookingText: m.supportBooking === false ? '到店即用' : '可预约',
+            displayTags: (m.tags || []).filter((tag) => !['营业中', '休息中'].includes(tag))
+          }))
+          const grouponList = grouponRes.data || grouponRes || []
+
+          const filteredData = this.buildFilteredLists({ merchantList, grouponList })
+          this.setData({
+            brandInfo: templateConfig.brandInfo,
+            homeConfig: templateConfig.home,
+            userLocation,
+            currentLocation: this.formatCurrentDistance(merchantList[0]),
+            currentMerchant: merchantList[0] || {},
+            merchantList,
+            grouponList,
+            displayMerchantList: filteredData.displayMerchantList,
+            displayGrouponList: filteredData.displayGrouponList,
+            loading: false
+          })
+        })
+      })
+      .catch(() => {
+        this.setData({ loading: false })
+      })
+>>>>>>> 苏
   },
 
   getUserLocation() {
@@ -83,6 +128,7 @@ Page({
     return merchant.distance || '距离计算中'
   },
 
+<<<<<<< HEAD
   toRadians(value) {
     return (value * Math.PI) / 180
   },
@@ -131,6 +177,8 @@ Page({
     })
   },
 
+=======
+>>>>>>> 苏
   buildFilteredLists({ merchantList = [], grouponList = [] }) {
     return {
       displayMerchantList: merchantList,
@@ -226,8 +274,8 @@ Page({
       return
     }
     wx.openLocation({
-      latitude: merchant.latitude,
-      longitude: merchant.longitude,
+      latitude: Number(merchant.latitude),
+      longitude: Number(merchant.longitude),
       name: merchant.name,
       address: merchant.address
     })

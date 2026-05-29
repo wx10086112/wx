@@ -243,13 +243,6 @@
   font-weight: 800;
 }
 
-.section-subtitle {
-  display: block;
-  margin-top: 8rpx;
-  color: #7e8a9b;
-  font-size: 24rpx;
-}
-
 .product-section {
   padding-bottom: 18rpx;
 }

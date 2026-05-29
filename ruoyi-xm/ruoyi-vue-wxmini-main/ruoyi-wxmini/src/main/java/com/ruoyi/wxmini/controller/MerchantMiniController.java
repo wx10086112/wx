@@ -2,17 +2,12 @@ package com.ruoyi.wxmini.controller;
 
 import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.mall.finance.domain.MerchantSettlementRecord;
+import com.ruoyi.mall.finance.service.IMerchantSettlementRecordService;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.service.IWriteOffService;
-import com.ruoyi.wxmini.dto.merchant.MerchantMiniGoodsDto;
-import com.ruoyi.wxmini.dto.merchant.MerchantMiniGoodsStatusRequestDto;
-import com.ruoyi.wxmini.dto.merchant.MerchantMiniLoginRequestDto;
-import com.ruoyi.wxmini.dto.merchant.MerchantMiniReasonRequestDto;
-import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffPermissionRequestDto;
-import com.ruoyi.wxmini.dto.merchant.MerchantMiniStaffRequestDto;
-import com.ruoyi.wxmini.dto.merchant.MerchantMiniStoreDto;
-import com.ruoyi.wxmini.dto.merchant.MerchantMiniWithdrawRequestDto;
+import com.ruoyi.wxmini.dto.merchant.*;
 import com.ruoyi.wxmini.service.IMerchantMiniMockService;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
 import org.apache.commons.lang3.StringUtils;
@@ -29,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -54,6 +50,8 @@ public class MerchantMiniController {
     private IMerchantService merchantService;
     @Resource
     private IWriteOffService writeOffService;
+    @Resource
+    private IMerchantSettlementRecordService settlementService;
 
     /**
      * 每次请求前，从AppID解析商家ID并设置上下文
@@ -70,10 +68,12 @@ public class MerchantMiniController {
     }
 
     @PostMapping("/auth/login")
-    public AjaxResult login(@RequestBody(required = false) MerchantMiniLoginRequestDto requestDto) {
-        String username = requestDto == null ? null : requestDto.getUsername();
-        String password = requestDto == null ? null : requestDto.getPassword();
-        return AjaxResult.success(merchantMiniMockService.login(username, password));
+    public AjaxResult login(@Valid @RequestBody MerchantMiniLoginRequestDto requestDto, HttpServletRequest request) {
+        String appId = request.getHeader("X-Merchant-AppId");
+        if (StringUtils.isBlank(appId)) {
+            appId = request.getParameter("appid");
+        }
+        return AjaxResult.success(merchantMiniMockService.login(requestDto.getUsername(), requestDto.getPassword(), appId));
     }
 
     @GetMapping("/workbench/overview")
@@ -208,8 +208,17 @@ public class MerchantMiniController {
         return AjaxResult.success(merchantMiniMockService.listGoods(status));
     }
 
+    @GetMapping("/goods/detail/{id}")
+    public AjaxResult getGoodsDetail(@PathVariable Long id) {
+        AjaxResult accessDenied = checkAccess(PERMISSION_GOODS_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        return AjaxResult.success(merchantMiniMockService.getGoodsDetail(id));
+    }
+
     @PostMapping("/goods/save")
-    public AjaxResult saveGoods(@RequestBody(required = false) MerchantMiniGoodsDto goodsDto) {
+    public AjaxResult saveGoods(@Valid @RequestBody MerchantMiniGoodsDto goodsDto) {
         AjaxResult accessDenied = checkStaffAccess(PERMISSION_GOODS_MANAGE);
         if (accessDenied != null) {
             return accessDenied;
@@ -319,7 +328,7 @@ public class MerchantMiniController {
     }
 
     @PostMapping("/staff/add")
-    public AjaxResult addStaff(@RequestBody(required = false) MerchantMiniStaffRequestDto requestDto) {
+    public AjaxResult addStaff(@Valid @RequestBody MerchantMiniStaffRequestDto requestDto) {
         AjaxResult accessDenied = checkStaffAccess(PERMISSION_STAFF_MANAGE);
         if (accessDenied != null) {
             return accessDenied;
@@ -332,7 +341,7 @@ public class MerchantMiniController {
     }
 
     @PutMapping("/staff/update")
-    public AjaxResult updateStaff(@RequestBody(required = false) MerchantMiniStaffRequestDto requestDto) {
+    public AjaxResult updateStaff(@Valid @RequestBody MerchantMiniStaffRequestDto requestDto) {
         AjaxResult accessDenied = checkStaffAccess(PERMISSION_STAFF_MANAGE);
         if (accessDenied != null) {
             return accessDenied;
@@ -350,7 +359,16 @@ public class MerchantMiniController {
         if (accessDenied != null) {
             return accessDenied;
         }
-        return AjaxResult.success(merchantMiniMockService.getFinanceOverview());
+        return AjaxResult.success(buildSettlementOverview());
+    }
+
+    @GetMapping("/settlement/overview")
+    public AjaxResult getSettlementOverview() {
+        AjaxResult accessDenied = checkAccess(PERMISSION_FINANCE_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        return AjaxResult.success(buildSettlementOverview());
     }
 
     @PostMapping("/finance/withdraw")
@@ -359,12 +377,96 @@ public class MerchantMiniController {
         if (accessDenied != null) {
             return accessDenied;
         }
-        try {
-            Long amount = requestDto == null ? null : requestDto.getAmount();
-            return AjaxResult.success(merchantMiniMockService.applyWithdraw(amount));
-        } catch (IllegalArgumentException e) {
-            return AjaxResult.error(e.getMessage());
+        return AjaxResult.error("该版本已切换为微信自动结算，无需商家手动提现");
+    }
+
+    // ==================== 结算概览（真实数据） ====================
+
+    private MerchantMiniSettlementOverviewDto buildSettlementOverview() {
+        Long merchantId = WxMiniUserContext.getCurrentMerchantId();
+        MerchantMiniSettlementOverviewDto dto = new MerchantMiniSettlementOverviewDto();
+
+        // 金额转分
+        java.math.BigDecimal todayIncome = settlementService.sumMerchantAmountToday(merchantId);
+        java.math.BigDecimal monthIncome = settlementService.sumMerchantAmountThisMonth(merchantId);
+        java.math.BigDecimal pendingAmount = settlementService.sumMerchantAmountByStatus(merchantId, "WAITING_T1");
+        java.math.BigDecimal settledAmount = settlementService.sumMerchantAmountByStatus(merchantId, "ARRIVED");
+        java.math.BigDecimal processingAmount = settlementService.sumMerchantAmountByStatus(merchantId, "TRANSFERRING");
+        Integer completedCount = settlementService.countCompletedByMerchantId(merchantId);
+
+        dto.setTodayIncomeAmount(yuanToCent(todayIncome));
+        dto.setMonthIncomeAmount(yuanToCent(monthIncome));
+        dto.setPendingSettleAmount(yuanToCent(pendingAmount));
+        dto.setSettledAmount(yuanToCent(settledAmount));
+        dto.setProcessingAmount(yuanToCent(processingAmount));
+        dto.setPendingAutoTransferAmount(yuanToCent(pendingAmount));
+        dto.setPlatformFeeAmount(0L);
+        dto.setCompletedOrderCount(completedCount != null ? completedCount : 0);
+        dto.setAutoTransferMode("T+1");
+        dto.setNextAutoTransferTime(nextAutoTransferTimeMillis());
+
+        // 结算账号（待配置）
+        MerchantMiniSettlementAccountDto account = new MerchantMiniSettlementAccountDto();
+        account.setStatus("PENDING");
+        dto.setSettlementAccount(account);
+
+        // 结算记录列表（最近50条）
+        MerchantSettlementRecord query = new MerchantSettlementRecord();
+        query.setMerchantId(merchantId);
+        List<MerchantSettlementRecord> records = settlementService.selectList(query);
+        List<MerchantMiniSettlementRecordDto> recordDtos = new ArrayList<>();
+        int count = 0;
+        for (MerchantSettlementRecord r : records) {
+            if (count++ >= 50) break;
+            MerchantMiniSettlementRecordDto rd = new MerchantMiniSettlementRecordDto();
+            rd.setSettlementId(r.getSettlementNo());
+            rd.setOrderNo(r.getOrderNo());
+            rd.setTitle(r.getTitle());
+            rd.setAmount(yuanToCent(r.getMerchantAmount()));
+            rd.setStatus(r.getStatus());
+            rd.setApplyTime(r.getApplyTime() != null ? r.getApplyTime().getTime() : null);
+            rd.setExpectedTransferTime(r.getExpectedTransferTime() != null ? r.getExpectedTransferTime().getTime() : null);
+            rd.setArriveTime(r.getArriveTime() != null ? r.getArriveTime().getTime() : null);
+            rd.setRemark(r.getFailReason());
+            recordDtos.add(rd);
         }
+        dto.setSettlementRecordList(recordDtos);
+
+        // 流水列表（从记录构建）
+        List<MerchantMiniFinanceLedgerDto> ledgerList = new ArrayList<>();
+        for (MerchantSettlementRecord r : records) {
+            if (ledgerList.size() >= 50) break;
+            if ("CANCELLED".equals(r.getStatus()) || "REVERSED".equals(r.getStatus())) continue;
+            MerchantMiniFinanceLedgerDto ld = new MerchantMiniFinanceLedgerDto();
+            ld.setLedgerId(r.getId());
+            ld.setOrderNo(r.getOrderNo());
+            ld.setTitle(r.getTitle());
+            ld.setOrderAmount(yuanToCent(r.getOrderAmount()));
+            ld.setMerchantAmount(yuanToCent(r.getMerchantAmount()));
+            ld.setPlatformFeeAmount(yuanToCent(r.getPlatformFeeAmount()));
+            ld.setStatus("ARRIVED".equals(r.getStatus()) || "TRANSFERRING".equals(r.getStatus()) ? "SETTLED" : "PENDING");
+            ld.setFinishTime(r.getApplyTime() != null ? r.getApplyTime().getTime() : null);
+            ld.setSettleTime(r.getExpectedTransferTime() != null ? r.getExpectedTransferTime().getTime() : null);
+            ledgerList.add(ld);
+        }
+        dto.setLedgerList(ledgerList);
+
+        return dto;
+    }
+
+    private static Long yuanToCent(java.math.BigDecimal yuan) {
+        if (yuan == null) return 0L;
+        return yuan.multiply(java.math.BigDecimal.valueOf(100)).longValue();
+    }
+
+    private static Long nextAutoTransferTimeMillis() {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.add(java.util.Calendar.DAY_OF_MONTH, 1);
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 10);
+        cal.set(java.util.Calendar.MINUTE, 0);
+        cal.set(java.util.Calendar.SECOND, 0);
+        cal.set(java.util.Calendar.MILLISECOND, 0);
+        return cal.getTimeInMillis();
     }
 
     // ==================== 营销模块（Stub，待数据库表就绪后实现） ====================

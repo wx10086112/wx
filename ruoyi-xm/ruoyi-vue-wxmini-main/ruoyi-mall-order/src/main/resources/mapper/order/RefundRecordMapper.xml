@@ -9,7 +9,9 @@
         <result property="orderNo" column="order_no"/>
         <result property="refundNo" column="refund_no"/>
         <result property="merchantId" column="merchant_id"/>
+        <result property="merchantName" column="merchant_name"/>
         <result property="userId" column="user_id"/>
+        <result property="userName" column="user_name"/>
         <result property="paymentRecordId" column="payment_record_id"/>
         <result property="refundAmount" column="refund_amount"/>
         <result property="refundReason" column="refund_reason"/>
@@ -21,36 +23,44 @@
         <result property="operator" column="operator"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
+        <result property="delFlag" column="del_flag"/>
     </resultMap>
 
     <sql id="selectRefundRecordVo">
-        select id, order_no, refund_no, merchant_id, user_id, payment_record_id,
-               refund_amount, refund_reason, refund_type, status, audit_time,
-               refund_time, reject_reason, operator, create_time, update_time
-        from refund_record
+        select r.id, r.order_no, r.refund_no, r.merchant_id, m.name as merchant_name,
+               r.user_id, u.nickname as user_name, r.payment_record_id,
+               r.refund_amount, r.refund_reason, r.refund_type, r.status, r.audit_time,
+               r.refund_time, r.reject_reason, r.operator, r.create_time, r.update_time
+        from refund_record r
+        LEFT JOIN merchant m ON r.merchant_id = m.id
+        LEFT JOIN mall_user u ON r.user_id = u.id
     </sql>
 
     <select id="selectRefundRecordById" parameterType="Long" resultMap="RefundRecordResult">
         <include refid="selectRefundRecordVo"/>
-        where id = #{id}
+        where r.id = #{id} AND r.del_flag = '0'
     </select>
 
     <select id="selectRefundRecordByRefundNo" parameterType="String" resultMap="RefundRecordResult">
         <include refid="selectRefundRecordVo"/>
-        where refund_no = #{refundNo}
+        where r.refund_no = #{refundNo} AND r.del_flag = '0'
     </select>
 
     <select id="selectRefundRecordList" parameterType="com.ruoyi.mall.order.domain.RefundRecord" resultMap="RefundRecordResult">
         <include refid="selectRefundRecordVo"/>
         <where>
-            <if test="orderNo != null and orderNo != ''">and order_no like concat('%', #{orderNo}, '%')</if>
-            <if test="refundNo != null and refundNo != ''">and refund_no = #{refundNo}</if>
-            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
-            <if test="userId != null">and user_id = #{userId}</if>
-            <if test="status != null">and status = #{status}</if>
-            <if test="refundType != null">and refund_type = #{refundType}</if>
+            and r.del_flag = '0'
+            <if test="orderNo != null and orderNo != ''">and r.order_no like concat('%', #{orderNo}, '%')</if>
+            <if test="refundNo != null and refundNo != ''">and r.refund_no = #{refundNo}</if>
+            <if test="merchantId != null">and r.merchant_id = #{merchantId}</if>
+            <if test="merchantName != null and merchantName != ''">and m.name like concat('%', #{merchantName}, '%')</if>
+            <if test="userId != null">and r.user_id = #{userId}</if>
+            <if test="userName != null and userName != ''">and u.nickname like concat('%', #{userName}, '%')</if>
+            <if test="status != null">and r.status = #{status}</if>
+            <if test="refundType != null">and r.refund_type = #{refundType}</if>
+            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
         </where>
-        order by create_time desc
+        order by r.create_time desc
     </select>
 
     <insert id="insertRefundRecord" parameterType="com.ruoyi.mall.order.domain.RefundRecord" useGeneratedKeys="true" keyProperty="id">
@@ -107,15 +117,15 @@
         where id = #{id}
     </update>
 
-    <delete id="deleteRefundRecordById" parameterType="Long">
-        delete from refund_record where id = #{id}
-    </delete>
+    <update id="deleteRefundRecordById" parameterType="Long">
+        update refund_record set del_flag = '2' where id = #{id}
+    </update>
 
-    <delete id="deleteRefundRecordByIds" parameterType="String">
-        delete from refund_record where id in
+    <update id="deleteRefundRecordByIds" parameterType="String">
+        update refund_record set del_flag = '2' where id in
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
-    </delete>
+    </update>
 
 </mapper>

@@ -18,17 +18,19 @@
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
         <result property="remark" column="remark"/>
+        <result property="delFlag" column="del_flag"/>
     </resultMap>
 
     <sql id="selectMallUserVo">
         select id, nickname, phone, avatar, gender, city, open_id, status,
-               total_orders, total_amount, create_time, update_time, remark
+               total_orders, total_amount, create_time, update_time, remark, del_flag
         from mall_user
     </sql>
 
     <select id="selectMallUserList" parameterType="com.ruoyi.mall.user.domain.MallUser" resultMap="MallUserResult">
         <include refid="selectMallUserVo"/>
         <where>
+            and del_flag = '0'
             <if test="nickname != null and nickname != ''">and nickname like concat('%', #{nickname}, '%')</if>
             <if test="phone != null and phone != ''">and phone = #{phone}</if>
             <if test="openId != null and openId != ''">and open_id = #{openId}</if>
@@ -38,12 +40,12 @@
 
     <select id="selectMallUserById" parameterType="Long" resultMap="MallUserResult">
         <include refid="selectMallUserVo"/>
-        where id = #{id}
+        where id = #{id} and del_flag = '0'
     </select>
 
     <select id="selectMallUserByOpenId" parameterType="String" resultMap="MallUserResult">
         <include refid="selectMallUserVo"/>
-        where open_id = #{openId}
+        where open_id = #{openId} and del_flag = '0'
     </select>
 
     <insert id="insertMallUser" parameterType="com.ruoyi.mall.user.domain.MallUser" useGeneratedKeys="true" keyProperty="id">
@@ -58,6 +60,7 @@
             <if test="status != null">status,</if>
             <if test="totalOrders != null">total_orders,</if>
             <if test="totalAmount != null">total_amount,</if>
+            del_flag,
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="nickname != null">#{nickname},</if>
@@ -69,6 +72,7 @@
             <if test="status != null">#{status},</if>
             <if test="totalOrders != null">#{totalOrders},</if>
             <if test="totalAmount != null">#{totalAmount},</if>
+            '0',
         </trim>
     </insert>
 
@@ -88,15 +92,15 @@
         where id = #{id}
     </update>
 
-    <delete id="deleteMallUserById" parameterType="Long">
-        delete from mall_user where id = #{id}
-    </delete>
+    <update id="deleteMallUserById" parameterType="Long">
+        update mall_user set del_flag = '2' where id = #{id}
+    </update>
 
-    <delete id="deleteMallUserByIds" parameterType="String">
-        delete from mall_user where id in
+    <update id="deleteMallUserByIds" parameterType="String">
+        update mall_user set del_flag = '2' where id in
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
-    </delete>
+    </update>
 
 </mapper>

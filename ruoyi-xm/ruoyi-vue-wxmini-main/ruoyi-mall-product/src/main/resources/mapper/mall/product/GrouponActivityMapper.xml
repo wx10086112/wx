@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.product.mapper.GrouponActivityMapper">
+
+    <resultMap type="com.ruoyi.mall.product.domain.GrouponActivity" id="GrouponActivityResult">
+        <result property="id" column="id"/>
+        <result property="merchantId" column="merchant_id"/>
+        <result property="name" column="name"/>
+        <result property="coverImage" column="cover_image"/>
+        <result property="posterImage" column="poster_image"/>
+        <result property="detailImages" column="detail_images"/>
+        <result property="description" column="description"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="status" column="status"/>
+        <result property="totalSold" column="total_sold"/>
+        <result property="limitPerUser" column="limit_per_user"/>
+        <result property="sort" column="sort"/>
+        <result property="sourceType" column="source_type"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="delFlag" column="del_flag"/>
+    </resultMap>
+
+    <sql id="selectGrouponActivityVo">
+        select id, merchant_id, name, cover_image, poster_image, detail_images,
+               description, start_time, end_time, status, total_sold, limit_per_user,
+               sort, source_type, create_time, update_time, del_flag
+        from groupon_activity
+    </sql>
+
+    <select id="selectGrouponActivityById" parameterType="Long" resultMap="GrouponActivityResult">
+        <include refid="selectGrouponActivityVo"/>
+        where id = #{id} AND del_flag = '0'
+    </select>
+
+    <select id="selectGrouponActivityList" parameterType="com.ruoyi.mall.product.domain.GrouponActivity" resultMap="GrouponActivityResult">
+        <include refid="selectGrouponActivityVo"/>
+        <where>
+            del_flag = '0'
+            <if test="name != null and name != ''">and name like concat('%', #{name}, '%')</if>
+            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
+            <if test="status != null">and status = #{status}</if>
+            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+        </where>
+        order by sort asc, create_time desc
+    </select>
+
+    <select id="selectByMerchantId" parameterType="Long" resultMap="GrouponActivityResult">
+        <include refid="selectGrouponActivityVo"/>
+        where merchant_id = #{merchantId} AND del_flag = '0'
+        order by sort asc, create_time desc
+    </select>
+
+    <select id="selectActiveActivities" resultMap="GrouponActivityResult">
+        <include refid="selectGrouponActivityVo"/>
+        where status = 1 and del_flag = '0' and start_time &lt;= NOW() and end_time >= NOW()
+        order by sort asc, create_time desc
+    </select>
+
+    <insert id="insertGrouponActivity" parameterType="com.ruoyi.mall.product.domain.GrouponActivity" useGeneratedKeys="true" keyProperty="id">
+        insert into groupon_activity
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="merchantId != null">merchant_id,</if>
+            <if test="name != null">name,</if>
+            <if test="coverImage != null">cover_image,</if>
+            <if test="posterImage != null">poster_image,</if>
+            <if test="detailImages != null">detail_images,</if>
+            <if test="description != null">description,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="status != null">status,</if>
+            <if test="totalSold != null">total_sold,</if>
+            <if test="limitPerUser != null">limit_per_user,</if>
+            <if test="sort != null">sort,</if>
+            <if test="sourceType != null">source_type,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="merchantId != null">#{merchantId},</if>
+            <if test="name != null">#{name},</if>
+            <if test="coverImage != null">#{coverImage},</if>
+            <if test="posterImage != null">#{posterImage},</if>
+            <if test="detailImages != null">#{detailImages},</if>
+            <if test="description != null">#{description},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="endTime != null">#{endTime},</if>
+            <if test="status != null">#{status},</if>
+            <if test="totalSold != null">#{totalSold},</if>
+            <if test="limitPerUser != null">#{limitPerUser},</if>
+            <if test="sort != null">#{sort},</if>
+            <if test="sourceType != null">#{sourceType},</if>
+        </trim>
+    </insert>
+
+    <update id="updateGrouponActivity" parameterType="com.ruoyi.mall.product.domain.GrouponActivity">
+        update groupon_activity
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="merchantId != null">merchant_id = #{merchantId},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="coverImage != null">cover_image = #{coverImage},</if>
+            <if test="posterImage != null">poster_image = #{posterImage},</if>
+            <if test="detailImages != null">detail_images = #{detailImages},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="totalSold != null">total_sold = #{totalSold},</if>
+            <if test="limitPerUser != null">limit_per_user = #{limitPerUser},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="sourceType != null">source_type = #{sourceType},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <update id="deleteGrouponActivityById" parameterType="Long">
+        update groupon_activity set del_flag = '2' where id = #{id}
+    </update>
+
+    <update id="deleteGrouponActivityByIds" parameterType="String">
+        update groupon_activity set del_flag = '2' where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

@@ -38,8 +38,8 @@
         <el-table-column label="操作" width="150" align="center">
           <template slot-scope="scope">
             <template v-if="scope.row.status === 0">
-              <el-button type="text" size="small" class="text-success" @click="handleApprove(scope.row)">通过</el-button>
-              <el-button type="text" size="small" class="text-danger" @click="handleReject(scope.row)">拒绝</el-button>
+              <el-button v-hasPermi="['mall:merchant:audit']" type="text" size="small" class="text-success" @click="handleApprove(scope.row)">通过</el-button>
+              <el-button v-hasPermi="['mall:merchant:audit']" type="text" size="small" class="text-danger" @click="handleReject(scope.row)">拒绝</el-button>
             </template>
             <span v-else>-</span>
           </template>
@@ -64,7 +64,7 @@
       <el-input v-model="rejectReason" type="textarea" :rows="3" placeholder="请输入拒绝原因" />
       <div slot="footer">
         <el-button @click="rejectDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="submitReject">确 定</el-button>
+        <el-button v-hasPermi="['mall:merchant:audit']" type="primary" @click="submitReject">确 定</el-button>
       </div>
     </el-dialog>
   </div>

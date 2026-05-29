@@ -10,7 +10,9 @@ const user = {
     name: '',
     avatar: '',
     roles: [],
-    permissions: []
+    permissions: [],
+    accountType: '',
+    distributorId: ''
   },
 
   mutations: {
@@ -31,6 +33,12 @@ const user = {
     },
     SET_PERMISSIONS: (state, permissions) => {
       state.permissions = permissions
+    },
+    SET_ACCOUNT_TYPE: (state, accountType) => {
+      state.accountType = accountType
+    },
+    SET_DISTRIBUTOR_ID: (state, distributorId) => {
+      state.distributorId = distributorId
     }
   },
 
@@ -70,6 +78,8 @@ const user = {
           commit('SET_ID', user.userId)
           commit('SET_NAME', user.userName)
           commit('SET_AVATAR', avatar)
+          commit('SET_ACCOUNT_TYPE', user.accountType || 'PLATFORM')
+          commit('SET_DISTRIBUTOR_ID', user.distributorId)
           resolve(res)
         }).catch(error => {
           reject(error)
@@ -84,6 +94,8 @@ const user = {
           commit('SET_TOKEN', '')
           commit('SET_ROLES', [])
           commit('SET_PERMISSIONS', [])
+          commit('SET_ACCOUNT_TYPE', '')
+          commit('SET_DISTRIBUTOR_ID', '')
           removeToken()
           resolve()
         }).catch(error => {

@@ -19,6 +19,8 @@ public class Coupon extends BaseEntity {
     private Date startTime;
     private Date endTime;
     private Integer status;
+    /** 删除标志（0存在 2删除） */
+    private String delFlag;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -42,4 +44,7 @@ public class Coupon extends BaseEntity {
     public void setEndTime(Date endTime) { this.endTime = endTime; }
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
+
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 }

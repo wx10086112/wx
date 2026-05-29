@@ -10,6 +10,7 @@
         <result property="orderNo" column="order_no"/>
         <result property="writeOffCode" column="write_off_code"/>
         <result property="merchantId" column="merchant_id"/>
+        <result property="merchantName" column="merchant_name"/>
         <result property="storeId" column="store_id"/>
         <result property="operatorId" column="operator_id"/>
         <result property="operatorName" column="operator_name"/>
@@ -23,37 +24,39 @@
     </resultMap>
 
     <sql id="selectWriteOffRecordVo">
-        select id, order_id, order_no, write_off_code, merchant_id, store_id,
-               operator_id, operator_name, write_off_type, write_off_time,
-               product_name, product_amount, remark, status, create_time
-        from write_off_record
+        select w.id, w.order_id, w.order_no, w.write_off_code, w.merchant_id, m.name as merchant_name, w.store_id,
+               w.operator_id, w.operator_name, w.write_off_type, w.write_off_time,
+               w.product_name, w.product_amount, w.remark, w.status, w.create_time
+        from write_off_record w
+        LEFT JOIN merchant m ON w.merchant_id = m.id
     </sql>
 
     <select id="selectWriteOffRecordById" parameterType="Long" resultMap="WriteOffRecordResult">
         <include refid="selectWriteOffRecordVo"/>
-        where id = #{id}
+        where w.id = #{id}
     </select>
 
     <select id="selectWriteOffRecordList" parameterType="com.ruoyi.mall.order.domain.WriteOffRecord" resultMap="WriteOffRecordResult">
         <include refid="selectWriteOffRecordVo"/>
         <where>
-            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
-            <if test="orderNo != null and orderNo != ''">and order_no = #{orderNo}</if>
-            <if test="writeOffCode != null and writeOffCode != ''">and write_off_code = #{writeOffCode}</if>
-            <if test="status != null">and status = #{status}</if>
+            <if test="merchantId != null">and w.merchant_id = #{merchantId}</if>
+            <if test="merchantName != null and merchantName != ''">and m.name like concat('%', #{merchantName}, '%')</if>
+            <if test="orderNo != null and orderNo != ''">and w.order_no = #{orderNo}</if>
+            <if test="writeOffCode != null and writeOffCode != ''">and w.write_off_code = #{writeOffCode}</if>
+            <if test="status != null">and w.status = #{status}</if>
         </where>
-        order by write_off_time desc
+        order by w.write_off_time desc
     </select>
 
     <select id="selectByMerchantId" parameterType="Long" resultMap="WriteOffRecordResult">
         <include refid="selectWriteOffRecordVo"/>
-        where merchant_id = #{merchantId} and status = 1
-        order by write_off_time desc
+        where w.merchant_id = #{merchantId} and w.status = 1
+        order by w.write_off_time desc
     </select>
 
     <select id="selectByWriteOffCode" parameterType="String" resultMap="WriteOffRecordResult">
         <include refid="selectWriteOffRecordVo"/>
-        where write_off_code = #{code} and status = 1
+        where w.write_off_code = #{code} and w.status = 1
     </select>
 
     <insert id="insertWriteOffRecord" parameterType="com.ruoyi.mall.order.domain.WriteOffRecord" useGeneratedKeys="true" keyProperty="id">

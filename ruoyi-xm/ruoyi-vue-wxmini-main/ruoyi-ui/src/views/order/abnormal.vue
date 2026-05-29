@@ -23,11 +23,11 @@
       <!-- 表格 -->
       <el-table v-loading="loading" :data="tableList" border>
         <el-table-column label="订单号" prop="orderNo" width="180" />
-        <el-table-column label="商家" prop="merchantId" width="140" />
-        <el-table-column label="用户" prop="userId" width="100" />
+        <el-table-column label="商家" prop="merchantName" width="140" />
+        <el-table-column label="用户" prop="userName" width="100" />
         <el-table-column label="订单金额" width="110">
           <template slot-scope="scope">
-            <span>¥{{ scope.row.totalAmount.toFixed(2) }}</span>
+            <span>¥{{ (scope.row.totalAmount || 0).toFixed(2) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="创建时间" prop="createTime" width="160" />
@@ -64,9 +64,9 @@
       <template v-if="currentRow">
         <el-descriptions :column="1" border size="small">
           <el-descriptions-item label="订单号">{{ currentRow.orderNo }}</el-descriptions-item>
-          <el-descriptions-item label="商家">{{ currentRow.merchantId }}</el-descriptions-item>
+          <el-descriptions-item label="商家">{{ currentRow.merchantName || currentRow.merchantId }}</el-descriptions-item>
           <el-descriptions-item label="异常原因">{{ currentRow.issue }}</el-descriptions-item>
-          <el-descriptions-item label="订单金额">¥{{ currentRow.totalAmount.toFixed(2) }}</el-descriptions-item>
+          <el-descriptions-item label="订单金额">¥{{ (currentRow.totalAmount || 0).toFixed(2) }}</el-descriptions-item>
         </el-descriptions>
         <el-form :model="processForm" label-width="80px" style="margin-top: 16px;">
           <el-form-item label="处理方式">

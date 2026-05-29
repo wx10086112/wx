@@ -56,6 +56,8 @@ public class UserInfo extends BaseEntity {
     @Excel(name = "用户头像")
     private String avatarUrl;
 
+    private String delFlag = "0";
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -119,4 +121,7 @@ public class UserInfo extends BaseEntity {
     public String getAvatarUrl() {
         return avatarUrl;
     }
+
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 }

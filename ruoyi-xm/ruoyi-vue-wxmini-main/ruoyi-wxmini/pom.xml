@@ -79,6 +79,10 @@
             <groupId>com.ruoyi</groupId>
             <artifactId>ruoyi-mall-user</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-mall-pay</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

@@ -1,9 +1,8 @@
-const { get, post } = require('../utils/request')
+const { get } = require('../utils/request')
 
-const getFinanceOverview = () => get('/wxmini/merchant-mini/finance/overview')
-const applyFinanceWithdraw = (data) => post('/wxmini/merchant-mini/finance/withdraw', data)
+const getSettlementOverview = () => get('/wxmini/merchant-mini/settlement/overview')
 
 module.exports = {
-  getFinanceOverview,
-  applyFinanceWithdraw
+  getSettlementOverview,
+  getFinanceOverview: getSettlementOverview
 }

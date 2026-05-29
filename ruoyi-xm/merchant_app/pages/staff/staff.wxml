@@ -31,7 +31,6 @@
     <!-- 权限配置 -->
     <view class="panel permission-panel">
       <text class="section-title">权限配置</text>
-      <text wx:if="{{selectedStaffId}}" class="section-desc">正在编辑：{{staffList[0].name}}（切换员工请点击上方列表）</text>
       <checkbox-group bindchange="handlePermissionChange">
         <label wx:for="{{permissionOptions}}" wx:key="value" class="permission-row">
           <view class="permission-main">

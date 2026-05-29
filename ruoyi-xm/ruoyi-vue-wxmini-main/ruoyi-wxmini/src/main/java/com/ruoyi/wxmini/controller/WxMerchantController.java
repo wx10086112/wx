@@ -1,6 +1,7 @@
 package com.ruoyi.wxmini.controller;
 
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.mall.common.util.WxMiniUserContext;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.domain.MerchantStore;
 import com.ruoyi.mall.merchant.mapper.MerchantStoreMapper;
@@ -19,8 +20,11 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/wxmini/merchant")
@@ -34,13 +38,18 @@ public class WxMerchantController {
     private IProductService productService;
 
     @GetMapping("/home")
-    public AjaxResult home(@RequestParam String appid) {
-        Merchant merchant = merchantService.selectMerchantByCAppId(appid);
+    public AjaxResult home() {
+        // 优先从 JWT 上下文获取商家ID（Filter已从X-Wx-AppId解析）
+        Long merchantId = WxMiniUserContext.getCurrentMerchantId();
+        if (merchantId == null) {
+            merchantId = WxMiniUserContext.getAppIdMerchantId();
+        }
+        if (merchantId == null) {
+            return AjaxResult.error("无法识别当前商家");
+        }
+        Merchant merchant = merchantService.selectMerchantById(merchantId);
         if (merchant == null || merchant.getStatus() == null || merchant.getStatus() != 1) {
-            merchant = merchantService.selectMerchantById(1L);
-            if (merchant == null || merchant.getStatus() == null || merchant.getStatus() != 1) {
-                return AjaxResult.error("商家不存在或已下线");
-            }
+            return AjaxResult.error("商家不存在或已下线");
         }
 
         List<MerchantStore> stores = merchantStoreMapper.selectMerchantStoreByMerchantId(merchant.getId());
@@ -78,9 +87,18 @@ public class WxMerchantController {
             @RequestParam(required = false) BigDecimal latitude,
             @RequestParam(required = false) BigDecimal longitude,
             @RequestParam(required = false) Long categoryId) {
-        Merchant query = new Merchant();
-        query.setStatus(1);
-        List<Merchant> merchants = merchantService.selectMerchantList(query);
+        // SaaS数据隔离：只返回当前小程序对应的商家
+        Long merchantId = WxMiniUserContext.getCurrentMerchantId();
+        if (merchantId == null) {
+            merchantId = WxMiniUserContext.getAppIdMerchantId();
+        }
+        List<Merchant> merchants = new ArrayList<>();
+        if (merchantId != null) {
+            Merchant merchant = merchantService.selectMerchantById(merchantId);
+            if (merchant != null && merchant.getStatus() != null && merchant.getStatus() == 1) {
+                merchants.add(merchant);
+            }
+        }
 
         List<WxMerchantItemDto> result = new ArrayList<>();
         for (Merchant merchant : merchants) {
@@ -108,11 +126,74 @@ public class WxMerchantController {
         if (store == null) {
             return AjaxResult.error("门店不存在");
         }
+        // SaaS数据隔离：校验门店归属当前商家
+        Long currentMerchantId = WxMiniUserContext.getCurrentMerchantId();
+        if (currentMerchantId == null) {
+            currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
+        }
+        if (currentMerchantId != null && !currentMerchantId.equals(store.getMerchantId())) {
+            return AjaxResult.error("门店不存在");
+        }
         Merchant merchant = merchantService.selectMerchantById(store.getMerchantId());
         if (merchant == null || merchant.getStatus() == null || merchant.getStatus() != 1) {
             return AjaxResult.error("商家不存在或已下线");
         }
         return AjaxResult.success(convertToItemDto(merchant, store, null, null));
+    }
+
+    @GetMapping("/album/{merchantId}")
+    public AjaxResult album(@PathVariable Long merchantId) {
+        // SaaS数据隔离：校验商家归属
+        Long currentMerchantId = WxMiniUserContext.getCurrentMerchantId();
+        if (currentMerchantId == null) {
+            currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
+        }
+        if (currentMerchantId != null && !currentMerchantId.equals(merchantId)) {
+            return AjaxResult.error("商家不存在");
+        }
+        Merchant merchant = merchantService.selectMerchantById(merchantId);
+        if (merchant == null || merchant.getStatus() == null || merchant.getStatus() != 1) {
+            return AjaxResult.error("商家不存在或已下线");
+        }
+
+        Set<String> seen = new HashSet<>();
+        List<String> albumList = new ArrayList<>();
+
+        // 1. 商家 logo / avatar
+        addIfNotBlank(albumList, seen, merchant.getLogo());
+        addIfNotBlank(albumList, seen, merchant.getAvatar());
+
+        // 2. 门店 avatar
+        List<MerchantStore> stores = merchantStoreMapper.selectMerchantStoreByMerchantId(merchantId);
+        for (MerchantStore store : stores) {
+            addIfNotBlank(albumList, seen, store.getAvatar());
+        }
+
+        // 3. 商品封面图 + images
+        Product query = new Product();
+        query.setMerchantId(merchantId);
+        query.setStatus(1);
+        List<Product> products = productService.selectProductList(query);
+        for (Product product : products) {
+            addIfNotBlank(albumList, seen, product.getCoverImage());
+            addIfNotBlank(albumList, seen, product.getMainImage());
+            if (product.getImages() != null && !product.getImages().isEmpty()) {
+                for (String img : product.getImages().split("[,;]")) {
+                    addIfNotBlank(albumList, seen, img.trim());
+                }
+            }
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("merchantId", merchantId);
+        result.put("albumList", albumList);
+        return AjaxResult.success(result);
+    }
+
+    private void addIfNotBlank(List<String> list, Set<String> seen, String url) {
+        if (url != null && !url.isEmpty() && seen.add(url)) {
+            list.add(url);
+        }
     }
 
     private WxMerchantItemDto convertToItemDto(Merchant merchant, MerchantStore store,

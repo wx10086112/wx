@@ -126,6 +126,51 @@ public class SecurityUtils
     }
 
     /**
+     * 获取账号类型
+     **/
+    public static String getAccountType()
+    {
+        try
+        {
+            return getLoginUser().getAccountType();
+        }
+        catch (Exception e)
+        {
+            return "PLATFORM";
+        }
+    }
+
+    /**
+     * 获取绑定分销商ID
+     **/
+    public static Long getDistributorId()
+    {
+        try
+        {
+            return getLoginUser().getDistributorId();
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
+    }
+
+    /**
+     * 获取绑定商家ID
+     **/
+    public static Long getMerchantId()
+    {
+        try
+        {
+            return getLoginUser().getMerchantId();
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
+    }
+
+    /**
      * 验证用户是否具备某权限
      * 
      * @param permission 权限字符串

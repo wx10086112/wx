@@ -1,9 +1,14 @@
 package com.ruoyi.wxmini.dto.merchant;
 
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
 public class MerchantMiniGoodsDto {
 
     private Long goodsId;
 
+    @NotBlank(message = "商品标题不能为空")
     private String title;
 
     private String subtitle;
@@ -12,8 +17,11 @@ public class MerchantMiniGoodsDto {
 
     private String imageUrl;
 
+    @NotNull(message = "价格不能为空")
+    @Min(value = 0, message = "价格不能为负数")
     private Long price;
 
+    @Min(value = 0, message = "原价不能为负数")
     private Long originalPrice;
 
     private Integer stock;

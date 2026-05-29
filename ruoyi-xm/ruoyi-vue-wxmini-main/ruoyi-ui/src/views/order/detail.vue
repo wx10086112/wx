@@ -16,10 +16,8 @@
               <div class="status-desc">{{ statusDesc }}</div>
             </div>
             <div class="action-buttons">
-              <el-button v-if="order.status === 0" type="primary" size="small">标记已付款</el-button>
-              <el-button v-if="order.status === 1" type="success" size="small">标记已完成</el-button>
-              <el-button v-if="order.status === 4" type="warning" size="small">处理售后</el-button>
-              <el-button v-if="order.status === 5" type="danger" size="small">处理异常</el-button>
+              <el-button v-if="order.status === 1" type="success" size="small">标记已核销</el-button>
+              <el-button v-if="order.status === 2" type="success" size="small">标记已完成</el-button>
             </div>
           </div>
         </el-card>
@@ -28,8 +26,8 @@
         <el-card shadow="never" class="info-card">
           <div slot="header"><span>商品信息</span></div>
           <el-descriptions :column="2" border>
-            <el-descriptions-item label="商品名称">{{ order.orderNo }}</el-descriptions-item>
-            <el-descriptions-item label="商家名称">{{ order.merchantId }}</el-descriptions-item>
+            <el-descriptions-item label="商品名称">{{ orderItemName }}</el-descriptions-item>
+            <el-descriptions-item label="商家名称">{{ order.merchantName || order.merchantId }}</el-descriptions-item>
             <el-descriptions-item label="订单号">{{ order.orderNo }}</el-descriptions-item>
             <el-descriptions-item label="下单时间">{{ order.createTime }}</el-descriptions-item>
           </el-descriptions>
@@ -40,13 +38,13 @@
           <div slot="header"><span>支付信息</span></div>
           <el-descriptions :column="2" border>
             <el-descriptions-item label="订单金额">
-              <span class="amount">¥{{ order.totalAmount.toFixed(2) }}</span>
+              <span class="amount">¥{{ (order.totalAmount || 0).toFixed(2) }}</span>
             </el-descriptions-item>
             <el-descriptions-item label="实付金额">
-              <span class="amount text-primary">¥{{ order.payAmount.toFixed(2) }}</span>
+              <span class="amount text-primary">¥{{ (order.payAmount || 0).toFixed(2) }}</span>
             </el-descriptions-item>
             <el-descriptions-item label="优惠金额">
-              <span class="text-danger">-¥{{ (order.totalAmount - order.payAmount).toFixed(2) }}</span>
+              <span class="text-danger">-¥{{ ((order.totalAmount || 0) - (order.payAmount || 0)).toFixed(2) }}</span>
             </el-descriptions-item>
             <el-descriptions-item label="支付时间">{{ order.payTime || '未支付' }}</el-descriptions-item>
           </el-descriptions>
@@ -56,8 +54,8 @@
         <el-card shadow="never" class="info-card">
           <div slot="header"><span>用户信息</span></div>
           <el-descriptions :column="2" border>
-            <el-descriptions-item label="用户名">{{ order.userId }}</el-descriptions-item>
-            <el-descriptions-item label="用户ID">{{ order.id }}</el-descriptions-item>
+            <el-descriptions-item label="用户名">{{ order.userName || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="用户ID">{{ order.userId }}</el-descriptions-item>
           </el-descriptions>
         </el-card>
       </template>
@@ -74,13 +72,14 @@ export default {
     return {
       loading: false,
       order: null,
+      items: [],
       statusMap: {
         0: { text: '待付款', type: 'warning' },
         1: { text: '已付款', type: '' },
-        2: { text: '已完成', type: 'success' },
-        3: { text: '已退款', type: 'info' },
-        4: { text: '售后中', type: 'danger' },
-        5: { text: '异常', type: 'danger' }
+        2: { text: '已核销', type: 'success' },
+        3: { text: '已完成', type: 'success' },
+        4: { text: '已退款', type: 'info' },
+        5: { text: '已取消', type: 'danger' }
       }
     }
   },
@@ -91,9 +90,9 @@ export default {
         0: 'el-icon-time',
         1: 'el-icon-success',
         2: 'el-icon-circle-check',
-        3: 'el-icon-refresh-left',
-        4: 'el-icon-warning',
-        5: 'el-icon-error'
+        3: 'el-icon-circle-check',
+        4: 'el-icon-refresh-left',
+        5: 'el-icon-circle-close'
       }
       return icons[this.order.status] || 'el-icon-info'
     },
@@ -101,13 +100,18 @@ export default {
       if (!this.order) return ''
       const descs = {
         0: '用户已下单，等待支付',
-        1: '用户已支付，等待商家服务',
-        2: '订单已完成',
-        3: '订单已退款',
-        4: '订单正在售后处理中',
-        5: '订单存在异常，需要处理'
+        1: '用户已支付，等待核销',
+        2: '商家已核销，等待完成',
+        3: '订单已完成',
+        4: '订单已退款',
+        5: '订单已取消'
       }
       return descs[this.order.status] || ''
+    },
+    orderItemName() {
+      if (!this.items || !this.items.length) return '-'
+      const names = this.items.map(i => i.productName || i.skuName || '').filter(Boolean)
+      return names.join('、') || '-'
     }
   },
   created() {
@@ -119,7 +123,8 @@ export default {
       try {
         const id = Number(this.$route.params.id)
         const res = await getOrderDetail(id)
-        this.order = res.data
+        this.order = res.data.order
+        this.items = res.data.items || []
       } finally {
         this.loading = false
       }

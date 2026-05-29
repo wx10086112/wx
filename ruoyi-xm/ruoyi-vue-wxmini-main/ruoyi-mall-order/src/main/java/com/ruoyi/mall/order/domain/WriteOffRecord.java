@@ -41,6 +41,11 @@ public class WriteOffRecord extends BaseEntity {
     public Long getMerchantId() { return merchantId; }
     public void setMerchantId(Long merchantId) { this.merchantId = merchantId; }
 
+    /** 商家名称（LEFT JOIN） */
+    private String merchantName;
+    public String getMerchantName() { return merchantName; }
+    public void setMerchantName(String merchantName) { this.merchantName = merchantName; }
+
     public Long getStoreId() { return storeId; }
     public void setStoreId(Long storeId) { this.storeId = storeId; }
 

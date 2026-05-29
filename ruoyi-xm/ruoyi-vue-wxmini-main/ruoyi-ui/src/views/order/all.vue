@@ -9,19 +9,19 @@
           <el-input v-model="queryParams.orderNo" placeholder="请输入订单号" clearable @keyup.enter.native="handleQuery" />
         </el-form-item>
         <el-form-item label="商家名称">
-          <el-input v-model="queryParams.merchantId" placeholder="请输入商家ID" clearable @keyup.enter.native="handleQuery" />
+          <el-input v-model="queryParams.merchantName" placeholder="请输入商家名称" clearable @keyup.enter.native="handleQuery" />
         </el-form-item>
         <el-form-item label="用户名">
-          <el-input v-model="queryParams.userId" placeholder="请输入用户ID" clearable @keyup.enter.native="handleQuery" />
+          <el-input v-model="queryParams.userName" placeholder="请输入用户名" clearable @keyup.enter.native="handleQuery" />
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="queryParams.status" placeholder="全部" clearable>
             <el-option label="待付款" :value="0" />
             <el-option label="已付款" :value="1" />
-            <el-option label="已完成" :value="2" />
-            <el-option label="已退款" :value="3" />
-            <el-option label="售后中" :value="4" />
-            <el-option label="异常" :value="5" />
+            <el-option label="已核销" :value="2" />
+            <el-option label="已完成" :value="3" />
+            <el-option label="已退款" :value="4" />
+            <el-option label="已取消" :value="5" />
           </el-select>
         </el-form-item>
         <el-form-item label="下单时间">
@@ -43,23 +43,24 @@
       <!-- 表格 -->
       <el-table v-loading="loading" :data="tableList" border>
         <el-table-column label="订单号" prop="orderNo" width="180" />
-        <el-table-column label="商家" prop="merchantId" width="140" />
-        <el-table-column label="用户" prop="userId" width="100" />
+        <el-table-column label="商家" prop="merchantName" width="140" />
+        <el-table-column label="用户" prop="userName" width="100" />
         <el-table-column label="订单金额" width="110">
           <template slot-scope="scope">
-            <span>¥{{ scope.row.totalAmount.toFixed(2) }}</span>
+            <span>¥{{ (scope.row.totalAmount || 0).toFixed(2) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="实付金额" width="110">
           <template slot-scope="scope">
-            <span class="text-primary">¥{{ scope.row.payAmount.toFixed(2) }}</span>
+            <span class="text-primary">¥{{ (scope.row.payAmount || 0).toFixed(2) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="状态" width="90" align="center">
           <template slot-scope="scope">
-            <el-tag :type="statusMap[scope.row.status].type" size="small">
+            <el-tag v-if="statusMap[scope.row.status]" :type="statusMap[scope.row.status].type" size="small">
               {{ statusMap[scope.row.status].text }}
             </el-tag>
+            <el-tag v-else type="info" size="small">未知</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="下单时间" prop="createTime" width="160" />
@@ -102,8 +103,8 @@ export default {
       total: 0,
       queryParams: {
         orderNo: '',
-        merchantId: '',
-        userId: '',
+        merchantName: '',
+        userName: '',
         status: '',
         pageNum: 1,
         pageSize: 10
@@ -112,10 +113,10 @@ export default {
       statusMap: {
         0: { text: '待付款', type: 'warning' },
         1: { text: '已付款', type: '' },
-        2: { text: '已完成', type: 'success' },
-        3: { text: '已退款', type: 'info' },
-        4: { text: '售后中', type: 'danger' },
-        5: { text: '异常', type: 'danger' }
+        2: { text: '已核销', type: 'success' },
+        3: { text: '已完成', type: 'success' },
+        4: { text: '已退款', type: 'info' },
+        5: { text: '已取消', type: 'danger' }
       }
     }
   },
@@ -126,7 +127,12 @@ export default {
     async fetchData() {
       this.loading = true
       try {
-        const res = await getOrderList(this.queryParams)
+        const params = { ...this.queryParams }
+        if (this.dateRange && this.dateRange.length === 2) {
+          params.beginTime = this.dateRange[0]
+          params.endTime = this.dateRange[1]
+        }
+        const res = await getOrderList(params)
         this.tableList = res.rows
         this.total = res.total
       } finally {
@@ -140,8 +146,8 @@ export default {
     resetQuery() {
       this.queryParams = {
         orderNo: '',
-        merchantId: '',
-        userId: '',
+        merchantName: '',
+        userName: '',
         status: '',
         pageNum: 1,
         pageSize: 10
@@ -158,7 +164,7 @@ export default {
       this.fetchData()
     },
     handleDetail(row) {
-      this.$router.push({ path: '/finance/detail/' + row.id })
+      this.$router.push({ name: 'OrderDetail', params: { id: row.id } })
     }
   }
 }

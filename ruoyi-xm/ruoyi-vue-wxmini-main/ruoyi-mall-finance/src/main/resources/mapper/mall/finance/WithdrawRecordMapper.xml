@@ -7,6 +7,7 @@
     <resultMap type="com.ruoyi.mall.finance.domain.WithdrawRecord" id="WithdrawRecordResult">
         <result property="id" column="id"/>
         <result property="merchantId" column="merchant_id"/>
+        <result property="merchantName" column="merchant_name"/>
         <result property="amount" column="amount"/>
         <result property="bankName" column="bank_name"/>
         <result property="bankAccount" column="bank_account"/>
@@ -18,37 +19,42 @@
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
         <result property="remark" column="remark"/>
+        <result property="delFlag" column="del_flag"/>
     </resultMap>
 
     <sql id="selectWithdrawRecordVo">
-        select id, merchant_id, amount, bank_name, bank_account, account_name,
-               status, audit_time, pay_time, reject_reason,
-               create_time, update_time, remark
-        from withdraw_record
+        select w.id, w.merchant_id, m.name as merchant_name, w.amount, w.bank_name, w.bank_account, w.account_name,
+               w.status, w.audit_time, w.pay_time, w.reject_reason,
+               w.create_time, w.update_time, w.remark
+        from withdraw_record w
+        LEFT JOIN merchant m ON w.merchant_id = m.id
     </sql>
 
     <select id="selectWithdrawRecordList" parameterType="com.ruoyi.mall.finance.domain.WithdrawRecord" resultMap="WithdrawRecordResult">
         <include refid="selectWithdrawRecordVo"/>
         <where>
-            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
-            <if test="status != null">and status = #{status}</if>
-            <if test="bankName != null and bankName != ''">and bank_name like concat('%', #{bankName}, '%')</if>
-            <if test="accountName != null and accountName != ''">and account_name like concat('%', #{accountName}, '%')</if>
-            <if test="params.beginTime != null">and create_time &gt;= #{params.beginTime}</if>
-            <if test="params.endTime != null">and create_time &lt;= #{params.endTime}</if>
+            and w.del_flag = '0'
+            <if test="merchantId != null">and w.merchant_id = #{merchantId}</if>
+            <if test="merchantName != null and merchantName != ''">and m.name like concat('%', #{merchantName}, '%')</if>
+            <if test="status != null">and w.status = #{status}</if>
+            <if test="bankName != null and bankName != ''">and w.bank_name like concat('%', #{bankName}, '%')</if>
+            <if test="accountName != null and accountName != ''">and w.account_name like concat('%', #{accountName}, '%')</if>
+            <if test="params.beginTime != null">and w.create_time &gt;= #{params.beginTime}</if>
+            <if test="params.endTime != null">and w.create_time &lt;= #{params.endTime}</if>
+            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
         </where>
-        order by create_time desc
+        order by w.create_time desc
     </select>
 
     <select id="selectWithdrawRecordById" parameterType="Long" resultMap="WithdrawRecordResult">
         <include refid="selectWithdrawRecordVo"/>
-        where id = #{id}
+        where w.id = #{id} AND w.del_flag = '0'
     </select>
 
     <select id="selectWithdrawRecordByMerchantId" parameterType="Long" resultMap="WithdrawRecordResult">
         <include refid="selectWithdrawRecordVo"/>
-        where merchant_id = #{merchantId}
-        order by create_time desc
+        where w.merchant_id = #{merchantId} AND w.del_flag = '0'
+        order by w.create_time desc
     </select>
 
     <insert id="insertWithdrawRecord" parameterType="com.ruoyi.mall.finance.domain.WithdrawRecord" useGeneratedKeys="true" keyProperty="id">
@@ -96,15 +102,15 @@
         where id = #{id}
     </update>
 
-    <delete id="deleteWithdrawRecordById" parameterType="Long">
-        delete from withdraw_record where id = #{id}
-    </delete>
+    <update id="deleteWithdrawRecordById" parameterType="Long">
+        update withdraw_record set del_flag = '2' where id = #{id}
+    </update>
 
-    <delete id="deleteWithdrawRecordByIds" parameterType="String">
-        delete from withdraw_record where id in
+    <update id="deleteWithdrawRecordByIds" parameterType="String">
+        update withdraw_record set del_flag = '2' where id in
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
-    </delete>
+    </update>
 
 </mapper>
