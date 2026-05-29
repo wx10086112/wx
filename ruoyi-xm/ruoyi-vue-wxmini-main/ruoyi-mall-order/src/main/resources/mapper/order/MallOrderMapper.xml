@@ -239,4 +239,41 @@
           )
     </select>
 
+    <!-- 数据分析：商家排行 -->
+    <select id="selectMerchantRankForAnalysis" resultType="java.util.LinkedHashMap">
+        SELECT m.id, m.name,
+            IFNULL(SUM(o.pay_amount), 0) AS sales,
+            COUNT(*) AS orders,
+            SUM(CASE WHEN o.status IN (2, 3) THEN 1 ELSE 0 END) AS completedOrders,
+            IFNULL(SUM(CASE WHEN o.status = 4 THEN o.pay_amount ELSE 0 END), 0) AS refundAmount
+        FROM merchant m
+        INNER JOIN mall_order o ON o.merchant_id = m.id AND o.del_flag = '0' AND o.status NOT IN (0, 5)
+        WHERE m.status = 1 AND m.del_flag = '0'
+        <if test="keyword != null and keyword != ''">
+            AND m.name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="distributorId != null">
+            AND m.distributor_id = #{distributorId}
+        </if>
+        GROUP BY m.id, m.name
+        <choose>
+            <when test="sortBy == 'orders'">ORDER BY orders DESC</when>
+            <otherwise>ORDER BY sales DESC</otherwise>
+        </choose>
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <select id="countMerchantRankForAnalysis" resultType="int">
+        SELECT COUNT(DISTINCT m.id)
+        FROM merchant m
+        INNER JOIN mall_order o ON o.merchant_id = m.id AND o.del_flag = '0' AND o.status NOT IN (0, 5)
+        WHERE m.status = 1 AND m.del_flag = '0'
+        <if test="keyword != null and keyword != ''">
+            AND m.name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="distributorId != null">
+            AND m.distributor_id = #{distributorId}
+        </if>
+    </select>
+
 </mapper>

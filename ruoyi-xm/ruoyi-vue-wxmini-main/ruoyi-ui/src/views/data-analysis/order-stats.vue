@@ -36,7 +36,7 @@
     </el-row>
 
     <el-card shadow="hover" class="chart-card">
-      <div slot="header"><span>每日订单统计（堆叠柱状图）</span></div>
+      <div slot="header"><span>每日订单统计</span></div>
       <div ref="stackedChart" class="chart-container"></div>
     </el-card>
 
@@ -93,7 +93,7 @@ export default {
   },
   computed: {
     dailyTable() {
-      return (this.stats.dailyData || []).slice().reverse()
+      return (this.stats.dailyData || []).filter(d => d.newOrders > 0).slice().reverse()
     }
   },
   created() {
@@ -112,15 +112,14 @@ export default {
     fetchData() {
       this.loading = true
       getOrderStats().then(res => {
-        this.stats = res || this.stats
-        if (!this.stats.dailyData || this.stats.dailyData.length === 0) {
-          this.stats = this.getMockData()
+        const data = res.data || {}
+        this.stats = {
+          totalOrders: Number(data.totalOrders) || 0,
+          completedOrders: Number(data.completedOrders) || 0,
+          refundOrders: Number(data.refundOrders) || 0,
+          abnormalOrders: Number(data.abnormalOrders) || 0,
+          dailyData: data.dailyData || []
         }
-        this.$nextTick(() => {
-          this.initChart()
-        })
-      }).catch(() => {
-        this.stats = this.getMockData()
         this.$nextTick(() => {
           this.initChart()
         })
@@ -128,37 +127,14 @@ export default {
         this.loading = false
       })
     },
-    getMockData() {
-      const dailyData = []
-      const now = new Date()
-      for (let i = 29; i >= 0; i--) {
-        const d = new Date(now)
-        d.setDate(d.getDate() - i)
-        const month = (d.getMonth() + 1).toString().padStart(2, '0')
-        const day = d.getDate().toString().padStart(2, '0')
-        const dateStr = d.getFullYear() + '-' + month + '-' + day
-        const newOrders = Math.round(150 * (0.7 + Math.random() * 0.6))
-        const completed = Math.round(newOrders * (0.8 + Math.random() * 0.15))
-        const refund = Math.round(newOrders * (0.02 + Math.random() * 0.03))
-        dailyData.push({ date: dateStr, newOrders, completed, refund })
-      }
-      const totalOrders = dailyData.reduce((s, d) => s + d.newOrders, 0)
-      const completedOrders = dailyData.reduce((s, d) => s + d.completed, 0)
-      const refundOrders = dailyData.reduce((s, d) => s + d.refund, 0)
-      return {
-        totalOrders,
-        completedOrders,
-        refundOrders,
-        abnormalOrders: Math.round(totalOrders * 0.01),
-        dailyData
-      }
-    },
     initChart() {
       const data = this.stats.dailyData || []
-      const dates = data.map(d => d.date.substring(5))
-      const newOrders = data.map(d => d.newOrders)
-      const completed = data.map(d => d.completed)
-      const refunds = data.map(d => d.refund)
+      if (data.length === 0) return
+
+      const dates = data.map(d => d.date ? d.date.substring(5) : '')
+      const newOrders = data.map(d => d.newOrders || 0)
+      const completed = data.map(d => d.completed || 0)
+      const refunds = data.map(d => d.refund || 0)
 
       this.stackedChart = echarts.init(this.$refs.stackedChart, 'macarons')
       this.stackedChart.setOption({

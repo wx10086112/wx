@@ -23,7 +23,7 @@ public class MallMerchantController extends BaseController {
     @Autowired
     private IMerchantService merchantService;
 
-    @DataScopeBiz(distributorAlias = "merchant")
+    @DataScopeBiz(distributorAlias = "m")
     @PreAuthorize("@ss.hasPermi('mall:merchant:list')")
     @GetMapping("/list")
     public TableDataInfo list(Merchant merchant) {
@@ -61,6 +61,11 @@ public class MallMerchantController extends BaseController {
     @Log(title = "商户管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody Merchant merchant) {
+        // 分销商创建商家：强制归属到自己名下，忽略前端传值
+        String accountType = SecurityUtils.getAccountType();
+        if ("DISTRIBUTOR".equals(accountType)) {
+            merchant.setDistributorId(SecurityUtils.getDistributorId());
+        }
         return toAjax(merchantService.insertMerchant(merchant));
     }
 
@@ -85,6 +90,11 @@ public class MallMerchantController extends BaseController {
         }
         if ("******".equals(merchant.getWxPayApiKey())) {
             merchant.setWxPayApiKey(null);
+        }
+        // 分销商不能修改商家归属，强制保留原 distributorId
+        String accountType = SecurityUtils.getAccountType();
+        if ("DISTRIBUTOR".equals(accountType)) {
+            merchant.setDistributorId(existing.getDistributorId());
         }
         return toAjax(merchantService.updateMerchant(merchant));
     }
@@ -112,6 +122,7 @@ public class MallMerchantController extends BaseController {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", m.getId());
         map.put("distributorId", m.getDistributorId());
+        map.put("distributorName", m.getDistributorName());
         map.put("name", m.getName());
         map.put("logo", m.getLogo());
         map.put("contact", m.getContact());

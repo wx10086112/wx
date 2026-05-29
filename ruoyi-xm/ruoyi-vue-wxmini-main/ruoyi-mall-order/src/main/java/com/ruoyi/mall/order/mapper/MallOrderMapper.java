@@ -103,4 +103,23 @@ public interface MallOrderMapper {
                                       @Param("statuses") List<Integer> statuses);
 
     BigDecimal sumTodaySalesByMerchantId(@Param("merchantId") Long merchantId);
+
+    // ---- 数据分析：商家排行 ----
+
+    List<Map<String, Object>> selectMerchantRankForAnalysis(@Param("keyword") String keyword,
+                                                             @Param("sortBy") String sortBy,
+                                                             @Param("distributorId") Long distributorId,
+                                                             @Param("offset") int offset,
+                                                             @Param("pageSize") int pageSize);
+
+    int countMerchantRankForAnalysis(@Param("keyword") String keyword,
+                                     @Param("distributorId") Long distributorId);
+
+    // ---- 数据分析：每日订单状态明细 ----
+
+    @Select("SELECT DATE(create_time) AS date, status, COUNT(*) AS count " +
+            "FROM mall_order " +
+            "WHERE DATE(create_time) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) " +
+            "GROUP BY DATE(create_time), status ORDER BY date")
+    List<Map<String, Object>> selectDailyOrderStatsByStatus();
 }

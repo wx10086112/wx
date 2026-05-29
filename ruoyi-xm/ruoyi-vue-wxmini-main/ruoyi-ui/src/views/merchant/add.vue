@@ -6,12 +6,23 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="商家名称" prop="name">
-              <el-input v-model="form.name" placeholder="请输入商家ID" />
+              <el-input v-model="form.name" placeholder="请输入商家名称" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="联系人" prop="contact">
               <el-input v-model="form.contact" placeholder="请输入联系人" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="所属分销商">
+              <el-select v-if="isPlatform" v-model="form.distributorId" placeholder="请选择分销商（可选）" clearable filterable style="width: 100%;">
+                <el-option label="无（平台直属）" :value="null" />
+                <el-option v-for="d in distributorOptions" :key="d.id" :label="d.name" :value="d.id" />
+              </el-select>
+              <el-input v-else :value="currentDistributorName" disabled />
             </el-form-item>
           </el-col>
         </el-row>
@@ -87,6 +98,7 @@
 
 <script>
 import { addMerchant } from '@/api/merchant'
+import { listDistributor } from '@/api/distributor'
 
 export default {
   name: 'MerchantAdd',
@@ -97,6 +109,7 @@ export default {
         name: '',
         contact: '',
         phone: '',
+        distributorId: null,
         bankName: '',
         bankAccount: '',
         address: '',
@@ -115,10 +128,32 @@ export default {
           { required: true, message: '请输入联系电话', trigger: 'blur' },
           { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
         ]
-      }
+      },
+      distributorOptions: []
+    }
+  },
+  computed: {
+    isPlatform() {
+      return this.$store.state.user.accountType !== 'DISTRIBUTOR'
+    },
+    currentDistributorName() {
+      return this.$store.state.user.name || '当前分销商'
+    }
+  },
+  created() {
+    if (this.isPlatform) {
+      this.loadDistributors()
     }
   },
   methods: {
+    async loadDistributors() {
+      try {
+        const res = await listDistributor({ pageSize: 500 })
+        this.distributorOptions = res.rows || []
+      } catch (e) {
+        this.distributorOptions = []
+      }
+    },
     handleSubmit() {
       this.$refs.form.validate(async (valid) => {
         if (!valid) return

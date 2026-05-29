@@ -10,6 +10,7 @@
         <!-- 基本信息 -->
         <el-descriptions title="基本信息" :column="3" border>
           <el-descriptions-item label="商家名称">{{ merchant.name }}</el-descriptions-item>
+          <el-descriptions-item label="所属分销商">{{ merchant.distributorName || '无（平台直属）' }}</el-descriptions-item>
           <el-descriptions-item label="联系人">{{ merchant.contact }}</el-descriptions-item>
           <el-descriptions-item label="联系电话">{{ merchant.phone }}</el-descriptions-item>
           <el-descriptions-item label="状态">
@@ -28,6 +29,7 @@
             <el-descriptions :column="2" border style="margin-top: 10px;">
               <el-descriptions-item label="商家ID">{{ merchant.id }}</el-descriptions-item>
               <el-descriptions-item label="商家名称">{{ merchant.name }}</el-descriptions-item>
+              <el-descriptions-item label="所属分销商">{{ merchant.distributorName || '无（平台直属）' }}</el-descriptions-item>
               <el-descriptions-item label="联系人">{{ merchant.contact }}</el-descriptions-item>
               <el-descriptions-item label="联系电话">{{ merchant.phone }}</el-descriptions-item>
               <el-descriptions-item label="入驻时间">{{ merchant.createTime }}</el-descriptions-item>

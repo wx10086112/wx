@@ -1,5 +1,6 @@
 package com.ruoyi.service.impl;
 
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.mall.common.service.IDashboardService;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.merchant.mapper.MerchantMapper;
@@ -200,6 +201,40 @@ public class DashboardServiceImpl implements IDashboardService {
     }
 
     @Override
+    public Map<String, Object> selectMerchantRankWithParams(Map<String, Object> params) {
+        String keyword = (String) params.get("keyword");
+        String sortBy = (String) params.get("sortBy");
+        int pageNum = params.get("pageNum") != null ? Integer.parseInt(params.get("pageNum").toString()) : 1;
+        int pageSize = params.get("pageSize") != null ? Integer.parseInt(params.get("pageSize").toString()) : 10;
+        int offset = (pageNum - 1) * pageSize;
+
+        Long distributorId = null;
+        String accountType = SecurityUtils.getAccountType();
+        if ("DISTRIBUTOR".equals(accountType)) {
+            distributorId = SecurityUtils.getDistributorId();
+        }
+
+        int total = mallOrderMapper.countMerchantRankForAnalysis(keyword, distributorId);
+        List<Map<String, Object>> rows = mallOrderMapper.selectMerchantRankForAnalysis(keyword, sortBy, distributorId, offset, pageSize);
+
+        // 计算完成率和退款率
+        for (Map<String, Object> row : rows) {
+            long orders = ((Number) row.get("orders")).longValue();
+            long completedOrders = ((Number) row.get("completedOrders")).longValue();
+            BigDecimal sales = (BigDecimal) row.get("sales");
+            BigDecimal refundAmount = (BigDecimal) row.get("refundAmount");
+            row.put("completionRate", orders > 0 ? (double) completedOrders / orders : 0);
+            row.put("refundRate", sales != null && sales.compareTo(BigDecimal.ZERO) > 0
+                    ? refundAmount.divide(sales, 4, RoundingMode.HALF_UP) : BigDecimal.ZERO);
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("total", total);
+        result.put("rows", rows);
+        return result;
+    }
+
+    @Override
     public Map<String, Object> selectSalesStats() {
         Map<String, Object> stats = new HashMap<>();
         Map<String, Object> sales = mallOrderMapper.selectSalesStats();
@@ -223,6 +258,43 @@ public class DashboardServiceImpl implements IDashboardService {
         stats.put("avgOrderAmount", avgOrderAmount);
         stats.put("conversionRate", conversionRate);
         stats.put("categoryData", new ArrayList<>());
+
+        // 近7日销售趋势
+        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd");
+        Calendar cal = Calendar.getInstance();
+        List<String> dates = new ArrayList<>();
+        Map<String, BigDecimal> trendAmountMap = new LinkedHashMap<>();
+        Map<String, Integer> trendCountMap = new LinkedHashMap<>();
+        for (int i = 6; i >= 0; i--) {
+            cal.setTime(new Date());
+            cal.add(Calendar.DAY_OF_MONTH, -i);
+            String dateStr = sdf.format(cal.getTime());
+            dates.add(dateStr);
+            trendAmountMap.put(dateStr, BigDecimal.ZERO);
+            trendCountMap.put(dateStr, 0);
+        }
+        List<Map<String, Object>> trendDb = mallOrderMapper.selectTrendByDay(7);
+        SimpleDateFormat dbSdf = new SimpleDateFormat("MM-dd");
+        for (Map<String, Object> row : trendDb) {
+            Object dateObj = row.get("date");
+            String date = dbSdf.format(dateObj);
+            if (trendAmountMap.containsKey(date)) {
+                trendAmountMap.put(date, (BigDecimal) row.get("totalAmount"));
+                trendCountMap.put(date, ((Number) row.get("orderCount")).intValue());
+            }
+        }
+        List<BigDecimal> trendAmounts = new ArrayList<>();
+        List<Integer> trendCounts = new ArrayList<>();
+        for (String d : dates) {
+            trendAmounts.add(trendAmountMap.get(d));
+            trendCounts.add(trendCountMap.get(d));
+        }
+        Map<String, Object> trendData = new HashMap<>();
+        trendData.put("dates", dates);
+        trendData.put("amounts", trendAmounts);
+        trendData.put("orderCounts", trendCounts);
+        stats.put("trendData", trendData);
+
         return stats;
     }
 
@@ -236,12 +308,48 @@ public class DashboardServiceImpl implements IDashboardService {
             Integer status = ((Number) item.get("status")).intValue();
             int cnt = ((Number) item.get("cnt")).intValue();
             totalOrders += cnt;
-            if (status == 2) completedOrders = cnt;
-            if (status == 3) refundOrders = cnt;
+            if (status == 2 || status == 3) completedOrders += cnt;
+            if (status == 4) refundOrders = cnt;
             if (status == 5) abnormalOrders = cnt;
         }
 
-        List<Map<String, Object>> dailyData = mallOrderMapper.selectDailyOrderStats();
+        // 按日期+状态分组的每日明细
+        List<Map<String, Object>> rawDaily = mallOrderMapper.selectDailyOrderStatsByStatus();
+        // 按日期聚合: date -> { date, newOrders, completed, refund }
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Calendar cal = Calendar.getInstance();
+        // 初始化最近30天
+        LinkedHashMap<String, Map<String, Object>> dailyMap = new LinkedHashMap<>();
+        for (int i = 29; i >= 0; i--) {
+            cal.setTime(new Date());
+            cal.add(Calendar.DAY_OF_MONTH, -i);
+            String dateStr = sdf.format(cal.getTime());
+            Map<String, Object> day = new HashMap<>();
+            day.put("date", dateStr);
+            day.put("newOrders", 0);
+            day.put("completed", 0);
+            day.put("refund", 0);
+            dailyMap.put(dateStr, day);
+        }
+        // 填充数据库数据
+        SimpleDateFormat dbSdf = new SimpleDateFormat("yyyy-MM-dd");
+        for (Map<String, Object> row : rawDaily) {
+            Object dateObj = row.get("date");
+            String date = dateObj instanceof String ? (String) dateObj : dbSdf.format(dateObj);
+            Map<String, Object> day = dailyMap.get(date);
+            if (day == null) continue;
+            int status = ((Number) row.get("status")).intValue();
+            int count = ((Number) row.get("count")).intValue();
+            day.put("newOrders", ((Number) day.get("newOrders")).intValue() + count);
+            if (status == 2 || status == 3) {
+                day.put("completed", ((Number) day.get("completed")).intValue() + count);
+            }
+            if (status == 4) {
+                day.put("refund", ((Number) day.get("refund")).intValue() + count);
+            }
+        }
+
+        List<Map<String, Object>> dailyData = new ArrayList<>(dailyMap.values());
 
         stats.put("totalOrders", totalOrders);
         stats.put("completedOrders", completedOrders);

@@ -10,6 +10,7 @@ public interface IDashboardService {
     List<Map<String, Object>> selectOrderStatusData();
     List<Map<String, Object>> selectHotProducts();
     List<Map<String, Object>> selectMerchantRank();
+    Map<String, Object> selectMerchantRankWithParams(Map<String, Object> params);
     Map<String, Object> selectSalesStats();
     Map<String, Object> selectOrderStats();
 }

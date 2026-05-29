@@ -21,7 +21,7 @@ public class MallMerchantAuditController extends BaseController {
     @Autowired
     private IMerchantService merchantService;
 
-    @DataScopeBiz(distributorAlias = "merchant")
+    @DataScopeBiz(distributorAlias = "m")
     @PreAuthorize("@ss.hasPermi('mall:merchant:audit')")
     @GetMapping("/audit/list")
     public TableDataInfo auditList(Merchant merchant) {

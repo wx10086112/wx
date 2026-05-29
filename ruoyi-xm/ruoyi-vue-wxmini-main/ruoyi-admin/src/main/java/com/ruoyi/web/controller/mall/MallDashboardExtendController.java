@@ -7,6 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/mall/dashboard")
 public class MallDashboardExtendController extends BaseController {
@@ -37,8 +40,16 @@ public class MallDashboardExtendController extends BaseController {
      */
     @PreAuthorize("@ss.hasPermi('mall:dashboard:list')")
     @GetMapping("/merchant-rank")
-    public AjaxResult merchantRank() {
-        return success(dashboardService.selectMerchantRank());
+    public AjaxResult merchantRank(@RequestParam(required = false) String keyword,
+                                   @RequestParam(required = false) String sortBy,
+                                   @RequestParam(defaultValue = "1") Integer pageNum,
+                                   @RequestParam(defaultValue = "10") Integer pageSize) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("keyword", keyword);
+        params.put("sortBy", sortBy);
+        params.put("pageNum", pageNum);
+        params.put("pageSize", pageSize);
+        return success(dashboardService.selectMerchantRankWithParams(params));
     }
 
     /**

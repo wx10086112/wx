@@ -17,10 +17,11 @@ export function getTrendData() {
 }
 
 // 商家排行
-export function getMerchantRankList() {
+export function getMerchantRankList(params) {
   return request({
     url: '/mall/dashboard/merchant-rank',
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 
