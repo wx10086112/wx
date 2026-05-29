@@ -1,5 +1,5 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
+const orderApi = require('../../api/order')
 
 Page({
   data: {
@@ -15,13 +15,21 @@ Page({
 
   onLoad(options) {
     const orderNo = options.orderNo || ''
-    const order = mock.orderList.find((item) => item.orderNo === orderNo) || mock.orderList[0] || {}
-    this.setData({
-      order: {
-        ...order,
-        payAmountText: ((order.payAmount || order.price || 0) / 100).toFixed(2)
-      }
-    })
+    if (orderNo) {
+      orderApi.getOrderDetail(orderNo)
+        .then((res) => {
+          const order = res.data || res || {}
+          this.setData({
+            order: {
+              ...order,
+              payAmountText: ((order.payAmount || order.price || 0) / 100).toFixed(2)
+            }
+          })
+        })
+        .catch(() => {
+          this.setData({ order: {} })
+        })
+    }
   },
 
   onStarTap(e) {
@@ -62,7 +70,7 @@ Page({
   },
 
   onSubmit() {
-    const { rating, content, order, submitting } = this.data
+    const { content, submitting } = this.data
     if (submitting) return
 
     if (!content.trim()) {
@@ -76,8 +84,8 @@ Page({
     setTimeout(() => {
       this.setData({ submitting: false, submitted: true })
       util.hideLoading()
-      util.showToast('评价成功', 'success')
-    }, 600)
+      util.showToast('评价功能暂未开放', 'none')
+    }, 500)
   },
 
   onDone() {

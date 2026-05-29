@@ -5,6 +5,7 @@ import com.ruoyi.mall.finance.mapper.OrderProfitLedgerMapper;
 import com.ruoyi.mall.finance.service.IOrderProfitLedgerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,16 +20,21 @@ public class OrderProfitLedgerServiceImpl implements IOrderProfitLedgerService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderProfitLedgerServiceImpl.class);
 
-    /** 有分销商时的默认比例 */
-    private static final BigDecimal DEFAULT_MERCHANT_RATE = new BigDecimal("85");
-    private static final BigDecimal DEFAULT_PLATFORM_RATE = new BigDecimal("10");
-    private static final BigDecimal DEFAULT_DISTRIBUTOR_RATE = new BigDecimal("5");
-
-    /** 无分销商时商家多拿分销商那份 */
-    private static final BigDecimal MERCHANT_RATE_NO_DISTRIBUTOR = new BigDecimal("90");
-    private static final BigDecimal PLATFORM_RATE_NO_DISTRIBUTOR = new BigDecimal("10");
-
     private static final BigDecimal HUNDRED = new BigDecimal("100");
+
+    /** 有分销商时的比例（可从 application.yml 配置） */
+    @Value("${mall.split-rate.merchant-with-distributor:85}")
+    private int merchantRateWithDist;
+    @Value("${mall.split-rate.platform-with-distributor:10}")
+    private int platformRateWithDist;
+    @Value("${mall.split-rate.distributor:5}")
+    private int distributorRateVal;
+
+    /** 无分销商时的比例 */
+    @Value("${mall.split-rate.merchant-no-distributor:90}")
+    private int merchantRateNoDist;
+    @Value("${mall.split-rate.platform-no-distributor:10}")
+    private int platformRateNoDist;
 
     @Resource
     private OrderProfitLedgerMapper ledgerMapper;
@@ -65,27 +71,32 @@ public class OrderProfitLedgerServiceImpl implements IOrderProfitLedgerService {
         ledger.setPayAmount(payAmount);
 
         if (distributorId != null) {
-            // 有分销商：85/10/5
-            BigDecimal merchantAmt = payAmount.multiply(DEFAULT_MERCHANT_RATE).divide(HUNDRED, 2, RoundingMode.DOWN);
-            BigDecimal platformAmt = payAmount.multiply(DEFAULT_PLATFORM_RATE).divide(HUNDRED, 2, RoundingMode.DOWN);
+            // 有分销商：按配置比例
+            BigDecimal mRate = new BigDecimal(merchantRateWithDist);
+            BigDecimal pRate = new BigDecimal(platformRateWithDist);
+            BigDecimal dRate = new BigDecimal(distributorRateVal);
+            BigDecimal merchantAmt = payAmount.multiply(mRate).divide(HUNDRED, 2, RoundingMode.DOWN);
+            BigDecimal platformAmt = payAmount.multiply(pRate).divide(HUNDRED, 2, RoundingMode.DOWN);
             BigDecimal distributorAmt = payAmount.subtract(merchantAmt).subtract(platformAmt);
 
             ledger.setMerchantAmount(merchantAmt);
             ledger.setPlatformAmount(platformAmt);
             ledger.setDistributorAmount(distributorAmt);
-            ledger.setMerchantRate(DEFAULT_MERCHANT_RATE);
-            ledger.setPlatformRate(DEFAULT_PLATFORM_RATE);
-            ledger.setDistributorRate(DEFAULT_DISTRIBUTOR_RATE);
+            ledger.setMerchantRate(mRate);
+            ledger.setPlatformRate(pRate);
+            ledger.setDistributorRate(dRate);
         } else {
-            // 无分销商：90/10/0
-            BigDecimal merchantAmt = payAmount.multiply(MERCHANT_RATE_NO_DISTRIBUTOR).divide(HUNDRED, 2, RoundingMode.DOWN);
+            // 无分销商：按配置比例
+            BigDecimal mRate = new BigDecimal(merchantRateNoDist);
+            BigDecimal pRate = new BigDecimal(platformRateNoDist);
+            BigDecimal merchantAmt = payAmount.multiply(mRate).divide(HUNDRED, 2, RoundingMode.DOWN);
             BigDecimal platformAmt = payAmount.subtract(merchantAmt);
 
             ledger.setMerchantAmount(merchantAmt);
             ledger.setPlatformAmount(platformAmt);
             ledger.setDistributorAmount(BigDecimal.ZERO);
-            ledger.setMerchantRate(MERCHANT_RATE_NO_DISTRIBUTOR);
-            ledger.setPlatformRate(PLATFORM_RATE_NO_DISTRIBUTOR);
+            ledger.setMerchantRate(mRate);
+            ledger.setPlatformRate(pRate);
             ledger.setDistributorRate(BigDecimal.ZERO);
         }
 

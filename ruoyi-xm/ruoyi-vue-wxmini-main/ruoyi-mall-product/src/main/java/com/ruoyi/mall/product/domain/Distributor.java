@@ -22,6 +22,9 @@ public class Distributor extends BaseEntity {
     private Date updateTime;
     private String delFlag = "0";
 
+    /** 关联商家数（LEFT JOIN 统计） */
+    private Integer merchantCount;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -65,4 +68,6 @@ public class Distributor extends BaseEntity {
     public void setUpdateTime(Date updateTime) { this.updateTime = updateTime; }
     public String getDelFlag() { return delFlag; }
     public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
+    public Integer getMerchantCount() { return merchantCount; }
+    public void setMerchantCount(Integer merchantCount) { this.merchantCount = merchantCount; }
 }

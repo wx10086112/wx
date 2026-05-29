@@ -1,8 +1,9 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
 const cartService = require('../../services/cart')
 const orderApi = require('../../api/order')
+const productApi = require('../../api/product')
+const merchantApi = require('../../api/merchant')
 const app = getApp()
 
 Page({
@@ -34,15 +35,14 @@ Page({
       const cartIds = options.cartIds.split(',').map(Number)
       this.setData({ checkoutMode: 'cart', cartIds })
     } else {
-      this.setData({ checkoutMode: 'single', productId: parseInt(options.id || 101, 10) })
+      this.setData({ checkoutMode: 'single', productId: parseInt(options.id, 10) })
     }
     this.loadData()
   },
 
   loadData() {
     const checkoutConfig = templateService.getTemplateSection('checkout')
-    const couponList = mock.couponList.filter((item) => item.status === 'AVAILABLE')
-    const phone = (app.globalData.userInfo && app.globalData.userInfo.phone) || mock.userInfo.phone
+    const phone = (app.globalData.userInfo && app.globalData.userInfo.phone) || ''
 
     if (this.data.checkoutMode === 'cart') {
       const cartItems = cartService.getSelectedItems()
@@ -60,7 +60,7 @@ Page({
           product: { title: merchantName, price: totalAmount, stock: 999 },
           merchant: { name: merchantName },
           useRuleList: ['支付成功后自动生成使用码，可在订单中心随时查看'],
-          couponList,
+          couponList: [],
           phone,
           couponIndex: 0,
           selectedCouponId: null,
@@ -69,27 +69,47 @@ Page({
         () => { this.syncCouponState() }
       )
     } else {
-      const product = mock.grouponList.find((item) => item.id === this.data.productId) || mock.grouponList[0]
-      const merchant = mock.merchantList.find((item) => item.id === product.merchantId) || mock.merchantList[0]
+      productApi.getGrouponDetail(this.data.productId)
+        .then((res) => {
+          const product = res.data || res || {}
+          const merchantId = product.merchantId
 
-      this.setData(
-        {
-          checkoutConfig,
-          product,
-          merchant,
-          useRuleList: [
-            `有效期：${product.validPeriod}`,
-            `预约说明：${product.bookingRule}`,
-            `退款规则：${product.refundRule}`
-          ],
-          couponList,
-          phone,
-          couponIndex: 0,
-          selectedCouponId: null,
-          selectedCoupon: null
-        },
-        () => { this.syncCouponState() }
-      )
+          const ruleList = [
+            `有效期：${product.validPeriod || '购买后有效'}`,
+            `预约说明：${product.bookingRule || '无需预约'}`,
+            `退款规则：${product.refundRule || '过期自动退款'}`
+          ]
+
+          const applyMerchant = (merchantData) => {
+            this.setData(
+              {
+                checkoutConfig,
+                product,
+                merchant: merchantData || {},
+                useRuleList: ruleList,
+                couponList: [],
+                phone,
+                couponIndex: 0,
+                selectedCouponId: null,
+                selectedCoupon: null
+              },
+              () => { this.syncCouponState() }
+            )
+          }
+
+          if (merchantId) {
+            merchantApi.getMerchantDetail(merchantId)
+              .then((merchantRes) => {
+                applyMerchant(merchantRes.data || merchantRes || {})
+              })
+              .catch(() => { applyMerchant() })
+          } else {
+            applyMerchant()
+          }
+        })
+        .catch(() => {
+          util.showToast('商品加载失败')
+        })
     }
   },
 
@@ -97,7 +117,7 @@ Page({
     if (this.data.checkoutMode === 'cart') {
       return this.data.cartItemList.reduce((sum, item) => sum + item.price * item.quantity, 0)
     }
-    return this.data.product.price * this.data.quantity
+    return (this.data.product.price || 0) * this.data.quantity
   },
 
   getCouponOptionLabel(coupon, baseAmount) {
@@ -182,27 +202,6 @@ Page({
     this.setData({ phone: e.detail.value })
   },
 
-  buildOrder(product, merchant, quantity) {
-    return {
-      id: Date.now() + Math.random(),
-      orderNo: util.generateOrderNo(),
-      productId: product.id || product.productId,
-      merchantId: merchant.id || merchant.merchantId,
-      title: product.title,
-      merchantName: merchant.name || merchant.merchantName,
-      image: product.image,
-      quantity,
-      orderAmount: product.price * quantity,
-      couponAmount: 0,
-      payAmount: product.price * quantity,
-      price: product.price * quantity,
-      phone: this.data.phone,
-      status: 'PENDING_PAY',
-      createTime: Date.now(),
-      expireTime: Date.now() + 1000 * 60 * 15
-    }
-  },
-
   submitOrder() {
     if (!app.needLogin()) return
     if (!this.data.phone) {
@@ -225,8 +224,9 @@ Page({
           util.redirectTo(`/pages/order-detail/order-detail?orderNo=${orderNo}`)
         }, 400)
       })
-      .catch(() => {
-        this.submitOrderLocal()
+      .catch((err) => {
+        util.hideLoading()
+        util.showToast(err && err.msg ? err.msg : '提交失败，请重试')
       })
   },
 
@@ -247,45 +247,5 @@ Page({
       phone: this.data.phone,
       couponId: this.data.selectedCoupon ? this.data.selectedCoupon.couponId : null
     }
-  },
-
-  submitOrderLocal() {
-    const existing = util.getStoredOrderList(mock.orderList)
-    let orders = []
-    let firstOrderNo = ''
-
-    if (this.data.checkoutMode === 'cart') {
-      const couponAmount = this.data.selectedCoupon ? this.data.selectedCoupon.amount : 0
-      const cartItems = this.data.cartItemList
-      const totalBase = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-
-      cartItems.forEach((item) => {
-        const itemBase = item.price * item.quantity
-        const itemCouponShare = totalBase > 0 ? Math.round(couponAmount * itemBase / totalBase) : 0
-        const order = this.buildOrder(item, item, item.quantity)
-        order.couponAmount = itemCouponShare
-        order.payAmount = Math.max(itemBase - itemCouponShare, 0)
-        order.price = order.payAmount
-        orders.push(order)
-      })
-
-      cartService.removeSelected()
-      firstOrderNo = orders[0].orderNo
-    } else {
-      const order = this.buildOrder(this.data.product, this.data.merchant, this.data.quantity)
-      order.couponAmount = this.data.selectedCoupon ? this.data.selectedCoupon.amount : 0
-      order.payAmount = this.data.payAmount
-      order.price = this.data.payAmount
-      orders.push(order)
-      firstOrderNo = order.orderNo
-    }
-
-    util.setStoredOrderList([...orders, ...existing])
-    util.hideLoading()
-    util.showToast('订单已创建', 'success')
-    util.setPendingOrderFilter('PENDING_PAY')
-    setTimeout(() => {
-      util.redirectTo(`/pages/order-detail/order-detail?orderNo=${firstOrderNo}`)
-    }, 400)
   }
 })

@@ -1,6 +1,6 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
+const merchantApi = require('../../api/merchant')
 
 Page({
   data: {
@@ -14,7 +14,7 @@ Page({
 
   onLoad(options) {
     this.setData({
-      merchantId: parseInt(options.id || 1, 10),
+      merchantId: parseInt(options.id, 10),
       merchantConfig: templateService.getTemplateSection('merchantDetail')
     })
     this.loadMerchantDetail()
@@ -23,20 +23,36 @@ Page({
   loadMerchantDetail() {
     this.setData({ loading: true })
 
-    setTimeout(() => {
-      const merchant = mock.merchantList.find((item) => item.id === this.data.merchantId) || mock.merchantList[0]
-      const grouponList = mock.grouponList.filter((item) => item.merchantId === merchant.id)
-      const albumList = (merchant.albumList && merchant.albumList.length
-        ? merchant.albumList
-        : [merchant.coverImage, merchant.avatar, ...grouponList.map((item) => item.image)]
-      ).slice(0, 6)
+    merchantApi.getMerchantDetail(this.data.merchantId)
+      .then((res) => {
+        const merchant = res.data || res || {}
+        const albumList = (merchant.albumList && merchant.albumList.length
+          ? merchant.albumList
+          : [merchant.coverImage, merchant.avatar]
+        ).filter(Boolean).slice(0, 6)
 
-      this.setData({
-        merchant,
-        albumList,
-        loading: false
+        // 若商家相册为空，尝试从接口补充
+        if (albumList.length <= 1) {
+          merchantApi.getMerchantAlbum(this.data.merchantId)
+            .then((albumRes) => {
+              const apiAlbum = (albumRes.data || albumRes || {}).albumList || []
+              if (apiAlbum.length > 0) {
+                this.setData({ albumList: apiAlbum.slice(0, 6) })
+              }
+            })
+            .catch(() => {})
+        }
+
+        this.setData({
+          merchant,
+          albumList,
+          loading: false
+        })
       })
-    }, 180)
+      .catch(() => {
+        this.setData({ loading: false })
+        util.showToast('加载失败，请重试')
+      })
   },
 
   makePhoneCall() {
@@ -51,9 +67,13 @@ Page({
 
   viewLocation() {
     const merchant = this.data.merchant
+    if (!merchant.latitude || !merchant.longitude) {
+      util.showToast('暂无门店位置')
+      return
+    }
     wx.openLocation({
-      latitude: merchant.latitude,
-      longitude: merchant.longitude,
+      latitude: Number(merchant.latitude),
+      longitude: Number(merchant.longitude),
       name: merchant.name,
       address: merchant.address
     })

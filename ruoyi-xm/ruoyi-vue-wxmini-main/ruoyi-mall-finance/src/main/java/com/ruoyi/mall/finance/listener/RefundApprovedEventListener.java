@@ -3,6 +3,7 @@ package com.ruoyi.mall.finance.listener;
 import com.ruoyi.mall.common.event.RefundApprovedEvent;
 import com.ruoyi.mall.finance.service.IDistributorSettlementRecordService;
 import com.ruoyi.mall.finance.service.IMerchantSettlementRecordService;
+import com.ruoyi.mall.finance.service.IOrderProfitLedgerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -24,6 +25,8 @@ public class RefundApprovedEventListener {
     private IMerchantSettlementRecordService merchantSettlementService;
     @Resource
     private IDistributorSettlementRecordService distributorSettlementService;
+    @Resource
+    private IOrderProfitLedgerService profitLedgerService;
 
     @EventListener
     @Async
@@ -45,6 +48,14 @@ public class RefundApprovedEventListener {
             log.info("分销商结算逆向完成: orderNo={}", orderNo);
         } catch (Exception e) {
             log.error("分销商结算逆向失败: orderNo={}, error={}", orderNo, e.getMessage(), e);
+        }
+
+        try {
+            // 3. 分账流水逆向（标记为 REFUND_REVERSED）
+            profitLedgerService.handleRefundReverse(orderNo);
+            log.info("分账流水逆向完成: orderNo={}", orderNo);
+        } catch (Exception e) {
+            log.error("分账流水逆向失败: orderNo={}, error={}", orderNo, e.getMessage(), e);
         }
     }
 }

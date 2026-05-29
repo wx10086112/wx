@@ -1,4 +1,3 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
 
 Page({
@@ -6,8 +5,8 @@ Page({
     keyword: '',
     hotList: ['SPA', '肩颈', '焕肤', '到店核销', '护理', '轻养'],
     historyList: [],
-    merchantList: mock.merchantList,
-    productList: mock.grouponList
+    merchantList: [],
+    productList: []
   },
 
   onLoad() {
@@ -43,15 +42,5 @@ Page({
     list = list.slice(0, 10)
     wx.setStorageSync('search_history', list)
     this.setData({ historyList: list })
-  },
-
-  onProductTap(e) {
-    const product = e.currentTarget.dataset.item
-    util.navigateTo(`/pages/product-detail/product-detail?id=${product.id}`)
-  },
-
-  onMerchantTap(e) {
-    const merchant = e.currentTarget.dataset.item
-    util.navigateTo(`/pages/merchant-detail/merchant-detail?id=${merchant.id}`)
   }
 })

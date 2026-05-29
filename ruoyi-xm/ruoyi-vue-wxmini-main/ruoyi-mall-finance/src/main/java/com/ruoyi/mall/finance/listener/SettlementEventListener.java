@@ -4,6 +4,7 @@ import com.ruoyi.mall.finance.domain.OrderProfitLedger;
 import com.ruoyi.mall.finance.service.IDistributorSettlementRecordService;
 import com.ruoyi.mall.finance.service.IMerchantSettlementRecordService;
 import com.ruoyi.mall.finance.service.IOrderProfitLedgerService;
+import com.ruoyi.mall.finance.service.IPlatformIncomeService;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.event.OrderCompletedEvent;
@@ -32,6 +33,8 @@ public class SettlementEventListener {
     private IDistributorSettlementRecordService distributorSettlementService;
     @Resource
     private IMerchantService merchantService;
+    @Resource
+    private IPlatformIncomeService platformIncomeService;
 
     @Async
     @EventListener
@@ -59,15 +62,20 @@ public class SettlementEventListener {
             // 1. 生成三方分账流水
             profitLedgerService.createLedger(orderNo, merchantId, distributorId, payAmount);
 
-            // 2. 生成商家结算记录（从分账流水取商家金额）
+            // 2. 记录平台收入
             OrderProfitLedger ledger = profitLedgerService.selectByOrderNo(orderNo);
+            if (ledger != null && ledger.getPlatformAmount() != null && ledger.getPlatformAmount().compareTo(BigDecimal.ZERO) > 0) {
+                platformIncomeService.createIncome(orderNo, merchantId, payAmount, ledger.getPlatformAmount());
+            }
+
+            // 3. 生成商家结算记录（从分账流水取商家金额）
             if (ledger != null) {
                 settlementService.createSettlementForOrder(orderNo, merchantId, storeId, ledger.getMerchantAmount(), title);
             } else {
                 settlementService.createSettlementForOrder(orderNo, merchantId, storeId, payAmount, title);
             }
 
-            // 3. 生成分销商结算记录（如果有分销商且佣金>0）
+            // 4. 生成分销商结算记录（如果有分销商且佣金>0）
             if (distributorId != null && ledger != null && ledger.getDistributorAmount().compareTo(BigDecimal.ZERO) > 0) {
                 distributorSettlementService.createSettlementForOrder(orderNo, merchantId, distributorId, ledger.getDistributorAmount(), DISTRIBUTOR_RATE);
             }

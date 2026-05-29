@@ -1,4 +1,3 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const orderApi = require('../../api/order')
 
@@ -11,7 +10,7 @@ Page({
 
   onLoad(options) {
     this.setData({
-      orderNo: options.orderNo || mock.orderList[0].orderNo
+      orderNo: options.orderNo || ''
     })
     this.loadOrderDetail()
   },
@@ -41,6 +40,7 @@ Page({
   },
 
   loadOrderDetail() {
+    if (!this.data.orderNo) return
     this.setData({ loading: true })
 
     orderApi
@@ -53,32 +53,22 @@ Page({
         })
       })
       .catch(() => {
-        const rawOrder = util.getStoredOrderList(mock.orderList).find((item) => item.orderNo === this.data.orderNo) || {}
-        this.setData({
-          order: this.formatOrder(rawOrder),
-          loading: false
-        })
+        this.setData({ loading: false })
+        util.showToast('订单加载失败')
       })
-  },
-
-  updateOrder(updateHandler, successText) {
-    const orders = util.getStoredOrderList(mock.orderList)
-    const nextOrders = updateHandler(orders)
-    util.setStoredOrderList(nextOrders)
-    if (successText) {
-      util.showToast(successText, 'success')
-    }
-    this.loadOrderDetail()
   },
 
   cancelOrder() {
     util.showModal('取消订单', '确认取消当前订单？').then((confirm) => {
       if (!confirm) return
-      this.updateOrder(
-        (orders) =>
-          orders.map((item) => (item.orderNo === this.data.orderNo ? util.transitionOrderToCancelled(item) : item)),
-        '已取消'
-      )
+      orderApi.cancelOrder(this.data.orderNo)
+        .then(() => {
+          util.showToast('已取消', 'success')
+          this.loadOrderDetail()
+        })
+        .catch((err) => {
+          util.showToast(err && err.msg ? err.msg : '取消失败')
+        })
     })
   },
 
@@ -86,63 +76,64 @@ Page({
     util.showModal('确认支付', `确认支付 ¥${this.data.order.payAmountText} 吗？`).then((confirm) => {
       if (!confirm) return
       util.showLoading('支付中...')
-      this.tryRealPayment()
+      orderApi
+        .createPayOrder({ orderNo: this.data.orderNo })
+        .then((res) => {
+          const payParams = res.data || res
+          if (payParams && payParams.timeStamp) {
+            return util.requestPayment(payParams)
+          }
+          return Promise.reject(new Error('no pay params'))
+        })
         .then(() => {
           util.hideLoading()
-          this.updateOrder(
-            (orders) =>
-              orders.map((item) => (item.orderNo === this.data.orderNo ? util.transitionOrderToPaidUnused(item) : item)),
-            '支付成功'
-          )
-          util.requestSubscribeMessage()
+          util.showToast('支付成功', 'success')
+          this.loadOrderDetail()
         })
         .catch((err) => {
           util.hideLoading()
           if (err && err.message !== '用户取消支付') {
-            this.updateOrder(
-              (orders) =>
-                orders.map((item) => (item.orderNo === this.data.orderNo ? util.transitionOrderToPaidUnused(item) : item)),
-              '支付成功（模拟）'
-            )
+            util.showToast(err.msg || '支付失败，请重试')
           }
         })
     })
   },
 
-  tryRealPayment() {
-    const orderApi = require('../../api/order')
-    return orderApi
-      .createPayOrder({ orderNo: this.data.orderNo })
-      .then((res) => {
-        const payParams = res.data || res
-        if (payParams && payParams.timeStamp) {
-          return util.requestPayment(payParams)
-        }
-        return Promise.reject(new Error('no pay params'))
-      })
-  },
-
   applyRefund() {
+    const refundApi = require('../../api/user')
     util.showModal('申请退款', '确认申请退款？').then((confirm) => {
       if (!confirm) return
-      this.updateOrder(
-        (orders) =>
-          orders.map((item) => (item.orderNo === this.data.orderNo ? util.transitionOrderToRefunding(item) : item)),
-        '退款申请已提交'
-      )
+      const { post } = require('../../api/request')
+      post('/wxmini/refund/apply', { orderNo: this.data.orderNo, refundReason: '用户申请退款' })
+        .then(() => {
+          util.showToast('退款申请已提交', 'success')
+          this.loadOrderDetail()
+        })
+        .catch((err) => {
+          util.showToast(err && err.msg ? err.msg : '申请失败')
+        })
     })
   },
 
   contactMerchant() {
-    util.showToast('已唤起联系门店能力')
+    const phone = this.data.order.merchantPhone
+    if (phone) {
+      wx.makePhoneCall({ phoneNumber: phone })
+    } else {
+      util.showToast('暂无联系方式')
+    }
   },
 
   showCode() {
-    util.showToast('请向门店出示核销码')
+    if (this.data.order.writeOffCode) {
+      util.showToast(`核销码：${this.data.order.writeOffCode}`)
+    } else {
+      util.showToast('暂无核销码')
+    }
   },
 
   queryWriteOffResult() {
-    util.showToast('暂无新的核销记录')
+    this.loadOrderDetail()
   },
 
   buyAgain() {

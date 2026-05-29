@@ -556,8 +556,8 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         long completedOrderCount = mallOrderMapper.countCompletedOrdersByMerchantId(merchantId);
         BigDecimal todayIncomeSql = mallOrderMapper.sumTodayIncomeByMerchantId(merchantId);
         BigDecimal monthIncomeSql = mallOrderMapper.sumMonthIncomeByMerchantId(merchantId);
-        Long todayIncomeAmount = todayIncomeSql.longValue();
-        Long monthIncomeAmount = monthIncomeSql.longValue();
+        Long todayIncomeAmount = todayIncomeSql.multiply(BigDecimal.valueOf(100)).longValue();
+        Long monthIncomeAmount = monthIncomeSql.multiply(BigDecimal.valueOf(100)).longValue();
 
         // 查询已完成/已使用的订单总金额，用于计算平台费和分账
         List<Integer> completedStatuses = Arrays.asList(ORDER_STATUS_COMPLETED, ORDER_STATUS_USED);

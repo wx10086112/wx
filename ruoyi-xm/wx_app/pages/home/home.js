@@ -1,6 +1,7 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
+const merchantApi = require('../../api/merchant')
+const productApi = require('../../api/product')
 
 Page({
   data: {
@@ -41,23 +42,42 @@ Page({
     return this.getUserLocation()
       .then((userLocation) => {
         const templateConfig = templateService.getTemplateConfig()
-        const merchantList = this.buildLocatedMerchantList(mock.merchantList, userLocation)
-        const filteredData = this.buildFilteredLists({
-          merchantList,
-          grouponList: mock.grouponList
+
+        const merchantParams = {}
+        if (userLocation) {
+          merchantParams.latitude = userLocation.latitude
+          merchantParams.longitude = userLocation.longitude
+        }
+
+        return Promise.all([
+          merchantApi.getMerchantList(merchantParams),
+          productApi.getGrouponList()
+        ]).then(([merchantRes, grouponRes]) => {
+          const merchantList = (merchantRes.data || merchantRes || []).map((m) => ({
+            ...m,
+            businessStatusText: m.businessStatus ? '营业中' : '休息中',
+            bookingText: m.supportBooking === false ? '到店即用' : '可预约',
+            displayTags: (m.tags || []).filter((tag) => !['营业中', '休息中'].includes(tag))
+          }))
+          const grouponList = grouponRes.data || grouponRes || []
+
+          const filteredData = this.buildFilteredLists({ merchantList, grouponList })
+          this.setData({
+            brandInfo: templateConfig.brandInfo,
+            homeConfig: templateConfig.home,
+            userLocation,
+            currentLocation: this.formatCurrentDistance(merchantList[0]),
+            currentMerchant: merchantList[0] || {},
+            merchantList,
+            grouponList,
+            displayMerchantList: filteredData.displayMerchantList,
+            displayGrouponList: filteredData.displayGrouponList,
+            loading: false
+          })
         })
-        this.setData({
-          brandInfo: templateConfig.brandInfo,
-          homeConfig: templateConfig.home,
-          userLocation,
-          currentLocation: this.formatCurrentDistance(merchantList[0]),
-          currentMerchant: merchantList[0] || {},
-          merchantList,
-          grouponList: mock.grouponList,
-          displayMerchantList: filteredData.displayMerchantList,
-          displayGrouponList: filteredData.displayGrouponList,
-          loading: false
-        })
+      })
+      .catch(() => {
+        this.setData({ loading: false })
       })
   },
 
@@ -81,54 +101,6 @@ Page({
 
   formatCurrentDistance(merchant = {}) {
     return merchant.distance || '距离计算中'
-  },
-
-  toRadians(value) {
-    return (value * Math.PI) / 180
-  },
-
-  calculateDistanceMeters(userLocation, merchant = {}) {
-    if (!userLocation || !merchant.latitude || !merchant.longitude) {
-      return Number(merchant.distanceValue || 0)
-    }
-
-    const earthRadius = 6371000
-    const lat1 = this.toRadians(userLocation.latitude)
-    const lat2 = this.toRadians(Number(merchant.latitude))
-    const deltaLat = this.toRadians(Number(merchant.latitude) - userLocation.latitude)
-    const deltaLng = this.toRadians(Number(merchant.longitude) - userLocation.longitude)
-    const a =
-      Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
-      Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2)
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-
-    return Math.round(earthRadius * c)
-  },
-
-  formatDistance(distanceValue = 0) {
-    if (distanceValue < 1000) {
-      return `${Math.max(distanceValue, 0)}m`
-    }
-
-    if (distanceValue < 10000) {
-      return `${(distanceValue / 1000).toFixed(1)}km`
-    }
-
-    return `${Math.round(distanceValue / 1000)}km`
-  },
-
-  buildLocatedMerchantList(merchantList = [], userLocation) {
-    return merchantList.map((merchant) => {
-      const distanceValue = this.calculateDistanceMeters(userLocation, merchant)
-      return {
-        ...merchant,
-        distanceValue,
-        distance: this.formatDistance(distanceValue),
-        businessStatusText: merchant.businessStatus ? '营业中' : '休息中',
-        bookingText: merchant.supportBooking === false ? '到店即用' : '可预约',
-        displayTags: (merchant.tags || []).filter((tag) => !['营业中', '休息中'].includes(tag))
-      }
-    })
   },
 
   buildFilteredLists({ merchantList = [], grouponList = [] }) {
@@ -172,7 +144,6 @@ Page({
           })
           return
         }
-
         this.loadData()
       },
       fail: () => {
@@ -226,8 +197,8 @@ Page({
       return
     }
     wx.openLocation({
-      latitude: merchant.latitude,
-      longitude: merchant.longitude,
+      latitude: Number(merchant.latitude),
+      longitude: Number(merchant.longitude),
       name: merchant.name,
       address: merchant.address
     })

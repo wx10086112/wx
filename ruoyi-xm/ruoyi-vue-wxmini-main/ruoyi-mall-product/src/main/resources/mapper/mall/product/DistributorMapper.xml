@@ -20,6 +20,7 @@
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
         <result property="delFlag" column="del_flag"/>
+        <result property="merchantCount" column="merchant_count"/>
     </resultMap>
 
     <sql id="selectDistributorVo">
@@ -29,23 +30,31 @@
         from distributor
     </sql>
 
+    <sql id="selectDistributorWithCountVo">
+        select d.id, d.name, d.contact, d.phone, d.username, d.password,
+               d.region_code, d.region_name, d.status, d.receiver_openid, d.receiver_type,
+               d.remark, d.create_time, d.update_time, d.del_flag,
+               (select count(*) from merchant m where m.distributor_id = d.id and m.del_flag = '0') as merchant_count
+        from distributor d
+    </sql>
+
     <select id="selectDistributorById" parameterType="Long" resultMap="DistributorResult">
         <include refid="selectDistributorVo"/>
         where id = #{id} and del_flag = '0'
     </select>
 
     <select id="selectDistributorList" parameterType="com.ruoyi.mall.product.domain.Distributor" resultMap="DistributorResult">
-        <include refid="selectDistributorVo"/>
+        <include refid="selectDistributorWithCountVo"/>
         <where>
-            and del_flag = '0'
-            <if test="id != null">and id = #{id}</if>
-            <if test="name != null and name != ''">and name like concat('%', #{name}, '%')</if>
-            <if test="phone != null and phone != ''">and phone like concat('%', #{phone}, '%')</if>
-            <if test="regionName != null and regionName != ''">and region_name like concat('%', #{regionName}, '%')</if>
-            <if test="status != null">and status = #{status}</if>
+            and d.del_flag = '0'
+            <if test="id != null">and d.id = #{id}</if>
+            <if test="name != null and name != ''">and d.name like concat('%', #{name}, '%')</if>
+            <if test="phone != null and phone != ''">and d.phone like concat('%', #{phone}, '%')</if>
+            <if test="regionName != null and regionName != ''">and d.region_name like concat('%', #{regionName}, '%')</if>
+            <if test="status != null">and d.status = #{status}</if>
             <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
         </where>
-        order by create_time desc
+        order by d.create_time desc
     </select>
 
     <select id="selectByUsername" parameterType="String" resultMap="DistributorResult">

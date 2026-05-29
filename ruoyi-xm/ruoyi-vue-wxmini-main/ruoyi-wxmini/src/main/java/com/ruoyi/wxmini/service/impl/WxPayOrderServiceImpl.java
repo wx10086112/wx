@@ -8,6 +8,7 @@ import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.service.IMallOrderService;
+import com.ruoyi.mall.pay.service.IPaymentRecordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,8 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
     private IMallOrderService mallOrderService;
     @Resource
     private IMerchantService merchantService;
+    @Resource
+    private IPaymentRecordService paymentRecordService;
 
     @Override
     public String getResourceId(WxPayOrderVo payVo) {
@@ -93,7 +96,11 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
 
     @Override
     public Boolean saveOrderInfo(String orderNo, WxPayOrderVo payVo, WxPayCreateOrderParam orderParam, HashMap<String, Object> contextMap) {
-        // 支付参数已生成，订单状态不在此处修改（由回调修改）
+        // 创建支付记录（全链路留痕）
+        MallOrder order = mallOrderService.selectMallOrderByOrderNo(orderNo);
+        if (order != null) {
+            paymentRecordService.createPayment(orderNo, order.getMerchantId(), order.getUserId(), order.getPayAmount(), orderNo);
+        }
         log.info("订单{}支付参数已生成，等待用户支付", orderNo);
         return true;
     }

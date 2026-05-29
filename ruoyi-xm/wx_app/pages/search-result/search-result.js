@@ -1,5 +1,6 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
+const merchantApi = require('../../api/merchant')
+const productApi = require('../../api/product')
 
 const SORT_OPTIONS = [
   { label: '综合', value: 'default' },
@@ -16,43 +17,48 @@ Page({
     priceAsc: true,
     productList: [],
     merchantList: [],
-    totalResultCount: 0
+    totalResultCount: 0,
+    loading: true
   },
 
   onLoad(options) {
     const keyword = options.keyword || ''
     this.setData({ keyword })
-    this.doSearch(keyword, 'default')
+    this.doSearch(keyword)
   },
 
-  doSearch(keyword, sortKey) {
-    let productList = mock.grouponList.filter((item) => {
-      if (!keyword) return true
-      return (
-        item.title.includes(keyword) ||
-        item.subtitle.includes(keyword) ||
-        item.categoryName.includes(keyword) ||
-        item.description.includes(keyword)
-      )
-    })
+  doSearch(keyword) {
+    this.setData({ loading: true })
 
-    let merchantList = mock.merchantList.filter((item) => {
-      if (!keyword) return true
-      return (
-        item.name.includes(keyword) ||
-        item.shortName.includes(keyword) ||
-        (item.tags || []).some((tag) => tag.includes(keyword))
-      )
-    })
+    Promise.all([
+      productApi.getGrouponList({ keyword }).catch(() => ({ data: [] })),
+      merchantApi.getMerchantList({ keyword }).catch(() => ({ data: [] }))
+    ]).then(([productRes, merchantRes]) => {
+      let productList = (productRes.data || productRes || [])
+      let merchantList = (merchantRes.data || merchantRes || [])
 
-    productList = this.sortList(productList, sortKey)
-    merchantList = this.sortList(merchantList, sortKey)
+      if (keyword) {
+        productList = productList.filter((item) =>
+          (item.title || '').includes(keyword) ||
+          (item.subtitle || '').includes(keyword) ||
+          (item.merchantName || '').includes(keyword)
+        )
+        merchantList = merchantList.filter((item) =>
+          (item.name || '').includes(keyword) ||
+          (item.shortName || '').includes(keyword) ||
+          (item.tags || []).some((tag) => tag.includes(keyword))
+        )
+      }
 
-    this.setData({
-      productList,
-      merchantList,
-      sortKey,
-      totalResultCount: productList.length + merchantList.length
+      productList = this.sortList(productList, this.data.sortKey)
+      merchantList = this.sortList(merchantList, this.data.sortKey)
+
+      this.setData({
+        productList,
+        merchantList,
+        totalResultCount: productList.length + merchantList.length,
+        loading: false
+      })
     })
   },
 
@@ -76,11 +82,13 @@ Page({
     const sortKey = e.currentTarget.dataset.key
     if (sortKey === 'price' && this.data.sortKey === 'price') {
       this.setData({ priceAsc: !this.data.priceAsc }, () => {
-        this.doSearch(this.data.keyword, sortKey)
+        this.doSearch(this.data.keyword)
       })
       return
     }
-    this.doSearch(this.data.keyword, sortKey)
+    this.setData({ sortKey }, () => {
+      this.doSearch(this.data.keyword)
+    })
   },
 
   onProductTap(e) {

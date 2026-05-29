@@ -412,7 +412,15 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
             detail.setOutDetailNo(record.getTransferNo());
             detail.setTransferAmount(record.getAmount().multiply(BigDecimal.valueOf(100)).intValue());
             detail.setOpenid(record.getReceiverOpenid());
-            detail.setUserName(null); // 需要时加密传入
+
+            // RSA加密收款人真实姓名
+            String receiverName = resolveReceiverName(record);
+            if (receiverName != null) {
+                detail.setUserName(encryptReceiverName(receiverName));
+            } else {
+                detail.setUserName(null);
+            }
+
             detail.setTransferRemark("结算打款-" + record.getSettlementNo());
             request.setTransferDetailList(Collections.singletonList(detail));
 
@@ -447,6 +455,47 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
                 s.setArriveTime(now);
                 distributorSettlementService.updateById(s);
             }
+        }
+    }
+
+    /**
+     * 解析收款人真实姓名（商家contact 或 分销商contact）
+     */
+    private String resolveReceiverName(PlatformTransferRecord record) {
+        try {
+            if ("MERCHANT".equals(record.getTargetType())) {
+                Merchant m = merchantService.selectMerchantById(record.getTargetId());
+                if (m != null && StringUtils.isNotBlank(m.getContact())) {
+                    return m.getContact();
+                }
+            } else if ("DISTRIBUTOR".equals(record.getTargetType())) {
+                Distributor d = distributorService.selectDistributorById(record.getTargetId());
+                if (d != null && StringUtils.isNotBlank(d.getContact())) {
+                    return d.getContact();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("解析收款人姓名失败: transferNo={}, error={}", record.getTransferNo(), e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * RSA加密收款人姓名（微信V3要求 OAEP-SHA1-MGF1 填充）
+     * 使用微信平台公钥证书加密
+     */
+    private String encryptReceiverName(String plainName) {
+        try {
+            java.security.cert.X509Certificate cert = wxPayService.getConfig().getVerifier().getValidCertificate();
+            java.security.PublicKey publicKey = cert.getPublicKey();
+
+            javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+            cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, publicKey);
+            byte[] encrypted = cipher.doFinal(plainName.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return java.util.Base64.getEncoder().encodeToString(encrypted);
+        } catch (Exception e) {
+            log.error("RSA加密收款人姓名失败: error={}", e.getMessage(), e);
+            return null;
         }
     }
 

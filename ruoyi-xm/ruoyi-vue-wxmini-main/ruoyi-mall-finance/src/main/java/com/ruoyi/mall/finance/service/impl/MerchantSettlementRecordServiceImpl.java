@@ -111,6 +111,11 @@ public class MerchantSettlementRecordServiceImpl implements IMerchantSettlementR
     }
 
     @Override
+    public List<MerchantSettlementRecord> selectWaitingTransfer(int limit) {
+        return settlementMapper.selectWaitingTransfer(limit);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void processWaitingTransfer(int batchSize) {
         List<MerchantSettlementRecord> waitingList = settlementMapper.selectWaitingTransfer(batchSize);

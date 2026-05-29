@@ -7,6 +7,8 @@ import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.OrderItem;
+import com.ruoyi.mall.order.domain.RefundRecord;
+import com.ruoyi.mall.order.mapper.RefundRecordMapper;
 import com.ruoyi.mall.order.service.IMallOrderService;
 import com.ruoyi.mall.product.domain.Product;
 import com.ruoyi.mall.product.service.IProductService;
@@ -34,6 +36,8 @@ public class WxOrderController {
 
     @Resource
     private IMallOrderService mallOrderService;
+    @Resource
+    private RefundRecordMapper refundRecordMapper;
     @Resource
     private IProductService productService;
     @Resource
@@ -193,7 +197,6 @@ public class WxOrderController {
         dto.setId(order.getId());
         dto.setOrderNo(order.getOrderNo());
         dto.setMerchantId(order.getMerchantId());
-        dto.setStatus(mapDbStatus(order.getStatus()));
         dto.setWriteOffCode(order.getWriteOffCode());
         dto.setOrderAmount(order.getTotalAmount() != null ? order.getTotalAmount().longValue() : 0L);
         dto.setCouponAmount(order.getCouponAmount() != null ? order.getCouponAmount().longValue() : 0L);
@@ -203,6 +206,31 @@ public class WxOrderController {
         dto.setWriteOffTime(order.getUseTime() != null ? order.getUseTime().getTime() : null);
         dto.setRefundTime(order.getRefundTime() != null ? order.getRefundTime().getTime() : null);
         dto.setQuantity(1);
+
+        // 查询退款记录：覆盖状态 + 填充退款原因
+        String wxStatus = mapDbStatus(order.getStatus());
+        RefundRecord latestRefund = null;
+        try {
+            RefundRecord refundQuery = new RefundRecord();
+            refundQuery.setOrderNo(order.getOrderNo());
+            List<RefundRecord> refunds = refundRecordMapper.selectRefundRecordList(refundQuery);
+            if (refunds != null && !refunds.isEmpty()) {
+                refunds.sort((a, b) -> {
+                    long idA = a.getId() != null ? a.getId() : 0L;
+                    long idB = b.getId() != null ? b.getId() : 0L;
+                    return Long.compare(idB, idA);
+                });
+                latestRefund = refunds.get(0);
+            }
+        } catch (Exception ignored) {}
+        if (latestRefund != null && latestRefund.getStatus() != null
+                && (latestRefund.getStatus() == 1 || latestRefund.getStatus() == 2)) {
+            wxStatus = "REFUNDING";
+        }
+        if (latestRefund != null && latestRefund.getRefundReason() != null) {
+            dto.setRefundReason(latestRefund.getRefundReason());
+        }
+        dto.setStatus(wxStatus);
 
         List<OrderItem> items = mallOrderService.selectOrderItemListByOrderId(order.getId());
         if (!items.isEmpty()) {
@@ -241,8 +269,8 @@ public class WxOrderController {
         if (dbStatus == null) return "PENDING_PAY";
         switch (dbStatus) {
             case ORDER_STATUS_PENDING: return "PENDING_PAY";
-            case ORDER_STATUS_PAID:
-            case ORDER_STATUS_USED: return "PAID_UNUSED";
+            case ORDER_STATUS_PAID: return "PAID_UNUSED";
+            case ORDER_STATUS_USED: return "USED_COMPLETED";
             case ORDER_STATUS_COMPLETED: return "USED_COMPLETED";
             case ORDER_STATUS_REFUNDED: return "REFUNDED";
             case ORDER_STATUS_CANCELLED: return "CANCELLED";

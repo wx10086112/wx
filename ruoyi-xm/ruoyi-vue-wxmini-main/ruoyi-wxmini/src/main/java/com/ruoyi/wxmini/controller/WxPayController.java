@@ -9,6 +9,8 @@ import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.service.IMallOrderService;
+import com.ruoyi.mall.pay.service.IPaymentRecordService;
+import com.github.binarywang.wxpay.service.WxPayService;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +37,10 @@ public class WxPayController {
     private IMerchantService merchantService;
     @Resource
     private IWxPayOrderService wxPayOrderService;
+    @Resource
+    private IPaymentRecordService paymentRecordService;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private WxPayService wxPayService;
 
     @PostMapping("/order/create")
     public AjaxResult createPay(@RequestBody Map<String, String> body) {
@@ -57,7 +63,9 @@ public class WxPayController {
         }
 
         if (stubEnabled) {
-            // Stub 模式：返回模拟支付参数
+            // Stub 模式：创建支付记录 + 返回模拟支付参数
+            paymentRecordService.createPayment(orderNo, order.getMerchantId(), Long.valueOf(userId), order.getPayAmount(), orderNo);
+
             Map<String, Object> result = new HashMap<>();
             result.put("timeStamp", String.valueOf(System.currentTimeMillis() / 1000));
             result.put("nonceStr", generateNonceStr());
@@ -110,9 +118,31 @@ public class WxPayController {
             return AjaxResult.error("订单不存在");
         }
 
+        // 本地状态为待支付 且 非stub模式 → 主动查询微信，防止回调丢失
+        boolean isLocalPaid = order.getStatus() != null && order.getStatus() >= ORDER_STATUS_PAID;
+        if (!isLocalPaid && !stubEnabled && wxPayService != null) {
+            try {
+                com.github.binarywang.wxpay.bean.request.WxPayOrderQueryV3Request queryReq =
+                        new com.github.binarywang.wxpay.bean.request.WxPayOrderQueryV3Request();
+                queryReq.setOutTradeNo(outTradeNo);
+                com.github.binarywang.wxpay.bean.result.WxPayOrderQueryV3Result wxResult =
+                        wxPayService.queryOrderV3(queryReq);
+                if ("SUCCESS".equals(wxResult.getTradeState())) {
+                    // 回调可能丢失，主动更新本地状态
+                    order.setStatus(ORDER_STATUS_PAID);
+                    order.setPayTime(new java.util.Date());
+                    mallOrderService.updateMallOrder(order);
+                    paymentRecordService.markPaySuccess(outTradeNo, wxResult.getTransactionId(), "query-sync");
+                    isLocalPaid = true;
+                }
+            } catch (Exception e) {
+                // 查询失败不影响本地结果返回
+            }
+        }
+
         Map<String, Object> result = new HashMap<>();
         result.put("outTradeNo", outTradeNo);
-        result.put("tradeState", order.getStatus() != null && order.getStatus() >= ORDER_STATUS_PAID ? "SUCCESS" : "NOTPAY");
+        result.put("tradeState", isLocalPaid ? "SUCCESS" : "NOTPAY");
         result.put("tradeType", "JSAPI");
         result.put("amount", order.getPayAmount() != null ? order.getPayAmount().multiply(BigDecimal.valueOf(100)).longValue() : 0);
         result.put("successTime", order.getPayTime() != null

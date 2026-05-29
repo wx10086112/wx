@@ -1,7 +1,7 @@
 const { get, post, put, del } = require('./request')
 
 const login = (appid, code) => {
-  return get('/wxmini/login', { appid, code })
+  return post('/wxmini/login', { appid, code })
 }
 
 const quickLogin = (loginCode, phoneCode) => {

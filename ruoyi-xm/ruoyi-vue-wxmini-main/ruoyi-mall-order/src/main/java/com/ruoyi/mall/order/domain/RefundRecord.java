@@ -8,6 +8,13 @@ import java.util.Date;
 public class RefundRecord extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
+    /** 退款状态常量 */
+    public static final int STATUS_PENDING = 1;        // 待审核
+    public static final int STATUS_APPROVED = 2;       // 已通过（审批通过，待微信退款）
+    public static final int STATUS_REJECTED = 3;       // 已拒绝
+    public static final int STATUS_REFUNDED = 4;       // 退款完成（微信确认）
+    public static final int STATUS_ABNORMAL = 5;       // 退款异常
+
     private Long id;
     private String orderNo;
     private String refundNo;

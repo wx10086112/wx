@@ -25,7 +25,15 @@ const clone = (data) => JSON.parse(JSON.stringify(data))
 
 const formatDate = (date, fmt = 'YYYY-MM-DD HH:mm') => {
   if (!date) return ''
-  const target = typeof date === 'number' ? new Date(date) : date
+  let target
+  if (typeof date === 'number') {
+    target = new Date(date)
+  } else if (typeof date === 'string') {
+    target = new Date(date.replace(/-/g, '/'))
+  } else {
+    target = date
+  }
+  if (!(target instanceof Date) || isNaN(target.getTime())) return ''
   const map = {
     'M+': target.getMonth() + 1,
     'D+': target.getDate(),
@@ -47,7 +55,7 @@ const formatDate = (date, fmt = 'YYYY-MM-DD HH:mm') => {
   return fmt
 }
 
-const formatPrice = (price) => Number(price || 0).toFixed(2)
+const formatPrice = (price) => (Number(price || 0) / 100).toFixed(2)
 
 const showToast = (title, icon = 'none') => {
   wx.showToast({

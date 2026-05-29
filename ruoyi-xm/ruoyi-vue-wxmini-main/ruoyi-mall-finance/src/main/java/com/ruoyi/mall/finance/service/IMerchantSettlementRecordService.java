@@ -32,6 +32,11 @@ public interface IMerchantSettlementRecordService {
     void processWaitingTransfer(int batchSize);
 
     /**
+     * 查询待打款的结算记录（WAITING_T1 且 expected_transfer_time <= NOW）
+     */
+    List<MerchantSettlementRecord> selectWaitingTransfer(int limit);
+
+    /**
      * 处理退款逆向结算
      */
     void handleRefundReverse(String orderNo, String failReason);

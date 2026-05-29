@@ -5,7 +5,10 @@ import com.github.binarywang.wxpay.bean.notify.WxPayNotifyV3Result;
 import com.github.binarywang.wxpay.bean.notify.WxPayRefundNotifyV3Result;
 import com.github.binarywang.wxpay.service.WxPayService;
 import com.ruoyi.mall.order.domain.MallOrder;
+import com.ruoyi.mall.order.domain.RefundRecord;
+import com.ruoyi.mall.order.mapper.RefundRecordMapper;
 import com.ruoyi.mall.order.service.IMallOrderService;
+import com.ruoyi.mall.pay.service.IPaymentRecordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +35,10 @@ public class WxPayNotifyController {
     private WxPayService wxPayService;
     @Autowired
     private IMallOrderService mallOrderService;
+    @Autowired
+    private IPaymentRecordService paymentRecordService;
+    @Autowired
+    private RefundRecordMapper refundRecordMapper;
 
     /**
      * 微信支付V3回调（JSON格式）
@@ -77,6 +84,10 @@ public class WxPayNotifyController {
                 order.setStatus(ORDER_STATUS_PAID);
                 order.setPayTime(new Date());
                 mallOrderService.updateMallOrder(order);
+
+                // 更新支付记录（全链路留痕：transactionId 持久化）
+                paymentRecordService.markPaySuccess(outTradeNo, transactionId, body);
+
                 log.info("订单{}支付成功，已更新状态（transactionId={}）", outTradeNo, transactionId);
             } else {
                 log.warn("订单{}支付状态非SUCCESS: {}", outTradeNo, tradeState);
@@ -117,10 +128,23 @@ public class WxPayNotifyController {
             log.info("退款回调解析成功: outRefundNo={}, refundStatus={}", outRefundNo, refundStatus);
 
             if ("SUCCESS".equals(refundStatus)) {
-                log.info("退款{}成功", outRefundNo);
-                // TODO: 更新退款记录状态
+                log.info("退款{}成功，更新退款记录状态", outRefundNo);
+                RefundRecord refundRecord = refundRecordMapper.selectRefundRecordByRefundNo(outRefundNo);
+                if (refundRecord != null && refundRecord.getStatus() != null && refundRecord.getStatus() < RefundRecord.STATUS_REFUNDED) {
+                    refundRecord.setStatus(RefundRecord.STATUS_REFUNDED);
+                    refundRecord.setRefundTime(new java.util.Date());
+                    refundRecordMapper.updateRefundRecord(refundRecord);
+                    log.info("退款记录 {} 已更新为退款完成", refundRecord.getId());
+                } else if (refundRecord == null) {
+                    log.warn("退款回调: 未找到退款记录 refundNo={}", outRefundNo);
+                }
             } else if ("ABNORMAL".equals(refundStatus) || "CLOSED".equals(refundStatus)) {
                 log.warn("退款{}异常: {}", outRefundNo, refundStatus);
+                RefundRecord refundRecord = refundRecordMapper.selectRefundRecordByRefundNo(outRefundNo);
+                if (refundRecord != null) {
+                    refundRecord.setStatus(RefundRecord.STATUS_ABNORMAL);
+                    refundRecordMapper.updateRefundRecord(refundRecord);
+                }
             }
 
             return buildSuccessResponse();
