@@ -15,7 +15,7 @@
           <el-select v-model="queryParams.status" placeholder="请选择" clearable>
             <el-option label="正常" :value="1" />
             <el-option label="禁用" :value="0" />
-            <el-option label="待审核" :value="2" />
+            <el-option label="停止合作" :value="3" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -47,11 +47,13 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="入驻时间" width="110" align="center" />
-        <el-table-column label="操作" width="220" align="center" fixed="right">
+        <el-table-column label="操作" width="280" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button type="text" size="small" icon="el-icon-view" @click="handleDetail(scope.row)">详情</el-button>
             <el-button v-hasPermi="['mall:merchant:audit']" v-if="scope.row.status === 2" type="text" size="small" icon="el-icon-s-check" class="audit-btn" @click="handleAudit(scope.row)">审核</el-button>
             <el-button v-if="isPlatform" v-hasPermi="['mall:merchant:edit']" type="text" size="small" icon="el-icon-connection" @click="handleAssign(scope.row)">分配</el-button>
+            <el-button v-if="scope.row.status === 1" v-hasPermi="['mall:merchant:edit']" type="text" size="small" icon="el-icon-close" class="text-warning" @click="handleStop(scope.row)">停止合作</el-button>
+            <el-button v-if="scope.row.status === 3" v-hasPermi="['mall:merchant:edit']" type="text" size="small" icon="el-icon-check" class="text-success" @click="handleResume(scope.row)">恢复合作</el-button>
             <el-button v-hasPermi="['mall:merchant:remove']" type="text" size="small" icon="el-icon-delete" class="text-danger" @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
@@ -120,7 +122,7 @@
 </template>
 
 <script>
-import { getMerchantList, auditMerchant, deleteMerchant, updateMerchant } from '@/api/merchant'
+import { getMerchantList, auditMerchant, deleteMerchant, updateMerchant, stopMerchant, resumeMerchant } from '@/api/merchant'
 import { listDistributor } from '@/api/distributor'
 
 export default {
@@ -229,11 +231,11 @@ export default {
       }
     },
     statusText(status) {
-      const map = { 0: '禁用', 1: '正常', 2: '待审核' }
+      const map = { 0: '禁用', 1: '正常', 2: '待审核', 3: '停止合作' }
       return map[status] || '未知'
     },
     statusTagType(status) {
-      const map = { 0: 'info', 1: 'success', 2: 'warning' }
+      const map = { 0: 'info', 1: 'success', 2: 'warning', 3: 'danger' }
       return map[status] || 'info'
     },
     handleDelete(row) {
@@ -269,6 +271,20 @@ export default {
       } finally {
         this.assignLoading = false
       }
+    },
+    handleStop(row) {
+      this.$modal.confirm('确认停止与商家「' + row.name + '」的合作？商户资料、订单、结算记录将保留，但商家端和C端将不可继续运营。').then(async () => {
+        await stopMerchant(row.id)
+        this.$modal.msgSuccess('已停止合作')
+        this.fetchData()
+      }).catch(() => {})
+    },
+    handleResume(row) {
+      this.$modal.confirm('确认恢复与商家「' + row.name + '」的合作？').then(async () => {
+        await resumeMerchant(row.id)
+        this.$modal.msgSuccess('已恢复合作')
+        this.fetchData()
+      }).catch(() => {})
     }
   }
 }
@@ -298,5 +314,11 @@ export default {
 }
 .text-danger {
   color: #F56C6C;
+}
+.text-warning {
+  color: #E6A23C;
+}
+.text-success {
+  color: #67C23A;
 }
 </style>

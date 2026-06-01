@@ -30,6 +30,26 @@
         <result property="wxPayApiKey" column="wx_pay_api_key"/>
         <result property="receiverOpenid" column="receiver_openid"/>
         <result property="receiverType" column="receiver_type"/>
+        <result property="mapClaimStatus" column="map_claim_status"/>
+        <result property="mapPoiId" column="map_poi_id"/>
+        <result property="mapClaimUrl" column="map_claim_url"/>
+        <result property="mapClaimTime" column="map_claim_time"/>
+        <result property="mapClaimRemark" column="map_claim_remark"/>
+        <result property="wxApplymentId" column="wx_applyment_id"/>
+        <result property="wxApplymentState" column="wx_applyment_state"/>
+        <result property="wxApplymentRejectReason" column="wx_applyment_reject_reason"/>
+        <result property="wxApplymentTime" column="wx_applyment_time"/>
+        <result property="wxApplymentFinishTime" column="wx_applyment_finish_time"/>
+        <result property="wxPaymentAccessType" column="wx_payment_access_type"/>
+        <result property="merchantWxMchId" column="merchant_wx_mch_id"/>
+        <result property="merchantWxMchName" column="merchant_wx_mch_name"/>
+        <result property="wxProfitSharingEnabled" column="wx_profit_sharing_enabled"/>
+        <result property="platformReceiverMchId" column="platform_receiver_mch_id"/>
+        <result property="distributorReceiverMchId" column="distributor_receiver_mch_id"/>
+        <result property="merchantShareRate" column="merchant_share_rate"/>
+        <result property="platformShareRate" column="platform_share_rate"/>
+        <result property="distributorShareRate" column="distributor_share_rate"/>
+        <result property="settlementCycle" column="settlement_cycle"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
         <result property="remark" column="remark"/>
@@ -42,6 +62,12 @@
                m.product_count, m.store_count, m.c_mini_app_id, m.c_mini_app_secret,
                m.m_mini_app_id, m.m_mini_app_secret, m.wx_pay_mch_id, m.wx_pay_api_key,
                m.receiver_openid, m.receiver_type,
+               m.map_claim_status, m.map_poi_id, m.map_claim_url, m.map_claim_time, m.map_claim_remark,
+               m.wx_applyment_id, m.wx_applyment_state, m.wx_applyment_reject_reason,
+               m.wx_applyment_time, m.wx_applyment_finish_time,
+               m.wx_payment_access_type, m.merchant_wx_mch_id, m.merchant_wx_mch_name,
+               m.wx_profit_sharing_enabled, m.platform_receiver_mch_id, m.distributor_receiver_mch_id,
+               m.merchant_share_rate, m.platform_share_rate, m.distributor_share_rate, m.settlement_cycle,
                m.create_time, m.update_time, m.remark,
                d.name as distributor_name
         from merchant m
@@ -94,6 +120,26 @@
             <if test="wxPayApiKey != null">wx_pay_api_key,</if>
             <if test="receiverOpenid != null">receiver_openid,</if>
             <if test="receiverType != null">receiver_type,</if>
+            <if test="mapClaimStatus != null">map_claim_status,</if>
+            <if test="mapPoiId != null">map_poi_id,</if>
+            <if test="mapClaimUrl != null">map_claim_url,</if>
+            <if test="mapClaimTime != null">map_claim_time,</if>
+            <if test="mapClaimRemark != null">map_claim_remark,</if>
+            <if test="wxApplymentId != null">wx_applyment_id,</if>
+            <if test="wxApplymentState != null">wx_applyment_state,</if>
+            <if test="wxApplymentRejectReason != null">wx_applyment_reject_reason,</if>
+            <if test="wxApplymentTime != null">wx_applyment_time,</if>
+            <if test="wxApplymentFinishTime != null">wx_applyment_finish_time,</if>
+            <if test="wxPaymentAccessType != null">wx_payment_access_type,</if>
+            <if test="merchantWxMchId != null">merchant_wx_mch_id,</if>
+            <if test="merchantWxMchName != null">merchant_wx_mch_name,</if>
+            <if test="wxProfitSharingEnabled != null">wx_profit_sharing_enabled,</if>
+            <if test="platformReceiverMchId != null">platform_receiver_mch_id,</if>
+            <if test="distributorReceiverMchId != null">distributor_receiver_mch_id,</if>
+            <if test="merchantShareRate != null">merchant_share_rate,</if>
+            <if test="platformShareRate != null">platform_share_rate,</if>
+            <if test="distributorShareRate != null">distributor_share_rate,</if>
+            <if test="settlementCycle != null">settlement_cycle,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="distributorId != null">#{distributorId},</if>
@@ -120,6 +166,26 @@
             <if test="wxPayApiKey != null">#{wxPayApiKey},</if>
             <if test="receiverOpenid != null">#{receiverOpenid},</if>
             <if test="receiverType != null">#{receiverType},</if>
+            <if test="mapClaimStatus != null">#{mapClaimStatus},</if>
+            <if test="mapPoiId != null">#{mapPoiId},</if>
+            <if test="mapClaimUrl != null">#{mapClaimUrl},</if>
+            <if test="mapClaimTime != null">#{mapClaimTime},</if>
+            <if test="mapClaimRemark != null">#{mapClaimRemark},</if>
+            <if test="wxApplymentId != null">#{wxApplymentId},</if>
+            <if test="wxApplymentState != null">#{wxApplymentState},</if>
+            <if test="wxApplymentRejectReason != null">#{wxApplymentRejectReason},</if>
+            <if test="wxApplymentTime != null">#{wxApplymentTime},</if>
+            <if test="wxApplymentFinishTime != null">#{wxApplymentFinishTime},</if>
+            <if test="wxPaymentAccessType != null">#{wxPaymentAccessType},</if>
+            <if test="merchantWxMchId != null">#{merchantWxMchId},</if>
+            <if test="merchantWxMchName != null">#{merchantWxMchName},</if>
+            <if test="wxProfitSharingEnabled != null">#{wxProfitSharingEnabled},</if>
+            <if test="platformReceiverMchId != null">#{platformReceiverMchId},</if>
+            <if test="distributorReceiverMchId != null">#{distributorReceiverMchId},</if>
+            <if test="merchantShareRate != null">#{merchantShareRate},</if>
+            <if test="platformShareRate != null">#{platformShareRate},</if>
+            <if test="distributorShareRate != null">#{distributorShareRate},</if>
+            <if test="settlementCycle != null">#{settlementCycle},</if>
         </trim>
     </insert>
 
@@ -150,6 +216,26 @@
             <if test="wxPayApiKey != null">wx_pay_api_key = #{wxPayApiKey},</if>
             <if test="receiverOpenid != null">receiver_openid = #{receiverOpenid},</if>
             <if test="receiverType != null">receiver_type = #{receiverType},</if>
+            <if test="mapClaimStatus != null">map_claim_status = #{mapClaimStatus},</if>
+            <if test="mapPoiId != null">map_poi_id = #{mapPoiId},</if>
+            <if test="mapClaimUrl != null">map_claim_url = #{mapClaimUrl},</if>
+            <if test="mapClaimTime != null">map_claim_time = #{mapClaimTime},</if>
+            <if test="mapClaimRemark != null">map_claim_remark = #{mapClaimRemark},</if>
+            <if test="wxApplymentId != null">wx_applyment_id = #{wxApplymentId},</if>
+            <if test="wxApplymentState != null">wx_applyment_state = #{wxApplymentState},</if>
+            <if test="wxApplymentRejectReason != null">wx_applyment_reject_reason = #{wxApplymentRejectReason},</if>
+            <if test="wxApplymentTime != null">wx_applyment_time = #{wxApplymentTime},</if>
+            <if test="wxApplymentFinishTime != null">wx_applyment_finish_time = #{wxApplymentFinishTime},</if>
+            <if test="wxPaymentAccessType != null">wx_payment_access_type = #{wxPaymentAccessType},</if>
+            <if test="merchantWxMchId != null">merchant_wx_mch_id = #{merchantWxMchId},</if>
+            <if test="merchantWxMchName != null">merchant_wx_mch_name = #{merchantWxMchName},</if>
+            <if test="wxProfitSharingEnabled != null">wx_profit_sharing_enabled = #{wxProfitSharingEnabled},</if>
+            <if test="platformReceiverMchId != null">platform_receiver_mch_id = #{platformReceiverMchId},</if>
+            <if test="distributorReceiverMchId != null">distributor_receiver_mch_id = #{distributorReceiverMchId},</if>
+            <if test="merchantShareRate != null">merchant_share_rate = #{merchantShareRate},</if>
+            <if test="platformShareRate != null">platform_share_rate = #{platformShareRate},</if>
+            <if test="distributorShareRate != null">distributor_share_rate = #{distributorShareRate},</if>
+            <if test="settlementCycle != null">settlement_cycle = #{settlementCycle},</if>
         </trim>
         where id = #{id}
     </update>

@@ -48,6 +48,42 @@
               <el-descriptions-item label="微信商户号">{{ merchant.wxPayMchId || '未配置' }}</el-descriptions-item>
               <el-descriptions-item label="支付API密钥">{{ merchant.wxPayApiKeyConfigured ? '******' : '未配置' }}</el-descriptions-item>
             </el-descriptions>
+
+            <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+              <h3 style="margin: 0;">腾讯地图认领</h3>
+              <el-button type="primary" icon="el-icon-edit" size="small" @click="handleEditMapClaim">编辑配置</el-button>
+            </div>
+            <el-descriptions :column="2" border style="margin-top: 10px;">
+              <el-descriptions-item label="认领状态">
+                <el-tag :type="mapClaimStatusType(merchant.mapClaimStatus)" size="small">{{ mapClaimStatusText(merchant.mapClaimStatus) }}</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="POI ID">{{ merchant.mapPoiId || '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="认领链接">{{ merchant.mapClaimUrl || '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="认领时间">{{ merchant.mapClaimTime || '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="备注" :span="2">{{ merchant.mapClaimRemark || '无' }}</el-descriptions-item>
+            </el-descriptions>
+
+            <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+              <h3 style="margin: 0;">微信支付与三方分账</h3>
+              <el-button type="primary" icon="el-icon-edit" size="small" @click="handleEditWxApplyment">编辑配置</el-button>
+            </div>
+            <el-descriptions :column="2" border style="margin-top: 10px;">
+              <el-descriptions-item label="接入方式">{{ wxPaymentAccessTypeText(merchant.wxPaymentAccessType) }}</el-descriptions-item>
+              <el-descriptions-item label="商家商户号">{{ merchant.effectiveMerchantWxMchId || '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="商户名称">{{ merchant.merchantWxMchName || '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="分账开关">
+                <el-tag :type="merchant.wxProfitSharingEnabled === 1 ? 'success' : 'info'" size="small">{{ merchant.wxProfitSharingEnabled === 1 ? '已开启' : '未开启' }}</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="商家留存">{{ percentText(merchant.merchantShareRate) }}</el-descriptions-item>
+              <el-descriptions-item label="平台分账">{{ percentText(merchant.platformShareRate) }}</el-descriptions-item>
+              <el-descriptions-item label="分销商分账">{{ percentText(merchant.distributorShareRate) }}</el-descriptions-item>
+              <el-descriptions-item label="到账周期">{{ merchant.settlementCycle || 'T1' }}</el-descriptions-item>
+              <el-descriptions-item label="平台接收方">{{ merchant.platformReceiverMchId || '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="分销商接收方">{{ merchant.distributorReceiverMchId || '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="运营准入" :span="2">
+                <el-tag :type="merchant.canOperate ? 'success' : 'warning'" size="small">{{ merchant.canOperate ? '可运营' : (merchant.operateBlockReason || '配置未完成') }}</el-tag>
+              </el-descriptions-item>
+            </el-descriptions>
           </el-tab-pane>
 
           <!-- Tab 2: 商品列表 -->
@@ -295,7 +331,7 @@
             :before-upload="beforeImageUpload"
             :data="uploadData"
           >
-            <img v-if="productForm.mainImage" :src="productForm.mainImage" class="image-preview">
+            <img v-if="productForm.mainImage || productForm.coverImage" :src="productForm.mainImage || productForm.coverImage" class="image-preview">
             <i v-else class="el-icon-plus image-uploader-icon"></i>
           </el-upload>
           <div class="upload-tip">支持 jpg/jpeg/png/webp 格式，单张不超过5MB</div>
@@ -366,6 +402,102 @@
       <div slot="footer">
         <el-button @click="miniAppDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="submitMiniAppForm">保 存</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 编辑腾讯地图认领配置弹窗 -->
+    <el-dialog title="编辑腾讯地图认领配置" :visible.sync="mapClaimDialogVisible" width="500px" append-to-body>
+      <el-form ref="mapClaimForm" :model="mapClaimForm" label-width="100px">
+        <el-form-item label="认领状态">
+          <el-select v-model="mapClaimForm.mapClaimStatus" placeholder="请选择状态" style="width: 100%;">
+            <el-option label="未认领" value="NOT_CLAIMED" />
+            <el-option label="认领中" value="CLAIMING" />
+            <el-option label="已认领" value="CLAIMED" />
+            <el-option label="认领失败" value="FAILED" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="POI ID">
+          <el-input v-model="mapClaimForm.mapPoiId" placeholder="腾讯地图POI ID" />
+        </el-form-item>
+        <el-form-item label="认领链接">
+          <el-input v-model="mapClaimForm.mapClaimUrl" placeholder="腾讯地图认领或门店链接" />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="mapClaimForm.mapClaimRemark" type="textarea" :rows="3" placeholder="请输入备注" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="mapClaimDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="submitMapClaimForm">保 存</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 编辑微信支付与三方分账配置弹窗 -->
+    <el-dialog title="编辑微信支付与三方分账配置" :visible.sync="wxApplymentDialogVisible" width="680px" append-to-body>
+      <el-form ref="wxApplymentForm" :model="wxApplymentForm" label-width="140px">
+        <el-divider content-position="left">商家支付账号</el-divider>
+        <el-form-item label="接入方式">
+          <el-radio-group v-model="wxApplymentForm.wxPaymentAccessType">
+            <el-radio label="EXISTING_MCH">已有微信支付商户号</el-radio>
+            <el-radio label="APPLYMENT_ASSISTED">平台协助申请</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="商家商户号">
+          <el-input v-model="wxApplymentForm.merchantWxMchId" placeholder="商家自己的微信支付商户号" />
+        </el-form-item>
+        <el-form-item label="商户名称">
+          <el-input v-model="wxApplymentForm.merchantWxMchName" placeholder="商家微信支付商户名称" />
+        </el-form-item>
+        <template v-if="wxApplymentForm.wxPaymentAccessType === 'APPLYMENT_ASSISTED'">
+          <el-divider content-position="left">协助申请信息</el-divider>
+          <el-form-item label="申请单号">
+            <el-input v-model="wxApplymentForm.wxApplymentId" placeholder="平台协助申请时填写，已有商户号可不填" />
+          </el-form-item>
+          <el-form-item label="申请状态">
+            <el-select v-model="wxApplymentForm.wxApplymentState" placeholder="请选择状态" style="width: 100%;">
+              <el-option label="未提交" value="NOT_SUBMITTED" />
+              <el-option label="已提交" value="SUBMITTED" />
+              <el-option label="审核中" value="AUDITING" />
+              <el-option label="待账户验证" value="NEED_VERIFY" />
+              <el-option label="待签约" value="NEED_SIGN" />
+              <el-option label="已完成" value="FINISHED" />
+              <el-option label="已驳回" value="REJECTED" />
+              <el-option label="已冻结" value="FROZEN" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="驳回原因">
+            <el-input v-model="wxApplymentForm.wxApplymentRejectReason" type="textarea" :rows="2" placeholder="平台协助申请失败时填写" />
+          </el-form-item>
+        </template>
+        <el-divider content-position="left">微信分账配置</el-divider>
+        <el-form-item label="启用分账">
+          <el-switch v-model="wxApplymentForm.wxProfitSharingEnabled" :active-value="1" :inactive-value="0" />
+        </el-form-item>
+        <el-form-item label="商家留存比例">
+          <el-input-number v-model="wxApplymentForm.merchantShareRate" :min="0" :max="100" :precision="2" :controls="false" style="width: 100%;" />
+        </el-form-item>
+        <el-form-item label="平台分账比例">
+          <el-input-number v-model="wxApplymentForm.platformShareRate" :min="0" :max="100" :precision="2" :controls="false" style="width: 100%;" />
+        </el-form-item>
+        <el-form-item label="分销商分账比例">
+          <el-input-number v-model="wxApplymentForm.distributorShareRate" :min="0" :max="100" :precision="2" :controls="false" style="width: 100%;" />
+          <div style="font-size: 12px; color: #909399; margin-top: 4px;">三方比例合计必须等于100%，商家比例代表留存在商家微信支付账户的部分。</div>
+        </el-form-item>
+        <el-form-item label="平台接收方">
+          <el-input v-model="wxApplymentForm.platformReceiverMchId" placeholder="平台作为分账接收方的微信商户号" />
+        </el-form-item>
+        <el-form-item label="分销商接收方">
+          <el-input v-model="wxApplymentForm.distributorReceiverMchId" placeholder="分销商作为分账接收方的微信商户号" />
+        </el-form-item>
+        <el-form-item label="到账周期">
+          <el-select v-model="wxApplymentForm.settlementCycle" style="width: 100%;">
+            <el-option label="T+1" value="T1" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="wxApplymentDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="submitWxApplymentForm">保 存</el-button>
       </div>
     </el-dialog>
 
@@ -690,7 +822,7 @@ export default {
       productQuery: { name: '', status: '', pageNum: 1, pageSize: 10 },
       productDialogVisible: false,
       productDialogTitle: '新增商品',
-      productForm: { id: null, name: '', category: '', originalPrice: 0, price: 0, stock: 0, validDays: 30, mainImage: '', description: '' },
+      productForm: { id: null, name: '', category: '', originalPrice: 0, price: 0, stock: 0, validDays: 30, mainImage: '', coverImage: '', description: '' },
       productRules: {
         name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
         category: [{ required: true, message: '请输入分类', trigger: 'blur' }],
@@ -724,6 +856,19 @@ export default {
       // 小程序配置
       miniAppDialogVisible: false,
       miniAppForm: { cMiniAppId: '', cMiniAppSecret: '', mMiniAppId: '', mMiniAppSecret: '', wxPayMchId: '', wxPayApiKey: '' },
+
+      // 腾讯地图认领
+      mapClaimDialogVisible: false,
+      mapClaimForm: { mapClaimStatus: 'NOT_CLAIMED', mapPoiId: '', mapClaimUrl: '', mapClaimRemark: '' },
+
+      // 微信特约商户
+      wxApplymentDialogVisible: false,
+      wxApplymentForm: {
+        wxApplymentId: '', wxApplymentState: 'NOT_SUBMITTED', wxApplymentRejectReason: '',
+        wxPaymentAccessType: 'EXISTING_MCH', merchantWxMchId: '', merchantWxMchName: '',
+        wxProfitSharingEnabled: 0, platformReceiverMchId: '', distributorReceiverMchId: '',
+        merchantShareRate: 100, platformShareRate: 0, distributorShareRate: 0, settlementCycle: 'T1'
+      },
 
       // 团购活动
       grouponLoading: false,
@@ -763,7 +908,7 @@ export default {
       itemUploadUrl: process.env.VUE_APP_BASE_API + '/mall/groupon/item/image/upload',
       itemDetailFileList: [],
       // 图片上传
-      uploadUrl: process.env.VUE_APP_BASE_API + '/merchant/product/image/upload',
+      uploadUrl: process.env.VUE_APP_BASE_API + '/mall/product/image/upload',
     }
   },
   computed: {
@@ -819,9 +964,13 @@ export default {
       }
       return isValidType && isLt5M
     },
+    getUploadFileUrl(file) {
+      return file.url || (file.response && file.response.data && file.response.data.url) || ''
+    },
     handleImageSuccess(res) {
       if (res.code === 200) {
         this.productForm.mainImage = res.data.url
+        this.productForm.coverImage = res.data.url
         this.$message.success('图片上传成功')
       } else {
         this.$message.error(res.msg || '上传失败')
@@ -860,7 +1009,7 @@ export default {
     },
     handleAddProduct() {
       this.productDialogTitle = '新增商品'
-      this.productForm = { id: null, name: '', category: '', originalPrice: 0, price: 0, stock: 0, validDays: 30, mainImage: '', description: '' }
+      this.productForm = { id: null, name: '', category: '', originalPrice: 0, price: 0, stock: 0, validDays: 30, mainImage: '', coverImage: '', description: '' }
       this.productDialogVisible = true
       this.$nextTick(() => { this.$refs.productForm && this.$refs.productForm.clearValidate() })
     },
@@ -1003,6 +1152,87 @@ export default {
       this.fetchDetail()
     },
 
+    // ========== 腾讯地图认领 ==========
+    mapClaimStatusText(status) {
+      const map = { NOT_CLAIMED: '未认领', CLAIMING: '认领中', CLAIMED: '已认领', FAILED: '认领失败' }
+      return map[status] || '未认领'
+    },
+    mapClaimStatusType(status) {
+      const map = { NOT_CLAIMED: 'info', CLAIMING: 'warning', CLAIMED: 'success', FAILED: 'danger' }
+      return map[status] || 'info'
+    },
+    handleEditMapClaim() {
+      this.mapClaimForm = {
+        id: this.merchant.id,
+        mapClaimStatus: this.merchant.mapClaimStatus || 'NOT_CLAIMED',
+        mapPoiId: this.merchant.mapPoiId || '',
+        mapClaimUrl: this.merchant.mapClaimUrl || '',
+        mapClaimRemark: this.merchant.mapClaimRemark || ''
+      }
+      this.mapClaimDialogVisible = true
+    },
+    async submitMapClaimForm() {
+      await updateMerchant(this.mapClaimForm)
+      this.$message.success('保存成功')
+      this.mapClaimDialogVisible = false
+      this.fetchDetail()
+    },
+
+    // ========== 微信特约商户 ==========
+    wxApplymentStateText(state) {
+      const map = {
+        NOT_SUBMITTED: '未提交', SUBMITTED: '已提交', AUDITING: '审核中',
+        NEED_VERIFY: '待账户验证', NEED_SIGN: '待签约', FINISHED: '已完成',
+        REJECTED: '已驳回', FROZEN: '已冻结'
+      }
+      return map[state] || '未提交'
+    },
+    wxApplymentStateType(state) {
+      const map = {
+        NOT_SUBMITTED: 'info', SUBMITTED: 'warning', AUDITING: 'warning',
+        NEED_VERIFY: 'warning', NEED_SIGN: 'warning', FINISHED: 'success',
+        REJECTED: 'danger', FROZEN: 'danger'
+      }
+      return map[state] || 'info'
+    },
+    wxPaymentAccessTypeText(type) {
+      const map = { EXISTING_MCH: '已有微信支付商户号', APPLYMENT_ASSISTED: '平台协助申请' }
+      return map[type] || '已有微信支付商户号'
+    },
+    percentText(value) {
+      return value === null || value === undefined || value === '' ? '未配置' : value + '%'
+    },
+    handleEditWxApplyment() {
+      this.wxApplymentForm = {
+        id: this.merchant.id,
+        wxApplymentId: this.merchant.wxApplymentId || '',
+        wxApplymentState: this.merchant.wxApplymentState || 'NOT_SUBMITTED',
+        wxApplymentRejectReason: this.merchant.wxApplymentRejectReason || '',
+        wxPaymentAccessType: this.merchant.wxPaymentAccessType || 'EXISTING_MCH',
+        merchantWxMchId: this.merchant.merchantWxMchId || '',
+        merchantWxMchName: this.merchant.merchantWxMchName || '',
+        wxProfitSharingEnabled: this.merchant.wxProfitSharingEnabled === 1 ? 1 : 0,
+        platformReceiverMchId: this.merchant.platformReceiverMchId || '',
+        distributorReceiverMchId: this.merchant.distributorReceiverMchId || '',
+        merchantShareRate: this.merchant.merchantShareRate !== undefined && this.merchant.merchantShareRate !== null ? this.merchant.merchantShareRate : 100,
+        platformShareRate: this.merchant.platformShareRate !== undefined && this.merchant.platformShareRate !== null ? this.merchant.platformShareRate : 0,
+        distributorShareRate: this.merchant.distributorShareRate !== undefined && this.merchant.distributorShareRate !== null ? this.merchant.distributorShareRate : 0,
+        settlementCycle: this.merchant.settlementCycle || 'T1'
+      }
+      this.wxApplymentDialogVisible = true
+    },
+    async submitWxApplymentForm() {
+      const total = Number(this.wxApplymentForm.merchantShareRate || 0) + Number(this.wxApplymentForm.platformShareRate || 0) + Number(this.wxApplymentForm.distributorShareRate || 0)
+      if (Math.abs(total - 100) > 0.0001) {
+        this.$message.error('商家、平台、分销商三方分账比例合计必须等于100%')
+        return
+      }
+      await updateMerchant(this.wxApplymentForm)
+      this.$message.success('保存成功')
+      this.wxApplymentDialogVisible = false
+      this.fetchDetail()
+    },
+
     // ========== 团购活动 ==========
     async loadGroupons() {
       this.grouponLoading = true
@@ -1099,8 +1329,9 @@ export default {
         this.$message.error(res.msg || '上传失败')
       }
     },
-    handleDetailImageSuccess(res) {
+    handleDetailImageSuccess(res, file) {
       if (res.code === 200) {
+        file.url = res.data.url
         const list = JSON.parse(this.grouponForm.detailImages || '[]')
         list.push(res.data.url)
         this.grouponForm.detailImages = JSON.stringify(list)
@@ -1110,7 +1341,8 @@ export default {
     },
     handleDetailImageRemove(file) {
       const list = JSON.parse(this.grouponForm.detailImages || '[]')
-      const idx = list.indexOf(file.url)
+      const url = this.getUploadFileUrl(file)
+      const idx = list.indexOf(url)
       if (idx > -1) {
         list.splice(idx, 1)
         this.grouponForm.detailImages = JSON.stringify(list)
@@ -1256,8 +1488,9 @@ export default {
         this.$message.error(res.msg || '上传失败')
       }
     },
-    handleItemDetailImageSuccess(res) {
+    handleItemDetailImageSuccess(res, file) {
       if (res.code === 200) {
+        file.url = res.data.url
         const list = JSON.parse(this.itemForm.detailImages || '[]')
         list.push(res.data.url)
         this.itemForm.detailImages = JSON.stringify(list)
@@ -1267,7 +1500,8 @@ export default {
     },
     handleItemDetailImageRemove(file) {
       const list = JSON.parse(this.itemForm.detailImages || '[]')
-      const idx = list.indexOf(file.url)
+      const url = this.getUploadFileUrl(file)
+      const idx = list.indexOf(url)
       if (idx > -1) {
         list.splice(idx, 1)
         this.itemForm.detailImages = JSON.stringify(list)

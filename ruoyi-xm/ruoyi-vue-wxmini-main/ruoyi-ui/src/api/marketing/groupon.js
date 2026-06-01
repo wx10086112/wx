@@ -153,3 +153,35 @@ export function listMerchantSimple() {
     method: 'get'
   })
 }
+
+export function listGrouponProducts(grouponId) {
+  return request({
+    url: '/mall/groupon/product/list',
+    method: 'get',
+    params: { grouponId }
+  })
+}
+
+export function bindGrouponProducts(data) {
+  return request({
+    url: '/mall/groupon/product/bind',
+    method: 'post',
+    data: data
+  })
+}
+
+export function unbindGrouponProducts(data) {
+  return request({
+    url: '/mall/groupon/product/unbind',
+    method: 'post',
+    data: data
+  })
+}
+
+export function listProduct(query) {
+  return request({
+    url: '/mall/product/list',
+    method: 'get',
+    params: query
+  })
+}

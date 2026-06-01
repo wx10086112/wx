@@ -48,6 +48,11 @@ module.exports = {
       '^/v3/api-docs/(.*)': {
         target: baseUrl,
         changeOrigin: true
+      },
+      // 图片资源代理
+      '/profile': {
+        target: baseUrl,
+        changeOrigin: true
       }
     },
     disableHostCheck: true

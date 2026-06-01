@@ -72,7 +72,7 @@
 
 <script>
 import CountTo from 'vue-count-to'
-import echarts from 'echarts'
+import * as echarts from 'echarts'
 import { getOrderStats } from '@/api/analysis'
 
 export default {

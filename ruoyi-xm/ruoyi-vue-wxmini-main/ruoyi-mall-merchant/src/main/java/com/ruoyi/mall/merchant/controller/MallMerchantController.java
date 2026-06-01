@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 @RestController
@@ -96,6 +97,10 @@ public class MallMerchantController extends BaseController {
         if ("DISTRIBUTOR".equals(accountType)) {
             merchant.setDistributorId(existing.getDistributorId());
         }
+        AjaxResult paymentCheck = validateProfitShareConfig(merchant);
+        if (paymentCheck != null) {
+            return paymentCheck;
+        }
         return toAjax(merchantService.updateMerchant(merchant));
     }
 
@@ -113,6 +118,50 @@ public class MallMerchantController extends BaseController {
             }
         }
         return toAjax(merchantService.deleteMerchantByIds(ids));
+    }
+
+    /**
+     * 停止合作
+     */
+    @PreAuthorize("@ss.hasPermi('mall:merchant:edit')")
+    @Log(title = "商户管理 - 停止合作", businessType = BusinessType.UPDATE)
+    @PutMapping("/stop/{id}")
+    public AjaxResult stopCooperation(@PathVariable Long id) {
+        Merchant existing = merchantService.selectMerchantById(id);
+        if (existing == null) {
+            return AjaxResult.error("商家不存在");
+        }
+        // 归属校验
+        Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effDistributorId != null && !effDistributorId.equals(existing.getDistributorId())) {
+            return AjaxResult.error("无权限操作该商家");
+        }
+        Merchant update = new Merchant();
+        update.setId(id);
+        update.setStatus(Merchant.STATUS_STOPPED);
+        return toAjax(merchantService.updateMerchant(update));
+    }
+
+    /**
+     * 恢复合作
+     */
+    @PreAuthorize("@ss.hasPermi('mall:merchant:edit')")
+    @Log(title = "商户管理 - 恢复合作", businessType = BusinessType.UPDATE)
+    @PutMapping("/resume/{id}")
+    public AjaxResult resumeCooperation(@PathVariable Long id) {
+        Merchant existing = merchantService.selectMerchantById(id);
+        if (existing == null) {
+            return AjaxResult.error("商家不存在");
+        }
+        // 归属校验
+        Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effDistributorId != null && !effDistributorId.equals(existing.getDistributorId())) {
+            return AjaxResult.error("无权限操作该商家");
+        }
+        Merchant update = new Merchant();
+        update.setId(id);
+        update.setStatus(Merchant.STATUS_NORMAL);
+        return toAjax(merchantService.updateMerchant(update));
     }
 
     /**
@@ -151,6 +200,55 @@ public class MallMerchantController extends BaseController {
         map.put("wxPayMchId", m.getWxPayMchId());
         map.put("wxPayApiKeyConfigured", m.getWxPayApiKey() != null && !m.getWxPayApiKey().isEmpty());
         map.put("wxPayApiKeyMasked", "******");
+
+        // 腾讯地图认领字段
+        map.put("mapClaimStatus", m.getMapClaimStatus());
+        map.put("mapPoiId", m.getMapPoiId());
+        map.put("mapClaimUrl", m.getMapClaimUrl());
+        map.put("mapClaimTime", m.getMapClaimTime());
+        map.put("mapClaimRemark", m.getMapClaimRemark());
+
+        // 微信特约商户字段
+        map.put("wxApplymentId", m.getWxApplymentId());
+        map.put("wxApplymentState", m.getWxApplymentState());
+        map.put("wxApplymentRejectReason", m.getWxApplymentRejectReason());
+        map.put("wxApplymentTime", m.getWxApplymentTime());
+        map.put("wxApplymentFinishTime", m.getWxApplymentFinishTime());
+        map.put("wxPaymentAccessType", m.getWxPaymentAccessType());
+        map.put("merchantWxMchId", m.getMerchantWxMchId());
+        map.put("merchantWxMchName", m.getMerchantWxMchName());
+        map.put("wxProfitSharingEnabled", m.getWxProfitSharingEnabled());
+        map.put("platformReceiverMchId", m.getPlatformReceiverMchId());
+        map.put("distributorReceiverMchId", m.getDistributorReceiverMchId());
+        map.put("merchantShareRate", m.getMerchantShareRate());
+        map.put("platformShareRate", m.getPlatformShareRate());
+        map.put("distributorShareRate", m.getDistributorShareRate());
+        map.put("settlementCycle", m.getSettlementCycle());
+        map.put("effectiveMerchantWxMchId", m.getEffectiveMerchantWxMchId());
+        map.put("canOperate", m.canOperate());
+        map.put("operateBlockReason", m.getOperateBlockReason());
+
         return map;
+    }
+
+    private AjaxResult validateProfitShareConfig(Merchant merchant) {
+        boolean touched = merchant.getMerchantShareRate() != null
+                || merchant.getPlatformShareRate() != null
+                || merchant.getDistributorShareRate() != null;
+        if (!touched) {
+            return null;
+        }
+        if (merchant.getMerchantShareRate() == null
+                || merchant.getPlatformShareRate() == null
+                || merchant.getDistributorShareRate() == null) {
+            return AjaxResult.error("商家、平台、分销商三方分账比例必须同时填写");
+        }
+        BigDecimal sum = merchant.getMerchantShareRate()
+                .add(merchant.getPlatformShareRate())
+                .add(merchant.getDistributorShareRate());
+        if (sum.compareTo(new BigDecimal("100")) != 0) {
+            return AjaxResult.error("商家、平台、分销商三方分账比例合计必须等于100%");
+        }
+        return null;
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -34,6 +35,11 @@ public class MerchantServiceImpl implements IMerchantService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int insertMerchant(Merchant merchant) {
+        // 新增商户默认正常状态，无需审核
+        if (merchant.getStatus() == null) {
+            merchant.setStatus(1);
+        }
+        fillPaymentDefaults(merchant);
         int rows = merchantMapper.insertMerchant(merchant);
         if (rows > 0 && merchant.getId() != null) {
             MerchantUser owner = new MerchantUser();
@@ -52,6 +58,27 @@ public class MerchantServiceImpl implements IMerchantService {
     @Override
     public int updateMerchant(Merchant merchant) {
         return merchantMapper.updateMerchant(merchant);
+    }
+
+    private void fillPaymentDefaults(Merchant merchant) {
+        if (merchant.getWxPaymentAccessType() == null) {
+            merchant.setWxPaymentAccessType("EXISTING_MCH");
+        }
+        if (merchant.getWxProfitSharingEnabled() == null) {
+            merchant.setWxProfitSharingEnabled(0);
+        }
+        if (merchant.getMerchantShareRate() == null) {
+            merchant.setMerchantShareRate(new BigDecimal("100.00"));
+        }
+        if (merchant.getPlatformShareRate() == null) {
+            merchant.setPlatformShareRate(BigDecimal.ZERO);
+        }
+        if (merchant.getDistributorShareRate() == null) {
+            merchant.setDistributorShareRate(BigDecimal.ZERO);
+        }
+        if (merchant.getSettlementCycle() == null) {
+            merchant.setSettlementCycle("T1");
+        }
     }
 
     @Override

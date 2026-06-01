@@ -54,7 +54,7 @@
 
 <script>
 import CountTo from 'vue-count-to'
-import echarts from 'echarts'
+import * as echarts from 'echarts'
 import { getDashboardStats } from '@/api/data'
 
 export default {

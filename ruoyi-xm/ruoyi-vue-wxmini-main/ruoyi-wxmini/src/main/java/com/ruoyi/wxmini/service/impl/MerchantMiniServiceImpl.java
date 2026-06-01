@@ -126,7 +126,13 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         }
 
         Merchant merchant = merchantMapper.selectMerchantById(merchantUser.getMerchantId());
-        if (merchant == null || merchant.getStatus() != 1) {
+        if (merchant == null) {
+            throw new IllegalArgumentException("商家不存在");
+        }
+        if (merchant.getStatus() == Merchant.STATUS_STOPPED) {
+            throw new IllegalArgumentException("商家已停止合作，请联系平台");
+        }
+        if (merchant.getStatus() != Merchant.STATUS_NORMAL) {
             throw new IllegalArgumentException("商家未审核通过或已被禁用");
         }
 

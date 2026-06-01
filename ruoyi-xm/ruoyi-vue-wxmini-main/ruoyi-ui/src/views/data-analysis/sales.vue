@@ -44,7 +44,7 @@
 
 <script>
 import CountTo from 'vue-count-to'
-import echarts from 'echarts'
+import * as echarts from 'echarts'
 import { getSalesStats } from '@/api/analysis'
 
 export default {

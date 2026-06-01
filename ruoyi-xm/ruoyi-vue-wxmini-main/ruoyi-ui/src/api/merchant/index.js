@@ -43,6 +43,22 @@ export function deleteMerchant(ids) {
   })
 }
 
+// 停止合作
+export function stopMerchant(id) {
+  return request({
+    url: '/mall/merchant/stop/' + id,
+    method: 'put'
+  })
+}
+
+// 恢复合作
+export function resumeMerchant(id) {
+  return request({
+    url: '/mall/merchant/resume/' + id,
+    method: 'put'
+  })
+}
+
 // 商品列表
 export function getProductList(query) {
   return request({

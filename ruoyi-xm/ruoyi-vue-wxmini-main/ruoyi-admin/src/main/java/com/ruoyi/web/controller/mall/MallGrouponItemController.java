@@ -7,6 +7,8 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.mall.merchant.domain.Merchant;
+import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.product.domain.GrouponActivityItem;
 import java.math.BigDecimal;
 import com.ruoyi.mall.product.service.IGrouponActivityItemService;
@@ -29,6 +31,9 @@ public class MallGrouponItemController extends BaseController {
 
     @Resource
     private IGrouponActivityItemService grouponActivityItemService;
+
+    @Resource
+    private IMerchantService merchantService;
 
     private static final Set<String> ALLOWED_IMAGE_TYPES = new HashSet<>(Arrays.asList(
             "main", "detail", "avatar", "banner", "cover", "poster", "sku"
@@ -71,6 +76,13 @@ public class MallGrouponItemController extends BaseController {
     @Log(title = "团购商品管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody GrouponActivityItem item) {
+        // 新建商品如果直接上架，需校验商家运营准入
+        if (item.getStatus() != null && item.getStatus() == 1 && item.getMerchantId() != null) {
+            Merchant merchant = merchantService.selectMerchantById(item.getMerchantId());
+            if (merchant != null && !merchant.canOperate()) {
+                return AjaxResult.error("商家运营条件不满足：" + merchant.getOperateBlockReason());
+            }
+        }
         if (item.getMerchantId() == null || item.getGrouponId() == null) {
             return AjaxResult.error("商家ID和活动ID不能为空");
         }
@@ -102,6 +114,16 @@ public class MallGrouponItemController extends BaseController {
     @Log(title = "团购商品管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody GrouponActivityItem item) {
+        // 编辑时如果上架(status=1)，需校验商家运营准入
+        if (item.getStatus() != null && item.getStatus() == 1 && item.getId() != null) {
+            GrouponActivityItem existing = grouponActivityItemService.selectGrouponActivityItemById(item.getId());
+            if (existing != null && existing.getMerchantId() != null) {
+                Merchant merchant = merchantService.selectMerchantById(existing.getMerchantId());
+                if (merchant != null && !merchant.canOperate()) {
+                    return AjaxResult.error("商家运营条件不满足：" + merchant.getOperateBlockReason());
+                }
+            }
+        }
         return toAjax(grouponActivityItemService.updateGrouponActivityItem(item));
     }
 
@@ -122,6 +144,16 @@ public class MallGrouponItemController extends BaseController {
     @Log(title = "团购商品状态修改", businessType = BusinessType.UPDATE)
     @PutMapping("/status")
     public AjaxResult changeStatus(@RequestBody GrouponActivityItem item) {
+        // 上架前校验商家运营准入（从DB查existing获取merchantId，防止前端不传绕过）
+        if (item.getStatus() != null && item.getStatus() == 1 && item.getId() != null) {
+            GrouponActivityItem existing = grouponActivityItemService.selectGrouponActivityItemById(item.getId());
+            if (existing != null && existing.getMerchantId() != null) {
+                Merchant merchant = merchantService.selectMerchantById(existing.getMerchantId());
+                if (merchant != null && !merchant.canOperate()) {
+                    return AjaxResult.error("商家运营条件不满足：" + merchant.getOperateBlockReason());
+                }
+            }
+        }
         return toAjax(grouponActivityItemService.updateGrouponActivityItem(item));
     }
 

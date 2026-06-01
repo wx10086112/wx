@@ -44,6 +44,18 @@ public class WxGrouponController {
         query.setStatus(1);
         List<Product> products = productService.selectProductList(query);
 
+        // 过滤未满足运营准入条件的商户商品
+        if (currentMerchantId == null) {
+            List<Product> filtered = new ArrayList<>();
+            for (Product p : products) {
+                Merchant merchant = merchantService.selectMerchantById(p.getMerchantId());
+                if (merchant != null && merchant.canOperate()) {
+                    filtered.add(p);
+                }
+            }
+            products = filtered;
+        }
+
         if (StringUtils.isNotBlank(keyword)) {
             List<Product> filtered = new ArrayList<>();
             for (Product p : products) {
@@ -75,6 +87,11 @@ public class WxGrouponController {
             currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
         }
         if (currentMerchantId != null && !currentMerchantId.equals(product.getMerchantId())) {
+            return AjaxResult.error("商品不存在");
+        }
+        // 校验商家运营准入
+        Merchant merchant = merchantService.selectMerchantById(product.getMerchantId());
+        if (merchant == null || !merchant.canOperate()) {
             return AjaxResult.error("商品不存在");
         }
         Map<Long, String> merchantNameCache = new HashMap<>();

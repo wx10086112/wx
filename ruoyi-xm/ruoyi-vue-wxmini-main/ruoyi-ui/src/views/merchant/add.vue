@@ -119,7 +119,8 @@ export default {
         mMiniAppId: '',
         mMiniAppSecret: '',
         wxPayMchId: '',
-        wxPayApiKey: ''
+        wxPayApiKey: '',
+        status: 1
       },
       rules: {
         name: [{ required: true, message: '请输入商家名称', trigger: 'blur' }],
@@ -160,7 +161,7 @@ export default {
         this.loading = true
         try {
           await addMerchant(this.form)
-          this.$message.success('添加成功')
+          this.$message.success('添加成功，商户已启用')
           this.$router.push({ path: '/merchant/list' })
         } catch (e) {
           this.$message.error('添加失败')
