@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-=======
 const MERCHANT_STORAGE_VERSION_KEY = 'merchant_mock_storage_version'
 const MERCHANT_STORAGE_VERSION = 'groupon_verify_only_20260525'
->>>>>>> 苏
 const MERCHANT_ORDER_KEY = 'merchant_order_list'
 const MERCHANT_GOODS_KEY = 'merchant_goods_list'
 const MERCHANT_STORE_KEY = 'merchant_store_info'
@@ -14,17 +11,9 @@ const MERCHANT_WITHDRAW_KEY = 'merchant_withdraw_record_list'
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000
 const MERCHANT_RATE = 90
 const PLATFORM_RATE = 10
-<<<<<<< HEAD
-
-const orderStatusMap = {
-  PENDING_ACCEPT: { text: '待接单', className: 'orange' },
-  ACCEPTED: { text: '已接单', className: 'blue' },
-  SHIPPING: { text: '配送中', className: 'blue' },
-=======
 const GROUPON_ORDER_STATUSES = ['PENDING_VERIFY', 'COMPLETED', 'REFUNDING', 'REFUNDED', 'CANCELLED']
 
 const orderStatusMap = {
->>>>>>> 苏
   PENDING_VERIFY: { text: '待核销', className: 'blue' },
   COMPLETED: { text: '已完成', className: 'green' },
   REFUNDING: { text: '退款中', className: 'orange' },
@@ -81,11 +70,6 @@ const switchTab = (url) => wx.switchTab({ url })
 
 const getOrderStatusMeta = (status) => orderStatusMap[status] || { text: '未知', className: 'gray' }
 
-<<<<<<< HEAD
-const initMerchantMockStorage = (mock) => {
-  if (!wx.getStorageSync(MERCHANT_ORDER_KEY)) {
-    wx.setStorageSync(MERCHANT_ORDER_KEY, clone(mock.orderList))
-=======
 const isGrouponOrder = (order = {}) => {
   return GROUPON_ORDER_STATUSES.includes(order.status) && (!order.orderType || order.orderType === 'GROUPON')
 }
@@ -156,7 +140,6 @@ const initMerchantMockStorage = (mock) => {
 
   if (!wx.getStorageSync(MERCHANT_ORDER_KEY)) {
     wx.setStorageSync(MERCHANT_ORDER_KEY, clone(normalizeGrouponOrders(mock.orderList)))
->>>>>>> 苏
   }
   if (!wx.getStorageSync(MERCHANT_GOODS_KEY)) {
     wx.setStorageSync(MERCHANT_GOODS_KEY, clone(mock.goodsList))
@@ -168,40 +151,15 @@ const initMerchantMockStorage = (mock) => {
     wx.setStorageSync(MERCHANT_STAFF_KEY, clone(mock.staffList))
   }
   if (!wx.getStorageSync(MERCHANT_VERIFY_RECORD_KEY)) {
-<<<<<<< HEAD
-    const verifyRecords = (mock.orderList || [])
-      .filter((item) => item.status === 'COMPLETED')
-      .map((item, index) => ({
-        recordId: index + 1,
-        orderNo: item.orderNo,
-        goodsId: item.goodsId,
-        title: item.title,
-        inputCode: item.writeOffCode,
-        writeOffCode: item.writeOffCode,
-        customerName: item.customerName,
-        customerPhone: item.customerPhone,
-        payAmount: item.payAmount,
-        status: 'SUCCESS',
-        verifyTime: item.verifyTime,
-        verifyStaffName: item.verifyStaffName
-      }))
-    wx.setStorageSync(MERCHANT_VERIFY_RECORD_KEY, clone(verifyRecords))
-=======
     wx.setStorageSync(MERCHANT_VERIFY_RECORD_KEY, clone(buildVerifyRecords(mock.orderList)))
->>>>>>> 苏
   }
   if (!wx.getStorageSync(MERCHANT_WITHDRAW_KEY)) {
     wx.setStorageSync(MERCHANT_WITHDRAW_KEY, [])
   }
 }
 
-<<<<<<< HEAD
-const getOrderList = () => clone(wx.getStorageSync(MERCHANT_ORDER_KEY) || [])
-const setOrderList = (list = []) => wx.setStorageSync(MERCHANT_ORDER_KEY, clone(list))
-=======
 const getOrderList = () => normalizeGrouponOrders(wx.getStorageSync(MERCHANT_ORDER_KEY) || [])
 const setOrderList = (list = []) => wx.setStorageSync(MERCHANT_ORDER_KEY, clone(normalizeGrouponOrders(list)))
->>>>>>> 苏
 
 const getGoodsList = () => clone(wx.getStorageSync(MERCHANT_GOODS_KEY) || [])
 const setGoodsList = (list = []) => wx.setStorageSync(MERCHANT_GOODS_KEY, clone(list))
@@ -229,19 +187,6 @@ const consumePendingOrderFilter = () => {
 }
 
 const buildWorkbenchStats = (orderList = [], goodsList = []) => {
-<<<<<<< HEAD
-  return {
-    pendingAcceptCount: orderList.filter((item) => item.status === 'PENDING_ACCEPT').length,
-    pendingVerifyCount: orderList.filter((item) => item.status === 'PENDING_VERIFY').length,
-    completedCount: orderList.filter((item) => item.status === 'COMPLETED').length,
-    refundingCount: orderList.filter((item) => item.status === 'REFUNDING').length,
-    shippingCount: orderList.filter((item) => item.status === 'SHIPPING').length,
-    onShelfCount: goodsList.filter((item) => item.status === 'ON_SHELF').length,
-    todaySalesAmount: orderList
-      .filter((item) => ['PENDING_VERIFY', 'COMPLETED', 'ACCEPTED', 'SHIPPING'].includes(item.status))
-      .reduce((sum, item) => sum + Number(item.payAmount || 0), 0),
-    abnormalCount: orderList.filter((item) => ['REFUNDING', 'REJECTED'].includes(item.status)).length
-=======
   const grouponOrders = normalizeGrouponOrders(orderList)
   return {
     pendingVerifyCount: grouponOrders.filter((item) => item.status === 'PENDING_VERIFY').length,
@@ -254,7 +199,6 @@ const buildWorkbenchStats = (orderList = [], goodsList = []) => {
       .filter((item) => ['PENDING_VERIFY', 'COMPLETED'].includes(item.status))
       .reduce((sum, item) => sum + Number(item.payAmount || 0), 0),
     abnormalCount: grouponOrders.filter((item) => item.status === 'REFUNDING').length
->>>>>>> 苏
   }
 }
 
@@ -381,108 +325,27 @@ const verifyOrderByCode = (code, staffUser) => {
   }
 }
 
-<<<<<<< HEAD
-/**
- * 接单操作（本地）
- */
-const acceptOrder = (orderNo) => {
-  const orderList = getOrderList()
-  const target = orderList.find((item) => item.orderNo === orderNo)
-  if (!target) return { success: false, message: '订单不存在' }
-  if (target.status !== 'PENDING_ACCEPT') return { success: false, message: '当前状态不可接单' }
-  const nextList = orderList.map((item) =>
-    item.orderNo === orderNo
-      ? { ...item, status: 'ACCEPTED', acceptTime: Date.now() }
-      : item
-  )
-  setOrderList(nextList)
-  return { success: true, message: '接单成功', order: nextList.find((item) => item.orderNo === orderNo) }
-}
-
-/**
- * 拒单操作（本地）
- */
-const rejectOrder = (orderNo, reason = '') => {
-  const orderList = getOrderList()
-  const target = orderList.find((item) => item.orderNo === orderNo)
-  if (!target) return { success: false, message: '订单不存在' }
-  if (target.status !== 'PENDING_ACCEPT') return { success: false, message: '当前状态不可拒单' }
-  const nextList = orderList.map((item) =>
-    item.orderNo === orderNo
-      ? { ...item, status: 'REJECTED', rejectTime: Date.now(), rejectReason: reason }
-      : item
-  )
-  setOrderList(nextList)
-  return { success: true, message: '已拒单', order: nextList.find((item) => item.orderNo === orderNo) }
-}
-
-/**
- * 发货/配送操作（本地）
- */
-const shipOrder = (orderNo) => {
-  const orderList = getOrderList()
-  const target = orderList.find((item) => item.orderNo === orderNo)
-  if (!target) return { success: false, message: '订单不存在' }
-  if (target.status !== 'ACCEPTED') return { success: false, message: '当前状态不可发货' }
-  const nextList = orderList.map((item) =>
-    item.orderNo === orderNo
-      ? { ...item, status: 'SHIPPING', shipTime: Date.now() }
-      : item
-  )
-  setOrderList(nextList)
-  return { success: true, message: '已发货', order: nextList.find((item) => item.orderNo === orderNo) }
-}
-
-/**
- * 确认完成（配送到达 / 本地）
- */
-const completeOrder = (orderNo) => {
-  const orderList = getOrderList()
-  const target = orderList.find((item) => item.orderNo === orderNo)
-  if (!target) return { success: false, message: '订单不存在' }
-  if (target.status !== 'SHIPPING') return { success: false, message: '当前状态不可确认完成' }
-  const nextList = orderList.map((item) =>
-    item.orderNo === orderNo
-      ? { ...item, status: 'COMPLETED', completeTime: Date.now() }
-      : item
-  )
-  setOrderList(nextList)
-  return { success: true, message: '订单已完成', order: nextList.find((item) => item.orderNo === orderNo) }
-}
-
-=======
->>>>>>> 苏
 const buildFinanceLedgerList = () => {
   return getOrderList()
     .filter((item) => item.status === 'COMPLETED')
     .map((item, index) => {
       const finishTime = item.verifyTime || item.completeTime || item.payTime
       const settleTime = finishTime + DAY_MILLISECONDS
-<<<<<<< HEAD
-      return {
-        ledgerId: index + 1,
-=======
       const transferStatus = settleTime <= Date.now() ? 'ARRIVED' : 'WAITING_T1'
       return {
         ledgerId: index + 1,
         settlementId: index + 1,
->>>>>>> 苏
         orderNo: item.orderNo,
         title: item.title,
         orderAmount: item.payAmount,
         merchantAmount: Math.floor(Number(item.payAmount || 0) * MERCHANT_RATE / 100),
         platformFeeAmount: Math.floor(Number(item.payAmount || 0) * PLATFORM_RATE / 100),
         status: settleTime <= Date.now() ? 'SETTLED' : 'PENDING',
-<<<<<<< HEAD
-        finishTime,
-        settleTime
-=======
         transferStatus,
         finishTime,
         settleTime,
         arriveTime: transferStatus === 'ARRIVED' ? settleTime : null,
         transferRemark: transferStatus === 'ARRIVED' ? '微信已自动打款至结算卡' : '订单完成后进入 T+1 自动打款队列'
->>>>>>> 苏
       }
     })
     .sort((a, b) => (b.finishTime || 0) - (a.finishTime || 0))
@@ -491,15 +354,6 @@ const buildFinanceLedgerList = () => {
 const isSameDay = (time) => time && formatDate(time, 'YYYYMMDD') === formatDate(Date.now(), 'YYYYMMDD')
 const isSameMonth = (time) => time && formatDate(time, 'YYYYMM') === formatDate(Date.now(), 'YYYYMM')
 
-<<<<<<< HEAD
-const buildFinanceOverview = () => {
-  const ledgerList = buildFinanceLedgerList()
-  const withdrawList = getWithdrawRecordList().sort((a, b) => (b.applyTime || 0) - (a.applyTime || 0))
-  const settledAmount = ledgerList
-    .filter((item) => item.status === 'SETTLED')
-    .reduce((sum, item) => sum + Number(item.merchantAmount || 0), 0)
-  const frozenWithdrawAmount = withdrawList.reduce((sum, item) => sum + Number(item.amount || 0), 0)
-=======
 const buildSettlementRecordList = (ledgerList = []) => {
   const withdrawList = getWithdrawRecordList().sort((a, b) => (b.applyTime || 0) - (a.applyTime || 0))
   const apiStyleRecords = withdrawList.map((item) => ({
@@ -549,7 +403,6 @@ const buildFinanceOverview = () => {
   const processingAmount = settlementRecordList
     .filter((item) => item.status === 'TRANSFERRING')
     .reduce((sum, item) => sum + Number(item.amount || 0), 0)
->>>>>>> 苏
 
   return {
     todayIncomeAmount: ledgerList
@@ -558,53 +411,6 @@ const buildFinanceOverview = () => {
     monthIncomeAmount: ledgerList
       .filter((item) => isSameMonth(item.finishTime))
       .reduce((sum, item) => sum + Number(item.merchantAmount || 0), 0),
-<<<<<<< HEAD
-    pendingSettleAmount: ledgerList
-      .filter((item) => item.status === 'PENDING')
-      .reduce((sum, item) => sum + Number(item.merchantAmount || 0), 0),
-    withdrawableAmount: Math.max(0, settledAmount - frozenWithdrawAmount),
-    platformFeeAmount: ledgerList.reduce((sum, item) => sum + Number(item.platformFeeAmount || 0), 0),
-    completedOrderCount: ledgerList.length,
-    ledgerList,
-    withdrawList
-  }
-}
-
-const applyWithdraw = (amount) => {
-  const overview = buildFinanceOverview()
-  if (!amount || amount <= 0) {
-    return {
-      success: false,
-      message: '请输入提现金额'
-    }
-  }
-  if (amount > overview.withdrawableAmount) {
-    return {
-      success: false,
-      message: '提现金额超过可提现余额'
-    }
-  }
-  const withdrawList = getWithdrawRecordList()
-  const maxId = withdrawList.reduce((max, item) => Math.max(max, Number(item.withdrawId || 0)), 0)
-  const record = {
-    withdrawId: maxId + 1,
-    amount,
-    status: 'PROCESSING',
-    applyTime: Date.now(),
-    remark: '商家端在线提现申请，等待平台/微信支付出款处理'
-  }
-  setWithdrawRecordList([record, ...withdrawList])
-  return {
-    success: true,
-    message: '提现申请已提交',
-    record
-  }
-}
-
-/**
- * 添加新员工（本地）
- */
-=======
     pendingSettleAmount,
     withdrawableAmount: settledAmount,
     settledAmount,
@@ -626,7 +432,6 @@ const applyWithdraw = (amount) => {
   }
 }
 
->>>>>>> 苏
 const addStaff = (staffData) => {
   const staffList = getStaffList()
   const maxId = staffList.reduce((max, item) => Math.max(max, Number(item.staffId || 0)), 0)
@@ -643,12 +448,6 @@ const addStaff = (staffData) => {
   return { success: true, message: '员工添加成功', staff: newStaff }
 }
 
-<<<<<<< HEAD
-/**
- * 编辑员工信息（本地）
- */
-=======
->>>>>>> 苏
 const updateStaffInfo = (staffId, updates) => {
   const staffList = getStaffList()
   const target = staffList.find((item) => item.staffId === staffId)
@@ -660,12 +459,6 @@ const updateStaffInfo = (staffId, updates) => {
   return { success: true, message: '员工信息已更新', staff: nextList.find((item) => item.staffId === staffId) }
 }
 
-<<<<<<< HEAD
-/**
- * 商家取消订单（本地）
- */
-=======
->>>>>>> 苏
 const cancelOrder = (orderNo, reason = '') => {
   const orderList = getOrderList()
   const target = orderList.find((item) => item.orderNo === orderNo)
@@ -682,12 +475,6 @@ const cancelOrder = (orderNo, reason = '') => {
   return { success: true, message: '订单已取消' }
 }
 
-<<<<<<< HEAD
-/**
- * 同意退款（本地）
- */
-=======
->>>>>>> 苏
 const approveRefundOrder = (orderNo) => {
   const orderList = getOrderList()
   const target = orderList.find((item) => item.orderNo === orderNo)
@@ -702,12 +489,6 @@ const approveRefundOrder = (orderNo) => {
   return { success: true, message: '已同意退款' }
 }
 
-<<<<<<< HEAD
-/**
- * 拒绝退款（本地）
- */
-=======
->>>>>>> 苏
 const rejectRefundOrder = (orderNo, reason = '') => {
   const orderList = getOrderList()
   const target = orderList.find((item) => item.orderNo === orderNo)
@@ -722,22 +503,10 @@ const rejectRefundOrder = (orderNo, reason = '') => {
   return { success: true, message: '已拒绝退款' }
 }
 
-<<<<<<< HEAD
-/**
- * 获取库存预警商品（库存 ≤ 阈值的上架商品）
- */
-=======
->>>>>>> 苏
 const getLowStockGoods = (threshold = 20) => {
   return getGoodsList().filter((item) => item.status === 'ON_SHELF' && Number(item.stock || 0) <= threshold)
 }
 
-<<<<<<< HEAD
-/**
- * 批量更新商品状态（本地）
- */
-=======
->>>>>>> 苏
 const batchUpdateGoodsStatus = (goodsIds = [], status = 'OFF_SHELF') => {
   const goodsList = getGoodsList()
   const nextList = goodsList.map((item) =>
@@ -756,11 +525,8 @@ module.exports = {
   redirectTo,
   switchTab,
   getOrderStatusMeta,
-<<<<<<< HEAD
-=======
   isGrouponOrder,
   normalizeGrouponOrders,
->>>>>>> 苏
   initMerchantMockStorage,
   getOrderList,
   setOrderList,
@@ -778,23 +544,12 @@ module.exports = {
   consumePendingOrderFilter,
   buildWorkbenchStats,
   verifyOrderByCode,
-<<<<<<< HEAD
-  acceptOrder,
-  rejectOrder,
-  shipOrder,
-  completeOrder,
-=======
->>>>>>> 苏
   cancelOrder,
   approveRefundOrder,
   rejectRefundOrder,
   getLowStockGoods,
   batchUpdateGoodsStatus,
   buildFinanceOverview,
-<<<<<<< HEAD
-  applyWithdraw,
-=======
->>>>>>> 苏
   addStaff,
   updateStaffInfo
 }

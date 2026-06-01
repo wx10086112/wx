@@ -266,17 +266,12 @@ Page({
             util.showToast('图片已上传', 'success')
           })
           .catch(() => {
-<<<<<<< HEAD
-            this.setData({
-              'form.imageUrl': filePath
-=======
             const imageCrop = DEFAULT_IMAGE_CROP
             this.setData({
               'form.imageUrl': filePath,
               'form.imageCrop': imageCrop,
               cropScaleValue: Math.round(imageCrop.scale * 100),
               imageCropStyle: buildCropStyle(imageCrop)
->>>>>>> 苏
             })
             util.showToast('后端未联通，已使用本地图片')
           })

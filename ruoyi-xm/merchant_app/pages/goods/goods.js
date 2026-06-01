@@ -155,19 +155,10 @@ Page({
       util.showToast('请先选择商品')
       return
     }
-<<<<<<< HEAD
-    util.showModal('批量上架', `确定上架选中的 ${this.data.selectedIds.length} 个商品吗？`).then((confirm) => {
-      if (!confirm) return
-      const result = util.batchUpdateGoodsStatus(this.data.selectedIds, 'ON_SHELF')
-      util.showToast(result.message, 'success')
-      this.setData({ selectedIds: [], batchMode: false })
-      this.loadData()
-=======
     this.openConfirmModal({
       title: '批量上架',
       desc: `确定上架选中的 ${this.data.selectedIds.length} 个商品吗？`,
       action: 'ON_SHELF'
->>>>>>> 苏
     })
   },
 
@@ -176,19 +167,10 @@ Page({
       util.showToast('请先选择商品')
       return
     }
-<<<<<<< HEAD
-    util.showModal('批量下架', `确定下架选中的 ${this.data.selectedIds.length} 个商品吗？`).then((confirm) => {
-      if (!confirm) return
-      const result = util.batchUpdateGoodsStatus(this.data.selectedIds, 'OFF_SHELF')
-      util.showToast(result.message, 'success')
-      this.setData({ selectedIds: [], batchMode: false })
-      this.loadData()
-=======
     this.openConfirmModal({
       title: '批量下架',
       desc: `确定下架选中的 ${this.data.selectedIds.length} 个商品吗？`,
       action: 'OFF_SHELF'
->>>>>>> 苏
     })
   },
 

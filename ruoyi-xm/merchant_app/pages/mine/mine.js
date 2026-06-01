@@ -5,14 +5,9 @@ const app = getApp()
 Page({
   data: {
     staffUser: {},
-<<<<<<< HEAD
-    permissionList: [],
-    storeInfo: {}
-=======
     storeInfo: {},
     operationList: [],
     managementList: []
->>>>>>> 苏
   },
 
   onShow() {
@@ -22,16 +17,10 @@ Page({
     const storeInfo = util.getStoreInfo()
 
     this.setData({
-<<<<<<< HEAD
-      staffUser: app.globalData.staffUser || {},
-      permissionList: app.globalData.permissionCodes || [],
-      storeInfo: util.getStoreInfo()
-=======
       staffUser,
       storeInfo,
       operationList: this.buildOperationList(permissionCodes),
       managementList: this.buildManagementList(permissionCodes)
->>>>>>> 苏
     })
   },
 

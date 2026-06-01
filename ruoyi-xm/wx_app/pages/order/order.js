@@ -98,15 +98,11 @@ Page({
         })
       })
       .catch(() => {
-<<<<<<< HEAD
-        this.loadOrdersLocal()
-=======
         this.setData({
           orderList: [],
           orderStats: this.buildOrderStats([]),
           loading: false
         })
->>>>>>> 苏
       })
   },
 
@@ -150,15 +146,6 @@ Page({
     const order = e.detail.order
     util.showModal('取消订单', '确认取消该订单？').then((confirm) => {
       if (!confirm) return
-<<<<<<< HEAD
-      this.updateOrderList(
-        (orders) =>
-          orders.map((item) =>
-            item.orderNo === order.orderNo ? util.transitionOrderToCancelled(item) : item
-          ),
-        '订单已取消'
-      )
-=======
       orderApi.cancelOrder(order.orderNo)
         .then(() => {
           util.showToast('订单已取消', 'success')
@@ -167,7 +154,6 @@ Page({
         .catch((err) => {
           util.showToast(err && err.msg ? err.msg : '取消失败')
         })
->>>>>>> 苏
     })
   },
 

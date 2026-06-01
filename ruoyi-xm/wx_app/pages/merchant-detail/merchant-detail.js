@@ -1,10 +1,7 @@
 const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
-<<<<<<< HEAD
-=======
 const merchantApi = require('../../api/merchant')
->>>>>>> 苏
 
 Page({
   data: {
@@ -18,11 +15,7 @@ Page({
 
   onLoad(options) {
     this.setData({
-<<<<<<< HEAD
-      merchantId: parseInt(options.id || 1, 10),
-=======
       merchantId: parseInt(options.id, 10),
->>>>>>> 苏
       merchantConfig: templateService.getTemplateSection('merchantDetail')
     })
     this.loadMerchantDetail()
@@ -31,15 +24,6 @@ Page({
   loadMerchantDetail() {
     this.setData({ loading: true })
 
-<<<<<<< HEAD
-    setTimeout(() => {
-      const merchant = mock.merchantList.find((item) => item.id === this.data.merchantId) || mock.merchantList[0]
-      const grouponList = mock.grouponList.filter((item) => item.merchantId === merchant.id)
-      const albumList = (merchant.albumList && merchant.albumList.length
-        ? merchant.albumList
-        : [merchant.coverImage, merchant.avatar, ...grouponList.map((item) => item.image)]
-      ).slice(0, 6)
-=======
     merchantApi.getMerchantDetail(this.data.merchantId)
       .then((res) => {
         const merchant = res.data || res || {}
@@ -47,7 +31,6 @@ Page({
           ? merchant.albumList
           : [merchant.coverImage, merchant.avatar]
         ).filter(Boolean).slice(0, 6)
->>>>>>> 苏
 
         // 若商家相册为空，尝试从接口补充
         if (albumList.length <= 1) {
@@ -67,14 +50,10 @@ Page({
           loading: false
         })
       })
-<<<<<<< HEAD
-    }, 180)
-=======
       .catch(() => {
         this.setData({ loading: false })
         util.showToast('加载失败，请重试')
       })
->>>>>>> 苏
   },
 
   makePhoneCall() {

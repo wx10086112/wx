@@ -54,16 +54,8 @@ Page({
         })
       })
       .catch(() => {
-<<<<<<< HEAD
-        const rawOrder = util.getStoredOrderList(mock.orderList).find((item) => item.orderNo === this.data.orderNo) || {}
-        this.setData({
-          order: this.formatOrder(rawOrder),
-          loading: false
-        })
-=======
         this.setData({ loading: false })
         util.showToast('订单加载失败')
->>>>>>> 苏
       })
   },
 
@@ -80,13 +72,6 @@ Page({
   cancelOrder() {
     util.showModal('取消订单', '确认取消当前订单？').then((confirm) => {
       if (!confirm) return
-<<<<<<< HEAD
-      this.updateOrder(
-        (orders) =>
-          orders.map((item) => (item.orderNo === this.data.orderNo ? util.transitionOrderToCancelled(item) : item)),
-        '已取消'
-      )
-=======
       orderApi.cancelOrder(this.data.orderNo)
         .then(() => {
           util.showToast('已取消', 'success')
@@ -95,7 +80,6 @@ Page({
         .catch((err) => {
           util.showToast(err && err.msg ? err.msg : '取消失败')
         })
->>>>>>> 苏
     })
   },
 
@@ -103,17 +87,6 @@ Page({
     util.showModal('确认支付', `确认支付 ¥${this.data.order.payAmountText} 吗？`).then((confirm) => {
       if (!confirm) return
       util.showLoading('支付中...')
-<<<<<<< HEAD
-      this.tryRealPayment()
-        .then(() => {
-          util.hideLoading()
-          this.updateOrder(
-            (orders) =>
-              orders.map((item) => (item.orderNo === this.data.orderNo ? util.transitionOrderToPaidUnused(item) : item)),
-            '支付成功'
-          )
-          util.requestSubscribeMessage()
-=======
       orderApi
         .createPayOrder({ orderNo: this.data.orderNo })
         .then((res) => {
@@ -127,20 +100,11 @@ Page({
           util.hideLoading()
           util.showToast('支付成功', 'success')
           this.loadOrderDetail()
->>>>>>> 苏
         })
         .catch((err) => {
           util.hideLoading()
           if (err && err.message !== '用户取消支付') {
-<<<<<<< HEAD
-            this.updateOrder(
-              (orders) =>
-                orders.map((item) => (item.orderNo === this.data.orderNo ? util.transitionOrderToPaidUnused(item) : item)),
-              '支付成功（模拟）'
-            )
-=======
             util.showToast(err.msg || '支付失败，请重试')
->>>>>>> 苏
           }
         })
     })
@@ -163,13 +127,6 @@ Page({
     const refundApi = require('../../api/user')
     util.showModal('申请退款', '确认申请退款？').then((confirm) => {
       if (!confirm) return
-<<<<<<< HEAD
-      this.updateOrder(
-        (orders) =>
-          orders.map((item) => (item.orderNo === this.data.orderNo ? util.transitionOrderToRefunding(item) : item)),
-        '退款申请已提交'
-      )
-=======
       const { post } = require('../../api/request')
       post('/wxmini/refund/apply', { orderNo: this.data.orderNo, refundReason: '用户申请退款' })
         .then(() => {
@@ -179,7 +136,6 @@ Page({
         .catch((err) => {
           util.showToast(err && err.msg ? err.msg : '申请失败')
         })
->>>>>>> 苏
     })
   },
 

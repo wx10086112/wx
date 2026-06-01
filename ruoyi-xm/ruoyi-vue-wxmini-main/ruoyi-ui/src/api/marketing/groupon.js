@@ -72,6 +72,42 @@ export function uploadGrouponImage(data) {
   })
 }
 
+// 获取团购活动下已绑定的商品
+export function listGrouponProducts(grouponId) {
+  return request({
+    url: '/mall/groupon/product/list',
+    method: 'get',
+    params: { grouponId }
+  })
+}
+
+// 绑定商品到团购活动
+export function bindGrouponProducts(data) {
+  return request({
+    url: '/mall/groupon/product/bind',
+    method: 'post',
+    data: data
+  })
+}
+
+// 解绑团购活动商品
+export function unbindGrouponProducts(data) {
+  return request({
+    url: '/mall/groupon/product/unbind',
+    method: 'post',
+    data: data
+  })
+}
+
+// 商品列表（用于绑定团购活动）
+export function listProduct(query) {
+  return request({
+    url: '/mall/product/list',
+    method: 'get',
+    params: query
+  })
+}
+
 // ========== 团购商品明细 ==========
 
 // 团购商品列表（按活动ID查询）

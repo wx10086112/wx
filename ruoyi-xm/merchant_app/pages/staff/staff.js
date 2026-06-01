@@ -2,8 +2,6 @@ const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const api = require('../../api/index')
 
-<<<<<<< HEAD
-=======
 const PERMISSION_OPTIONS = [
   { label: '查看经营数据', value: 'stats.view' },
   { label: '订单处理', value: 'order.manage' },
@@ -16,17 +14,12 @@ const PERMISSION_OPTIONS = [
   { label: '结算中心', value: 'finance.manage' }
 ]
 
->>>>>>> 苏
 const app = getApp()
 
 Page({
   data: {
     canManageStaff: false,
-<<<<<<< HEAD
-    permissionOptions: mock.permissionOptions,
-=======
     permissionOptions: PERMISSION_OPTIONS,
->>>>>>> 苏
     roleOptions: [
       { label: '店长', value: 'manager' },
       { label: '店员', value: 'clerk' }

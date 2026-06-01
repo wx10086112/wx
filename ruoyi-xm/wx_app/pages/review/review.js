@@ -15,15 +15,6 @@ Page({
 
   onLoad(options) {
     const orderNo = options.orderNo || ''
-<<<<<<< HEAD
-    const order = mock.orderList.find((item) => item.orderNo === orderNo) || mock.orderList[0] || {}
-    this.setData({
-      order: {
-        ...order,
-        payAmountText: ((order.payAmount || order.price || 0) / 100).toFixed(2)
-      }
-    })
-=======
     if (orderNo) {
       orderApi.getOrderDetail(orderNo)
         .then((res) => {
@@ -39,7 +30,6 @@ Page({
           this.setData({ order: {} })
         })
     }
->>>>>>> 苏
   },
 
   onStarTap(e) {

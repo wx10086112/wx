@@ -1,13 +1,11 @@
 package com.ruoyi.web.controller.mall;
 
-import com.ruoyi.common.annotation.DataScopeBiz;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.MallDataScopeHelper;
-import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.mall.product.domain.Distributor;
 import com.ruoyi.mall.product.service.IDistributorService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,15 +28,14 @@ public class MallDistributorController extends BaseController {
     /**
      * 查询分销商列表
      */
-    @DataScopeBiz(distributorAlias = "distributor")
     @PreAuthorize("@ss.hasPermi('mall:distributor:list')")
     @GetMapping("/list")
     public TableDataInfo list(Distributor distributor) {
         startPage();
-        // 分销商账号只能查看自己的数据
-        String accountType = SecurityUtils.getAccountType();
-        if ("DISTRIBUTOR".equals(accountType)) {
-            distributor.setId(SecurityUtils.getDistributorId());
+        // 分销商账号或超管切换分销商视角时，只能查看当前分销商自身。
+        Long effectiveDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effectiveDistributorId != null) {
+            distributor.setId(effectiveDistributorId);
         }
         List<Distributor> list = distributorService.selectDistributorList(distributor);
         return getDataTable(list);

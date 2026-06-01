@@ -84,11 +84,8 @@ Page({
   },
 
   loadAssets(profileConfigArg, featureToggleArg) {
-<<<<<<< HEAD
-=======
     if (!app.globalData.isLoggedIn) return
 
->>>>>>> 苏
     const profileConfig =
       profileConfigArg || (this.data.profileConfig && this.data.profileConfig.assetEntries
         ? this.data.profileConfig
@@ -99,14 +96,6 @@ Page({
         ? this.data.featureToggle
         : templateService.getTemplateSection('featureToggle')
       )
-<<<<<<< HEAD
-    const storedOrderList = util.getStoredOrderList(mock.orderList)
-    const orderCountMap = this.buildOrderCountMap(storedOrderList)
-    const counters = {
-      couponCount: mock.couponList.filter((item) => item.status === 'AVAILABLE').length,
-      favoriteCount: mock.favoriteList.length
-    }
-=======
 
     // 从真实API获取订单数统计
     orderApi.getOrderList()
@@ -128,7 +117,6 @@ Page({
   },
 
   renderAssets(profileConfig, featureToggle, counters, orderCountMap) {
->>>>>>> 苏
     const assetCardList = (profileConfig.assetEntries || [])
       .filter((item) => {
         if (item.url === '/pages/coupon/coupon') return featureToggle.enableCoupon
@@ -162,11 +150,7 @@ Page({
         }
 
         userApi
-<<<<<<< HEAD
-          .login(app.appId || 'wx6c708117ea8eaab4', loginRes.code)
-=======
           .login(app.globalData.appId, loginRes.code)
->>>>>>> 苏
           .then((res) => {
             const info = res.data || {}
             const userInfo = {

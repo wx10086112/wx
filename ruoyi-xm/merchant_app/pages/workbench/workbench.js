@@ -26,22 +26,10 @@ Page({
         const stats = response.stats || {}
         this.setData({
           staffUser: response.staffUser || app.globalData.staffUser || {},
-<<<<<<< HEAD
-          storeInfo: response.storeInfo || {},
-          statsCardList: [
-            { label: '待接单', value: response.stats.pendingAcceptCount || 0, highlight: (response.stats.pendingAcceptCount || 0) > 0 },
-            { label: '待核销', value: response.stats.pendingVerifyCount || 0 },
-            { label: '配送中', value: response.stats.shippingCount || 0 },
-            { label: '已完成', value: response.stats.completedCount || 0 },
-            { label: '退款中', value: response.stats.refundingCount || 0, warn: (response.stats.refundingCount || 0) > 0 },
-            { label: '在售套餐', value: response.stats.onShelfCount || 0 }
-          ],
-=======
           storeInfo: response.storeInfo || util.getStoreInfo(),
           todaySalesText: util.formatPrice(stats.todaySalesAmount),
           statsCardList: this.buildStatsCardList(stats),
           alertList: this.buildAlertList(stats),
->>>>>>> 苏
           quickActionList: this.buildQuickActions(),
           pendingOrderList: this.buildPendingOrderList(response.pendingOrderList || [])
         })
@@ -56,68 +44,15 @@ Page({
     const goodsList = util.getGoodsList()
     const orderList = util.getOrderList()
     const stats = util.buildWorkbenchStats(orderList, goodsList)
-<<<<<<< HEAD
-
-    // 构建提醒列表
-    const alertList = []
-    if (stats.pendingAcceptCount > 0) {
-      alertList.push({
-        type: 'urgent',
-        text: `有 ${stats.pendingAcceptCount} 个新订单等待接单，请及时处理！`,
-        filter: 'PENDING_ACCEPT'
-      })
-    }
-    if (stats.abnormalCount > 0) {
-      alertList.push({
-        type: 'warning',
-        text: `有 ${stats.abnormalCount} 个异常订单（退款/拒单），请关注处理。`,
-        filter: 'REFUNDING'
-      })
-    }
-    const threshold = Number(storeInfo.stockAlertThreshold || 20)
-    const lowStockGoods = util.getLowStockGoods(threshold)
-    if (lowStockGoods.length > 0) {
-      alertList.push({
-        type: 'warning',
-        text: `${lowStockGoods.length} 个商品库存不足（≤${threshold}），请及时补货。`,
-        action: 'goods'
-      })
-    }
-=======
     const threshold = Number(storeInfo.stockAlertThreshold || 20)
     const lowStockGoods = util.getLowStockGoods(threshold)
     const alertList = this.buildAlertList(stats, lowStockGoods.length, threshold)
->>>>>>> 苏
 
     this.setData({
       staffUser: app.globalData.staffUser || {},
       storeInfo,
       todaySalesText: util.formatPrice(stats.todaySalesAmount),
       alertList,
-<<<<<<< HEAD
-      statsCardList: [
-        { label: '待接单', value: stats.pendingAcceptCount, highlight: stats.pendingAcceptCount > 0 },
-        { label: '待核销', value: stats.pendingVerifyCount },
-        { label: '配送中', value: stats.shippingCount },
-        { label: '已完成', value: stats.completedCount },
-        { label: '退款中', value: stats.refundingCount, warn: stats.refundingCount > 0 },
-        { label: '在售套餐', value: stats.onShelfCount }
-      ],
-      quickActionList: this.buildQuickActions(),
-      pendingOrderList: orderList
-        .filter((item) => ['PENDING_ACCEPT', 'PENDING_VERIFY'].includes(item.status))
-        .sort((a, b) => (b.payTime || 0) - (a.payTime || 0))
-        .slice(0, 5)
-        .map((item) => ({
-          ...item,
-          payAmountText: util.formatPrice(item.payAmount),
-          payTimeText: util.formatDate(item.payTime),
-          statusMeta: util.getOrderStatusMeta(item.status)
-        }))
-    })
-  },
-
-=======
       statsCardList: this.buildStatsCardList(stats),
       quickActionList: this.buildQuickActions(),
       pendingOrderList: this.buildPendingOrderList(orderList)
@@ -166,7 +101,6 @@ Page({
       }))
   },
 
->>>>>>> 苏
   buildQuickActions() {
     return [
       { label: '待核销', icon: '📋', url: '/pages/order/order', permissionCodes: ['order.manage'], isTab: true, filter: 'PENDING_VERIFY' },

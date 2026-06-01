@@ -69,31 +69,12 @@
       </el-col>
     </el-row>
 
-    <!-- 分布 + 排行 -->
+    <!-- 订单状态分布 -->
     <el-row :gutter="20" class="chart-row">
-      <el-col :xs="24" :sm="24" :lg="12">
+      <el-col :xs="24" :sm="24" :lg="24">
         <el-card>
           <div slot="header"><span>订单状态分布</span></div>
           <div ref="orderStatusChart" style="height: 300px;" />
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :sm="24" :lg="12">
-        <el-card>
-          <div slot="header"><span>热销商品 TOP5</span></div>
-          <el-table :data="hotProducts" style="width: 100%;" :show-header="true">
-            <el-table-column type="index" label="排名" width="60" align="center">
-              <template slot-scope="scope">
-                <span :class="['rank-badge', 'rank-' + (scope.$index + 1)]">{{ scope.$index + 1 }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="name" label="商品名称" />
-            <el-table-column prop="sales" label="销量" width="80" align="center" />
-            <el-table-column prop="revenue" label="营收(元)" width="100" align="right">
-              <template slot-scope="scope">
-                <span class="revenue-text">¥{{ Number(scope.row.revenue || 0).toLocaleString() }}</span>
-              </template>
-            </el-table-column>
-          </el-table>
         </el-card>
       </el-col>
     </el-row>
@@ -119,7 +100,7 @@
 import * as echarts from 'echarts'
 require('echarts/theme/macarons')
 import CountTo from 'vue-count-to'
-import { getDashboardStats, getTrendData, getOrderStatusData, getHotProducts } from '@/api/data'
+import { getDashboardStats, getTrendData, getOrderStatusData } from '@/api/data'
 
 export default {
   name: 'Dashboard',
@@ -130,7 +111,6 @@ export default {
       stats: { todayOrders: 0, todayRevenue: 0, merchantCount: 0 },
       trendData: { dates: [], orderCounts: [], completedCounts: [], revenues: [] },
       orderStatus: [],
-      hotProducts: [],
       orderRange: 'day',
       revenueRange: 'day',
       shortcuts: [
@@ -153,11 +133,10 @@ export default {
   methods: {
     async fetchData() {
       try {
-        const [statsRes, trendRes, statusRes, hotRes] = await Promise.all([
+        const [statsRes, trendRes, statusRes] = await Promise.all([
           getDashboardStats().catch(() => ({ data: null })),
           getTrendData().catch(() => ({ data: null })),
-          getOrderStatusData().catch(() => ({ data: null })),
-          getHotProducts().catch(() => ({ data: null }))
+          getOrderStatusData().catch(() => ({ data: null }))
         ])
         // 适配后端字段名: todayAmount→todayRevenue, totalFlow→totalFlow
         const rawStats = statsRes.data
@@ -179,13 +158,10 @@ export default {
         this.orderStatus = Array.isArray(rawStatus) && rawStatus.length > 0
           ? rawStatus.map(i => ({ name: i.name, value: i.count || i.value || 0 }))
           : this.getMockOrderStatus()
-        this.hotProducts = (Array.isArray(hotRes.data) && hotRes.data.length > 0)
-          ? hotRes.data : this.getMockHotProducts()
       } catch (e) {
         this.stats = { todayOrders: 328, todayRevenue: 45920, merchantCount: 156 }
         this.trendData = this.getMockTrend()
         this.orderStatus = this.getMockOrderStatus()
-        this.hotProducts = this.getMockHotProducts()
       }
       this.$nextTick(() => {
         this.initOrderTrendChart()
@@ -208,15 +184,6 @@ export default {
         { value: 156, name: '已支付' },
         { value: 520, name: '已完成' },
         { value: 42, name: '已取消' }
-      ]
-    },
-    getMockHotProducts() {
-      return [
-        { name: '精品双人火锅套餐', sales: 1280, revenue: 126720 },
-        { name: '日式料理四人餐', sales: 856, revenue: 119840 },
-        { name: '鲜果拼团10斤装', sales: 2100, revenue: 62790 },
-        { name: '健身私教体验课', sales: 645, revenue: 51600 },
-        { name: '美甲美容套餐', sales: 432, revenue: 38880 }
       ]
     },
     handleResize() {
@@ -550,27 +517,6 @@ export default {
       }
     }
   }
-}
-
-.rank-badge {
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  line-height: 24px;
-  text-align: center;
-  border-radius: 50%;
-  font-size: 12px;
-  color: #fff;
-  background: #909399;
-
-  &.rank-1 { background: #f56c6c; }
-  &.rank-2 { background: #e6a23c; }
-  &.rank-3 { background: #409eff; }
-}
-
-.revenue-text {
-  color: #f56c6c;
-  font-weight: bold;
 }
 
 @media (max-width: 550px) {
