@@ -1,0 +1,21 @@
+<view class="login-page">
+  <view class="hero-block">
+    <text class="hero-title">商家端登录</text>
+  </view>
+
+  <view class="login-panel">
+    <view class="input-group">
+      <text class="panel-label">账号</text>
+      <input class="login-input" placeholder="请输入商家账号" value="{{username}}" bindinput="onUsernameInput" />
+    </view>
+    <view class="input-group">
+      <text class="panel-label">密码</text>
+      <input class="login-input" password placeholder="请输入密码" value="{{password}}" bindinput="onPasswordInput" />
+    </view>
+    <button class="primary-btn login-btn" bindtap="submitLogin">登录</button>
+    <view class="apply-entry" bindtap="goApply">
+      <text>还没有店铺？</text>
+      <text class="apply-link">商家入驻申请</text>
+    </view>
+  </view>
+</view>

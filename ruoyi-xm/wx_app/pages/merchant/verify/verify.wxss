@@ -1,0 +1,116 @@
+.verify-hero,
+.input-panel,
+.result-panel,
+.recent-panel {
+  padding: 28rpx;
+}
+
+.input-panel,
+.result-panel,
+.recent-panel {
+  margin-top: 20rpx;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.head-link {
+  font-size: 24rpx;
+  color: #1f6feb;
+}
+
+.hint-order {
+  margin-top: 18rpx;
+  padding: 20rpx;
+  border-radius: 16rpx;
+  background: #f6f9ff;
+}
+
+.hint-title,
+.result-title {
+  display: block;
+  font-size: 30rpx;
+  color: #1f2a37;
+  font-weight: 600;
+}
+
+.hint-meta,
+.result-meta,
+.recent-meta,
+.recent-code {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.code-input {
+  height: 92rpx;
+  padding: 0 24rpx;
+  border-radius: 16rpx;
+  background: #f6f9ff;
+  font-size: 28rpx;
+}
+
+.action-row {
+  margin-top: 18rpx;
+  display: flex;
+  gap: 14rpx;
+}
+
+.half-btn {
+  flex: 1;
+}
+
+.recent-row {
+  margin-top: 20rpx;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #edf1f5;
+  display: flex;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.recent-row:last-child {
+  border-bottom: none;
+}
+
+.recent-main {
+  flex: 1;
+}
+
+.recent-title {
+  display: block;
+  font-size: 28rpx;
+  color: #1f2a37;
+  font-weight: 600;
+}
+
+.recent-side {
+  text-align: right;
+}
+
+.recent-amount {
+  font-size: 28rpx;
+  color: #1f6feb;
+  font-weight: 600;
+}
+
+.recent-amount.failed,
+.recent-error {
+  color: #d93025;
+}
+
+.recent-error {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+}
+
+.empty-inline {
+  padding: 48rpx 0 12rpx;
+  text-align: center;
+}

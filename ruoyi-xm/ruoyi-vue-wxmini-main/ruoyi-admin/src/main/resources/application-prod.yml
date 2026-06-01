@@ -1,0 +1,56 @@
+## 生产环境覆盖配置
+## 启动方式示例：
+## java -jar ruoyi-admin.jar --spring.profiles.active=druid,prod
+
+ruoyi:
+  profile: ${RUOYI_UPLOAD_PATH}
+  addressEnabled: true
+
+logging:
+  level:
+    com.ruoyi: info
+    org.springframework: warn
+
+spring:
+  devtools:
+    restart:
+      enabled: false
+  redis:
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT:6379}
+    database: ${REDIS_DATABASE:0}
+    password: ${REDIS_PASSWORD:}
+  datasource:
+    druid:
+      master:
+        url: jdbc:mysql://${DB_HOST}:${DB_PORT:3306}/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
+        username: ${DB_USERNAME}
+        password: ${DB_PASSWORD}
+      statViewServlet:
+        allow: ${DRUID_ALLOW:}
+        login-username: ${DRUID_USERNAME}
+        login-password: ${DRUID_PASSWORD}
+
+token:
+  secret: ${TOKEN_SECRET}
+  expireTime: ${TOKEN_EXPIRE_MINUTES:30}
+
+swagger:
+  enabled: false
+
+wx:
+  miniapp:
+    configs:
+      - appid: ${WX_MINI_APPID}
+        secret: ${WX_MINI_SECRET}
+        token: ${WX_MINI_TOKEN:}
+        aesKey: ${WX_MINI_AES_KEY:}
+        msgDataFormat: JSON
+  pay:
+    stub-enabled: false
+    appId: ${WX_PAY_APP_ID}
+    mchId: ${WX_PAY_MCH_ID}
+    apiV3Key: ${WX_PAY_API_V3_KEY}
+    certSerialNo: ${WX_PAY_CERT_SERIAL_NO}
+    privateKeyPath: ${WX_PAY_PRIVATE_KEY_PATH}
+    privateCertPath: ${WX_PAY_PRIVATE_CERT_PATH}

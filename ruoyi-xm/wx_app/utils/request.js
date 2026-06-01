@@ -1,22 +1,24 @@
 const app = getApp()
 
-const baseUrl = app.baseUrl || 'http://localhost:8080'
+const getBaseUrl = () => app.baseUrl || 'http://localhost:8080'
+const getAppId = () => (app.globalData && app.globalData.appId) || ''
 
 const request = (options) => {
   return new Promise((resolve, reject) => {
     const token = wx.getStorageSync('token')
-    
+
     const header = {
       'Content-Type': 'application/json',
+      'X-Wx-AppId': getAppId(),
       ...options.header
     }
-    
+
     if (token) {
-      header['Wx-Authorization'] = token
+      header['Wx-Authorization'] = token.startsWith('Bearer ') ? token : `Bearer ${token}`
     }
-    
+
     wx.request({
-      url: baseUrl + options.url,
+      url: getBaseUrl() + options.url,
       method: options.method || 'GET',
       data: options.data || {},
       header: header,
@@ -92,12 +94,18 @@ const del = (url, data) => {
 const uploadFile = (filePath, url = '/wxmini/common/upload') => {
   return new Promise((resolve, reject) => {
     const token = wx.getStorageSync('token')
-    
+    const header = {
+      'X-Wx-AppId': getAppId()
+    }
+    if (token) {
+      header['Wx-Authorization'] = token.startsWith('Bearer ') ? token : `Bearer ${token}`
+    }
+
     wx.uploadFile({
-      url: baseUrl + url,
+      url: getBaseUrl() + url,
       filePath: filePath,
       name: 'file',
-      header: token ? { 'Wx-Authorization': token } : {},
+      header,
       success: (res) => {
         const data = JSON.parse(res.data)
         if (data.code === 200 || data.code === 0) {
@@ -120,5 +128,5 @@ module.exports = {
   put,
   del,
   uploadFile,
-  baseUrl
+  baseUrl: getBaseUrl()
 }

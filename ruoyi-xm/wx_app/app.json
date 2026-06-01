@@ -14,7 +14,21 @@
     "pages/favorite/favorite",
     "pages/contact/contact",
     "pages/profile-edit/profile-edit",
-    "pages/review/review"
+    "pages/review/review",
+    "pages/merchant/login/login",
+    "pages/merchant/workbench/workbench",
+    "pages/merchant/order/order",
+    "pages/merchant/verify/verify",
+    "pages/merchant/goods/goods",
+    "pages/merchant/mine/mine",
+    "pages/merchant/order-detail/order-detail",
+    "pages/merchant/goods-edit/goods-edit",
+    "pages/merchant/store/store",
+    "pages/merchant/staff/staff",
+    "pages/merchant/verify-records/verify-records",
+    "pages/merchant/finance/finance",
+    "pages/merchant/marketing/marketing",
+    "pages/merchant/apply/apply"
   ],
   "window": {
     "navigationBarTextStyle": "white",

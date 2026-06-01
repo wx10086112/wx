@@ -1,0 +1,14 @@
+prod_tables=64
+mapper_files=42
+findings=11
+alias-column	ruoyi-mall-finance\src\main\resources\mapper\mall\finance\PlatformTransferRecordMapper.xml	platform_transfer_record.order_no	t.order_no
+alias-column	ruoyi-mall-finance\src\main\resources\mapper\mall\finance\PlatformTransferRecordMapper.xml	platform_transfer_record.receiver_account_type	t.receiver_account_type
+alias-column	ruoyi-mall-finance\src\main\resources\mapper\mall\finance\PlatformTransferRecordMapper.xml	platform_transfer_record.receiver_name	t.receiver_name
+alias-column	ruoyi-mall-finance\src\main\resources\mapper\mall\finance\PlatformTransferRecordMapper.xml	platform_transfer_record.receiver_openid	t.receiver_openid
+alias-column	ruoyi-mall-finance\src\main\resources\mapper\mall\finance\PlatformTransferRecordMapper.xml	platform_transfer_record.remark	t.remark
+insert-column	ruoyi-mall-finance\src\main\resources\mapper\mall\finance\PlatformTransferRecordMapper.xml	platform_transfer_record.order_no	order_no
+insert-column	ruoyi-mall-finance\src\main\resources\mapper\mall\finance\PlatformTransferRecordMapper.xml	platform_transfer_record.receiver_openid	receiver_openid
+insert-column	ruoyi-mall-finance\src\main\resources\mapper\mall\finance\PlatformTransferRecordMapper.xml	platform_transfer_record.receiver_name	receiver_name
+insert-column	ruoyi-mall-finance\src\main\resources\mapper\mall\finance\PlatformTransferRecordMapper.xml	platform_transfer_record.receiver_account_type	receiver_account_type
+insert-column	ruoyi-mall-finance\src\main\resources\mapper\mall\finance\PlatformTransferRecordMapper.xml	platform_transfer_record.remark	remark
+insert-column	ruoyi-mall-product\src\main\resources\mapper\mall\product\ProductImageMapper.xml	product_image.create_by	create_by

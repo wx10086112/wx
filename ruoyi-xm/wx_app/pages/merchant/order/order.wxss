@@ -1,0 +1,195 @@
+.tabs-scroll {
+  white-space: nowrap;
+}
+
+.tabs {
+  padding: 10rpx;
+  display: inline-flex;
+  gap: 10rpx;
+  min-width: 100%;
+}
+
+.tab-item {
+  flex-shrink: 0;
+  min-width: 120rpx;
+  height: 68rpx;
+  border-radius: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6f7d91;
+  font-size: 24rpx;
+  padding: 0 20rpx;
+}
+
+.tab-item.active {
+  background: #eaf2ff;
+  color: #1f6feb;
+  font-weight: 600;
+}
+
+.order-card {
+  margin-top: 18rpx;
+  padding: 24rpx;
+}
+
+.order-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.order-no {
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.order-title {
+  display: block;
+  margin-top: 18rpx;
+  font-size: 30rpx;
+  color: #1f2a37;
+  font-weight: 600;
+}
+
+.order-meta,
+.order-code {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #7a8798;
+}
+
+.order-remark {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #9aa6b6;
+  font-style: italic;
+}
+
+.order-bottom {
+  margin-top: 20rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16rpx;
+}
+
+.order-amount {
+  font-size: 30rpx;
+  color: #1f6feb;
+  font-weight: 700;
+}
+
+.order-actions {
+  display: flex;
+  gap: 12rpx;
+  width: 100%;
+}
+
+.action-btn {
+  flex: 1;
+  min-width: 0;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: normal;
+  font-size: 24rpx;
+  padding: 0 20rpx;
+}
+
+.cancel-btn {
+  background: #f5f5f5;
+  color: #6b7280;
+}
+
+.refund-btn {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+}
+
+.cancel-modal-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+  background: rgba(15, 23, 42, 0.38);
+  box-sizing: border-box;
+}
+
+.cancel-modal-card {
+  width: 100%;
+  padding: 34rpx;
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-shadow: 0 30rpx 80rpx rgba(15, 23, 42, 0.18);
+  box-sizing: border-box;
+}
+
+.cancel-modal-title {
+  display: block;
+  font-size: 34rpx;
+  color: #111827;
+  font-weight: 700;
+}
+
+.cancel-modal-desc {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.cancel-reason-input {
+  margin-top: 24rpx;
+  width: 100%;
+  min-height: 160rpx;
+  padding: 20rpx;
+  border-radius: 18rpx;
+  background: #f8fafc;
+  color: #111827;
+  font-size: 28rpx;
+  box-sizing: border-box;
+}
+
+.cancel-modal-actions {
+  margin-top: 24rpx;
+  display: flex;
+  gap: 16rpx;
+}
+
+.cancel-modal-btn {
+  flex: 1;
+  height: 78rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: normal;
+  font-size: 28rpx;
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.cancel-modal-btn::after {
+  border: none;
+}
+
+.cancel-modal-btn.secondary {
+  background: #eef2f7;
+  color: #334155;
+}
+
+.cancel-modal-btn.primary {
+  background: #ef4444;
+  color: #ffffff;
+}

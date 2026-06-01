@@ -1,0 +1,54 @@
+<view class="page-shell">
+  <view class="verify-hero panel">
+    <text class="section-title">到店核销</text>
+    <view wx:if="{{orderHint.orderNo}}" class="hint-order">
+      <text class="hint-title">{{orderHint.title}}</text>
+      <text class="hint-meta">订单号 {{orderHint.orderNo}} · 推荐直接核销码 {{orderHint.writeOffCode}}</text>
+    </view>
+  </view>
+
+  <view class="input-panel panel">
+    <input
+      class="code-input"
+      value="{{manualCode}}"
+      placeholder="请输入核销码或订单号"
+      bindinput="handleCodeInput"
+    />
+    <view class="action-row">
+      <button class="ghost-btn half-btn" bindtap="scanCode">扫码核销</button>
+      <button class="primary-btn half-btn" bindtap="submitManualVerify">手动核销</button>
+    </view>
+  </view>
+
+  <view wx:if="{{verifyResult}}" class="result-panel panel">
+    <text class="section-title">本次核销结果</text>
+    <text class="result-title">{{verifyResult.title}}</text>
+    <text class="result-meta">订单号 {{verifyResult.orderNo}}</text>
+    <text class="result-meta">金额 ¥{{verifyResult.payAmountText}}</text>
+    <text class="result-meta">核销人 {{verifyResult.verifyStaffName || '当前账号'}}</text>
+    <text class="result-meta">核销时间 {{verifyResult.verifyTimeText}}</text>
+  </view>
+
+  <view class="panel recent-panel">
+    <view class="panel-head">
+      <text class="section-title">最近核销记录</text>
+      <text class="head-link" bindtap="goVerifyRecords">查看全部</text>
+    </view>
+    <view wx:if="{{recentRecordList.length}}">
+      <view wx:for="{{recentRecordList}}" wx:key="orderNo" class="recent-row">
+        <view class="recent-main">
+          <text class="recent-title">{{item.title}}</text>
+          <text class="recent-meta">{{item.verifyStaffName || '当前账号'}} · {{item.verifyTimeText}}</text>
+          <text wx:if="{{item.failureReason}}" class="recent-error">{{item.failureReason}}</text>
+        </view>
+        <view class="recent-side">
+          <text class="recent-amount {{item.status === 'FAILED' ? 'failed' : ''}}">{{item.amountLabel}}</text>
+          <text class="recent-code">{{item.writeOffCode || item.inputCode}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="empty-inline">
+      <text class="empty-text">暂时还没有核销记录</text>
+    </view>
+  </view>
+</view>
