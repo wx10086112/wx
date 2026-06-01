@@ -30,7 +30,11 @@ Page({
         this.renderSettlement(overview)
       })
       .catch(() => {
+<<<<<<< HEAD
+        this.renderFinance(util.buildFinanceOverview())
+=======
         this.renderSettlement(util.buildFinanceOverview())
+>>>>>>> 苏
       })
   },
 
@@ -108,5 +112,38 @@ Page({
     this.setData({ currentFilter: filter }, () => {
       this.loadData()
     })
+<<<<<<< HEAD
+  },
+
+  handleAmountInput(e) {
+    this.setData({
+      withdrawAmount: e.detail.value
+    })
+  },
+
+  submitWithdraw() {
+    const amount = Math.round(Number(this.data.withdrawAmount || 0) * 100)
+    if (!amount) {
+      util.showToast('请输入提现金额')
+      return
+    }
+
+    api
+      .applyFinanceWithdraw({ amount })
+      .then(() => {
+        util.showToast('提现申请已提交', 'success')
+        this.setData({ withdrawAmount: '' })
+        this.loadData()
+      })
+      .catch(() => {
+        const result = util.applyWithdraw(amount)
+        util.showToast(result.message, result.success ? 'success' : 'none')
+        if (result.success) {
+          this.setData({ withdrawAmount: '' })
+          this.loadData()
+        }
+      })
+=======
+>>>>>>> 苏
   }
 })

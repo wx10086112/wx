@@ -1,6 +1,10 @@
+const mock = require('../../data/mock')
 const util = require('../../utils/util')
+<<<<<<< HEAD
+=======
 const merchantApi = require('../../api/merchant')
 const productApi = require('../../api/product')
+>>>>>>> 苏
 
 const SORT_OPTIONS = [
   { label: '综合', value: 'default' },
@@ -24,9 +28,39 @@ Page({
   onLoad(options) {
     const keyword = options.keyword || ''
     this.setData({ keyword })
-    this.doSearch(keyword)
+    this.doSearch(keyword, 'default')
   },
 
+<<<<<<< HEAD
+  doSearch(keyword, sortKey) {
+    let productList = mock.grouponList.filter((item) => {
+      if (!keyword) return true
+      return (
+        item.title.includes(keyword) ||
+        item.subtitle.includes(keyword) ||
+        item.categoryName.includes(keyword) ||
+        item.description.includes(keyword)
+      )
+    })
+
+    let merchantList = mock.merchantList.filter((item) => {
+      if (!keyword) return true
+      return (
+        item.name.includes(keyword) ||
+        item.shortName.includes(keyword) ||
+        (item.tags || []).some((tag) => tag.includes(keyword))
+      )
+    })
+
+    productList = this.sortList(productList, sortKey)
+    merchantList = this.sortList(merchantList, sortKey)
+
+    this.setData({
+      productList,
+      merchantList,
+      sortKey,
+      totalResultCount: productList.length + merchantList.length
+=======
   doSearch(keyword) {
     this.setData({ loading: true })
 
@@ -59,6 +93,7 @@ Page({
         totalResultCount: productList.length + merchantList.length,
         loading: false
       })
+>>>>>>> 苏
     })
   },
 
@@ -82,6 +117,13 @@ Page({
     const sortKey = e.currentTarget.dataset.key
     if (sortKey === 'price' && this.data.sortKey === 'price') {
       this.setData({ priceAsc: !this.data.priceAsc }, () => {
+<<<<<<< HEAD
+        this.doSearch(this.data.keyword, sortKey)
+      })
+      return
+    }
+    this.doSearch(this.data.keyword, sortKey)
+=======
         this.doSearch(this.data.keyword)
       })
       return
@@ -89,6 +131,7 @@ Page({
     this.setData({ sortKey }, () => {
       this.doSearch(this.data.keyword)
     })
+>>>>>>> 苏
   },
 
   onProductTap(e) {

@@ -10,7 +10,10 @@ const getLocalCoupons = () => JSON.parse(JSON.stringify(wx.getStorageSync(COUPON
 const setLocalCoupons = (list) => wx.setStorageSync(COUPON_KEY, JSON.parse(JSON.stringify(list)))
 const getLocalPromotions = () => JSON.parse(JSON.stringify(wx.getStorageSync(PROMOTION_KEY) || []))
 const setLocalPromotions = (list) => wx.setStorageSync(PROMOTION_KEY, JSON.parse(JSON.stringify(list)))
+<<<<<<< HEAD
+=======
 const centsToYuanInput = (value) => util.formatPrice(value).replace(/\.00$/, '')
+>>>>>>> 苏
 
 Page({
   data: {
@@ -212,6 +215,20 @@ Page({
       })
       .catch(() => {
         const list = getLocalCoupons()
+<<<<<<< HEAD
+        const maxId = list.reduce((max, item) => Math.max(max, item.couponId || 0), 0)
+        list.unshift({
+          couponId: maxId + 1,
+          ...couponData,
+          usedCount: 0,
+          status: 'ACTIVE',
+          createTime: Date.now()
+        })
+        setLocalCoupons(list)
+        util.showToast('已本地创建优惠券', 'success')
+        this.setData({ showCouponForm: false })
+        this.renderCoupons(list)
+=======
         const nextList = f.couponId
           ? list.map((item) =>
               item.couponId === f.couponId
@@ -232,6 +249,7 @@ Page({
         util.showToast(f.couponId ? '已本地保存优惠券' : '已本地创建优惠券', 'success')
         this.setData({ showCouponForm: false })
         this.renderCoupons(nextList)
+>>>>>>> 苏
       })
   },
 
@@ -305,6 +323,19 @@ Page({
       })
       .catch(() => {
         const list = getLocalPromotions()
+<<<<<<< HEAD
+        const maxId = list.reduce((max, item) => Math.max(max, item.promotionId || 0), 0)
+        list.unshift({
+          promotionId: maxId + 1,
+          ...promoData,
+          status: 'ACTIVE',
+          createTime: Date.now()
+        })
+        setLocalPromotions(list)
+        util.showToast('已本地创建满减活动', 'success')
+        this.setData({ showPromotionForm: false })
+        this.renderPromotions(list)
+=======
         const nextList = f.promotionId
           ? list.map((item) =>
               item.promotionId === f.promotionId
@@ -324,6 +355,7 @@ Page({
         util.showToast(f.promotionId ? '已本地保存满减活动' : '已本地创建满减活动', 'success')
         this.setData({ showPromotionForm: false })
         this.renderPromotions(nextList)
+>>>>>>> 苏
       })
   },
 

@@ -2,8 +2,11 @@
 
 本文档面向后端开发人员，说明商家端小程序的全部接口调用约定、请求参数和期望的响应数据结构。
 
+<<<<<<< HEAD
+=======
 注意：本文财务章节仍保留旧版“提现”描述，商家端最新结算模型请优先以 `SETTLEMENT_BACKEND_CHANGE.md` 为准。
 
+>>>>>>> 苏
 ## 一、通信约定
 
 ### 基础地址
@@ -112,23 +115,43 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ```json
 {
+<<<<<<< HEAD
+  "pendingAcceptCount": 1,
   "pendingVerifyCount": 2,
+  "shippingCount": 1,
+=======
+  "pendingVerifyCount": 2,
+>>>>>>> 苏
   "completedCount": 1,
   "refundingCount": 1,
   "onShelfCount": 3,
   "todaySalesAmount": 87000,
+<<<<<<< HEAD
+  "abnormalCount": 2
+=======
   "abnormalCount": 1
+>>>>>>> 苏
 }
 ```
 
 | 字段 | 说明 |
 |------|------|
+<<<<<<< HEAD
+| `pendingAcceptCount` | 待接单数 |
 | `pendingVerifyCount` | 待核销数 |
+| `shippingCount` | 配送中数 |
+=======
+| `pendingVerifyCount` | 待核销数 |
+>>>>>>> 苏
 | `completedCount` | 已完成数 |
 | `refundingCount` | 退款中数 |
 | `onShelfCount` | 在售商品数 |
 | `todaySalesAmount` | 今日销售额（分） |
+<<<<<<< HEAD
+| `abnormalCount` | 异常订单数（退款中 + 已拒单） |
+=======
 | `abnormalCount` | 异常订单数（当前等同退款中数） |
+>>>>>>> 苏
 
 ---
 
@@ -223,6 +246,51 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 ---
 
+<<<<<<< HEAD
+#### `POST /wxmini/merchant-mini/order/accept/{orderNo}` — 接单
+
+需权限：`order.manage`
+
+仅 `PENDING_ACCEPT` 状态可接单。接单后流转为 `ACCEPTED`。
+
+响应 `data`：返回更新后的订单对象。
+
+---
+
+#### `POST /wxmini/merchant-mini/order/reject/{orderNo}` — 拒单
+
+需权限：`order.manage`
+
+请求体：
+
+```json
+{
+  "reason": "商品已售罄"
+}
+```
+
+仅 `PENDING_ACCEPT` 状态可拒单。拒单后流转为 `REJECTED`。
+
+---
+
+#### `POST /wxmini/merchant-mini/order/ship/{orderNo}` — 发货
+
+需权限：`order.manage`
+
+仅 `ACCEPTED` 状态可发货。发货后流转为 `SHIPPING`。
+
+---
+
+#### `POST /wxmini/merchant-mini/order/complete/{orderNo}` — 确认送达
+
+需权限：`order.manage`
+
+仅 `SHIPPING` 状态可确认完成。完成后流转为 `COMPLETED`。
+
+---
+
+=======
+>>>>>>> 苏
 #### `POST /wxmini/merchant-mini/order/cancel/{orderNo}` — 商家取消订单
 
 需权限：`order.manage`
@@ -696,6 +764,31 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 ## 三、订单状态机
 
 ```
+<<<<<<< HEAD
+         ┌────────────────┐
+         │ PENDING_ACCEPT │  外卖订单用户支付后
+         │    (待接单)     │
+         └───────┬────────┘
+      ┌──────────┼──────────┐
+      ▼                     ▼
+┌──────────┐          ┌──────────┐
+│ REJECTED │          │ ACCEPTED │
+│  (已拒单) │          │  (已接单) │
+└──────────┘          └─────┬────┘
+                            ▼
+                      ┌──────────┐
+                      │ SHIPPING │
+                      │  (配送中) │
+                      └─────┬────┘
+                            ▼
+                      ┌───────────┐
+                      │ COMPLETED │
+                      │  (已完成)  │
+                      └───────────┘
+
+
+=======
+>>>>>>> 苏
          ┌────────────────┐
          │ PENDING_VERIFY │  团购订单用户支付后
          │   (待核销)     │
@@ -723,8 +816,17 @@ token 存储在 `wx.setStorageSync('merchantToken', token)`，员工信息存储
 
 | 状态值 | 前端展示 | 前端可执行操作 |
 |--------|----------|----------------|
+<<<<<<< HEAD
+| `PENDING_ACCEPT` | 待接单 | 接单、拒单 |
+| `ACCEPTED` | 已接单 | 发货 |
+| `SHIPPING` | 配送中 | 确认送达 |
+| `PENDING_VERIFY` | 待核销 | 扫码/手动核销 |
+| `COMPLETED` | 已完成 | 查看详情 |
+| `REJECTED` | 已拒单 | 查看详情 |
+=======
 | `PENDING_VERIFY` | 待核销 | 扫码核销、手动核销、取消订单 |
 | `COMPLETED` | 已完成 | 查看详情 |
+>>>>>>> 苏
 | `REFUNDING` | 退款中 | 同意退款、拒绝退款 |
 | `REFUNDED` | 已退款 | 查看详情 |
 | `CANCELLED` | 已取消 | 查看详情 |

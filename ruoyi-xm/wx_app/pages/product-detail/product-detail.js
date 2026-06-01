@@ -1,8 +1,12 @@
+const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
 const cartService = require('../../services/cart')
+<<<<<<< HEAD
+=======
 const productApi = require('../../api/product')
 const merchantApi = require('../../api/merchant')
+>>>>>>> 苏
 
 Page({
   data: {
@@ -20,7 +24,11 @@ Page({
   },
 
   onLoad(options) {
+<<<<<<< HEAD
+    this.setData({ productId: parseInt(options.id || 101, 10) })
+=======
     this.setData({ productId: parseInt(options.id, 10) })
+>>>>>>> 苏
     this.loadProductDetail()
   },
 
@@ -34,6 +42,37 @@ Page({
 
   loadProductDetail() {
     this.setData({ loading: true })
+<<<<<<< HEAD
+    setTimeout(() => {
+      const productConfig = templateService.getTemplateSection('productDetail')
+      const rawProduct = mock.grouponList.find((item) => item.id === this.data.productId) || mock.grouponList[0]
+      const merchant = mock.merchantList.find((item) => item.id === rawProduct.merchantId) || mock.merchantList[0]
+      const otherStoreList = [merchant]
+      const product = this.formatProduct(rawProduct, productConfig)
+
+      this.setData({
+        productConfig,
+        product,
+        merchant,
+        otherStoreList,
+        serviceHighlightList: rawProduct.tags || [],
+        decisionList: [
+          `原价 ¥${(rawProduct.originalPrice / 100).toFixed(2)}，优惠价 ¥${(rawProduct.price / 100).toFixed(2)}`,
+          `已售 ${rawProduct.sales}，库存 ${rawProduct.stock}，有效期 ${rawProduct.validDays} 天`,
+          `适用门店 ${merchant.name}，距您约 ${merchant.distance}`
+        ],
+        ruleList: [
+          `有效期：${rawProduct.validPeriod}`,
+          productConfig.timeRangeRuleText,
+          `是否预约：${product.bookingRequiredText}`,
+          `预约说明：${rawProduct.bookingRule}`,
+          `限购说明：${rawProduct.limitRule}`,
+          `退款规则：${rawProduct.refundRule}`
+        ],
+        loading: false
+      })
+    }, 150)
+=======
 
     const productConfig = templateService.getTemplateSection('productDetail')
 
@@ -82,6 +121,7 @@ Page({
         this.setData({ loading: false })
         util.showToast('加载失败，请重试')
       })
+>>>>>>> 苏
   },
 
   goMerchant() {

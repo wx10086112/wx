@@ -1,3 +1,4 @@
+const mock = require('../../data/mock')
 const util = require('../../utils/util')
 
 Page({
@@ -5,8 +6,8 @@ Page({
     keyword: '',
     hotList: ['SPA', '肩颈', '焕肤', '到店核销', '护理', '轻养'],
     historyList: [],
-    merchantList: [],
-    productList: []
+    merchantList: mock.merchantList,
+    productList: mock.grouponList
   },
 
   onLoad() {

@@ -1,7 +1,11 @@
+const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
+<<<<<<< HEAD
+=======
 const merchantApi = require('../../api/merchant')
 const productApi = require('../../api/product')
+>>>>>>> 苏
 
 Page({
   data: {
@@ -42,6 +46,26 @@ Page({
     return this.getUserLocation()
       .then((userLocation) => {
         const templateConfig = templateService.getTemplateConfig()
+<<<<<<< HEAD
+        const merchantList = this.buildLocatedMerchantList(mock.merchantList, userLocation)
+        const filteredData = this.buildFilteredLists({
+          merchantList,
+          grouponList: mock.grouponList
+        })
+        this.setData({
+          brandInfo: templateConfig.brandInfo,
+          homeConfig: templateConfig.home,
+          userLocation,
+          currentLocation: this.formatCurrentDistance(merchantList[0]),
+          currentMerchant: merchantList[0] || {},
+          merchantList,
+          grouponList: mock.grouponList,
+          displayMerchantList: filteredData.displayMerchantList,
+          displayGrouponList: filteredData.displayGrouponList,
+          loading: false
+        })
+      })
+=======
 
         const merchantParams = {}
         if (userLocation) {
@@ -79,6 +103,7 @@ Page({
       .catch(() => {
         this.setData({ loading: false })
       })
+>>>>>>> 苏
   },
 
   getUserLocation() {
@@ -103,6 +128,57 @@ Page({
     return merchant.distance || '距离计算中'
   },
 
+<<<<<<< HEAD
+  toRadians(value) {
+    return (value * Math.PI) / 180
+  },
+
+  calculateDistanceMeters(userLocation, merchant = {}) {
+    if (!userLocation || !merchant.latitude || !merchant.longitude) {
+      return Number(merchant.distanceValue || 0)
+    }
+
+    const earthRadius = 6371000
+    const lat1 = this.toRadians(userLocation.latitude)
+    const lat2 = this.toRadians(Number(merchant.latitude))
+    const deltaLat = this.toRadians(Number(merchant.latitude) - userLocation.latitude)
+    const deltaLng = this.toRadians(Number(merchant.longitude) - userLocation.longitude)
+    const a =
+      Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+    return Math.round(earthRadius * c)
+  },
+
+  formatDistance(distanceValue = 0) {
+    if (distanceValue < 1000) {
+      return `${Math.max(distanceValue, 0)}m`
+    }
+
+    if (distanceValue < 10000) {
+      return `${(distanceValue / 1000).toFixed(1)}km`
+    }
+
+    return `${Math.round(distanceValue / 1000)}km`
+  },
+
+  buildLocatedMerchantList(merchantList = [], userLocation) {
+    return merchantList.map((merchant) => {
+      const distanceValue = this.calculateDistanceMeters(userLocation, merchant)
+      return {
+        ...merchant,
+        distanceValue,
+        distance: this.formatDistance(distanceValue),
+        businessStatusText: merchant.businessStatus ? '营业中' : '休息中',
+        bookingText: merchant.supportBooking === false ? '到店即用' : '可预约',
+        displayTags: (merchant.tags || []).filter((tag) => !['营业中', '休息中'].includes(tag))
+      }
+    })
+  },
+
+=======
+>>>>>>> 苏
   buildFilteredLists({ merchantList = [], grouponList = [] }) {
     return {
       displayMerchantList: merchantList,
@@ -144,6 +220,7 @@ Page({
           })
           return
         }
+
         this.loadData()
       },
       fail: () => {
