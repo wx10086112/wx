@@ -54,10 +54,21 @@ public class MerchantMiniController {
     private IMerchantSettlementRecordService settlementService;
 
     /**
-     * 每次请求前，从AppID解析商家ID并设置上下文
+     * 每次请求前，优先从商家入口ID解析当前商家，兼容旧的 AppID 模式
      */
     @org.springframework.web.bind.annotation.ModelAttribute
     public void resolveMerchantFromAppId(HttpServletRequest request) {
+        String merchantIdText = request.getHeader("X-Merchant-Id");
+        if (StringUtils.isBlank(merchantIdText)) {
+            merchantIdText = request.getParameter("merchantId");
+        }
+        if (StringUtils.isNotBlank(merchantIdText)) {
+            try {
+                WxMiniUserContext.setMerchantEntryId(Long.valueOf(merchantIdText));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
         String appId = request.getHeader("X-Merchant-AppId");
         if (StringUtils.isNotBlank(appId) && WxMiniUserContext.getAppIdMerchantId() == null) {
             Merchant merchant = merchantService.selectMerchantByMAppId(appId);
@@ -73,7 +84,34 @@ public class MerchantMiniController {
         if (StringUtils.isBlank(appId)) {
             appId = request.getParameter("appid");
         }
-        return AjaxResult.success(merchantMiniMockService.login(requestDto.getUsername(), requestDto.getPassword(), appId));
+        return AjaxResult.success(merchantMiniMockService.login(
+                requestDto.getUsername(),
+                requestDto.getPassword(),
+                requestDto.getMerchantId(),
+                appId
+        ));
+    }
+
+    @GetMapping("/entry/{merchantId}")
+    public AjaxResult getMerchantEntryInfo(@PathVariable Long merchantId) {
+        Merchant merchant = merchantService.selectMerchantById(merchantId);
+        if (merchant == null) {
+            return AjaxResult.error("商家不存在");
+        }
+        if (merchant.getStatus() == Merchant.STATUS_STOPPED) {
+            return AjaxResult.error("商家已停止合作");
+        }
+        if (merchant.getStatus() != Merchant.STATUS_NORMAL) {
+            return AjaxResult.error("商家暂不可登录");
+        }
+
+        MerchantMiniEntryInfoDto entryInfo = new MerchantMiniEntryInfoDto();
+        entryInfo.setMerchantId(merchant.getId());
+        entryInfo.setMerchantName(merchant.getName());
+        entryInfo.setContact(merchant.getContact());
+        entryInfo.setPhone(merchant.getPhone());
+        entryInfo.setLoginPage("/pages/merchant/login/login?merchantId=" + merchant.getId());
+        return AjaxResult.success(entryInfo);
     }
 
     @GetMapping("/workbench/overview")

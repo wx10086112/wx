@@ -8,6 +8,8 @@ public class MerchantMiniStaffUserDto {
 
     private Long staffId;
 
+    private String username;
+
     private Long merchantId;
 
     private Long storeId;
@@ -40,6 +42,14 @@ public class MerchantMiniStaffUserDto {
 
     public void setStaffId(Long staffId) {
         this.staffId = staffId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public Long getMerchantId() {

@@ -102,8 +102,7 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
      */
     private void handleMerchantMiniRequest(HttpServletRequest request, HttpServletResponse response,
                                            FilterChain filterChain) throws ServletException, IOException {
-        // 登录接口直接放行
-        if (request.getRequestURI().startsWith("/wxmini/merchant-mini/auth/login")) {
+        if (isMerchantMiniPublicUri(request.getRequestURI())) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -206,6 +205,11 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
                 || path.startsWith("/wxmini/public")
                 || path.startsWith("/wxmini/pay/notify")
                 || path.startsWith("/wxmini/template/config")
-                || path.startsWith("/wxmini/merchant-mini/auth/login");
+                || isMerchantMiniPublicUri(path);
+    }
+
+    private boolean isMerchantMiniPublicUri(String path) {
+        return path.startsWith("/wxmini/merchant-mini/auth/login")
+                || path.startsWith("/wxmini/merchant-mini/entry/");
     }
 }

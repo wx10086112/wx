@@ -1,7 +1,7 @@
 <view class="page-shell mine-page">
   <view class="profile-card">
     <view class="profile-top">
-      <view class="avatar-mark">{{staffUser.roleName === '店长' ? '长' : '员'}}</view>
+      <view class="avatar-mark">{{staffUser.roleKey === 'owner' ? '长' : '员'}}</view>
       <view class="profile-main">
         <view class="name-row">
           <text class="user-name">{{staffUser.name}}</text>

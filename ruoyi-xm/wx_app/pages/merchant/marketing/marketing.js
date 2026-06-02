@@ -40,7 +40,7 @@ Page({
   },
 
   onShow() {
-    if (!app.needMerchantLogin()) return
+    if (!app.needMerchantLogin() || !app.needPermission(['marketing.manage'])) return
     this.loadData()
   },
 

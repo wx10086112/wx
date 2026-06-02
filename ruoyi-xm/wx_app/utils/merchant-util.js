@@ -1,5 +1,5 @@
 const MERCHANT_STORAGE_VERSION_KEY = 'merchant_mock_storage_version'
-const MERCHANT_STORAGE_VERSION = 'groupon_verify_only_20260525'
+const MERCHANT_STORAGE_VERSION = 'merchant_real_login_20260602'
 const MERCHANT_ORDER_KEY = 'merchant_order_list'
 const MERCHANT_GOODS_KEY = 'merchant_goods_list'
 const MERCHANT_STORE_KEY = 'merchant_store_info'
@@ -443,33 +443,6 @@ const buildFinanceOverview = () => {
   }
 }
 
-const addStaff = (staffData) => {
-  const staffList = getStaffList()
-  const maxId = staffList.reduce((max, item) => Math.max(max, Number(item.staffId || 0)), 0)
-  const newStaff = {
-    staffId: maxId + 1,
-    name: staffData.name || '',
-    phone: staffData.phone || '',
-    roleKey: staffData.roleKey || 'clerk',
-    roleName: staffData.roleKey === 'manager' ? '店长' : '店员',
-    status: 'ACTIVE',
-    permissions: staffData.permissions || ['stats.view', 'order.manage', 'verify.scan', 'verify.manual', 'verify.record']
-  }
-  setStaffList([...staffList, newStaff])
-  return { success: true, message: '员工添加成功', staff: newStaff }
-}
-
-const updateStaffInfo = (staffId, updates) => {
-  const staffList = getStaffList()
-  const target = staffList.find((item) => item.staffId === staffId)
-  if (!target) return { success: false, message: '员工不存在' }
-  const nextList = staffList.map((item) =>
-    item.staffId === staffId ? { ...item, ...updates } : item
-  )
-  setStaffList(nextList)
-  return { success: true, message: '员工信息已更新', staff: nextList.find((item) => item.staffId === staffId) }
-}
-
 const cancelOrder = (orderNo, reason = '') => {
   const orderList = getOrderList()
   const target = orderList.find((item) => item.orderNo === orderNo)
@@ -562,7 +535,5 @@ module.exports = {
   rejectRefundOrder,
   getLowStockGoods,
   batchUpdateGoodsStatus,
-  buildFinanceOverview,
-  addStaff,
-  updateStaffInfo
+  buildFinanceOverview
 }

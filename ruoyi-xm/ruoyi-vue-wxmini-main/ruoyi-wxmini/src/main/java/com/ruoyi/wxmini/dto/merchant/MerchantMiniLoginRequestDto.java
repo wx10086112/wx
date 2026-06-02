@@ -10,6 +10,8 @@ public class MerchantMiniLoginRequestDto {
     @NotBlank(message = "密码不能为空")
     private String password;
 
+    private Long merchantId;
+
     public String getUsername() {
         return username;
     }
@@ -24,5 +26,13 @@ public class MerchantMiniLoginRequestDto {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Long getMerchantId() {
+        return merchantId;
+    }
+
+    public void setMerchantId(Long merchantId) {
+        this.merchantId = merchantId;
     }
 }

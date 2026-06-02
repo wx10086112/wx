@@ -78,7 +78,7 @@ Page({
         title: '营销活动',
         desc: '优惠券与门店促销配置',
         url: '/pages/merchant/marketing/marketing',
-        permissionCodes: ['goods.manage']
+        permissionCodes: ['marketing.manage']
       }
     ].filter((item) => this.hasAnyPermission(permissionCodes, item.permissionCodes))
   },

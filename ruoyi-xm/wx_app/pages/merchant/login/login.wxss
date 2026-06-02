@@ -21,6 +21,61 @@
   font-weight: 700;
 }
 
+.hero-desc {
+  display: block;
+  margin-top: 14rpx;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+
+.entry-card {
+  margin-top: 24rpx;
+  padding: 24rpx 28rpx;
+  border-radius: 20rpx;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12rpx 28rpx rgba(31, 51, 73, 0.06);
+}
+
+.entry-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.entry-card__title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1f2a37;
+}
+
+.entry-card__status {
+  font-size: 22rpx;
+  color: #1f6feb;
+}
+
+.entry-card__body,
+.entry-card__empty {
+  margin-top: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.entry-card__name {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.entry-card__meta,
+.entry-card__empty {
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #64748b;
+}
+
 .login-panel {
   margin-top: 28rpx;
   display: flex;
@@ -28,16 +83,11 @@
   gap: 18rpx;
 }
 
-.role-card,
 .login-panel {
   background: rgba(255, 255, 255, 0.92);
   border-radius: 20rpx;
   padding: 28rpx;
   box-shadow: 0 12rpx 28rpx rgba(31, 51, 73, 0.06);
-}
-
-.role-card.active {
-  border: 2rpx solid #1f6feb;
 }
 
 .panel-label {
@@ -60,6 +110,13 @@
 
 .login-btn {
   margin-top: 28rpx;
+}
+
+.login-tip {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #7a8798;
+  line-height: 1.7;
 }
 
 .apply-entry {

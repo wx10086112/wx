@@ -5,27 +5,69 @@ const app = getApp()
 
 Page({
   data: {
-    roleCardList: [
-      {
-        roleKey: 'manager',
-        title: '店长登录',
-        desc: '拥有订单、核销、商品、门店和员工权限'
-      },
-      {
-        roleKey: 'clerk',
-        title: '店员登录',
-        desc: '聚焦订单处理与到店核销日常操作'
-      }
-    ],
-    selectedRoleKey: 'manager'
+    merchantId: null,
+    merchantEntry: null,
+    entryLoading: false,
+    username: '',
+    password: '',
+    submitting: false
   },
 
-  onLoad() {
+  onLoad(options = {}) {
     if (app.globalData.isMerchantLoggedIn) {
       wx.redirectTo({
         url: '/pages/merchant/workbench/workbench'
       })
+      return
     }
+
+    this.initMerchantEntry(options)
+  },
+
+  initMerchantEntry(options = {}) {
+    const optionMerchantId = Number(options.merchantId || 0)
+    const cachedEntry = app.getMerchantEntry ? app.getMerchantEntry() : null
+    const merchantId = optionMerchantId || Number((cachedEntry && cachedEntry.merchantId) || 0)
+
+    if (!merchantId) {
+      this.setData({
+        merchantId: null,
+        merchantEntry: null
+      })
+      return
+    }
+
+    const nextEntry = app.setMerchantEntry({ ...(cachedEntry || {}), merchantId })
+    this.setData({
+      merchantId,
+      merchantEntry: nextEntry
+    })
+    this.loadMerchantEntryInfo(merchantId)
+  },
+
+  loadMerchantEntryInfo(merchantId) {
+    this.setData({ entryLoading: true })
+    api
+      .getMerchantEntryInfo(merchantId)
+      .then((response = {}) => {
+        const merchantEntry = app.setMerchantEntry({
+          merchantId,
+          merchantName: response.merchantName,
+          contact: response.contact,
+          phone: response.phone,
+          loginPage: response.loginPage
+        })
+        this.setData({
+          merchantId,
+          merchantEntry
+        })
+      })
+      .catch((err) => {
+        util.showToast(err.message || '商家入口信息加载失败')
+      })
+      .finally(() => {
+        this.setData({ entryLoading: false })
+      })
   },
 
   onUsernameInput(e) {
@@ -41,30 +83,36 @@ Page({
   },
 
   submitLogin() {
-    var username = (this.data.username || '').trim()
-    var password = (this.data.password || '').trim()
+    const username = (this.data.username || '').trim()
+    const password = (this.data.password || '').trim()
+    const merchantId = Number(this.data.merchantId || 0)
+
+    if (!merchantId) {
+      util.showToast('请先通过商家后台入口码进入')
+      return
+    }
 
     if (!username) {
-      util.showToast('请输入账号')
+      util.showToast('请输入登录账号')
       return
     }
     if (!password) {
-      util.showToast('请输入密码')
+      util.showToast('请输入登录密码')
       return
     }
 
-    wx.showLoading({
-      title: '登录中',
-      mask: true
-    })
+    this.setData({ submitting: true })
+    util.showLoading('登录中...')
 
     api
       .merchantLogin({
-        username: username,
-        password: password
+        username,
+        password,
+        merchantId
       })
       .then((response) => {
         app.setMerchantLoginInfo(response.token, response.staffUser)
+        util.showToast('登录成功', 'success')
         wx.redirectTo({
           url: '/pages/merchant/workbench/workbench'
         })
@@ -73,7 +121,8 @@ Page({
         util.showToast(err.message || '登录失败，请检查账号密码')
       })
       .finally(() => {
-        wx.hideLoading()
+        this.setData({ submitting: false })
+        util.hideLoading()
       })
   }
 })

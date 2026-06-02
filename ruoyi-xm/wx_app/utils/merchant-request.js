@@ -2,14 +2,20 @@ const app = getApp()
 
 const getBaseUrl = () => app.baseUrl || 'http://localhost:8080'
 const getAppId = () => (app.globalData && app.globalData.appId) || ''
+const getMerchantEntry = () => (app.getMerchantEntry ? app.getMerchantEntry() : null)
 
 const request = (options) => {
   return new Promise((resolve, reject) => {
     const token = wx.getStorageSync('merchantToken')
+    const merchantEntry = getMerchantEntry()
     const header = {
       'Content-Type': 'application/json',
       'X-Merchant-AppId': getAppId(),
       ...options.header
+    }
+
+    if (merchantEntry && merchantEntry.merchantId) {
+      header['X-Merchant-Id'] = String(merchantEntry.merchantId)
     }
 
     if (token) {

@@ -8,7 +8,7 @@
 ## 一、项目位置
 
 ```
-E:\ruoyi\ruoyi-xm\ruoyi-vue-wxmini-main\ruoyi-ui
+f:\wx\ruoyi-xm\ruoyi-vue-wxmini-main\ruoyi-ui
 ```
 
 ---

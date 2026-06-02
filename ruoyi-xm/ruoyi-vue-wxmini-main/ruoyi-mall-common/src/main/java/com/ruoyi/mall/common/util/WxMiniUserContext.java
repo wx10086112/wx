@@ -15,6 +15,7 @@ public class WxMiniUserContext {
 
     private static final ThreadLocal<WxMiniAuthContext> currentContext = new ThreadLocal<>();
     private static final ThreadLocal<Long> appIdMerchantId = new ThreadLocal<>();
+    private static final ThreadLocal<Long> merchantEntryId = new ThreadLocal<>();
 
     public static void setAppIdMerchantId(Long merchantId) {
         appIdMerchantId.set(merchantId);
@@ -22,6 +23,14 @@ public class WxMiniUserContext {
 
     public static Long getAppIdMerchantId() {
         return appIdMerchantId.get();
+    }
+
+    public static void setMerchantEntryId(Long merchantId) {
+        merchantEntryId.set(merchantId);
+    }
+
+    public static Long getMerchantEntryId() {
+        return merchantEntryId.get();
     }
 
     /**
@@ -120,5 +129,6 @@ public class WxMiniUserContext {
     public static void clear() {
         currentContext.remove();
         appIdMerchantId.remove();
+        merchantEntryId.remove();
     }
 }

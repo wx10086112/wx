@@ -112,12 +112,12 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     // ==================== 登录 ====================
 
     @Override
-    public MerchantMiniLoginResponseDto login(String username, String password, String appid) {
+    public MerchantMiniLoginResponseDto login(String username, String password, Long merchantId, String appid) {
         MerchantUser merchantUser = merchantUserMapper.selectMerchantUserByUsername(username);
         if (merchantUser == null) {
             throw new IllegalArgumentException("商家账号不存在");
         }
-        if (merchantUser.getStatus() != 1) {
+        if (!Integer.valueOf(1).equals(merchantUser.getStatus())) {
             throw new IllegalArgumentException("商家账号已被禁用");
         }
         // BCrypt密码校验
@@ -136,13 +136,23 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
             throw new IllegalArgumentException("商家未审核通过或已被禁用");
         }
 
-        // 校验appid与员工所属商家一致
-        if (StringUtils.isNotBlank(appid)) {
+        if (merchantId != null && !merchantId.equals(merchant.getId())) {
+            throw new IllegalArgumentException("该账号不属于当前扫码商家");
+        }
+
+        // 兼容旧模式：未传 merchantId 时，仍按旧 AppID 识别商家
+        if (merchantId == null && StringUtils.isNotBlank(appid)) {
             Merchant appMerchant = merchantMapper.selectMerchantByMAppId(appid);
             if (appMerchant == null || !appMerchant.getId().equals(merchant.getId())) {
                 throw new IllegalArgumentException("该账号不属于当前小程序所属商家");
             }
         }
+
+        MerchantUser loginUpdate = new MerchantUser();
+        loginUpdate.setId(merchantUser.getId());
+        loginUpdate.setLastLoginTime(new Date());
+        merchantUserMapper.updateMerchantUser(loginUpdate);
+        merchantUser.setLastLoginTime(loginUpdate.getLastLoginTime());
 
         MerchantMiniStaffUserDto staffUser = buildStaffUserFromDb(merchantUser, merchant);
 
@@ -799,6 +809,11 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         if (merchantId != null) {
             return merchantId;
         }
+        // 其次取扫码/入口指定的商家
+        merchantId = com.ruoyi.mall.common.util.WxMiniUserContext.getMerchantEntryId();
+        if (merchantId != null) {
+            return merchantId;
+        }
         // 回退到AppID方式
         merchantId = com.ruoyi.mall.common.util.WxMiniUserContext.getAppIdMerchantId();
         if (merchantId != null) {
@@ -1090,6 +1105,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         MerchantMiniStaffUserDto dto = new MerchantMiniStaffUserDto();
         dto.setUserId(String.valueOf(user.getId()));
         dto.setStaffId(user.getId());
+        dto.setUsername(user.getUsername());
         dto.setMerchantId(user.getMerchantId());
         dto.setName(user.getRealName());
         dto.setPhone(user.getPhone());
@@ -1097,7 +1113,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
 
         String role = user.getRole();
         dto.setRoleKey(role);
-        dto.setRoleName(ROLE_OWNER.equals(role) ? "管理员" : "成员");
+        dto.setRoleName(ROLE_OWNER.equals(role) ? "店长" : "店员");
         dto.setPermissions(new ArrayList<>(buildPermissions(role)));
 
         if (merchant != null) {
@@ -1122,6 +1138,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
             permissions.add("store.manage");
             permissions.add("staff.manage");
             permissions.add("finance.manage");
+            permissions.add("marketing.manage");
         }
         return permissions;
     }

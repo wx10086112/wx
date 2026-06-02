@@ -23,7 +23,7 @@
     (2, 1, 'fruit_staff', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '赵六', '13900001111', 'member', 1),
     (3, 2, 'bakery_admin', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '李四', '13800002222', 'owner', 1),
     (4, 3, 'chuan_admin', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '王五', '13800003333', 'owner', 1);
-    -- 密码统一为 123456 (BCrypt加密)
+    -- 密码统一为 admin123 (BCrypt加密)
 
     -- ============================================================
     -- 3. 门店

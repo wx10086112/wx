@@ -108,7 +108,7 @@ Page({
       { label: '核销记录', icon: '📝', url: '/pages/merchant/verify-records/verify-records', permissionCodes: ['verify.record', 'verify.scan', 'verify.manual'], isTab: false },
       { label: '商品管理', icon: '🏷️', url: '/pages/merchant/goods/goods', permissionCodes: ['goods.manage'], isTab: true },
       { label: '结算中心', icon: '💰', url: '/pages/merchant/finance/finance', permissionCodes: ['finance.manage'], isTab: false },
-      { label: '营销活动', icon: '🎫', url: '/pages/merchant/marketing/marketing', permissionCodes: ['goods.manage'], isTab: false },
+      { label: '营销活动', icon: '🎫', url: '/pages/merchant/marketing/marketing', permissionCodes: ['marketing.manage'], isTab: false },
       { label: '门店设置', icon: '🏪', url: '/pages/merchant/store/store', permissionCodes: ['store.manage'], isTab: false },
       { label: '员工权限', icon: '👥', url: '/pages/merchant/staff/staff', permissionCodes: ['staff.manage'], isTab: false }
     ].filter((item) => app.hasAnyPermission(item.permissionCodes))

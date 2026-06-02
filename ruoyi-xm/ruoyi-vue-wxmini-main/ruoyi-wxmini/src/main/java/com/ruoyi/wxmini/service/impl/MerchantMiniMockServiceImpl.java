@@ -76,7 +76,7 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
     private final List<MerchantMiniWithdrawRecordDto> withdrawRecordList = initWithdrawRecordList();
 
     @Override
-    public MerchantMiniLoginResponseDto login(String username, String password, String appid) {
+    public MerchantMiniLoginResponseDto login(String username, String password, Long merchantId, String appid) {
         // Mock模式：忽略密码，用username当作roleKey
         MerchantMiniStaffUserDto staffUser = cloneStaffUser(resolveStaffUserByRoleKey(username));
         MerchantMiniLoginResponseDto responseDto = new MerchantMiniLoginResponseDto();

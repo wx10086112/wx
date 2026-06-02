@@ -7,17 +7,18 @@ const permissionOptions = [
   { label: '商品管理', value: 'goods.manage' },
   { label: '门店设置', value: 'store.manage' },
   { label: '员工权限', value: 'staff.manage' },
-  { label: '结算中心', value: 'finance.manage' }
+  { label: '结算中心', value: 'finance.manage' },
+  { label: '营销活动', value: 'marketing.manage' }
 ]
 
 const roleTemplates = {
-  manager: {
-    roleKey: 'manager',
+  owner: {
+    roleKey: 'owner',
     roleName: '店长',
     permissions: permissionOptions.map((item) => item.value)
   },
-  clerk: {
-    roleKey: 'clerk',
+  member: {
+    roleKey: 'member',
     roleName: '店员',
     permissions: ['stats.view', 'order.manage', 'verify.scan', 'verify.manual', 'verify.record']
   }
@@ -26,21 +27,23 @@ const roleTemplates = {
 const staffList = [
   {
     staffId: 1,
+    username: 'lin_dianzhang',
     name: '林店长',
     phone: '13800001111',
-    roleKey: 'manager',
+    roleKey: 'owner',
     roleName: '店长',
     status: 'ACTIVE',
-    permissions: roleTemplates.manager.permissions
+    permissions: roleTemplates.owner.permissions
   },
   {
     staffId: 2,
+    username: 'zhou_dianyuan',
     name: '周店员',
     phone: '13800002222',
-    roleKey: 'clerk',
+    roleKey: 'member',
     roleName: '店员',
     status: 'ACTIVE',
-    permissions: roleTemplates.clerk.permissions
+    permissions: roleTemplates.member.permissions
   }
 ]
 
@@ -51,7 +54,7 @@ const merchantInfo = {
   storeName: '蓝屿轻养·国贸旗舰店',
   shortName: '国贸店',
   brandSlogan: '团购到店核销运营端',
-  notice: '支持扫码核销、手动核销、商品上下架与单店员工权限管理',
+  notice: '支持扫码核销、手动核销、商品上下架与单店员工账号管理',
   businessHours: '10:00-22:00',
   phone: '010-88886601',
   address: '北京市朝阳区建国路88号嘉里中心B1',
@@ -216,15 +219,19 @@ const orderList = [
   }
 ]
 
-const buildStaffUser = (roleKey = 'manager') => {
-  const role = roleTemplates[roleKey] || roleTemplates.manager
-  const seedUser = staffList.find((item) => item.roleKey === roleKey) || staffList[0]
+const buildStaffUser = (roleKey = 'owner') => {
+  const targetRoleKey = roleKey === 'owner' ? 'owner' : 'member'
+  const role = roleTemplates[targetRoleKey]
+  const seedUser = staffList.find((item) => item.roleKey === targetRoleKey) || staffList[0]
+
   return {
     staffId: seedUser.staffId,
+    username: seedUser.username,
     name: seedUser.name,
     phone: seedUser.phone,
     roleKey: role.roleKey,
     roleName: role.roleName,
+    status: seedUser.status,
     permissions: role.permissions
   }
 }

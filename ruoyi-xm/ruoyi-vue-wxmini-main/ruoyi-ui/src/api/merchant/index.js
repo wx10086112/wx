@@ -17,6 +17,13 @@ export function getMerchantDetail(id) {
   })
 }
 
+export function getMerchantEntryQrCode(id) {
+  return request({
+    url: '/mall/merchant/entry-qrcode/' + id,
+    method: 'get'
+  })
+}
+
 // 新增商家
 export function addMerchant(data) {
   return request({

@@ -1,6 +1,51 @@
 const util = require('./utils/util')
 const merchantUtil = require('./utils/merchant-util')
 const merchantMock = require('./data/merchant-mock')
+const MERCHANT_ENTRY_KEY = 'merchantEntry'
+
+const normalizeMerchantRoleKey = (roleKey = '') => {
+  if (roleKey === 'manager') return 'owner'
+  if (roleKey === 'clerk') return 'member'
+  return roleKey === 'owner' ? 'owner' : 'member'
+}
+
+const buildMerchantPermissions = (roleKey = 'member') => {
+  const basePermissions = ['stats.view', 'order.manage', 'verify.scan', 'verify.manual', 'verify.record']
+  if (roleKey !== 'owner') {
+    return basePermissions
+  }
+  return [
+    ...basePermissions,
+    'goods.manage',
+    'store.manage',
+    'staff.manage',
+    'finance.manage',
+    'marketing.manage'
+  ]
+}
+
+const normalizeMerchantStaffUser = (staffUser) => {
+  if (!staffUser) return null
+  const roleKey = normalizeMerchantRoleKey(staffUser.roleKey)
+  return {
+    ...staffUser,
+    roleKey,
+    roleName: roleKey === 'owner' ? '店长' : '店员',
+    permissions: buildMerchantPermissions(roleKey)
+  }
+}
+
+const normalizeMerchantEntry = (entry = {}) => {
+  const merchantId = Number(entry.merchantId || 0)
+  if (!merchantId) return null
+  return {
+    merchantId,
+    merchantName: entry.merchantName || '',
+    contact: entry.contact || '',
+    phone: entry.phone || '',
+    loginPage: entry.loginPage || `/pages/merchant/login/login?merchantId=${merchantId}`
+  }
+}
 
 App({
   globalData: {
@@ -11,14 +56,21 @@ App({
     merchantToken: null,
     isMerchantLoggedIn: false,
     permissionCodes: [],
-    appId: ''
+    appId: '',
+    merchantEntry: null
   },
 
-  onLaunch() {
+  onLaunch(options = {}) {
     this.initEnv()
     this.checkLoginStatus()
-    this.restoreMerchantLogin()
     merchantUtil.initMerchantMockStorage(merchantMock)
+    this.restoreMerchantEntry()
+    this.applyMerchantEntryOptions(options)
+    this.restoreMerchantLogin()
+  },
+
+  onShow(options = {}) {
+    this.applyMerchantEntryOptions(options)
   },
 
   initEnv() {
@@ -43,13 +95,45 @@ App({
 
   restoreMerchantLogin() {
     const merchantToken = wx.getStorageSync('merchantToken')
-    const staffUser = wx.getStorageSync('merchantStaffUser')
-    if (merchantToken && staffUser) {
-      this.globalData.merchantToken = merchantToken
-      this.globalData.staffUser = staffUser
-      this.globalData.isMerchantLoggedIn = true
-      this.globalData.permissionCodes = staffUser.permissions || []
+    const storedStaffUser = wx.getStorageSync('merchantStaffUser')
+    const staffUser = normalizeMerchantStaffUser(storedStaffUser)
+
+    if (!merchantToken || !staffUser) {
+      this.clearMerchantLoginInfo()
+      return
     }
+
+    this.globalData.merchantToken = merchantToken
+    this.globalData.staffUser = staffUser
+    this.globalData.isMerchantLoggedIn = true
+    this.globalData.permissionCodes = staffUser.permissions || []
+    wx.setStorageSync('merchantStaffUser', staffUser)
+  },
+
+  restoreMerchantEntry() {
+    const merchantEntry = normalizeMerchantEntry(wx.getStorageSync(MERCHANT_ENTRY_KEY))
+    this.globalData.merchantEntry = merchantEntry
+    if (merchantEntry) {
+      wx.setStorageSync(MERCHANT_ENTRY_KEY, merchantEntry)
+    } else {
+      wx.removeStorageSync(MERCHANT_ENTRY_KEY)
+    }
+  },
+
+  applyMerchantEntryOptions(options = {}) {
+    const query = options.query || {}
+    const scene = decodeURIComponent(query.scene || '')
+    let merchantId = query.merchantId || ''
+
+    if (!merchantId && scene) {
+      const match = scene.match(/(?:^|&)merchantId=(\d+)(?:&|$)/)
+      if (match) {
+        merchantId = match[1]
+      }
+    }
+
+    if (!merchantId) return
+    this.setMerchantEntry({ merchantId })
   },
 
   setLoginInfo(token, userInfo) {
@@ -70,12 +154,36 @@ App({
   },
 
   setMerchantLoginInfo(token, staffUser) {
+    const normalizedStaffUser = normalizeMerchantStaffUser(staffUser)
     this.globalData.merchantToken = token
-    this.globalData.staffUser = staffUser
+    this.globalData.staffUser = normalizedStaffUser
     this.globalData.isMerchantLoggedIn = true
-    this.globalData.permissionCodes = staffUser.permissions || []
+    this.globalData.permissionCodes = normalizedStaffUser ? normalizedStaffUser.permissions || [] : []
     wx.setStorageSync('merchantToken', token)
-    wx.setStorageSync('merchantStaffUser', staffUser)
+    wx.setStorageSync('merchantStaffUser', normalizedStaffUser)
+  },
+
+  setMerchantEntry(entry) {
+    const merchantEntry = normalizeMerchantEntry({
+      ...(this.globalData.merchantEntry || {}),
+      ...(entry || {})
+    })
+    this.globalData.merchantEntry = merchantEntry
+    if (merchantEntry) {
+      wx.setStorageSync(MERCHANT_ENTRY_KEY, merchantEntry)
+    } else {
+      wx.removeStorageSync(MERCHANT_ENTRY_KEY)
+    }
+    return merchantEntry
+  },
+
+  getMerchantEntry() {
+    return this.globalData.merchantEntry || null
+  },
+
+  clearMerchantEntry() {
+    this.globalData.merchantEntry = null
+    wx.removeStorageSync(MERCHANT_ENTRY_KEY)
   },
 
   clearMerchantLoginInfo() {

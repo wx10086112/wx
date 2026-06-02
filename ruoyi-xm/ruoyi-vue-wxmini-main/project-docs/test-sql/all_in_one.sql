@@ -753,7 +753,7 @@ INSERT INTO `merchant` (`id`, `distributor_id`, `name`, `logo`, `contact`, `phon
 (2, NULL, '好味烘焙坊', '/profile/upload/merchant/bakery_logo.png', '李四', '13800002222', 8.00, 1, 8960.00, 35600.00, '北京市海淀区中关村大街12号', '/profile/upload/merchant/bakery_cover.png', '手工烘焙,现做现卖,甜蜜每一天', '07:00-21:00', 5, 1),
 (3, NULL, '川味小厨', '/profile/upload/merchant/chuan_logo.png', '王五', '13800003333', 12.00, 1, 5200.00, 18900.00, '北京市西城区西单北大街56号', '/profile/upload/merchant/chuan_cover.png', '正宗川菜,麻辣鲜香,地道风味', '10:00-23:00', 5, 1);
 
--- 2. 商家登录账号（密码统一为 123456，BCrypt加密）
+-- 2. 商家登录账号（密码统一为 admin123，BCrypt加密）
 INSERT INTO `merchant_user` (`id`, `merchant_id`, `username`, `password`, `real_name`, `phone`, `role`, `status`) VALUES
 (1, 1, 'fruit_admin', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '张三', '13800001111', 'owner', 1),
 (2, 1, 'fruit_staff', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '赵六', '13900001111', 'member', 1),

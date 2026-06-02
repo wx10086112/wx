@@ -1,10 +1,5 @@
-.staff-panel,
-.permission-panel {
+.staff-panel {
   padding: 28rpx;
-}
-
-.permission-panel {
-  margin-top: 20rpx;
 }
 
 .panel-header {
@@ -28,16 +23,10 @@
   margin-top: 18rpx;
   padding: 18rpx 16rpx;
   border-radius: 14rpx;
-  border: 2rpx solid transparent;
   display: flex;
   justify-content: space-between;
   gap: 16rpx;
-  transition: all 0.2s;
-}
-
-.staff-row.active {
   background: #f8fbff;
-  border-color: #1f6feb;
 }
 
 .staff-main {
@@ -65,11 +54,15 @@
 }
 
 .staff-meta,
-.permission-code {
+.staff-summary {
   display: block;
   margin-top: 10rpx;
   font-size: 24rpx;
   color: #7a8798;
+}
+
+.staff-summary {
+  line-height: 1.6;
 }
 
 .staff-side {
@@ -96,35 +89,6 @@
   padding: 0 16rpx;
 }
 
-.permission-row {
-  margin-top: 18rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf1f5;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16rpx;
-}
-
-.permission-row:last-child {
-  border-bottom: none;
-}
-
-.permission-main {
-  flex: 1;
-}
-
-.permission-title {
-  display: block;
-  font-size: 28rpx;
-  color: #1f2a37;
-}
-
-.save-btn {
-  margin-top: 24rpx;
-}
-
-/* 弹窗样式 */
 .modal-mask {
   position: fixed;
   top: 0;
@@ -142,6 +106,8 @@
   width: 600rpx;
   padding: 36rpx;
   border-radius: 22rpx;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .modal-title {
@@ -179,6 +145,22 @@
   align-items: center;
 }
 
+.readonly-field {
+  display: flex;
+  align-items: center;
+  color: #516070;
+}
+
+.role-tip {
+  margin-top: 20rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 16rpx;
+  background: #f4f7fd;
+  color: #607089;
+  font-size: 24rpx;
+  line-height: 1.7;
+}
+
 .modal-actions {
   margin-top: 30rpx;
   display: flex;
@@ -191,4 +173,17 @@
   align-items: center;
   justify-content: center;
   line-height: normal;
+}
+
+.empty-card {
+  margin-top: 18rpx;
+  padding: 28rpx 24rpx;
+  border-radius: 16rpx;
+  background: #f8fbff;
+}
+
+.empty-card-text {
+  font-size: 24rpx;
+  color: #7a8798;
+  line-height: 1.7;
 }

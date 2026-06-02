@@ -1,21 +1,45 @@
 package com.ruoyi.mall.merchant.controller;
 
+import cn.binarywang.wx.miniapp.api.WxMaService;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import com.ruoyi.common.annotation.DataScopeBiz;
 import com.ruoyi.common.annotation.Log;
+import com.ruoyi.common.config.RuoYiConfig;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.MallDataScopeHelper;
 import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.mall.common.config.WxMaProperties;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
+import me.chanjar.weixin.common.error.WxErrorException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.imageio.ImageIO;
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/mall/merchant")
@@ -23,6 +47,10 @@ public class MallMerchantController extends BaseController {
 
     @Autowired
     private IMerchantService merchantService;
+    @Autowired
+    private WxMaService wxMaService;
+    @Autowired
+    private WxMaProperties wxMaProperties;
 
     @DataScopeBiz(distributorAlias = "m")
     @PreAuthorize("@ss.hasPermi('mall:merchant:list')")
@@ -56,6 +84,46 @@ public class MallMerchantController extends BaseController {
             return AjaxResult.error("无权限查看该商家");
         }
         return AjaxResult.success(toSafeMap(merchant));
+    }
+
+    @PreAuthorize("@ss.hasPermi('mall:merchant:query')")
+    @GetMapping("/entry-qrcode/{id}")
+    public AjaxResult getEntryQrCode(@PathVariable Long id, HttpServletRequest request) {
+        Merchant merchant = merchantService.selectMerchantById(id);
+        if (merchant == null) {
+            return AjaxResult.error("商家不存在");
+        }
+
+        Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effDistributorId != null && !effDistributorId.equals(merchant.getDistributorId())) {
+            return AjaxResult.error("无权限查看该商家");
+        }
+        if (merchant.getStatus() == Merchant.STATUS_STOPPED) {
+            return AjaxResult.error("商家已停止合作，暂不能生成后台入口码");
+        }
+        if (merchant.getStatus() != Merchant.STATUS_NORMAL) {
+            return AjaxResult.error("商家未审核通过，暂不能生成后台入口码");
+        }
+
+        List<WxMaProperties.Config> configs = wxMaProperties.getConfigs();
+        if (configs == null || configs.isEmpty() || configs.get(0) == null) {
+            return AjaxResult.error("统一小程序配置缺失");
+        }
+
+        String appId = configs.get(0).getAppid();
+        if (appId == null || appId.trim().isEmpty()) {
+            return AjaxResult.error("统一小程序 AppID 未配置");
+        }
+
+        String scene = "merchantId=" + id;
+        String loginPage = "/pages/merchant/login/login?merchantId=" + id;
+        try {
+            String relativePath = generateMerchantEntryCode(id, appId, scene, request);
+            Map<String, Object> data = buildEntryQrResponse(merchant, appId, scene, loginPage, request, relativePath);
+            return AjaxResult.success(data);
+        } catch (IOException e) {
+            return AjaxResult.error("生成后台入口码失败：" + e.getMessage());
+        }
     }
 
     @PreAuthorize("@ss.hasPermi('mall:merchant:add')")
@@ -250,5 +318,94 @@ public class MallMerchantController extends BaseController {
             return AjaxResult.error("商家、平台、分销商三方分账比例合计必须等于100%");
         }
         return null;
+    }
+
+    private Map<String, Object> buildEntryQrResponse(Merchant merchant, String appId, String scene,
+                                                     String loginPage, HttpServletRequest request, String relativePath) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("merchantId", merchant.getId());
+        data.put("merchantName", merchant.getName());
+        data.put("entryAppId", appId);
+        data.put("scene", scene);
+        data.put("loginPage", loginPage);
+        data.put("qrCodeUrl", buildFullUrl(request, relativePath));
+        return data;
+    }
+
+    private String generateMerchantEntryCode(Long merchantId, String appId, String scene, HttpServletRequest request) throws IOException {
+        try {
+            if (shouldUseWxMiniCode(appId)) {
+                wxMaService.switchoverTo(appId);
+                File tempFile = wxMaService.getQrcodeService().createWxaCodeUnlimit(scene, "pages/merchant/login/login");
+                return saveMerchantEntryCode(merchantId, tempFile);
+            }
+        } catch (WxErrorException e) {
+            return saveMerchantEntryFallbackCode(merchantId, buildMerchantEntryLandingUrl(request, merchantId));
+        }
+        return saveMerchantEntryFallbackCode(merchantId, buildMerchantEntryLandingUrl(request, merchantId));
+    }
+
+    private boolean shouldUseWxMiniCode(String appId) {
+        if (appId == null) {
+            return false;
+        }
+        String normalized = appId.trim();
+        return !normalized.isEmpty() && !"test".equalsIgnoreCase(normalized);
+    }
+
+    private String saveMerchantEntryCode(Long merchantId, File sourceFile) throws IOException {
+        String fileName = "merchant-entry-" + merchantId + ".png";
+        Path targetDir = Paths.get(RuoYiConfig.getProfile(), "merchant_entry_codes");
+        Files.createDirectories(targetDir);
+        Path targetFile = targetDir.resolve(fileName);
+        Files.copy(sourceFile.toPath(), targetFile, StandardCopyOption.REPLACE_EXISTING);
+        return "/profile/merchant_entry_codes/" + fileName;
+    }
+
+    private String saveMerchantEntryFallbackCode(Long merchantId, String entryUrl) throws IOException {
+        String fileName = "merchant-entry-" + merchantId + ".png";
+        Path targetDir = Paths.get(RuoYiConfig.getProfile(), "merchant_entry_codes");
+        Files.createDirectories(targetDir);
+        Path targetFile = targetDir.resolve(fileName);
+        try {
+            QRCodeWriter writer = new QRCodeWriter();
+            Map<EncodeHintType, Object> hints = new EnumMap<>(EncodeHintType.class);
+            hints.put(EncodeHintType.CHARACTER_SET, StandardCharsets.UTF_8.name());
+            hints.put(EncodeHintType.MARGIN, 1);
+            BitMatrix bitMatrix = writer.encode(entryUrl, BarcodeFormat.QR_CODE, 430, 430, hints);
+            writeBitMatrixToPng(bitMatrix, targetFile);
+            return "/profile/merchant_entry_codes/" + fileName;
+        } catch (WriterException e) {
+            throw new IOException("本地二维码生成失败：" + e.getMessage(), e);
+        }
+    }
+
+    private void writeBitMatrixToPng(BitMatrix bitMatrix, Path targetFile) throws IOException {
+        int width = bitMatrix.getWidth();
+        int height = bitMatrix.getHeight();
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                image.setRGB(x, y, bitMatrix.get(x, y) ? Color.BLACK.getRGB() : Color.WHITE.getRGB());
+            }
+        }
+        ImageIO.write(image, "PNG", targetFile.toFile());
+    }
+
+    private String buildMerchantEntryLandingUrl(HttpServletRequest request, Long merchantId) {
+        return buildFullUrl(request, "/wxmini/merchant-mini/entry/" + merchantId);
+    }
+
+    private String buildFullUrl(HttpServletRequest request, String relativePath) {
+        StringBuilder url = new StringBuilder();
+        url.append(request.getScheme()).append("://").append(request.getServerName());
+        int port = request.getServerPort();
+        boolean defaultPort = ("http".equalsIgnoreCase(request.getScheme()) && port == 80)
+                || ("https".equalsIgnoreCase(request.getScheme()) && port == 443);
+        if (!defaultPort) {
+            url.append(":").append(port);
+        }
+        url.append(relativePath);
+        return url.toString();
     }
 }

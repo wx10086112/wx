@@ -36,21 +36,47 @@
               <el-descriptions-item label="佣金比例">{{ merchant.commissionRate }}%</el-descriptions-item>
             </el-descriptions>
 
-            <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
-              <h3 style="margin: 0;">小程序配置</h3>
+            <div class="section-header">
+              <h3 class="section-title">统一小程序与商家后台入口</h3>
               <el-button type="primary" icon="el-icon-edit" size="small" @click="handleEditMiniApp">编辑配置</el-button>
             </div>
             <el-descriptions :column="2" border style="margin-top: 10px;">
-              <el-descriptions-item label="C端 AppID">{{ merchant.cMiniAppId || '未配置' }}</el-descriptions-item>
-              <el-descriptions-item label="C端 Secret">{{ merchant.cMiniAppSecretConfigured ? '******' : '未配置' }}</el-descriptions-item>
-              <el-descriptions-item label="商家端 AppID">{{ merchant.mMiniAppId || '未配置' }}</el-descriptions-item>
-              <el-descriptions-item label="商家端 Secret">{{ merchant.mMiniAppSecretConfigured ? '******' : '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="统一 C 端 AppID">{{ merchant.cMiniAppId || '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="统一 C 端 Secret">{{ merchant.cMiniAppSecretConfigured ? '******' : '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="B 端登录方式">商家专属入口码扫码后进入后台登录页</el-descriptions-item>
+              <el-descriptions-item label="旧商家端 AppID">{{ merchant.mMiniAppId || '已停用/未配置' }}</el-descriptions-item>
               <el-descriptions-item label="微信商户号">{{ merchant.wxPayMchId || '未配置' }}</el-descriptions-item>
               <el-descriptions-item label="支付API密钥">{{ merchant.wxPayApiKeyConfigured ? '******' : '未配置' }}</el-descriptions-item>
             </el-descriptions>
 
-            <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
-              <h3 style="margin: 0;">腾讯地图认领</h3>
+            <div class="entry-panel">
+              <div class="entry-panel__main">
+                <div class="entry-panel__title">商家后台入口码</div>
+                <div class="entry-panel__desc">店长和员工扫码后，会直接进入该商家的后台登录页，不再落到 C 端首页。</div>
+                <div class="entry-panel__meta">
+                  <span>入口页：{{ merchantEntry.loginPage || ('/pages/merchant/login/login?merchantId=' + merchant.id) }}</span>
+                </div>
+                <div class="entry-panel__actions">
+                  <el-button type="primary" size="small" :loading="entryQrLoading" @click="loadMerchantEntryQrCode(false)">
+                    {{ merchantEntry.qrCodeUrl ? '刷新入口码' : '生成入口码' }}
+                  </el-button>
+                  <el-button v-if="merchantEntry.qrCodeUrl" size="small" @click="copyEntryLoginPage">复制登录页路径</el-button>
+                </div>
+              </div>
+              <div class="entry-panel__preview">
+                <el-image
+                  v-if="merchantEntry.qrCodeUrl"
+                  :src="merchantEntry.qrCodeUrl"
+                  fit="cover"
+                  :preview-src-list="[merchantEntry.qrCodeUrl]"
+                  class="entry-panel__image"
+                />
+                <div v-else class="entry-panel__empty">暂未生成后台入口码</div>
+              </div>
+            </div>
+
+            <div class="section-header">
+              <h3 class="section-title">腾讯地图认领</h3>
               <el-button type="primary" icon="el-icon-edit" size="small" @click="handleEditMapClaim">编辑配置</el-button>
             </div>
             <el-descriptions :column="2" border style="margin-top: 10px;">
@@ -63,8 +89,8 @@
               <el-descriptions-item label="备注" :span="2">{{ merchant.mapClaimRemark || '无' }}</el-descriptions-item>
             </el-descriptions>
 
-            <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
-              <h3 style="margin: 0;">微信支付与三方分账</h3>
+            <div class="section-header">
+              <h3 class="section-title">微信支付与三方分账</h3>
               <el-button type="primary" icon="el-icon-edit" size="small" @click="handleEditWxApplyment">编辑配置</el-button>
             </div>
             <el-descriptions :column="2" border style="margin-top: 10px;">
@@ -375,22 +401,21 @@
     </el-dialog>
 
     <!-- 编辑小程序配置弹窗 -->
-    <el-dialog title="编辑小程序配置" :visible.sync="miniAppDialogVisible" width="600px" append-to-body>
+    <el-dialog title="编辑统一小程序配置" :visible.sync="miniAppDialogVisible" width="600px" append-to-body>
       <el-form ref="miniAppForm" :model="miniAppForm" label-width="120px">
-        <el-divider content-position="left">C端小程序（用户下单）</el-divider>
-        <el-form-item label="C端 AppID">
+        <el-divider content-position="left">统一小程序（C/B 共用）</el-divider>
+        <el-form-item label="统一 AppID">
           <el-input v-model="miniAppForm.cMiniAppId" placeholder="wx开头的AppID" />
         </el-form-item>
-        <el-form-item label="C端 Secret">
+        <el-form-item label="统一 Secret">
           <el-input v-model="miniAppForm.cMiniAppSecret" placeholder="请输入Secret" />
         </el-form-item>
-        <el-divider content-position="left">商家端小程序（管理/核销）</el-divider>
-        <el-form-item label="商家端 AppID">
-          <el-input v-model="miniAppForm.mMiniAppId" placeholder="wx开头的AppID" />
-        </el-form-item>
-        <el-form-item label="商家端 Secret">
-          <el-input v-model="miniAppForm.mMiniAppSecret" placeholder="请输入Secret" />
-        </el-form-item>
+        <el-alert
+          title="B端已并入统一小程序，商家扫码后台入口码后进入登录页，不再依赖独立商家端 AppID。"
+          type="info"
+          :closable="false"
+          style="margin-bottom: 16px;"
+        />
         <el-divider content-position="left">微信支付</el-divider>
         <el-form-item label="商户号">
           <el-input v-model="miniAppForm.wxPayMchId" placeholder="微信支付商户号" />
@@ -801,7 +826,7 @@
 </template>
 
 <script>
-import { getMerchantDetail, getProductList, addProduct, updateProduct, deleteProduct, getMerchantOrders, getMerchantFlowList, orderStatusMap, getMerchantUserList, addMerchantUser, resetMerchantUserPwd, changeMerchantUserStatus, updateMerchant } from '@/api/merchant'
+import { getMerchantDetail, getMerchantEntryQrCode, getProductList, addProduct, updateProduct, deleteProduct, getMerchantOrders, getMerchantFlowList, orderStatusMap, getMerchantUserList, addMerchantUser, resetMerchantUserPwd, changeMerchantUserStatus, updateMerchant } from '@/api/merchant'
 import { listGroupon, getGroupon, addGroupon, updateGroupon, deleteGroupon, changeGrouponStatus, listGrouponItem, addGrouponItem, updateGrouponItem, deleteGrouponItem, changeGrouponItemStatus } from '@/api/marketing/groupon'
 import { getToken } from '@/utils/auth'
 
@@ -811,9 +836,16 @@ export default {
     return {
       loading: false,
       merchant: {},
-      activeTab: 'products',
+      activeTab: 'basic',
       merchantId: null,
       orderStatusMap: orderStatusMap,
+      entryQrLoading: false,
+      merchantEntry: {
+        qrCodeUrl: '',
+        loginPage: '',
+        entryAppId: '',
+        scene: ''
+      },
 
       // 商品
       productLoading: false,
@@ -855,7 +887,7 @@ export default {
 
       // 小程序配置
       miniAppDialogVisible: false,
-      miniAppForm: { cMiniAppId: '', cMiniAppSecret: '', mMiniAppId: '', mMiniAppSecret: '', wxPayMchId: '', wxPayApiKey: '' },
+      miniAppForm: { cMiniAppId: '', cMiniAppSecret: '', wxPayMchId: '', wxPayApiKey: '' },
 
       // 腾讯地图认领
       mapClaimDialogVisible: false,
@@ -949,6 +981,7 @@ export default {
       return
     }
     this.fetchDetail()
+    this.loadMerchantEntryQrCode(true)
     this.loadProducts()
   },
   methods: {
@@ -986,6 +1019,36 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+
+    async loadMerchantEntryQrCode(silent = false) {
+      if (!silent) {
+        this.entryQrLoading = true
+      }
+      try {
+        const res = await getMerchantEntryQrCode(this.merchantId)
+        this.merchantEntry = res.data || {}
+      } catch (e) {
+        if (!silent) {
+          this.$message.error((e && e.message) || '生成入口码失败')
+        }
+      } finally {
+        if (!silent) {
+          this.entryQrLoading = false
+        }
+      }
+    },
+    copyEntryLoginPage() {
+      const text = this.merchantEntry.loginPage || `/pages/merchant/login/login?merchantId=${this.merchantId}`
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          this.$message.success('登录页路径已复制')
+        }).catch(() => {
+          this.$message.info(text)
+        })
+        return
+      }
+      this.$message.info(text)
     },
 
     // ========== 商品管理 ==========
@@ -1138,8 +1201,6 @@ export default {
         id: this.merchant.id,
         cMiniAppId: this.merchant.cMiniAppId || '',
         cMiniAppSecret: this.merchant.cMiniAppSecretConfigured ? '******' : '',
-        mMiniAppId: this.merchant.mMiniAppId || '',
-        mMiniAppSecret: this.merchant.mMiniAppSecretConfigured ? '******' : '',
         wxPayMchId: this.merchant.wxPayMchId || '',
         wxPayApiKey: this.merchant.wxPayApiKeyConfigured ? '******' : ''
       }
@@ -1579,6 +1640,78 @@ export default {
 }
 .detail-tabs {
   margin-top: 20px;
+}
+.section-header {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.section-title {
+  margin: 0;
+}
+.entry-panel {
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid #EBEEF5;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  background: #FAFCFF;
+}
+.entry-panel__main {
+  flex: 1;
+}
+.entry-panel__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+}
+.entry-panel__desc {
+  margin-top: 8px;
+  line-height: 1.7;
+  color: #606266;
+}
+.entry-panel__meta {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #909399;
+  word-break: break-all;
+}
+.entry-panel__actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+}
+.entry-panel__preview {
+  width: 180px;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.entry-panel__image {
+  width: 160px;
+  height: 160px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #EBEEF5;
+  background: #fff;
+}
+.entry-panel__empty {
+  width: 160px;
+  height: 160px;
+  border: 1px dashed #DCDFE6;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  text-align: center;
+  color: #909399;
+  background: #fff;
 }
 .search-bar {
   display: flex;
