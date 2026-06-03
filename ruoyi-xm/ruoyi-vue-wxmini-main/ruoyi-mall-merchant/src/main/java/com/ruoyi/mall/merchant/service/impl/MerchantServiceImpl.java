@@ -42,15 +42,7 @@ public class MerchantServiceImpl implements IMerchantService {
         fillPaymentDefaults(merchant);
         int rows = merchantMapper.insertMerchant(merchant);
         if (rows > 0 && merchant.getId() != null) {
-            MerchantUser owner = new MerchantUser();
-            owner.setMerchantId(merchant.getId());
-            owner.setUsername(merchant.getPhone() != null ? merchant.getPhone() : "merchant_" + merchant.getId());
-            owner.setPassword(SecurityUtils.encryptPassword("123456"));
-            owner.setRealName(merchant.getContact() != null ? merchant.getContact() : "管理员");
-            owner.setPhone(merchant.getPhone());
-            owner.setRole("owner");
-            owner.setStatus(1);
-            merchantUserMapper.insertMerchantUser(owner);
+            ensureMerchantOwnerAccount(merchant);
         }
         return rows;
     }
@@ -81,6 +73,40 @@ public class MerchantServiceImpl implements IMerchantService {
         }
     }
 
+    private void ensureMerchantOwnerAccount(Merchant merchant) {
+        List<MerchantUser> merchantUsers = merchantUserMapper.selectMerchantUserByMerchantId(merchant.getId());
+        for (MerchantUser merchantUser : merchantUsers) {
+            if ("owner".equalsIgnoreCase(merchantUser.getRole())) {
+                return;
+            }
+        }
+
+        MerchantUser owner = new MerchantUser();
+        owner.setMerchantId(merchant.getId());
+        owner.setUsername(buildDefaultOwnerUsername(merchant.getId()));
+        owner.setPassword(SecurityUtils.encryptPassword("123456"));
+        owner.setRealName(resolveOwnerRealName(merchant));
+        owner.setPhone(merchant.getPhone());
+        owner.setRole("owner");
+        owner.setStatus(1);
+        owner.setRemark("系统自动创建的商家超级用户");
+        merchantUserMapper.insertMerchantUser(owner);
+    }
+
+    private String buildDefaultOwnerUsername(Long merchantId) {
+        return "merchant_" + merchantId + "_owner";
+    }
+
+    private String resolveOwnerRealName(Merchant merchant) {
+        if (merchant.getContact() != null && !merchant.getContact().trim().isEmpty()) {
+            return merchant.getContact();
+        }
+        if (merchant.getName() != null && !merchant.getName().trim().isEmpty()) {
+            return merchant.getName() + "超级管理员";
+        }
+        return "商家超级管理员";
+    }
+
     @Override
     public int deleteMerchantById(Long id) {
         return merchantMapper.deleteMerchantById(id);
@@ -99,5 +125,10 @@ public class MerchantServiceImpl implements IMerchantService {
     @Override
     public Merchant selectMerchantByMAppId(String mMiniAppId) {
         return merchantMapper.selectMerchantByMAppId(mMiniAppId);
+    }
+
+    @Override
+    public Merchant selectMerchantByAnyMiniAppId(String miniAppId) {
+        return merchantMapper.selectMerchantByAnyMiniAppId(miniAppId);
     }
 }

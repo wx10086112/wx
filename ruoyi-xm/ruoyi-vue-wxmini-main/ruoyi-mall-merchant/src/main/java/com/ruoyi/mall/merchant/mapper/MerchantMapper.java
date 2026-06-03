@@ -23,4 +23,6 @@ public interface MerchantMapper {
     Merchant selectMerchantByCAppId(String cMiniAppId);
 
     Merchant selectMerchantByMAppId(String mMiniAppId);
+
+    Merchant selectMerchantByAnyMiniAppId(String miniAppId);
 }

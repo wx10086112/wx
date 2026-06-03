@@ -16,15 +16,17 @@ import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.MallDataScopeHelper;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.mall.common.config.WxMaProperties;
+import com.ruoyi.mall.common.config.WxMaServiceManager;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import me.chanjar.weixin.common.error.WxErrorException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -51,22 +53,22 @@ public class MallMerchantController extends BaseController {
     private WxMaService wxMaService;
     @Autowired
     private WxMaProperties wxMaProperties;
+    @Autowired
+    private WxMaServiceManager wxMaServiceManager;
 
     @DataScopeBiz(distributorAlias = "m")
     @PreAuthorize("@ss.hasPermi('mall:merchant:list')")
     @GetMapping("/list")
     public TableDataInfo list(Merchant merchant) {
         startPage();
-        // 分销商账号只能看到自己名下的商家
         String accountType = SecurityUtils.getAccountType();
         if ("DISTRIBUTOR".equals(accountType)) {
             merchant.setDistributorId(SecurityUtils.getDistributorId());
         }
         List<Merchant> list = merchantService.selectMerchantList(merchant);
-        // 脱敏处理：不返回密钥明文
         List<Map<String, Object>> safeList = new ArrayList<>();
-        for (Merchant m : list) {
-            safeList.add(toSafeMap(m));
+        for (Merchant item : list) {
+            safeList.add(toSafeMap(item));
         }
         return getDataTable(safeList);
     }
@@ -78,7 +80,6 @@ public class MallMerchantController extends BaseController {
         if (merchant == null) {
             return AjaxResult.error("商家不存在");
         }
-        // 归属校验
         Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
         if (effDistributorId != null && !effDistributorId.equals(merchant.getDistributorId())) {
             return AjaxResult.error("无权限查看该商家");
@@ -111,7 +112,7 @@ public class MallMerchantController extends BaseController {
         }
 
         String appId = configs.get(0).getAppid();
-        if (appId == null || appId.trim().isEmpty()) {
+        if (StringUtils.isBlank(appId)) {
             return AjaxResult.error("统一小程序 AppID 未配置");
         }
 
@@ -130,12 +131,23 @@ public class MallMerchantController extends BaseController {
     @Log(title = "商户管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody Merchant merchant) {
-        // 分销商创建商家：强制归属到自己名下，忽略前端传值
+        normalizeMiniAppConfig(merchant);
+        AjaxResult miniAppCheck = validateMiniAppConfig(merchant, null);
+        if (miniAppCheck != null) {
+            return miniAppCheck;
+        }
+
         String accountType = SecurityUtils.getAccountType();
         if ("DISTRIBUTOR".equals(accountType)) {
             merchant.setDistributorId(SecurityUtils.getDistributorId());
         }
-        return toAjax(merchantService.insertMerchant(merchant));
+
+        int rows = merchantService.insertMerchant(merchant);
+        if (rows > 0 && merchant.getId() != null) {
+            Merchant savedMerchant = merchantService.selectMerchantById(merchant.getId());
+            syncWxMiniServices(null, savedMerchant);
+        }
+        return toAjax(rows);
     }
 
     @PreAuthorize("@ss.hasPermi('mall:merchant:edit')")
@@ -146,11 +158,12 @@ public class MallMerchantController extends BaseController {
         if (existing == null) {
             return AjaxResult.error("商家不存在");
         }
+
         Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
         if (effDistributorId != null && !effDistributorId.equals(existing.getDistributorId())) {
             return AjaxResult.error("无权限修改该商家");
         }
-        // 过滤占位符，防止覆盖真实密钥
+
         if ("******".equals(merchant.getCMiniAppSecret())) {
             merchant.setCMiniAppSecret(null);
         }
@@ -160,16 +173,29 @@ public class MallMerchantController extends BaseController {
         if ("******".equals(merchant.getWxPayApiKey())) {
             merchant.setWxPayApiKey(null);
         }
-        // 分销商不能修改商家归属，强制保留原 distributorId
+
+        normalizeMiniAppConfig(merchant);
+        AjaxResult miniAppCheck = validateMiniAppConfig(buildValidationTarget(merchant, existing), existing.getId());
+        if (miniAppCheck != null) {
+            return miniAppCheck;
+        }
+
         String accountType = SecurityUtils.getAccountType();
         if ("DISTRIBUTOR".equals(accountType)) {
             merchant.setDistributorId(existing.getDistributorId());
         }
+
         AjaxResult paymentCheck = validateProfitShareConfig(merchant);
         if (paymentCheck != null) {
             return paymentCheck;
         }
-        return toAjax(merchantService.updateMerchant(merchant));
+
+        int rows = merchantService.updateMerchant(merchant);
+        if (rows > 0) {
+            Merchant savedMerchant = merchantService.selectMerchantById(existing.getId());
+            syncWxMiniServices(existing, savedMerchant);
+        }
+        return toAjax(rows);
     }
 
     @PreAuthorize("@ss.hasPermi('mall:merchant:remove')")
@@ -179,8 +205,8 @@ public class MallMerchantController extends BaseController {
         Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
         if (effDistributorId != null) {
             for (Long id : ids) {
-                Merchant m = merchantService.selectMerchantById(id);
-                if (m != null && !effDistributorId.equals(m.getDistributorId())) {
+                Merchant merchant = merchantService.selectMerchantById(id);
+                if (merchant != null && !effDistributorId.equals(merchant.getDistributorId())) {
                     return AjaxResult.error("无权限删除该商家");
                 }
             }
@@ -188,9 +214,6 @@ public class MallMerchantController extends BaseController {
         return toAjax(merchantService.deleteMerchantByIds(ids));
     }
 
-    /**
-     * 停止合作
-     */
     @PreAuthorize("@ss.hasPermi('mall:merchant:edit')")
     @Log(title = "商户管理 - 停止合作", businessType = BusinessType.UPDATE)
     @PutMapping("/stop/{id}")
@@ -199,7 +222,6 @@ public class MallMerchantController extends BaseController {
         if (existing == null) {
             return AjaxResult.error("商家不存在");
         }
-        // 归属校验
         Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
         if (effDistributorId != null && !effDistributorId.equals(existing.getDistributorId())) {
             return AjaxResult.error("无权限操作该商家");
@@ -210,9 +232,6 @@ public class MallMerchantController extends BaseController {
         return toAjax(merchantService.updateMerchant(update));
     }
 
-    /**
-     * 恢复合作
-     */
     @PreAuthorize("@ss.hasPermi('mall:merchant:edit')")
     @Log(title = "商户管理 - 恢复合作", businessType = BusinessType.UPDATE)
     @PutMapping("/resume/{id}")
@@ -221,7 +240,6 @@ public class MallMerchantController extends BaseController {
         if (existing == null) {
             return AjaxResult.error("商家不存在");
         }
-        // 归属校验
         Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
         if (effDistributorId != null && !effDistributorId.equals(existing.getDistributorId())) {
             return AjaxResult.error("无权限操作该商家");
@@ -232,70 +250,190 @@ public class MallMerchantController extends BaseController {
         return toAjax(merchantService.updateMerchant(update));
     }
 
-    /**
-     * 将商家实体转为安全Map，敏感字段脱敏
-     */
-    private Map<String, Object> toSafeMap(Merchant m) {
+    private AjaxResult validateMiniAppConfig(Merchant merchant, Long currentMerchantId) {
+        AjaxResult cMiniAppPairCheck = validateMiniAppPair("C端", merchant.getCMiniAppId(), merchant.getCMiniAppSecret());
+        if (cMiniAppPairCheck != null) {
+            return cMiniAppPairCheck;
+        }
+
+        AjaxResult mMiniAppPairCheck = validateMiniAppPair("商家端", merchant.getMMiniAppId(), merchant.getMMiniAppSecret());
+        if (mMiniAppPairCheck != null) {
+            return mMiniAppPairCheck;
+        }
+
+        AjaxResult cMiniAppUniqueCheck = validateMiniAppUnique("C端 AppID", merchant.getCMiniAppId(), currentMerchantId);
+        if (cMiniAppUniqueCheck != null) {
+            return cMiniAppUniqueCheck;
+        }
+
+        AjaxResult mMiniAppUniqueCheck = validateMiniAppUnique("商家端 AppID", merchant.getMMiniAppId(), currentMerchantId);
+        if (mMiniAppUniqueCheck != null) {
+            return mMiniAppUniqueCheck;
+        }
+
+        return null;
+    }
+
+    private AjaxResult validateMiniAppPair(String label, String appId, String secret) {
+        boolean hasAppId = StringUtils.isNotBlank(appId);
+        boolean hasSecret = StringUtils.isNotBlank(secret);
+        if (hasAppId != hasSecret) {
+            return AjaxResult.error(label + " AppID 和 Secret 需同时填写");
+        }
+        return null;
+    }
+
+    private AjaxResult validateMiniAppUnique(String label, String appId, Long currentMerchantId) {
+        if (StringUtils.isBlank(appId)) {
+            return null;
+        }
+
+        Merchant occupiedMerchant = merchantService.selectMerchantByAnyMiniAppId(appId);
+        if (occupiedMerchant == null) {
+            return null;
+        }
+        if (currentMerchantId != null && currentMerchantId.equals(occupiedMerchant.getId())) {
+            return null;
+        }
+
+        String merchantName = StringUtils.defaultIfBlank(occupiedMerchant.getName(), "未命名商家");
+        return AjaxResult.error(label + " 已被商家【" + merchantName + "】占用");
+    }
+
+    private Merchant buildValidationTarget(Merchant merchant, Merchant existing) {
+        if (existing == null) {
+            return merchant;
+        }
+
+        Merchant target = new Merchant();
+        target.setCMiniAppId(merchant.getCMiniAppId());
+        target.setCMiniAppSecret(resolveSecretForValidation(
+                merchant.getCMiniAppId(),
+                merchant.getCMiniAppSecret(),
+                existing.getCMiniAppId(),
+                existing.getCMiniAppSecret()
+        ));
+        target.setMMiniAppId(merchant.getMMiniAppId());
+        target.setMMiniAppSecret(resolveSecretForValidation(
+                merchant.getMMiniAppId(),
+                merchant.getMMiniAppSecret(),
+                existing.getMMiniAppId(),
+                existing.getMMiniAppSecret()
+        ));
+        return target;
+    }
+
+    private String resolveSecretForValidation(String nextAppId, String nextSecret, String existingAppId, String existingSecret) {
+        if (StringUtils.isNotBlank(nextSecret)) {
+            return nextSecret;
+        }
+        if (StringUtils.isNotBlank(nextAppId) && StringUtils.equals(nextAppId, trimToNull(existingAppId))) {
+            return existingSecret;
+        }
+        return nextSecret;
+    }
+
+    private void syncWxMiniServices(Merchant oldMerchant, Merchant newMerchant) {
+        syncWxMiniService(
+                oldMerchant == null ? null : oldMerchant.getCMiniAppId(),
+                newMerchant == null ? null : newMerchant.getCMiniAppId(),
+                newMerchant == null ? null : newMerchant.getCMiniAppSecret()
+        );
+        syncWxMiniService(
+                oldMerchant == null ? null : oldMerchant.getMMiniAppId(),
+                newMerchant == null ? null : newMerchant.getMMiniAppId(),
+                newMerchant == null ? null : newMerchant.getMMiniAppSecret()
+        );
+    }
+
+    private void syncWxMiniService(String oldAppId, String newAppId, String newSecret) {
+        if (StringUtils.isNotBlank(oldAppId) && !StringUtils.equals(oldAppId, newAppId)) {
+            wxMaServiceManager.remove(oldAppId);
+        }
+        if (StringUtils.isBlank(newAppId)) {
+            return;
+        }
+        if (StringUtils.isBlank(newSecret)) {
+            wxMaServiceManager.remove(newAppId);
+            return;
+        }
+        wxMaServiceManager.registerOrRefresh(newAppId, newSecret);
+    }
+
+    private void normalizeMiniAppConfig(Merchant merchant) {
+        merchant.setCMiniAppId(trimToNull(merchant.getCMiniAppId()));
+        merchant.setCMiniAppSecret(trimToNull(merchant.getCMiniAppSecret()));
+        merchant.setMMiniAppId(trimToNull(merchant.getMMiniAppId()));
+        merchant.setMMiniAppSecret(trimToNull(merchant.getMMiniAppSecret()));
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private Map<String, Object> toSafeMap(Merchant merchant) {
         Map<String, Object> map = new LinkedHashMap<>();
-        map.put("id", m.getId());
-        map.put("distributorId", m.getDistributorId());
-        map.put("distributorName", m.getDistributorName());
-        map.put("name", m.getName());
-        map.put("logo", m.getLogo());
-        map.put("contact", m.getContact());
-        // 手机号脱敏
-        String phone = m.getPhone();
+        map.put("id", merchant.getId());
+        map.put("distributorId", merchant.getDistributorId());
+        map.put("distributorName", merchant.getDistributorName());
+        map.put("name", merchant.getName());
+        map.put("logo", merchant.getLogo());
+        map.put("contact", merchant.getContact());
+
+        String phone = merchant.getPhone();
         map.put("phone", phone != null && phone.length() >= 7
-                ? phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4) : phone);
-        map.put("commissionRate", m.getCommissionRate());
-        map.put("status", m.getStatus());
-        map.put("balance", m.getBalance());
-        map.put("totalIncome", m.getTotalIncome());
-        map.put("address", m.getAddress());
-        map.put("avatar", m.getAvatar());
-        map.put("description", m.getDescription());
-        map.put("businessHours", m.getBusinessHours());
-        map.put("productCount", m.getProductCount());
-        map.put("storeCount", m.getStoreCount());
-        map.put("createTime", m.getCreateTime());
-        // 敏感字段脱敏
-        map.put("cMiniAppId", m.getCMiniAppId());
-        map.put("cMiniAppSecretConfigured", m.getCMiniAppSecret() != null && !m.getCMiniAppSecret().isEmpty());
+                ? phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4)
+                : phone);
+        map.put("commissionRate", merchant.getCommissionRate());
+        map.put("status", merchant.getStatus());
+        map.put("balance", merchant.getBalance());
+        map.put("totalIncome", merchant.getTotalIncome());
+        map.put("address", merchant.getAddress());
+        map.put("avatar", merchant.getAvatar());
+        map.put("description", merchant.getDescription());
+        map.put("businessHours", merchant.getBusinessHours());
+        map.put("productCount", merchant.getProductCount());
+        map.put("storeCount", merchant.getStoreCount());
+        map.put("createTime", merchant.getCreateTime());
+
+        map.put("cMiniAppId", merchant.getCMiniAppId());
+        map.put("cMiniAppSecretConfigured", StringUtils.isNotBlank(merchant.getCMiniAppSecret()));
         map.put("cMiniAppSecretMasked", "******");
-        map.put("mMiniAppId", m.getMMiniAppId());
-        map.put("mMiniAppSecretConfigured", m.getMMiniAppSecret() != null && !m.getMMiniAppSecret().isEmpty());
+        map.put("mMiniAppId", merchant.getMMiniAppId());
+        map.put("mMiniAppSecretConfigured", StringUtils.isNotBlank(merchant.getMMiniAppSecret()));
         map.put("mMiniAppSecretMasked", "******");
-        map.put("wxPayMchId", m.getWxPayMchId());
-        map.put("wxPayApiKeyConfigured", m.getWxPayApiKey() != null && !m.getWxPayApiKey().isEmpty());
+        map.put("wxPayMchId", merchant.getWxPayMchId());
+        map.put("wxPayApiKeyConfigured", StringUtils.isNotBlank(merchant.getWxPayApiKey()));
         map.put("wxPayApiKeyMasked", "******");
 
-        // 腾讯地图认领字段
-        map.put("mapClaimStatus", m.getMapClaimStatus());
-        map.put("mapPoiId", m.getMapPoiId());
-        map.put("mapClaimUrl", m.getMapClaimUrl());
-        map.put("mapClaimTime", m.getMapClaimTime());
-        map.put("mapClaimRemark", m.getMapClaimRemark());
+        map.put("mapClaimStatus", merchant.getMapClaimStatus());
+        map.put("mapPoiId", merchant.getMapPoiId());
+        map.put("mapClaimUrl", merchant.getMapClaimUrl());
+        map.put("mapClaimTime", merchant.getMapClaimTime());
+        map.put("mapClaimRemark", merchant.getMapClaimRemark());
 
-        // 微信特约商户字段
-        map.put("wxApplymentId", m.getWxApplymentId());
-        map.put("wxApplymentState", m.getWxApplymentState());
-        map.put("wxApplymentRejectReason", m.getWxApplymentRejectReason());
-        map.put("wxApplymentTime", m.getWxApplymentTime());
-        map.put("wxApplymentFinishTime", m.getWxApplymentFinishTime());
-        map.put("wxPaymentAccessType", m.getWxPaymentAccessType());
-        map.put("merchantWxMchId", m.getMerchantWxMchId());
-        map.put("merchantWxMchName", m.getMerchantWxMchName());
-        map.put("wxProfitSharingEnabled", m.getWxProfitSharingEnabled());
-        map.put("platformReceiverMchId", m.getPlatformReceiverMchId());
-        map.put("distributorReceiverMchId", m.getDistributorReceiverMchId());
-        map.put("merchantShareRate", m.getMerchantShareRate());
-        map.put("platformShareRate", m.getPlatformShareRate());
-        map.put("distributorShareRate", m.getDistributorShareRate());
-        map.put("settlementCycle", m.getSettlementCycle());
-        map.put("effectiveMerchantWxMchId", m.getEffectiveMerchantWxMchId());
-        map.put("canOperate", m.canOperate());
-        map.put("operateBlockReason", m.getOperateBlockReason());
-
+        map.put("wxApplymentId", merchant.getWxApplymentId());
+        map.put("wxApplymentState", merchant.getWxApplymentState());
+        map.put("wxApplymentRejectReason", merchant.getWxApplymentRejectReason());
+        map.put("wxApplymentTime", merchant.getWxApplymentTime());
+        map.put("wxApplymentFinishTime", merchant.getWxApplymentFinishTime());
+        map.put("wxPaymentAccessType", merchant.getWxPaymentAccessType());
+        map.put("merchantWxMchId", merchant.getMerchantWxMchId());
+        map.put("merchantWxMchName", merchant.getMerchantWxMchName());
+        map.put("wxProfitSharingEnabled", merchant.getWxProfitSharingEnabled());
+        map.put("platformReceiverMchId", merchant.getPlatformReceiverMchId());
+        map.put("distributorReceiverMchId", merchant.getDistributorReceiverMchId());
+        map.put("merchantShareRate", merchant.getMerchantShareRate());
+        map.put("platformShareRate", merchant.getPlatformShareRate());
+        map.put("distributorShareRate", merchant.getDistributorShareRate());
+        map.put("settlementCycle", merchant.getSettlementCycle());
+        map.put("effectiveMerchantWxMchId", merchant.getEffectiveMerchantWxMchId());
+        map.put("canOperate", merchant.canOperate());
+        map.put("operateBlockReason", merchant.getOperateBlockReason());
         return map;
     }
 

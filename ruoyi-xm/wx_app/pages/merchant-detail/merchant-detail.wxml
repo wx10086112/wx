@@ -63,6 +63,13 @@
       <text class="muted-text">具体接待情况以门店实时确认为准</text>
     </view>
 
+    <view wx:if="{{merchant.description}}" class="detail-card">
+      <view class="card-title-row">
+        <text class="card-title">商家简介</text>
+      </view>
+      <text class="primary-text">{{merchant.description}}</text>
+    </view>
+
     <view class="detail-card">
       <view class="card-title-row">
         <text class="card-title">门店地址</text>
@@ -101,6 +108,21 @@
         </view>
       </view>
       <text wx:else class="muted-text no-margin">暂无门店图片</text>
+    </view>
+
+    <view wx:if="{{storeList.length}}" class="detail-card">
+      <view class="card-title-row">
+        <text class="card-title">门店列表</text>
+        <text class="muted-inline">{{storeList.length}} 家</text>
+      </view>
+      <view wx:for="{{storeList}}" wx:key="id" class="store-list-item">
+        <view class="store-list-name-row">
+          <text class="primary-text">{{item.name}}</text>
+          <text wx:if="{{item.isMain === 1}}" class="mini-tag">主门店</text>
+        </view>
+        <text class="muted-text no-margin">{{item.address || '暂无地址'}}</text>
+        <text class="muted-text no-margin">{{item.phone || '暂无电话'}} · {{item.businessHours || '暂无营业时间'}}</text>
+      </view>
     </view>
   </view>
 </view>

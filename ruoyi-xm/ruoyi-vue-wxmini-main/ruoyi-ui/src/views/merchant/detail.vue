@@ -75,7 +75,7 @@
 
                 <div class="entry-panel__path">
                   <span class="entry-panel__path-label">入口页</span>
-                  <span class="entry-panel__path-value">{{ merchantEntry.loginPage || ('/pages/merchant/login/login?merchantId=' + merchant.id) }}</span>
+                  <span class="entry-panel__path-value">{{ entryLoginPage }}</span>
                 </div>
 
                 <div class="entry-panel__steps">
@@ -984,6 +984,15 @@ export default {
         Authorization: 'Bearer ' + getToken()
       }
     },
+    entryLoginPage() {
+      if (this.merchantEntry && this.merchantEntry.loginPage) {
+        return this.merchantEntry.loginPage
+      }
+      if (this.merchantId) {
+        return `/pages/merchant/login/login?merchantId=${this.merchantId}`
+      }
+      return '/pages/merchant/login/login'
+    },
     computedDiscount() {
       if (this.itemForm.originalPriceYuan > 0 && this.itemForm.grouponPriceYuan > 0) {
         return (this.itemForm.grouponPriceYuan / this.itemForm.originalPriceYuan * 10).toFixed(1)
@@ -1067,7 +1076,7 @@ export default {
       }
     },
     copyEntryLoginPage() {
-      const text = this.merchantEntry.loginPage || `/pages/merchant/login/login?merchantId=${this.merchantId}`
+      const text = this.entryLoginPage
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(() => {
           this.$message.success('登录页路径已复制')

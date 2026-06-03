@@ -97,18 +97,16 @@ public class WxLoginController {
             return AjaxResult.error("empty appid");
         }
 
-        WxMaService maService = wxMaServiceManager.getService(appid);
         Merchant merchant = merchantService.selectMerchantByCAppId(appid);
         if (merchant == null) {
             return AjaxResult.error(String.format("未找到AppID [%s] 对应的商家配置", appid));
         }
-        if (maService == null) {
-            if (StringUtils.isBlank(merchant.getCMiniAppSecret())) {
-                return AjaxResult.error(String.format("未找到AppID [%s] 对应的商家配置", appid));
-            }
-            wxMaServiceManager.register(appid, merchant.getCMiniAppSecret());
-            maService = wxMaServiceManager.getService(appid);
+        if (StringUtils.isBlank(merchant.getCMiniAppSecret())) {
+            return AjaxResult.error(String.format("AppID [%s] 未配置Secret", appid));
         }
+
+        wxMaServiceManager.registerOrRefresh(appid, merchant.getCMiniAppSecret());
+        WxMaService maService = wxMaServiceManager.getService(appid);
 
         if (maService == null) {
             return AjaxResult.error("微信服务初始化失败");

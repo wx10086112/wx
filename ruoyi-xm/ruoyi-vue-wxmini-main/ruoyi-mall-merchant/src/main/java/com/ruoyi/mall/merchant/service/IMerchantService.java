@@ -20,4 +20,6 @@ public interface IMerchantService {
     Merchant selectMerchantByCAppId(String cMiniAppId);
 
     Merchant selectMerchantByMAppId(String mMiniAppId);
+
+    Merchant selectMerchantByAnyMiniAppId(String miniAppId);
 }

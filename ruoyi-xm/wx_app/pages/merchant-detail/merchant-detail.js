@@ -20,6 +20,7 @@ Page({
     merchantId: null,
     merchant: {},
     albumList: [],
+    storeList: [],
     loading: true,
     loadFailed: false
   },
@@ -43,11 +44,13 @@ Page({
 
     merchantApi.getMerchantDetail(this.data.merchantId)
       .then((res) => {
-        const merchant = normalizeMerchantDetail(res.data || res || {})
+        const detailData = res.data || res || {}
+        const merchant = normalizeMerchantDetail(detailData.merchant || detailData)
         const albumList = (merchant.albumList && merchant.albumList.length
           ? merchant.albumList
           : [merchant.coverImage, merchant.avatar]
         ).filter(Boolean).slice(0, 6)
+        const storeList = Array.isArray(detailData.storeList) ? detailData.storeList : (Array.isArray(merchant.storeList) ? merchant.storeList : [])
         const albumMerchantId = merchant.merchantId || merchant.id
 
         if (albumList.length <= 1) {
@@ -58,12 +61,13 @@ Page({
                 this.setData({ albumList: apiAlbum.slice(0, 6) })
               }
             })
-            .catch(() => {})
+            .catch(() => { })
         }
 
         this.setData({
           merchant,
           albumList,
+          storeList,
           loading: false,
           loadFailed: false
         })

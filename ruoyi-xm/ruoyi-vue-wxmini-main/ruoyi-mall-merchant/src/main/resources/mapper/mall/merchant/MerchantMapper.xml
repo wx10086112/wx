@@ -250,6 +250,12 @@
         where m.m_mini_app_id = #{mMiniAppId} AND m.del_flag = '0'
     </select>
 
+    <select id="selectMerchantByAnyMiniAppId" parameterType="String" resultMap="MerchantResult">
+        <include refid="selectMerchantVo"/>
+        where (m.c_mini_app_id = #{miniAppId} or m.m_mini_app_id = #{miniAppId}) AND m.del_flag = '0'
+        limit 1
+    </select>
+
     <update id="deleteMerchantById" parameterType="Long">
         update merchant set del_flag = '2' where id = #{id}
     </update>

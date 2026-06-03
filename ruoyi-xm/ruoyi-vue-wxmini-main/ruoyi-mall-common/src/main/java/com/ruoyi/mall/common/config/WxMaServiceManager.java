@@ -21,46 +21,86 @@ public class WxMaServiceManager {
     private static final Logger log = LoggerFactory.getLogger(WxMaServiceManager.class);
 
     private final Map<String, WxMaService> serviceMap = new ConcurrentHashMap<>();
+    private final Map<String, String> secretMap = new ConcurrentHashMap<>();
 
     /**
      * 注册一个AppID对应的WxMaService
      */
     public void register(String appId, String secret) {
-        if (appId == null || secret == null) return;
-        if (serviceMap.containsKey(appId)) return;
+        registerOrRefresh(appId, secret);
+    }
 
-        WxMaDefaultConfigImpl config = new WxMaDefaultConfigImpl();
-        config.setAppid(appId);
-        config.setSecret(secret);
+    /**
+     * 新增或刷新一个AppID对应的WxMaService。
+     * 后台修改Secret后，运行中的缓存也能立即生效。
+     */
+    public void registerOrRefresh(String appId, String secret) {
+        String normalizedAppId = normalize(appId);
+        String normalizedSecret = normalize(secret);
+        if (normalizedAppId == null || normalizedSecret == null) {
+            return;
+        }
 
-        WxMaServiceImpl service = new WxMaServiceImpl();
-        service.setMultiConfigs(Collections.singletonMap(appId, config));
+        WxMaService existing = serviceMap.get(normalizedAppId);
+        String existingSecret = secretMap.get(normalizedAppId);
+        if (normalizedSecret.equals(existingSecret)) {
+            return;
+        }
 
-        serviceMap.put(appId, service);
-        log.info("注册微信小程序配置: appId={}", appId);
+        serviceMap.put(normalizedAppId, buildService(normalizedAppId, normalizedSecret));
+        secretMap.put(normalizedAppId, normalizedSecret);
+        if (existing == null) {
+            log.info("注册微信小程序配置: appId={}", normalizedAppId);
+        } else {
+            log.info("刷新微信小程序配置: appId={}", normalizedAppId);
+        }
     }
 
     /**
      * 获取WxMaService，找不到返回null
      */
     public WxMaService getService(String appId) {
-        if (appId == null) return null;
-        return serviceMap.get(appId);
+        String normalizedAppId = normalize(appId);
+        if (normalizedAppId == null) {
+            return null;
+        }
+        return serviceMap.get(normalizedAppId);
     }
 
     /**
      * 检查AppID是否已注册
      */
     public boolean hasService(String appId) {
-        return appId != null && serviceMap.containsKey(appId);
+        String normalizedAppId = normalize(appId);
+        return normalizedAppId != null && serviceMap.containsKey(normalizedAppId);
     }
 
     /**
      * 移除某个AppID的配置
      */
     public void remove(String appId) {
-        if (appId != null) {
-            serviceMap.remove(appId);
+        String normalizedAppId = normalize(appId);
+        if (normalizedAppId != null) {
+            serviceMap.remove(normalizedAppId);
+            secretMap.remove(normalizedAppId);
         }
+    }
+
+    private WxMaService buildService(String appId, String secret) {
+        WxMaDefaultConfigImpl config = new WxMaDefaultConfigImpl();
+        config.setAppid(appId);
+        config.setSecret(secret);
+
+        WxMaServiceImpl service = new WxMaServiceImpl();
+        service.setMultiConfigs(Collections.singletonMap(appId, config));
+        return service;
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

@@ -157,11 +157,12 @@ public class WxMaUserController {
     }
 
     private WxMaService getOrLoadService(String appId) {
-        WxMaService service = wxMaServiceManager.getService(appId);
-        if (service != null) return service;
+        if (StringUtils.isBlank(appId)) {
+            return null;
+        }
         Merchant merchant = merchantService.selectMerchantByCAppId(appId);
         if (merchant != null && StringUtils.isNotBlank(merchant.getCMiniAppSecret())) {
-            wxMaServiceManager.register(appId, merchant.getCMiniAppSecret());
+            wxMaServiceManager.registerOrRefresh(appId, merchant.getCMiniAppSecret());
             return wxMaServiceManager.getService(appId);
         }
         return null;

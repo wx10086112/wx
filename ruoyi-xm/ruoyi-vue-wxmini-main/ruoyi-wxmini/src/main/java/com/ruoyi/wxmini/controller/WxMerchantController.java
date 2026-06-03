@@ -122,28 +122,76 @@ public class WxMerchantController {
 
     @GetMapping("/detail/{id}")
     public AjaxResult detail(@PathVariable Long id) {
-        MerchantStore store = merchantStoreMapper.selectMerchantStoreById(id);
-        if (store == null) {
-            return AjaxResult.error("门店不存在");
-        }
-        // SaaS数据隔离：校验门店归属当前商家
+        Merchant merchant = merchantService.selectMerchantById(id);
+        MerchantStore targetStore;
+        List<MerchantStore> stores;
+
         Long currentMerchantId = WxMiniUserContext.getCurrentMerchantId();
         if (currentMerchantId == null) {
             currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
         }
-        if (currentMerchantId != null && !currentMerchantId.equals(store.getMerchantId())) {
-            return AjaxResult.error("门店不存在");
+        if (merchant != null) {
+            if (currentMerchantId != null && !currentMerchantId.equals(merchant.getId())) {
+                return AjaxResult.error("商家不存在");
+            }
+            stores = merchantStoreMapper.selectMerchantStoreByMerchantId(merchant.getId());
+            targetStore = selectMainStore(stores);
+        } else {
+            targetStore = merchantStoreMapper.selectMerchantStoreById(id);
+            if (targetStore == null) {
+                return AjaxResult.error("商家不存在");
+            }
+            if (currentMerchantId != null && !currentMerchantId.equals(targetStore.getMerchantId())) {
+                return AjaxResult.error("商家不存在");
+            }
+            merchant = merchantService.selectMerchantById(targetStore.getMerchantId());
+            if (merchant == null) {
+                return AjaxResult.error("商家不存在");
+            }
+            stores = merchantStoreMapper.selectMerchantStoreByMerchantId(merchant.getId());
         }
-        Merchant merchant = merchantService.selectMerchantById(store.getMerchantId());
-        if (merchant == null || merchant.getStatus() == null || merchant.getStatus() != 1) {
+
+        if (merchant.getStatus() == null || merchant.getStatus() != 1) {
             return AjaxResult.error("商家不存在或已下线");
         }
-        return AjaxResult.success(convertToItemDto(merchant, store, null, null));
+
+        WxMerchantItemDto dto = convertToItemDto(merchant, targetStore, null, null);
+        dto.setId(merchant.getId());
+        dto.setStoreId(targetStore != null ? targetStore.getId() : null);
+        dto.setContact(merchant.getContact());
+        dto.setDescription(merchant.getDescription());
+        dto.setStatus(merchant.getStatus());
+        dto.setStoreCount(merchant.getStoreCount() != null ? merchant.getStoreCount() : stores.size());
+        dto.setProductCount(merchant.getProductCount());
+        dto.setDistributorId(merchant.getDistributorId());
+        dto.setDistributorName(merchant.getDistributorName());
+        dto.setCMiniAppId(merchant.getCMiniAppId());
+        dto.setMMiniAppId(merchant.getMMiniAppId());
+        dto.setWxPayMchId(merchant.getWxPayMchId());
+        dto.setWxApplymentId(merchant.getWxApplymentId());
+        dto.setWxApplymentState(merchant.getWxApplymentState());
+        dto.setWxApplymentTime(merchant.getWxApplymentTime());
+        dto.setWxApplymentFinishTime(merchant.getWxApplymentFinishTime());
+        dto.setWxApplymentRejectReason(merchant.getWxApplymentRejectReason());
+        dto.setWxProfitSharingEnabled(merchant.getWxProfitSharingEnabled());
+        dto.setPlatformReceiverMchId(merchant.getPlatformReceiverMchId());
+        dto.setDistributorReceiverMchId(merchant.getDistributorReceiverMchId());
+        dto.setMerchantShareRate(merchant.getMerchantShareRate());
+        dto.setPlatformShareRate(merchant.getPlatformShareRate());
+        dto.setDistributorShareRate(merchant.getDistributorShareRate());
+        dto.setSettlementCycle(merchant.getSettlementCycle());
+        dto.setMapClaimStatus(merchant.getMapClaimStatus());
+        dto.setMapPoiId(merchant.getMapPoiId());
+        dto.setMapClaimUrl(merchant.getMapClaimUrl());
+        dto.setMapClaimTime(merchant.getMapClaimTime());
+        dto.setMapClaimRemark(merchant.getMapClaimRemark());
+        dto.setStoreList(stores);
+        dto.setAlbumList(buildAlbumList(merchant, stores));
+        return AjaxResult.success(dto);
     }
 
     @GetMapping("/album/{merchantId}")
     public AjaxResult album(@PathVariable Long merchantId) {
-        // SaaS数据隔离：校验商家归属
         Long currentMerchantId = WxMiniUserContext.getCurrentMerchantId();
         if (currentMerchantId == null) {
             currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
@@ -151,53 +199,22 @@ public class WxMerchantController {
         if (currentMerchantId != null && !currentMerchantId.equals(merchantId)) {
             return AjaxResult.error("商家不存在");
         }
+
         Merchant merchant = merchantService.selectMerchantById(merchantId);
         if (merchant == null || merchant.getStatus() == null || merchant.getStatus() != 1) {
             return AjaxResult.error("商家不存在或已下线");
         }
 
-        Set<String> seen = new HashSet<>();
-        List<String> albumList = new ArrayList<>();
-
-        // 1. 商家 logo / avatar
-        addIfNotBlank(albumList, seen, merchant.getLogo());
-        addIfNotBlank(albumList, seen, merchant.getAvatar());
-
-        // 2. 门店 avatar
         List<MerchantStore> stores = merchantStoreMapper.selectMerchantStoreByMerchantId(merchantId);
-        for (MerchantStore store : stores) {
-            addIfNotBlank(albumList, seen, store.getAvatar());
-        }
-
-        // 3. 商品封面图 + images
-        Product query = new Product();
-        query.setMerchantId(merchantId);
-        query.setStatus(1);
-        List<Product> products = productService.selectProductList(query);
-        for (Product product : products) {
-            addIfNotBlank(albumList, seen, product.getCoverImage());
-            addIfNotBlank(albumList, seen, product.getMainImage());
-            if (product.getImages() != null && !product.getImages().isEmpty()) {
-                for (String img : product.getImages().split("[,;]")) {
-                    addIfNotBlank(albumList, seen, img.trim());
-                }
-            }
-        }
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("merchantId", merchantId);
-        result.put("albumList", albumList);
+        result.put("albumList", buildAlbumList(merchant, stores));
         return AjaxResult.success(result);
     }
 
-    private void addIfNotBlank(List<String> list, Set<String> seen, String url) {
-        if (url != null && !url.isEmpty() && seen.add(url)) {
-            list.add(url);
-        }
-    }
-
     private WxMerchantItemDto convertToItemDto(Merchant merchant, MerchantStore store,
-                                                BigDecimal userLat, BigDecimal userLng) {
+            BigDecimal userLat, BigDecimal userLng) {
         WxMerchantItemDto dto = new WxMerchantItemDto();
         dto.setMerchantId(merchant.getId());
         dto.setName(merchant.getName());
@@ -260,6 +277,48 @@ public class WxMerchantController {
         return dto;
     }
 
+    private MerchantStore selectMainStore(List<MerchantStore> stores) {
+        if (stores == null || stores.isEmpty()) {
+            return null;
+        }
+        for (MerchantStore store : stores) {
+            if (store.getIsMain() != null && store.getIsMain() == 1) {
+                return store;
+            }
+        }
+        return stores.get(0);
+    }
+
+    private List<String> buildAlbumList(Merchant merchant, List<MerchantStore> stores) {
+        Set<String> seen = new HashSet<>();
+        List<String> albumList = new ArrayList<>();
+
+        addIfNotBlank(albumList, seen, merchant.getLogo());
+        addIfNotBlank(albumList, seen, merchant.getAvatar());
+
+        if (stores != null) {
+            for (MerchantStore store : stores) {
+                addIfNotBlank(albumList, seen, store.getAvatar());
+            }
+        }
+
+        Product query = new Product();
+        query.setMerchantId(merchant.getId());
+        query.setStatus(1);
+        List<Product> products = productService.selectProductList(query);
+        for (Product product : products) {
+            addIfNotBlank(albumList, seen, product.getCoverImage());
+            addIfNotBlank(albumList, seen, product.getMainImage());
+            if (product.getImages() != null && !product.getImages().isEmpty()) {
+                for (String img : product.getImages().split("[,;]")) {
+                    addIfNotBlank(albumList, seen, img.trim());
+                }
+            }
+        }
+
+        return albumList;
+    }
+
     private WxGrouponItemDto convertProductToDto(Product product, String merchantName) {
         WxGrouponItemDto dto = new WxGrouponItemDto();
         dto.setId(product.getId());
@@ -296,13 +355,19 @@ public class WxMerchantController {
         return dto;
     }
 
+    private void addIfNotBlank(List<String> list, Set<String> seen, String url) {
+        if (url != null && !url.isEmpty() && seen.add(url)) {
+            list.add(url);
+        }
+    }
+
     private double calculateDistance(double lat1, double lng1, double lat2, double lng2) {
         double earthRadius = 6371000;
         double dLat = Math.toRadians(lat2 - lat1);
         double dLng = Math.toRadians(lng2 - lng1);
         double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+                        * Math.sin(dLng / 2) * Math.sin(dLng / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return earthRadius * c;
     }
