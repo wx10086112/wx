@@ -50,19 +50,6 @@
             </el-descriptions>
 
             <div class="entry-panel">
-              <div class="entry-panel__main">
-                <div class="entry-panel__title">商家后台入口码</div>
-                <div class="entry-panel__desc">店长和员工扫码后，会直接进入该商家的后台登录页，不再落到 C 端首页。</div>
-                <div class="entry-panel__meta">
-                  <span>入口页：{{ merchantEntry.loginPage || ('/pages/merchant/login/login?merchantId=' + merchant.id) }}</span>
-                </div>
-                <div class="entry-panel__actions">
-                  <el-button type="primary" size="small" :loading="entryQrLoading" @click="loadMerchantEntryQrCode(false)">
-                    {{ merchantEntry.qrCodeUrl ? '刷新入口码' : '生成入口码' }}
-                  </el-button>
-                  <el-button v-if="merchantEntry.qrCodeUrl" size="small" @click="copyEntryLoginPage">复制登录页路径</el-button>
-                </div>
-              </div>
               <div class="entry-panel__preview">
                 <el-image
                   v-if="merchantEntry.qrCodeUrl"
@@ -71,7 +58,48 @@
                   :preview-src-list="[merchantEntry.qrCodeUrl]"
                   class="entry-panel__image"
                 />
-                <div v-else class="entry-panel__empty">暂未生成后台入口码</div>
+                <div v-else class="entry-panel__empty">
+                  <i class="el-icon-mobile-phone" />
+                  <span>点击生成商家后台入口码</span>
+                </div>
+              </div>
+
+              <div class="entry-panel__main">
+                <div class="entry-panel__title-row">
+                  <div>
+                    <div class="entry-panel__title">商家后台入口码</div>
+                    <div class="entry-panel__desc">给店长或员工扫码使用，进入统一小程序内的 B 端登录页，不落到 C 端首页。</div>
+                  </div>
+                  <el-tag type="success" size="small">单 AppID / BC 合并</el-tag>
+                </div>
+
+                <div class="entry-panel__path">
+                  <span class="entry-panel__path-label">入口页</span>
+                  <span class="entry-panel__path-value">{{ merchantEntry.loginPage || ('/pages/merchant/login/login?merchantId=' + merchant.id) }}</span>
+                </div>
+
+                <div class="entry-panel__steps">
+                  <div class="entry-step">
+                    <span class="entry-step__index">1</span>
+                    <span>后台先在“账户管理”创建店长或员工账号。</span>
+                  </div>
+                  <div class="entry-step">
+                    <span class="entry-step__index">2</span>
+                    <span>把入口码发给商家，员工扫码进入对应商家的后台登录页。</span>
+                  </div>
+                  <div class="entry-step">
+                    <span class="entry-step__index">3</span>
+                    <span>员工用商家账号密码登录，权限按 owner/member 控制。</span>
+                  </div>
+                </div>
+
+                <div class="entry-panel__actions">
+                  <el-button type="primary" size="small" :loading="entryQrLoading" @click="loadMerchantEntryQrCode(false)">
+                    {{ merchantEntry.qrCodeUrl ? '重新生成入口码' : '生成入口码' }}
+                  </el-button>
+                  <el-button size="small" @click="copyEntryLoginPage">复制登录页路径</el-button>
+                  <el-button size="small" @click="activeTab = 'accounts'; loadAccounts()">去建账号</el-button>
+                </div>
               </div>
             </div>
 
@@ -1652,19 +1680,25 @@ export default {
 }
 .entry-panel {
   margin-top: 12px;
-  padding: 16px;
-  border: 1px solid #EBEEF5;
-  border-radius: 8px;
+  padding: 18px;
+  border: 1px solid #D9E6FF;
+  border-radius: 12px;
   display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  background: #FAFCFF;
+  gap: 18px;
+  background: linear-gradient(135deg, #F7FBFF 0%, #FFFFFF 62%);
 }
 .entry-panel__main {
   flex: 1;
+  min-width: 0;
+}
+.entry-panel__title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 .entry-panel__title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: #303133;
 }
@@ -1673,45 +1707,87 @@ export default {
   line-height: 1.7;
   color: #606266;
 }
-.entry-panel__meta {
-  margin-top: 10px;
+.entry-panel__path {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #F2F7FF;
+  display: flex;
+  gap: 10px;
   font-size: 13px;
-  color: #909399;
+}
+.entry-panel__path-label {
+  color: #5C7EA8;
+  flex-shrink: 0;
+}
+.entry-panel__path-value {
+  color: #303133;
   word-break: break-all;
 }
-.entry-panel__actions {
+.entry-panel__steps {
   margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+.entry-step {
   display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #606266;
+  font-size: 13px;
+}
+.entry-step__index {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1677FF;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.entry-panel__actions {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 .entry-panel__preview {
-  width: 180px;
-  min-width: 180px;
+  width: 188px;
+  min-width: 188px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .entry-panel__image {
-  width: 160px;
-  height: 160px;
-  border-radius: 8px;
+  width: 172px;
+  height: 172px;
+  border-radius: 10px;
   overflow: hidden;
   border: 1px solid #EBEEF5;
   background: #fff;
 }
 .entry-panel__empty {
-  width: 160px;
-  height: 160px;
-  border: 1px dashed #DCDFE6;
-  border-radius: 8px;
+  width: 172px;
+  height: 172px;
+  border: 1px dashed #B9CEF2;
+  border-radius: 10px;
   display: flex;
+  flex-direction: column;
+  gap: 8px;
   align-items: center;
   justify-content: center;
   padding: 16px;
   box-sizing: border-box;
   text-align: center;
-  color: #909399;
+  color: #6D87AD;
   background: #fff;
+}
+.entry-panel__empty i {
+  font-size: 28px;
+  color: #1677FF;
 }
 .search-bar {
   display: flex;

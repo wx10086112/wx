@@ -1,25 +1,199 @@
 .merchant-detail-page {
   min-height: 100vh;
   background:
-    radial-gradient(circle at 92% 0%, rgba(22, 119, 255, 0.14), transparent 30%),
-    linear-gradient(180deg, #f7faff 0%, #f4f6fa 100%);
-  padding: 28rpx 24rpx 44rpx;
+    radial-gradient(circle at 88% 6%, rgba(22, 119, 255, 0.16), transparent 30%),
+    linear-gradient(180deg, #f4f8ff 0%, #f7f8fb 48%, #f3f5f8 100%);
+  padding: 24rpx 24rpx 44rpx;
   box-sizing: border-box;
 }
 
-.detail-header {
-  padding: 20rpx 6rpx 26rpx;
+.loading-state,
+.empty-state {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-.page-title {
-  display: block;
+.loading-text,
+.empty-desc {
+  color: #8a96a8;
+  font-size: 26rpx;
+}
+
+.empty-title {
   color: #172033;
-  font-size: 42rpx;
-  font-weight: 850;
+  font-size: 34rpx;
+  font-weight: 800;
+  margin-bottom: 14rpx;
+}
+
+.store-card {
+  padding: 26rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 24rpx 68rpx rgba(20, 55, 105, 0.14);
+}
+
+.store-main {
+  display: flex;
+  align-items: flex-start;
+}
+
+.store-avatar {
+  width: 142rpx;
+  height: 142rpx;
+  border-radius: 22rpx;
+  flex-shrink: 0;
+  box-shadow: 0 12rpx 26rpx rgba(20, 55, 105, 0.16);
+}
+
+.store-avatar.placeholder {
+  background: linear-gradient(135deg, #e9f3ff 0%, #f5f8ff 100%);
+  color: #1677ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+  font-weight: 800;
+}
+
+.store-info {
+  flex: 1;
+  min-width: 0;
+  margin-left: 22rpx;
+}
+
+.store-name-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+}
+
+.store-name {
+  flex: 1;
+  color: #161d2f;
+  font-size: 38rpx;
+  line-height: 1.22;
+  font-weight: 800;
+}
+
+.store-status {
+  flex-shrink: 0;
+  margin-top: 4rpx;
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.store-status.open {
+  color: #0b9b61;
+  background: rgba(11, 155, 97, 0.1);
+}
+
+.store-status.closed {
+  color: #8a96a8;
+  background: #eef1f5;
+}
+
+.store-sales-row {
+  margin-top: 14rpx;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  color: #7b8798;
+  font-size: 23rpx;
+}
+
+.store-tag-row {
+  margin-top: 14rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.store-tag,
+.mini-tag {
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  color: #4c6f9d;
+  background: #edf5ff;
+  font-size: 22rpx;
+}
+
+.store-time-row {
+  margin-top: 24rpx;
+  padding-top: 22rpx;
+  border-top: 1rpx solid #eef1f6;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  color: #5c6573;
+  font-size: 25rpx;
+}
+
+.time-strong {
+  color: #1f2a3d;
+  font-weight: 700;
+}
+
+.store-address-row {
+  margin-top: 20rpx;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.address-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.store-address {
+  display: block;
+  color: #1f2a3d;
+  font-size: 27rpx;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.distance-text {
+  display: block;
+  margin-top: 8rpx;
+  color: #8a96a8;
+  font-size: 24rpx;
+}
+
+.store-actions {
+  display: flex;
+  gap: 14rpx;
+}
+
+.store-action {
+  width: 86rpx;
+  height: 86rpx;
+  border-radius: 24rpx;
+  background: #f4f7fb;
+  color: #20293b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 21rpx;
+}
+
+.action-icon {
+  margin-bottom: 4rpx;
+  font-size: 30rpx;
+  font-weight: 700;
 }
 
 .detail-card {
-  margin-bottom: 22rpx;
+  margin-top: 22rpx;
   padding: 30rpx;
   border-radius: 30rpx;
   background: rgba(255, 255, 255, 0.96);
@@ -67,33 +241,13 @@
   font-size: 24rpx;
 }
 
+.muted-text.no-margin {
+  margin-top: 0;
+}
+
 .muted-inline {
   color: #8a96a8;
   font-size: 24rpx;
-}
-
-.action-row {
-  margin-top: 24rpx;
-  display: flex;
-  gap: 16rpx;
-}
-
-.action-button {
-  flex: 1;
-  height: 78rpx;
-  border-radius: 22rpx;
-  background: #f4f8ff;
-  color: #25415f;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 27rpx;
-  font-weight: 700;
-}
-
-.action-icon {
-  margin-right: 10rpx;
-  font-size: 31rpx;
 }
 
 .ability-block {

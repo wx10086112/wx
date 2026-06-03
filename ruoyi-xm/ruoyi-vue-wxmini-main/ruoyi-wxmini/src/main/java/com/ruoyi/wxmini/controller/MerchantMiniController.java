@@ -54,27 +54,39 @@ public class MerchantMiniController {
     private IMerchantSettlementRecordService settlementService;
 
     /**
-     * 每次请求前，优先从商家入口ID解析当前商家，兼容旧的 AppID 模式
+     * 每次请求前解析商家上下文：二维码入口优先，AppID模式仅作历史兼容。
      */
     @org.springframework.web.bind.annotation.ModelAttribute
-    public void resolveMerchantFromAppId(HttpServletRequest request) {
+    public void resolveMerchantContext(HttpServletRequest request) {
+        resolveMerchantEntryId(request);
+        resolveMerchantAppId(request);
+    }
+
+    private void resolveMerchantEntryId(HttpServletRequest request) {
         String merchantIdText = request.getHeader("X-Merchant-Id");
         if (StringUtils.isBlank(merchantIdText)) {
             merchantIdText = request.getParameter("merchantId");
         }
-        if (StringUtils.isNotBlank(merchantIdText)) {
-            try {
-                WxMiniUserContext.setMerchantEntryId(Long.valueOf(merchantIdText));
-            } catch (NumberFormatException ignored) {
-            }
+        if (StringUtils.isBlank(merchantIdText)) {
+            return;
         }
+        try {
+            WxMiniUserContext.setMerchantEntryId(Long.valueOf(merchantIdText));
+        } catch (NumberFormatException ignored) {
+        }
+    }
 
+    private void resolveMerchantAppId(HttpServletRequest request) {
         String appId = request.getHeader("X-Merchant-AppId");
-        if (StringUtils.isNotBlank(appId) && WxMiniUserContext.getAppIdMerchantId() == null) {
-            Merchant merchant = merchantService.selectMerchantByMAppId(appId);
-            if (merchant != null) {
-                WxMiniUserContext.setAppIdMerchantId(merchant.getId());
-            }
+        if (StringUtils.isBlank(appId) || WxMiniUserContext.getAppIdMerchantId() != null) {
+            return;
+        }
+        Merchant merchant = merchantService.selectMerchantByCAppId(appId);
+        if (merchant == null) {
+            merchant = merchantService.selectMerchantByMAppId(appId);
+        }
+        if (merchant != null) {
+            WxMiniUserContext.setAppIdMerchantId(merchant.getId());
         }
     }
 

@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="RuoYi Admin Backend" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH" value="D:\jdk-1.8" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="MAIN_CLASS_NAME" value="com.ruoyi.RuoYiApplication" />
+    <module name="ruoyi-admin" />
+    <option name="PROGRAM_PARAMETERS" value="--server.port=8080" />
+    <option name="VM_PARAMETERS" value="-Dfile.encoding=UTF-8" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/ruoyi-vue-wxmini-main" />
+    <option name="SHORTEN_COMMAND_LINE" value="ARGS_FILE" />
+    <envs>
+      <env name="JAVA_HOME" value="D:\jdk-1.8" />
+    </envs>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

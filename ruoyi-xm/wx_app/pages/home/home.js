@@ -1,4 +1,3 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
 const merchantApi = require('../../api/merchant')
@@ -17,8 +16,7 @@ Page({
     displayGrouponList: [],
     storeTabs: [
       { label: '团购优惠', key: 'deals', type: 'products' },
-      { label: '服务项目', key: 'services', type: 'products' },
-      { label: '商家信息', key: 'info', type: 'info' }
+      { label: '服务项目', key: 'services', type: 'products' }
     ],
     activeStoreTab: 'deals',
     loading: true
@@ -123,10 +121,6 @@ Page({
     })
   },
 
-  onSearchTap() {
-    util.navigateTo('/pages/search/search')
-  },
-
   refreshLocation() {
     wx.getSetting({
       success: (res) => {
@@ -160,22 +154,16 @@ Page({
   },
 
   onStoreTabTap(e) {
-    const tabType = e.currentTarget.dataset.type
     const tabKey = e.currentTarget.dataset.key
 
-    if (tabType === 'products') {
-      this.setData(
-        {
-          activeStoreTab: tabKey
-        },
-        () => {
-          this.applyFilters()
-        }
-      )
-      return
-    }
-
-    util.navigateTo(`/pages/merchant-detail/merchant-detail?id=${this.data.currentMerchant.id}`)
+    this.setData(
+      {
+        activeStoreTab: tabKey
+      },
+      () => {
+        this.applyFilters()
+      }
+    )
   },
 
   goMerchantDetail() {

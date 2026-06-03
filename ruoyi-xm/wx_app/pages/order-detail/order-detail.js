@@ -1,6 +1,6 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const orderApi = require('../../api/order')
+const refundApi = require('../../api/refund')
 
 Page({
   data: {
@@ -11,8 +11,13 @@ Page({
 
   onLoad(options) {
     this.setData({
-      orderNo: options.orderNo || mock.orderList[0].orderNo
+      orderNo: options.orderNo || ''
     })
+    if (!this.data.orderNo) {
+      this.setData({ loading: false })
+      util.showToast('订单不存在')
+      return
+    }
     this.loadOrderDetail()
   },
 
@@ -36,7 +41,9 @@ Page({
       writeOffDeadlineText: order.writeOffDeadline ? util.formatDate(order.writeOffDeadline, 'YYYY-MM-DD HH:mm') : '',
       priceAmountText: (priceAmount / 100).toFixed(2),
       couponAmountText: ((order.couponAmount || 0) / 100).toFixed(2),
-      payAmountText: (payAmount / 100).toFixed(2)
+      payAmountText: (payAmount / 100).toFixed(2),
+      image: order.image || order.coverImage || order.mainImage || '',
+      title: order.title || order.productName || order.name || ''
     }
   },
 
@@ -57,16 +64,6 @@ Page({
         this.setData({ loading: false })
         util.showToast('订单加载失败')
       })
-  },
-
-  updateOrder(updateHandler, successText) {
-    const orders = util.getStoredOrderList(mock.orderList)
-    const nextOrders = updateHandler(orders)
-    util.setStoredOrderList(nextOrders)
-    if (successText) {
-      util.showToast(successText, 'success')
-    }
-    this.loadOrderDetail()
   },
 
   cancelOrder() {
@@ -110,25 +107,11 @@ Page({
     })
   },
 
-  tryRealPayment() {
-    const orderApi = require('../../api/order')
-    return orderApi
-      .createPayOrder({ orderNo: this.data.orderNo })
-      .then((res) => {
-        const payParams = res.data || res
-        if (payParams && payParams.timeStamp) {
-          return util.requestPayment(payParams)
-        }
-        return Promise.reject(new Error('no pay params'))
-      })
-  },
-
   applyRefund() {
-    const refundApi = require('../../api/user')
     util.showModal('申请退款', '确认申请退款？').then((confirm) => {
       if (!confirm) return
-      const { post } = require('../../api/request')
-      post('/wxmini/refund/apply', { orderNo: this.data.orderNo, refundReason: '用户申请退款' })
+      refundApi
+        .applyRefund({ orderNo: this.data.orderNo, refundReason: '用户申请退款' })
         .then(() => {
           util.showToast('退款申请已提交', 'success')
           this.loadOrderDetail()
@@ -163,10 +146,6 @@ Page({
   buyAgain() {
     if (!this.data.order.productId) return
     util.navigateTo(`/pages/product-detail/product-detail?id=${this.data.order.productId}`)
-  },
-
-  goReview() {
-    util.navigateTo(`/pages/review/review?orderNo=${this.data.orderNo}`)
   },
 
   onShareAppMessage() {

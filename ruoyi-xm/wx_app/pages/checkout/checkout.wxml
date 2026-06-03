@@ -2,30 +2,19 @@
   <view class="card">
     <view class="section-title">{{checkoutConfig.productSectionTitle}}</view>
 
-    <view wx:if="{{checkoutMode === 'cart'}}" class="cart-product-list">
-      <view wx:for="{{cartItemList}}" wx:key="productId" class="product-row">
-        <image src="{{item.image}}" class="product-image" mode="aspectFill"></image>
-        <view class="product-info">
-          <text class="product-title">{{item.title}}</text>
-          <text class="product-meta">{{item.merchantName}} x{{item.quantity}}</text>
-          <text class="product-price">¥{{item.priceText}}</text>
-        </view>
-      </view>
-    </view>
-
-    <view wx:else class="product-row">
+    <view class="product-row">
       <image src="{{product.image}}" class="product-image" mode="aspectFill"></image>
       <view class="product-info">
         <text class="product-title">{{product.title}}</text>
         <text class="product-meta">{{merchant.name}}</text>
-        <text class="product-price">¥{{product.price / 100}}</text>
+        <text class="product-price">¥{{product.priceText}}</text>
       </view>
     </view>
   </view>
 
   <view class="card">
     <view class="section-title">{{checkoutConfig.infoSectionTitle}}</view>
-    <view wx:if="{{checkoutMode === 'single'}}" class="line-row">
+    <view class="line-row">
       <text>{{checkoutConfig.quantityLabel}}</text>
       <view class="quantity-box">
         <view class="quantity-btn" bindtap="changeQuantity" data-delta="-1">-</view>
@@ -37,20 +26,13 @@
       <text>{{checkoutConfig.phoneLabel}}</text>
       <input class="phone-input" type="number" maxlength="11" value="{{phone}}" bindinput="handlePhoneInput" placeholder="请输入手机号" />
     </view>
-    <view wx:if="{{checkoutMode === 'single'}}" class="line-row">
+    <view class="line-row">
       <text>到店门店</text>
       <view class="line-value-group">
         <text>{{merchant.shortName || merchant.name}}</text>
         <text class="line-value-tip">{{merchant.distance}}</text>
       </view>
     </view>
-    <view class="line-row">
-      <text>{{checkoutConfig.couponLabel}}</text>
-      <picker mode="selector" range="{{couponOptionList}}" bindchange="onCouponChange" value="{{couponIndex}}">
-        <view class="picker-text">{{couponOptionList[couponIndex] || '暂无可用优惠券'}}</view>
-      </picker>
-    </view>
-    <text class="coupon-hint">{{couponHintText}}</text>
   </view>
 
   <view class="card">
@@ -58,10 +40,6 @@
     <view class="line-row">
       <text>{{checkoutConfig.subtotalLabel}}</text>
       <text>¥{{subtotalText}}</text>
-    </view>
-    <view class="line-row">
-      <text>{{checkoutConfig.discountLabel}}</text>
-      <text class="discount-text">-¥{{couponAmountText}}</text>
     </view>
     <view class="line-row total-row">
       <text>{{checkoutConfig.totalLabel}}</text>

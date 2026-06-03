@@ -24,11 +24,6 @@
   display: flex;
 }
 
-.cart-product-list .product-row + .product-row {
-  padding-top: 20rpx;
-  border-top: 1rpx solid #edf2fb;
-}
-
 .product-image {
   width: 160rpx;
   height: 160rpx;
@@ -50,7 +45,6 @@
 }
 
 .product-meta,
-.picker-text,
 .summary-label {
   display: block;
   margin-top: 10rpx;
@@ -106,20 +100,9 @@
   gap: 12rpx;
 }
 
-.line-value-tip,
-.coupon-hint {
+.line-value-tip {
   color: #7c8ba1;
   font-size: 22rpx;
-}
-
-.coupon-hint {
-  display: block;
-  margin-top: 12rpx;
-  text-align: right;
-}
-
-.discount-text {
-  color: #18a058;
 }
 
 .total-row {

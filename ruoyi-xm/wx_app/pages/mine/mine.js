@@ -1,49 +1,75 @@
 const app = getApp()
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
-const templateService = require('../../services/template')
 const userApi = require('../../api/user')
-const orderApi = require('../../api/order')
+const merchantApi = require('../../api/merchant')
+
+const SERVICE_MENUS = [
+  { label: '个人资料', desc: '头像、手机号', url: '/pages/profile-edit/profile-edit' },
+  { label: '联系客服', desc: '电话与营业时间', url: '/pages/contact/contact' }
+]
+
+const EMPTY_MERCHANT_INFO = {
+  id: null,
+  name: '商家信息加载中',
+  phone: '',
+  address: '正在读取门店公开资料',
+  distance: '',
+  latitude: null,
+  longitude: null,
+  businessHours: '',
+  businessHoursText: '请稍候',
+  businessStatus: false,
+  businessStatusText: '',
+  bookingText: '',
+  displayTags: []
+}
+
+const buildBusinessHoursText = (merchant = {}) => {
+  if (merchant.businessHoursText) return merchant.businessHoursText
+  if (merchant.businessHours) return `周一至周日 ${merchant.businessHours}`
+  return '暂无营业时间'
+}
+
+const normalizeMerchantInfo = (merchant = {}) => {
+  const id = Number(merchant.id || 0)
+  const phone = merchant.phone || ''
+  const name = merchant.name || merchant.storeName || merchant.brandName || '暂无商家名称'
+  const rawTags = Array.isArray(merchant.tags) ? merchant.tags : []
+
+  return {
+    id,
+    name,
+    phone,
+    address: merchant.address || '暂无门店地址',
+    distance: merchant.distance || '',
+    latitude: merchant.latitude || null,
+    longitude: merchant.longitude || null,
+    businessHours: merchant.businessHours || '',
+    businessHoursText: buildBusinessHoursText(merchant),
+    businessStatus: merchant.businessStatus !== false && !!id,
+    businessStatusText: merchant.businessStatus === false ? '休息中' : (id ? '营业中' : ''),
+    bookingText: merchant.supportBooking === false ? '到店即用' : (id ? '可预约' : ''),
+    displayTags: rawTags.filter((tag) => !['营业中', '休息中'].includes(tag))
+  }
+}
 
 Page({
   data: {
     isLoggedIn: false,
     userInfo: {},
-    profileConfig: {},
-    orderEntryList: [],
-    assetCardList: [],
-    serviceMenuList: [],
-    featureToggle: {},
-    couponCount: 0,
-    favoriteCount: 0,
-    benefitTagList: [],
-    loginStep: 'idle'
+    serviceMenuList: SERVICE_MENUS,
+    loginStep: 'idle',
+    merchantInfo: EMPTY_MERCHANT_INFO,
+    merchantLoading: false
   },
 
   onLoad() {
-    this.initTemplateConfig()
     this.checkLoginStatus()
+    this.loadMerchantInfo()
   },
 
   onShow() {
     this.checkLoginStatus()
-    this.loadAssets()
-  },
-
-  initTemplateConfig() {
-    const profileConfig = templateService.getTemplateSection('profile')
-    const featureToggle = templateService.getTemplateSection('featureToggle')
-    this.setData({
-      profileConfig,
-      featureToggle,
-      serviceMenuList: (profileConfig.serviceMenus || []).filter((item) => {
-        if (item.url === '/pages/coupon/coupon') return featureToggle.enableCoupon
-        if (item.url === '/pages/favorite/favorite') return featureToggle.enableFavorite
-        return true
-      })
-    }, () => {
-      this.loadAssets(profileConfig, featureToggle)
-    })
   },
 
   checkLoginStatus() {
@@ -53,87 +79,45 @@ Page({
     })
   },
 
-  buildOrderCountMap(orderList = []) {
-    return {
-      PENDING_PAY: orderList.filter((item) => item.status === 'PENDING_PAY').length,
-      UNUSED: orderList.filter((item) => item.status === 'PAID_UNUSED').length,
-      AFTER_SALE: orderList.filter((item) => ['REFUNDING', 'REFUNDED'].includes(item.status)).length
-    }
-  },
-
-  buildOrderEntryList(profileConfig = {}, orderCountMap = {}) {
-    return (profileConfig.orderEntries || []).map((item) => ({
-      ...item,
-      badge: item.status ? orderCountMap[item.status] || 0 : 0
-    }))
-  },
-
-  buildBenefitTags(profileConfig = {}, counters = {}, orderCountMap = {}) {
-    const dynamicTags = []
-
-    if (counters.couponCount) {
-      dynamicTags.push(`${counters.couponCount} 张券待使用`)
-    }
-    if (orderCountMap.UNUSED) {
-      dynamicTags.push(`${orderCountMap.UNUSED} 个待核销订单`)
-    }
-    if (counters.favoriteCount) {
-      dynamicTags.push(`${counters.favoriteCount} 个收藏内容`)
-    }
-    return dynamicTags.concat(profileConfig.benefitTips || []).slice(0, 4)
-  },
-
-  loadAssets(profileConfigArg, featureToggleArg) {
-    if (!app.globalData.isLoggedIn) return
-
-    const profileConfig =
-      profileConfigArg || (this.data.profileConfig && this.data.profileConfig.assetEntries
-        ? this.data.profileConfig
-        : templateService.getTemplateSection('profile')
-      )
-    const featureToggle =
-      featureToggleArg || (this.data.featureToggle && Object.keys(this.data.featureToggle).length
-        ? this.data.featureToggle
-        : templateService.getTemplateSection('featureToggle')
-      )
-
-    // 从真实API获取订单数统计
-    orderApi.getOrderList()
+  loadMerchantInfo() {
+    this.setData({ merchantLoading: true })
+    merchantApi
+      .getMerchantList()
       .then((res) => {
-        const orderList = res.data || res || []
-        const orderCountMap = this.buildOrderCountMap(orderList)
-        const counters = {
-          couponCount: 0,
-          favoriteCount: 0
-        }
-
-        this.renderAssets(profileConfig, featureToggle, counters, orderCountMap)
+        const merchant = (res.data || res || [])[0] || {}
+        this.setData({
+          merchantInfo: normalizeMerchantInfo(merchant),
+          merchantLoading: false
+        })
       })
       .catch(() => {
-        const counters = { couponCount: 0, favoriteCount: 0 }
-        const orderCountMap = this.buildOrderCountMap([])
-        this.renderAssets(profileConfig, featureToggle, counters, orderCountMap)
+        this.setData({
+          merchantInfo: normalizeMerchantInfo({}),
+          merchantLoading: false
+        })
       })
   },
 
-  renderAssets(profileConfig, featureToggle, counters, orderCountMap) {
-    const assetCardList = (profileConfig.assetEntries || [])
-      .filter((item) => {
-        if (item.url === '/pages/coupon/coupon') return featureToggle.enableCoupon
-        if (item.url === '/pages/favorite/favorite') return featureToggle.enableFavorite
-        return true
+  fetchMerchantInfo() {
+    this.setData({ merchantLoading: true })
+    return merchantApi
+      .getMerchantList()
+      .then((res) => {
+        const merchant = normalizeMerchantInfo((res.data || res || [])[0] || {})
+        this.setData({
+          merchantInfo: merchant,
+          merchantLoading: false
+        })
+        return merchant
       })
-      .map((item) => ({
-        ...item,
-        count: counters[item.countField] || 0
-      }))
-
-    this.setData({
-      ...counters,
-      assetCardList,
-      orderEntryList: this.buildOrderEntryList(profileConfig, orderCountMap),
-      benefitTagList: this.buildBenefitTags(profileConfig, counters, orderCountMap)
-    })
+      .catch(() => {
+        const merchant = normalizeMerchantInfo({})
+        this.setData({
+          merchantInfo: merchant,
+          merchantLoading: false
+        })
+        return merchant
+      })
   },
 
   handleLogin() {
@@ -235,6 +219,55 @@ Page({
       })
   },
 
+  callMerchant() {
+    const phone = this.data.merchantInfo.phone
+    if (!phone) {
+      util.showToast('暂无联系电话')
+      return
+    }
+    wx.makePhoneCall({
+      phoneNumber: phone,
+      fail: () => {}
+    })
+  },
+
+  openMerchantMap() {
+    const merchant = this.data.merchantInfo
+    if (!merchant.latitude || !merchant.longitude) {
+      util.showToast('暂无门店位置')
+      return
+    }
+    wx.openLocation({
+      latitude: Number(merchant.latitude),
+      longitude: Number(merchant.longitude),
+      name: merchant.name,
+      address: merchant.address
+    })
+  },
+
+  goMerchantDetail() {
+    const merchantId = this.data.merchantInfo.id
+    if (merchantId) {
+      util.navigateTo(`/pages/merchant-detail/merchant-detail?id=${merchantId}`)
+      return
+    }
+
+    if (this.data.merchantLoading) {
+      util.showToast('正在加载商家信息')
+      return
+    }
+
+    util.showLoading('加载商家信息...')
+    this.fetchMerchantInfo().then((merchant) => {
+      util.hideLoading()
+      if (merchant.id) {
+        util.navigateTo(`/pages/merchant-detail/merchant-detail?id=${merchant.id}`)
+        return
+      }
+      util.showToast('暂无商家信息')
+    })
+  },
+
   handleLogout() {
     util.showModal('退出登录', '确定退出当前账号吗？').then((confirm) => {
       if (!confirm) return
@@ -245,26 +278,6 @@ Page({
       })
       util.showToast('已退出登录', 'success')
     })
-  },
-
-  goOrder() {
-    util.navigateTo('/pages/order/order')
-  },
-
-  goOrderStatus(e) {
-    util.setPendingOrderFilter(e.currentTarget.dataset.status)
-    util.navigateTo('/pages/order/order')
-  },
-
-  handleOrderEntry(e) {
-    const { status, url } = e.currentTarget.dataset
-    if (status) {
-      this.goOrderStatus(e)
-      return
-    }
-    if (url) {
-      util.navigateTo(url)
-    }
   },
 
   goPage(e) {

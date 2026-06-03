@@ -12,7 +12,6 @@ const defaultTemplateConfig = {
     slogan: '',
     notice: '支持微信支付、到店使用、退款售后与消息通知',
     servicePhone: '',
-    searchPlaceholder: '搜索套餐、服务项目',
     primaryColor: '#1677ff'
   },
   home: {
@@ -27,7 +26,7 @@ const defaultTemplateConfig = {
   },
   profile: {
     loginTitle: '点击登录',
-    loginDesc: '登录后查看订单、券包与到店使用信息',
+    loginDesc: '登录后查看订单、到店使用码与售后进度',
     orderSectionTitle: '我的订单',
     orderMoreText: '全部订单 ›',
     orderEntries: [
@@ -35,16 +34,11 @@ const defaultTemplateConfig = {
       { label: '待使用', status: 'UNUSED' },
       { label: '退款/售后', status: 'AFTER_SALE' },
     ],
-    assetEntries: [
-      { label: '优惠券/红包', url: '/pages/coupon/coupon', countField: 'couponCount' },
-      { label: '我的收藏', url: '/pages/favorite/favorite', countField: 'favoriteCount' }
-    ],
-    benefitTitle: '权益中心',
-    benefitDesc: '优惠券、收藏和待使用订单统一展示，方便到店前快速查看。',
+    assetEntries: [],
+    benefitTitle: '订单服务',
+    benefitDesc: '订单、核销码和售后进度统一展示，方便到店前快速查看。',
     benefitTips: ['支持到店使用', '支持退款售后'],
     serviceMenus: [
-      { label: '我的优惠券 / 红包', url: '/pages/coupon/coupon' },
-      { label: '我的收藏', url: '/pages/favorite/favorite' },
       { label: '联系客服', url: '/pages/contact/contact' }
     ],
     logoutText: '退出登录'
@@ -60,8 +54,6 @@ const defaultTemplateConfig = {
     albumSectionSubtitle: '门头、环境与项目实拍',
     homeNavText: '首页',
     orderNavText: '订单',
-    collectText: '收藏门店',
-    collectedText: '已收藏',
     contactButtonText: '联系门店'
   },
   productDetail: {
@@ -75,8 +67,6 @@ const defaultTemplateConfig = {
     timeRangeRuleText: '使用时间段：以门店营业时间为准',
     bookingYesText: '需要预约',
     bookingNoText: '无需预约',
-    collectText: '收藏',
-    collectedText: '已收藏',
     shareText: '分享',
     buyButtonText: '立即抢购'
   },
@@ -87,17 +77,15 @@ const defaultTemplateConfig = {
     useRuleSectionTitle: '使用说明',
     quantityLabel: '购买数量',
     phoneLabel: '手机号',
-    couponLabel: '优惠券',
     subtotalLabel: '商品金额',
-    discountLabel: '优惠抵扣',
     totalLabel: '实付总金额',
     paySummaryLabel: '待支付',
     submitButtonText: '提交订单并支付',
     loginHintText: '订单创建后可在订单中心完成支付与到店使用'
   },
   featureToggle: {
-    enableCoupon: true,
-    enableFavorite: true,
+    enableCoupon: false,
+    enableFavorite: false,
     enableAddress: false,
     enableJoinApply: false,
     enableBookingRule: true,

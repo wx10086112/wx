@@ -2,19 +2,14 @@
   "pages": [
     "pages/home/home",
     "pages/order/order",
-    "pages/cart/cart",
     "pages/mine/mine",
-    "pages/search/search",
-    "pages/search-result/search-result",
     "pages/merchant-detail/merchant-detail",
     "pages/product-detail/product-detail",
     "pages/checkout/checkout",
     "pages/order-detail/order-detail",
     "pages/coupon/coupon",
-    "pages/favorite/favorite",
     "pages/contact/contact",
     "pages/profile-edit/profile-edit",
-    "pages/review/review",
     "pages/merchant/login/login",
     "pages/merchant/workbench/workbench",
     "pages/merchant/order/order",
@@ -55,8 +50,8 @@
         "text": "首页"
       },
       {
-        "pagePath": "pages/cart/cart",
-        "text": "购物车"
+        "pagePath": "pages/order/order",
+        "text": "订单"
       },
       {
         "pagePath": "pages/mine/mine",

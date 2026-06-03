@@ -5,6 +5,8 @@
 ruoyi:
   profile: ${RUOYI_UPLOAD_PATH}
   addressEnabled: true
+  redis:
+    enabled: true
 
 logging:
   level:

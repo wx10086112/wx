@@ -34,29 +34,30 @@ Page({
           pendingOrderList: this.buildPendingOrderList(response.pendingOrderList || [])
         })
       })
-      .catch(() => {
-        this.loadLocalData()
+      .catch((err) => {
+        this.handleLoadFailure(err)
       })
   },
 
-  loadLocalData() {
-    const storeInfo = util.getStoreInfo()
-    const goodsList = util.getGoodsList()
-    const orderList = util.getOrderList()
-    const stats = util.buildWorkbenchStats(orderList, goodsList)
-    const threshold = Number(storeInfo.stockAlertThreshold || 20)
-    const lowStockGoods = util.getLowStockGoods(threshold)
-    const alertList = this.buildAlertList(stats, lowStockGoods.length, threshold)
-
+  handleLoadFailure(err = {}) {
+    const message = err.message || '商家后台数据加载失败，请重新登录'
     this.setData({
       staffUser: app.globalData.staffUser || {},
-      storeInfo,
-      todaySalesText: util.formatPrice(stats.todaySalesAmount),
-      alertList,
-      statsCardList: this.buildStatsCardList(stats),
+      storeInfo: {},
+      todaySalesText: '0.00',
+      statsCardList: this.buildStatsCardList({}),
+      alertList: [],
       quickActionList: this.buildQuickActions(),
-      pendingOrderList: this.buildPendingOrderList(orderList)
+      pendingOrderList: []
     })
+
+    util.showToast(message)
+    if (/未登录|登录已过期|商家身份校验失败|入口与登录账号不匹配/.test(message)) {
+      app.clearMerchantLoginInfo()
+      wx.redirectTo({
+        url: '/pages/merchant/login/login'
+      })
+    }
   },
 
   buildStatsCardList(stats = {}) {
@@ -108,7 +109,6 @@ Page({
       { label: '核销记录', icon: '📝', url: '/pages/merchant/verify-records/verify-records', permissionCodes: ['verify.record', 'verify.scan', 'verify.manual'], isTab: false },
       { label: '商品管理', icon: '🏷️', url: '/pages/merchant/goods/goods', permissionCodes: ['goods.manage'], isTab: true },
       { label: '结算中心', icon: '💰', url: '/pages/merchant/finance/finance', permissionCodes: ['finance.manage'], isTab: false },
-      { label: '营销活动', icon: '🎫', url: '/pages/merchant/marketing/marketing', permissionCodes: ['marketing.manage'], isTab: false },
       { label: '门店设置', icon: '🏪', url: '/pages/merchant/store/store', permissionCodes: ['store.manage'], isTab: false },
       { label: '员工权限', icon: '👥', url: '/pages/merchant/staff/staff', permissionCodes: ['staff.manage'], isTab: false }
     ].filter((item) => app.hasAnyPermission(item.permissionCodes))

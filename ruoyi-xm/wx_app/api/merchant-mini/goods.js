@@ -1,4 +1,4 @@
-const { get, post, put } = require('../../utils/merchant-request')
+const { get, post, put, getBaseUrl } = require('../../utils/merchant-request')
 const app = getApp()
 
 const getMerchantGoodsList = (data = {}) => get('/wxmini/merchant-mini/goods/list', data)
@@ -15,7 +15,7 @@ const uploadMerchantGoodsImage = (filePath) => {
       header['Wx-Authorization'] = `Bearer ${token}`
     }
     wx.uploadFile({
-      url: `${app.baseUrl || 'http://localhost:8080'}/wxmini/merchant-mini/goods/image/upload`,
+      url: `${getBaseUrl()}/wxmini/merchant-mini/goods/image/upload`,
       filePath,
       name: 'file',
       header,

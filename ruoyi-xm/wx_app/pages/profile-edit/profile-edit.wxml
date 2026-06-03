@@ -36,7 +36,9 @@
     <text class="tip-text">头像和昵称用于在小程序内展示，手机号用于到店服务通知</text>
   </view>
 
-  <button class="save-btn" bindtap="saveProfile" disabled="{{saving}}">
-    {{saving ? '保存中...' : '保存'}}
-  </button>
+  <view class="save-section">
+    <button class="save-btn" bindtap="saveProfile" disabled="{{saving}}">
+      {{saving ? '保存中...' : '保存'}}
+    </button>
+  </view>
 </view>

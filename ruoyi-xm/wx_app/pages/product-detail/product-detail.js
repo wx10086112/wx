@@ -1,7 +1,5 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const templateService = require('../../services/template')
-const cartService = require('../../services/cart')
 const productApi = require('../../api/product')
 const merchantApi = require('../../api/merchant')
 
@@ -16,8 +14,7 @@ Page({
     ruleList: [],
     serviceHighlightList: [],
     productImageCropStyle: util.buildImageCropStyle(),
-    loading: true,
-    isCollected: false
+    loading: true
   },
 
   onLoad(options) {
@@ -26,9 +23,15 @@ Page({
   },
 
   formatProduct(product = {}, productConfig = {}) {
+    const price = product.price || 0
+    const originalPrice = product.originalPrice || 0
     return {
       ...product,
-      savingAmountText: (((product.originalPrice || 0) - (product.price || 0)) / 100).toFixed(0),
+      title: product.title || product.name || '',
+      image: product.image || product.coverImage || product.mainImage || '',
+      priceText: (price / 100).toFixed(2),
+      originalPriceText: (originalPrice / 100).toFixed(2),
+      savingAmountText: ((Math.max(originalPrice - price, 0)) / 100).toFixed(0),
       bookingRequiredText: product.bookingRequired ? productConfig.bookingYesText : productConfig.bookingNoText
     }
   },
@@ -61,7 +64,6 @@ Page({
           ]
         })
 
-        // 加载商家信息
         if (rawProduct.merchantId) {
           merchantApi.getMerchantDetail(rawProduct.merchantId)
             .then((merchantRes) => {
@@ -115,18 +117,6 @@ Page({
 
   goHome() {
     util.switchTab('/pages/home/home')
-  },
-
-  toggleCollect() {
-    this.setData({
-      isCollected: !this.data.isCollected
-    })
-    util.showToast(this.data.isCollected ? '已收藏项目' : '已取消收藏', 'success')
-  },
-
-  addToCart() {
-    cartService.addToCart(this.data.product, 1)
-    util.showToast('已加入购物车', 'success')
   },
 
   buyNow() {

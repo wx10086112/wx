@@ -1,8 +1,11 @@
 package com.ruoyi.framework.aspectj;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -14,6 +17,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 import com.ruoyi.common.annotation.RateLimiter;
+import com.ruoyi.common.core.redis.RedisModeProperties;
 import com.ruoyi.common.enums.LimitType;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
@@ -30,17 +34,26 @@ public class RateLimiterAspect
 {
     private static final Logger log = LoggerFactory.getLogger(RateLimiterAspect.class);
 
+    private final RedisModeProperties redisModeProperties;
+
+    private final Map<String, LocalRateLimitWindow> localWindows = new ConcurrentHashMap<>();
+
     private RedisTemplate<Object, Object> redisTemplate;
 
     private RedisScript<Long> limitScript;
 
-    @Autowired
-    public void setRedisTemplate1(RedisTemplate<Object, Object> redisTemplate)
+    public RateLimiterAspect(RedisModeProperties redisModeProperties)
+    {
+        this.redisModeProperties = redisModeProperties;
+    }
+
+    @Autowired(required = false)
+    public void setRedisTemplate(RedisTemplate<Object, Object> redisTemplate)
     {
         this.redisTemplate = redisTemplate;
     }
 
-    @Autowired
+    @Autowired(required = false)
     public void setLimitScript(RedisScript<Long> limitScript)
     {
         this.limitScript = limitScript;
@@ -51,26 +64,37 @@ public class RateLimiterAspect
     {
         int time = rateLimiter.time();
         int count = rateLimiter.count();
-
         String combineKey = getCombineKey(rateLimiter, point);
-        List<Object> keys = Collections.singletonList(combineKey);
-        try
+
+        if (shouldUseRedis())
         {
-            Long number = redisTemplate.execute(limitScript, keys, count, time);
-            if (StringUtils.isNull(number) || number.intValue() > count)
+            List<Object> keys = Collections.singletonList(combineKey);
+            try
             {
-                throw new ServiceException("访问过于频繁，请稍候再试");
+                Long number = redisTemplate.execute(limitScript, keys, count, time);
+                if (StringUtils.isNull(number) || number.intValue() > count)
+                {
+                    throw new ServiceException("访问过于频繁，请稍候再试");
+                }
+                log.info("限制请求'{}',当前请求'{}',缓存key'{}'", count, number.intValue(), combineKey);
+                return;
             }
-            log.info("限制请求'{}',当前请求'{}',缓存key'{}'", count, number.intValue(), combineKey);
+            catch (ServiceException e)
+            {
+                throw e;
+            }
+            catch (Exception e)
+            {
+                log.warn("Redis 限流不可用，切换为本地限流模式：{}", e.getMessage());
+            }
         }
-        catch (ServiceException e)
+
+        int current = acquireLocalCount(combineKey, time);
+        if (current > count)
         {
-            throw e;
+            throw new ServiceException("访问过于频繁，请稍候再试");
         }
-        catch (Exception e)
-        {
-            throw new RuntimeException("服务器限流异常，请稍候再试");
-        }
+        log.info("限制请求'{}',当前请求'{}',缓存key'{}'", count, current, combineKey);
     }
 
     public String getCombineKey(RateLimiter rateLimiter, JoinPoint point)
@@ -85,5 +109,59 @@ public class RateLimiterAspect
         Class<?> targetClass = method.getDeclaringClass();
         stringBuffer.append(targetClass.getName()).append("-").append(method.getName());
         return stringBuffer.toString();
+    }
+
+    private boolean shouldUseRedis()
+    {
+        return redisModeProperties.isEnabled() && redisTemplate != null && limitScript != null;
+    }
+
+    private int acquireLocalCount(String key, int timeSeconds)
+    {
+        long now = System.currentTimeMillis();
+        long ttlMillis = TimeUnit.SECONDS.toMillis(timeSeconds);
+        LocalRateLimitWindow window = localWindows.compute(key, (cacheKey, existing) -> {
+            if (existing == null || existing.isExpired(now))
+            {
+                return new LocalRateLimitWindow(now + ttlMillis, 1);
+            }
+            existing.increment();
+            return existing;
+        });
+        cleanupExpiredWindows(now);
+        return window.getCount();
+    }
+
+    private void cleanupExpiredWindows(long now)
+    {
+        localWindows.entrySet().removeIf(entry -> entry.getValue().isExpired(now));
+    }
+
+    private static class LocalRateLimitWindow
+    {
+        private final long expireAt;
+
+        private int count;
+
+        LocalRateLimitWindow(long expireAt, int count)
+        {
+            this.expireAt = expireAt;
+            this.count = count;
+        }
+
+        boolean isExpired(long now)
+        {
+            return now >= expireAt;
+        }
+
+        void increment()
+        {
+            count++;
+        }
+
+        int getCount()
+        {
+            return count;
+        }
     }
 }

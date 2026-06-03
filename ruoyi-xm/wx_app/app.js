@@ -1,7 +1,13 @@
 const util = require('./utils/util')
 const merchantUtil = require('./utils/merchant-util')
-const merchantMock = require('./data/merchant-mock')
 const MERCHANT_ENTRY_KEY = 'merchantEntry'
+const BASE_URL_STORAGE_KEY = 'baseUrl'
+const DEFAULT_BASE_URL = 'http://localhost:8080'
+
+const normalizeBaseUrl = (value = '') => {
+  if (!value || typeof value !== 'string') return DEFAULT_BASE_URL
+  return value.trim().replace(/\/+$/, '') || DEFAULT_BASE_URL
+}
 
 const normalizeMerchantRoleKey = (roleKey = '') => {
   if (roleKey === 'manager') return 'owner'
@@ -63,7 +69,6 @@ App({
   onLaunch(options = {}) {
     this.initEnv()
     this.checkLoginStatus()
-    merchantUtil.initMerchantMockStorage(merchantMock)
     this.restoreMerchantEntry()
     this.applyMerchantEntryOptions(options)
     this.restoreMerchantLogin()
@@ -74,7 +79,8 @@ App({
   },
 
   initEnv() {
-    this.baseUrl = 'http://localhost:8080'
+    this.baseUrl = normalizeBaseUrl(wx.getStorageSync(BASE_URL_STORAGE_KEY) || DEFAULT_BASE_URL)
+    wx.setStorageSync(BASE_URL_STORAGE_KEY, this.baseUrl)
     const accountInfo = wx.getAccountInfoSync()
     if (accountInfo && accountInfo.miniProgram) {
       this.globalData.appId = accountInfo.miniProgram.appId || ''

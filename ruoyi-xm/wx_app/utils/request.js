@@ -1,6 +1,11 @@
 const app = getApp()
+const DEFAULT_BASE_URL = 'http://localhost:8080'
+const BASE_URL_STORAGE_KEY = 'baseUrl'
 
-const getBaseUrl = () => app.baseUrl || 'http://localhost:8080'
+const getBaseUrl = () => {
+  const runtimeBaseUrl = app.baseUrl || wx.getStorageSync(BASE_URL_STORAGE_KEY) || DEFAULT_BASE_URL
+  return String(runtimeBaseUrl).trim().replace(/\/+$/, '') || DEFAULT_BASE_URL
+}
 const getAppId = () => (app.globalData && app.globalData.appId) || ''
 
 const request = (options) => {
@@ -128,5 +133,5 @@ module.exports = {
   put,
   del,
   uploadFile,
-  baseUrl: getBaseUrl()
+  getBaseUrl
 }

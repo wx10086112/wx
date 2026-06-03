@@ -49,16 +49,13 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // C端和其他wxmini接口：需要有效token
-            // 先从X-Wx-AppId解析商家ID设置上下文（供未登录接口使用）
-            String cAppId = request.getHeader("X-Wx-AppId");
-            if (StringUtils.isNotBlank(cAppId)) {
-                Long cMerchantId = resolveMerchantIdByCAppId(cAppId);
-                if (cMerchantId != null) {
-                    WxMiniUserContext.setAppIdMerchantId(cMerchantId);
-                }
+            resolveCAppIdMerchantContext(request);
+            if (isWxMiniPublicBrowseUri(path)) {
+                filterChain.doFilter(request, response);
+                return;
             }
 
+            // C端其他wxmini接口：需要有效token
             String token = request.getHeader("Wx-Authorization");
             if (token == null || !token.startsWith("Bearer ")) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -98,7 +95,21 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 商家端请求处理：必须校验JWT，X-Merchant-AppId仅用于校验是否匹配当前商家
+     * 公开浏览接口也需要先按 C 端 AppID 识别商家，否则商家列表、团购列表会失去租户上下文。
+     */
+    private void resolveCAppIdMerchantContext(HttpServletRequest request) {
+        String cAppId = request.getHeader("X-Wx-AppId");
+        if (StringUtils.isBlank(cAppId)) {
+            return;
+        }
+        Long cMerchantId = resolveMerchantIdByCAppId(cAppId);
+        if (cMerchantId != null) {
+            WxMiniUserContext.setAppIdMerchantId(cMerchantId);
+        }
+    }
+
+    /**
+     * 商家端请求处理：入口二维码负责指定商家，JWT负责确认登录员工。
      */
     private void handleMerchantMiniRequest(HttpServletRequest request, HttpServletResponse response,
                                            FilterChain filterChain) throws ServletException, IOException {
@@ -132,7 +143,17 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // 如果携带了 X-Merchant-AppId，查DB校验是否与token中的merchantId对应的真实AppID匹配
+            String requestMerchantId = request.getHeader("X-Merchant-Id");
+            if (StringUtils.isNotBlank(requestMerchantId)
+                    && authContext.getMerchantId() != null
+                    && !requestMerchantId.equals(String.valueOf(authContext.getMerchantId()))) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"code\":403,\"msg\":\"商家入口与登录账号不匹配\"}");
+                return;
+            }
+
+            // BC合并后商家端也运行在C端小程序内，保留旧M端AppID兼容。
             String appId = request.getHeader("X-Merchant-AppId");
             if (StringUtils.isNotBlank(appId) && authContext.getMerchantId() != null) {
                 if (!validateMerchantAppId(authContext.getMerchantId(), appId)) {
@@ -156,8 +177,8 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 通过ApplicationContext动态获取IMerchantService，校验AppID与merchantId是否匹配
-     * 使用反射避免ruoyi-mall-common对ruoyi-mall-merchant的循环依赖
+     * 通过ApplicationContext动态获取IMerchantService，校验AppID与merchantId是否匹配。
+     * BC端合并后以C端AppID为主，旧M端AppID仅用于兼容历史独立商家端。
      */
     private boolean validateMerchantAppId(Long merchantId, String appId) {
         try {
@@ -167,13 +188,20 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
             if (merchant == null) {
                 return false;
             }
-            Method getMMiniAppId = merchant.getClass().getMethod("getMMiniAppId");
-            String dbAppId = (String) getMMiniAppId.invoke(merchant);
-            return appId.equals(dbAppId);
+
+            String cMiniAppId = readStringProperty(merchant, "getCMiniAppId");
+            String mMiniAppId = readStringProperty(merchant, "getMMiniAppId");
+            return appId.equals(cMiniAppId) || appId.equals(mMiniAppId);
         } catch (Exception e) {
             log.error("商家AppID校验异常: merchantId={}, appId={}", merchantId, appId, e);
             return false;
         }
+    }
+
+    private String readStringProperty(Object target, String getterName) throws ReflectiveOperationException {
+        Method getter = target.getClass().getMethod(getterName);
+        Object value = getter.invoke(target);
+        return value instanceof String ? (String) value : null;
     }
 
     /**
@@ -206,6 +234,15 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
                 || path.startsWith("/wxmini/pay/notify")
                 || path.startsWith("/wxmini/template/config")
                 || isMerchantMiniPublicUri(path);
+    }
+
+    private boolean isWxMiniPublicBrowseUri(String path) {
+        return path.equals("/wxmini/merchant/home")
+                || path.equals("/wxmini/merchant/list")
+                || path.startsWith("/wxmini/merchant/detail/")
+                || path.startsWith("/wxmini/merchant/album/")
+                || path.equals("/wxmini/groupon/list")
+                || path.startsWith("/wxmini/groupon/detail/");
     }
 
     private boolean isMerchantMiniPublicUri(String path) {

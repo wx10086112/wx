@@ -73,12 +73,6 @@ Page({
         desc: '自动到账概览、到账记录与结算流水',
         url: '/pages/merchant/finance/finance',
         permissionCodes: ['finance.manage']
-      },
-      {
-        title: '营销活动',
-        desc: '优惠券与门店促销配置',
-        url: '/pages/merchant/marketing/marketing',
-        permissionCodes: ['marketing.manage']
       }
     ].filter((item) => this.hasAnyPermission(permissionCodes, item.permissionCodes))
   },

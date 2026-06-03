@@ -202,6 +202,16 @@
   justify-content: center;
 }
 
+.share-item {
+  border: none;
+  margin: 0;
+  line-height: 1;
+}
+
+.share-item::after {
+  border: none;
+}
+
 .bar-label {
   font-size: 24rpx;
   color: #4d6586;
@@ -210,24 +220,7 @@
 .bar-right {
   display: flex;
   align-items: center;
-  gap: 14rpx;
   flex: 1;
-}
-
-.cart-btn {
-  height: 78rpx;
-  line-height: 78rpx;
-  padding: 0 32rpx;
-  border-radius: 40rpx;
-  background: #ff6f23;
-  color: #fff;
-  font-size: 28rpx;
-  border: none;
-  margin: 0;
-}
-
-.cart-btn::after {
-  border: none;
 }
 
 .buy-btn {

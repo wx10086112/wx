@@ -47,11 +47,6 @@
       </view>
     </view>
 
-    <view class="search-bar" bindtap="onSearchTap">
-      <text class="search-icon">⌕</text>
-      <text class="search-text">{{brandInfo.searchPlaceholder}}</text>
-    </view>
-
     <view class="store-tabs">
       <view
         wx:for="{{storeTabs}}"
@@ -59,7 +54,6 @@
         class="store-tab {{activeStoreTab === item.key ? 'active' : ''}}"
         bindtap="onStoreTabTap"
         data-key="{{item.key}}"
-        data-type="{{item.type}}"
       >
         {{item.label}}
       </view>

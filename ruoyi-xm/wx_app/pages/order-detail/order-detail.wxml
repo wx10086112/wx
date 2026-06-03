@@ -79,7 +79,7 @@
         <text class="price-label text-muted">商品金额</text>
         <text class="price-value">¥{{order.priceAmountText}}</text>
       </view>
-      <view class="price-item flex flex-between py-16">
+      <view wx:if="{{order.couponAmount}}" class="price-item flex flex-between py-16">
         <text class="price-label text-muted">优惠券抵扣</text>
         <text class="price-value text-success">-¥{{order.couponAmountText}}</text>
       </view>
@@ -100,7 +100,6 @@
       <button class="action-btn action-btn-primary" bindtap="queryWriteOffResult">刷新核销状态</button>
     </view>
     <view wx:if="{{order.status === 'USED_COMPLETED'}}" class="bar-actions flex flex-end flex-1">
-      <button class="action-btn action-btn-outline mr-24" bindtap="goReview">评价订单</button>
       <button class="action-btn action-btn-primary" bindtap="buyAgain">再来一单</button>
     </view>
     <view wx:if="{{order.status === 'REFUNDING' || order.status === 'REFUNDED'}}" class="bar-actions flex flex-end flex-1">

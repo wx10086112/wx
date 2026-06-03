@@ -89,18 +89,33 @@ C 端页面（wx_app/pages）
 
 ### 后端
 
-```bash
-cd F:\wx\ruoyi-xm\ruoyi-vue-wxmini-main
-mvn clean package -DskipTests
-```
+先用 JDK 8 导入整个 Maven 根工程 `F:\wx\ruoyi-xm\ruoyi-vue-wxmini-main`，不要只单独打开 `ruoyi-admin` 子模块。
 
-启动入口：
+IDEA 直接启动方式：
+
+1. `File -> Open` 打开 `F:\wx\ruoyi-xm\ruoyi-vue-wxmini-main`
+2. 等 Maven 多模块索引完成
+3. 确认 `Project SDK` 和 `Module SDK` 都是 `D:\jdk-1.8`
+4. 在运行配置里选择仓库自带的 `RuoYi Admin Backend`
+5. 直接点击 Run，启动入口就是 `com.ruoyi.RuoYiApplication`
+
+共享运行配置文件位于：
 
 ```text
-ruoyi-admin/src/main/java/com/ruoyi/RuoYiApplication.java
+.run/RuoYi Admin Backend.run.xml
+```
+
+命令行构建校验：
+
+```bash
+cd F:\wx\ruoyi-xm\ruoyi-vue-wxmini-main
+mvn -pl ruoyi-admin -am -DskipTests compile
 ```
 
 默认端口：`8080`。
+本地数据库：`localhost:3306/ruoyi-cs`
+本地账号：`root / 123456`
+Redis：本地未启动也可运行，已启用缓存降级兜底。
 
 ### 运营后台
 

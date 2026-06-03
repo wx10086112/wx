@@ -1,40 +1,57 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
-const templateService = require('../../services/template')
 const merchantApi = require('../../api/merchant')
+
+const normalizeMerchantDetail = (merchant = {}) => {
+  const tags = Array.isArray(merchant.tags) ? merchant.tags : []
+  const serviceAbilityTags = Array.isArray(merchant.serviceAbilityTags) ? merchant.serviceAbilityTags : []
+  const facilityTags = Array.isArray(merchant.facilityTags) ? merchant.facilityTags : []
+  return {
+    ...merchant,
+    serviceAbilityTags,
+    facilityTags,
+    displayTags: tags.filter((tag) => !['营业中', '休息中'].includes(tag)),
+    businessStatusText: merchant.businessStatus ? '营业中' : '休息中',
+    bookingText: merchant.supportBooking === false ? '到店即用' : '可预约'
+  }
+}
 
 Page({
   data: {
     merchantId: null,
-    merchantConfig: {},
     merchant: {},
     albumList: [],
     loading: true,
-    isCollected: false
+    loadFailed: false
   },
 
   onLoad(options) {
+    const merchantId = parseInt(options.id, 10)
     this.setData({
-      merchantId: parseInt(options.id, 10),
-      merchantConfig: templateService.getTemplateSection('merchantDetail')
+      merchantId: Number.isNaN(merchantId) ? null : merchantId
     })
     this.loadMerchantDetail()
   },
 
   loadMerchantDetail() {
-    this.setData({ loading: true })
+    if (!this.data.merchantId) {
+      this.setData({ loading: false, loadFailed: true })
+      util.showToast('商家信息不存在')
+      return
+    }
+
+    this.setData({ loading: true, loadFailed: false })
 
     merchantApi.getMerchantDetail(this.data.merchantId)
       .then((res) => {
-        const merchant = res.data || res || {}
+        const merchant = normalizeMerchantDetail(res.data || res || {})
         const albumList = (merchant.albumList && merchant.albumList.length
           ? merchant.albumList
           : [merchant.coverImage, merchant.avatar]
         ).filter(Boolean).slice(0, 6)
+        const albumMerchantId = merchant.merchantId || merchant.id
 
-        // 若商家相册为空，尝试从接口补充
         if (albumList.length <= 1) {
-          merchantApi.getMerchantAlbum(this.data.merchantId)
+          merchantApi.getMerchantAlbum(albumMerchantId)
             .then((albumRes) => {
               const apiAlbum = (albumRes.data || albumRes || {}).albumList || []
               if (apiAlbum.length > 0) {
@@ -47,11 +64,12 @@ Page({
         this.setData({
           merchant,
           albumList,
-          loading: false
+          loading: false,
+          loadFailed: false
         })
       })
       .catch(() => {
-        this.setData({ loading: false })
+        this.setData({ loading: false, loadFailed: true })
         util.showToast('加载失败，请重试')
       })
   },
@@ -86,13 +104,6 @@ Page({
       current: this.data.albumList[index],
       urls: this.data.albumList
     })
-  },
-
-  toggleCollect() {
-    this.setData({
-      isCollected: !this.data.isCollected
-    })
-    util.showToast(this.data.isCollected ? '已收藏门店' : '已取消收藏', 'success')
   },
 
   goHome() {

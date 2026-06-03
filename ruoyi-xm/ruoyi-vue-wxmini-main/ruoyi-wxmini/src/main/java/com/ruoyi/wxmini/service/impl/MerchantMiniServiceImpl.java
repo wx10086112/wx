@@ -140,9 +140,12 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
             throw new IllegalArgumentException("该账号不属于当前扫码商家");
         }
 
-        // 兼容旧模式：未传 merchantId 时，仍按旧 AppID 识别商家
+        // 二维码入口是主路径；没有入口ID时，按合并后的C端AppID识别，并兼容旧M端AppID。
         if (merchantId == null && StringUtils.isNotBlank(appid)) {
-            Merchant appMerchant = merchantMapper.selectMerchantByMAppId(appid);
+            Merchant appMerchant = merchantMapper.selectMerchantByCAppId(appid);
+            if (appMerchant == null) {
+                appMerchant = merchantMapper.selectMerchantByMAppId(appid);
+            }
             if (appMerchant == null || !appMerchant.getId().equals(merchant.getId())) {
                 throw new IllegalArgumentException("该账号不属于当前小程序所属商家");
             }

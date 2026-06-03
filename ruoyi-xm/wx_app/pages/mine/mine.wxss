@@ -1,13 +1,13 @@
 .mine-page {
   min-height: 100vh;
   background: #f3f7fd;
-  padding: 24rpx;
+  padding: 24rpx 24rpx 40rpx;
   box-sizing: border-box;
 }
 
 .user-section {
-  padding: 30rpx;
-  border-radius: 28rpx;
+  padding: 28rpx;
+  border-radius: 22rpx;
   background: linear-gradient(135deg, #1677ff 0%, #64b1ff 100%);
   box-shadow: 0 24rpx 60rpx rgba(22, 119, 255, 0.18);
 }
@@ -24,9 +24,9 @@
 
 .user-avatar,
 .login-avatar {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 28rpx;
+  width: 108rpx;
+  height: 108rpx;
+  border-radius: 20rpx;
   background: rgba(255, 255, 255, 0.18);
   display: flex;
   align-items: center;
@@ -62,6 +62,15 @@
   font-size: 24rpx;
 }
 
+.profile-link {
+  margin-left: auto;
+  padding: 12rpx 20rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 24rpx;
+}
+
 .phone-auth-btn {
   flex-shrink: 0;
   margin-left: auto;
@@ -76,139 +85,203 @@
   border: none;
 }
 
-.phone-auth-btn::after {
+.phone-auth-btn::after,
+.logout-btn::after {
   border: none;
 }
 
-.order-section,
+.merchant-section,
 .menu-section {
   margin-top: 24rpx;
-  padding: 28rpx;
-  border-radius: 26rpx;
+  box-sizing: border-box;
+}
+
+.menu-section {
+  padding: 26rpx;
+  border-radius: 20rpx;
   background: rgba(255, 255, 255, 0.94);
   box-shadow: 0 16rpx 40rpx rgba(20, 69, 138, 0.07);
 }
 
-.section-header,
-.menu-item {
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.header-title,
-.asset-value {
+.header-title {
   font-size: 30rpx;
   color: #20304a;
   font-weight: 600;
 }
 
-.more-text,
-.menu-arrow,
-.asset-label {
-  font-size: 24rpx;
-  color: #73849d;
+.about-store-card {
+  padding: 26rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 24rpx 68rpx rgba(20, 55, 105, 0.14);
+  box-sizing: border-box;
 }
 
-.order-icons,
-.asset-section {
-  margin-top: 22rpx;
+.about-store-main {
   display: flex;
-  gap: 16rpx;
+  align-items: flex-start;
 }
 
-.icon-item,
-.asset-card {
+.about-store-info {
   flex: 1;
-  padding: 24rpx 12rpx;
-  border-radius: 22rpx;
-  background: #f4f8ff;
-  text-align: center;
+  min-width: 0;
 }
 
-.icon-item {
-  position: relative;
+.about-store-name-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
 }
 
-.item-icon {
-  color: #44617f;
+.about-store-name {
+  flex: 1;
+  color: #161d2f;
+  font-size: 38rpx;
+  line-height: 1.22;
+  font-weight: 800;
+}
+
+.about-store-status {
+  flex-shrink: 0;
+  margin-top: 4rpx;
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.about-store-status.open {
+  color: #0b9b61;
+  background: rgba(11, 155, 97, 0.1);
+}
+
+.about-store-status.closed {
+  color: #8a96a8;
+  background: #eef1f5;
+}
+
+.about-store-tag-row {
+  margin-top: 14rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.about-store-tag,
+.mini-tag {
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  color: #4c6f9d;
+  background: #edf5ff;
+  font-size: 22rpx;
+}
+
+.about-store-time-row {
+  margin-top: 24rpx;
+  padding-top: 22rpx;
+  border-top: 1rpx solid #eef1f6;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  color: #5c6573;
+  font-size: 25rpx;
+}
+
+.time-strong {
+  color: #1f2a3d;
+  font-weight: 700;
+}
+
+.detail-link {
+  margin-left: auto;
+  color: #7b8798;
+}
+
+.about-store-address-row {
+  margin-top: 20rpx;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.address-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.about-store-address {
+  display: block;
+  color: #1f2a3d;
+  font-size: 27rpx;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.distance-text {
+  display: block;
+  margin-top: 8rpx;
+  color: #8a96a8;
   font-size: 24rpx;
 }
 
-.entry-badge {
-  position: absolute;
-  top: 10rpx;
-  right: 16rpx;
-  min-width: 34rpx;
-  height: 34rpx;
-  padding: 0 10rpx;
-  border-radius: 20rpx;
-  background: #1677ff;
-  color: #fff;
-  font-size: 20rpx;
-  line-height: 34rpx;
-  text-align: center;
-}
-
-.asset-section {
+.about-store-actions {
+  display: flex;
   gap: 14rpx;
 }
 
-.asset-card {
+.about-store-action {
+  width: 86rpx;
+  height: 86rpx;
+  border-radius: 24rpx;
+  background: #f4f7fb;
+  color: #20293b;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  font-size: 21rpx;
 }
 
-.asset-label {
-  margin-top: 8rpx;
+.action-icon {
+  margin-bottom: 4rpx;
+  font-size: 30rpx;
+  font-weight: 700;
 }
 
-.benefit-section {
-  margin-top: 24rpx;
+.service-grid {
+  margin-top: 22rpx;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16rpx;
 }
 
-.benefit-card {
-  padding: 26rpx 28rpx;
-  border-radius: 24rpx;
-  background: linear-gradient(135deg, rgba(22, 119, 255, 0.12) 0%, rgba(100, 177, 255, 0.18) 100%);
+.service-card {
+  min-height: 108rpx;
+  padding: 22rpx;
+  border-radius: 16rpx;
+  background: #f4f8ff;
+  box-sizing: border-box;
 }
 
-.benefit-title {
+.service-title {
   display: block;
   color: #20304a;
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
 }
 
-.benefit-tags {
-  margin-top: 18rpx;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-}
-
-.benefit-tag {
-  padding: 8rpx 18rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.75);
-  color: #3f638d;
+.service-desc {
+  display: block;
+  margin-top: 10rpx;
+  color: #7a8aa0;
   font-size: 22rpx;
-}
-
-.menu-item {
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #edf2fb;
-}
-
-.menu-item:last-child {
-  border-bottom: none;
-}
-
-.menu-text {
-  color: #30445e;
-  font-size: 28rpx;
 }
 
 .logout-section {
@@ -222,9 +295,5 @@
   background: #fff;
   color: #1677ff;
   font-size: 30rpx;
-  border: none;
-}
-
-.logout-btn::after {
   border: none;
 }

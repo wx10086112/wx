@@ -91,10 +91,16 @@
   line-height: 1.6;
 }
 
-.save-btn {
+.save-section {
   margin-top: 48rpx;
+  display: flex;
+  justify-content: center;
+}
+
+.save-btn {
+  width: 238rpx;
   height: 88rpx;
-  line-height: 88rpx;
+  line-height: normal;
   border-radius: 44rpx;
   background: linear-gradient(135deg, #1677ff 0%, #64b1ff 100%);
   color: #fff;
@@ -102,6 +108,11 @@
   font-weight: 600;
   border: none;
   box-shadow: 0 16rpx 40rpx rgba(22, 119, 255, 0.2);
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .save-btn::after {

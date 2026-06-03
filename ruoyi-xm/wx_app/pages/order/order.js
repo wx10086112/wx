@@ -1,6 +1,7 @@
-const mock = require('../../data/mock')
 const util = require('../../utils/util')
 const orderApi = require('../../api/order')
+const refundApi = require('../../api/refund')
+const app = getApp()
 
 Page({
   data: {
@@ -23,12 +24,10 @@ Page({
     if (status) {
       this.setData({ currentTab: status })
     }
-    this.ensureOrderStorage()
     this.loadOrders()
   },
 
   onShow() {
-    this.ensureOrderStorage()
     this.loadOrders()
   },
 
@@ -36,17 +35,6 @@ Page({
     this.loadOrders().then(() => {
       wx.stopPullDownRefresh()
     })
-  },
-
-  ensureOrderStorage() {
-    const stored = util.getStoredOrderList()
-    const validProductIds = mock.grouponList.map((item) => item.id)
-    const hasLegacyStoreOrder = stored.some((item) => {
-      return item.merchantId !== mock.merchantInfo.storeId || !validProductIds.includes(item.productId)
-    })
-    if (!stored.length || hasLegacyStoreOrder) {
-      util.setStoredOrderList(mock.orderList)
-    }
   },
 
   normalizeOrder(order) {
@@ -106,29 +94,6 @@ Page({
       })
   },
 
-  loadOrdersLocal() {
-    const orders = util
-      .getStoredOrderList(mock.orderList)
-      .sort((a, b) => (b.createTime || 0) - (a.createTime || 0))
-      .map((item) => this.normalizeOrder(item))
-
-    this.setData({
-      orderStats: this.buildOrderStats(orders),
-      orderList: this.getFilteredOrders(orders),
-      loading: false
-    })
-  },
-
-  updateOrderList(updateHandler, successText) {
-    const orders = util.getStoredOrderList(mock.orderList)
-    const nextOrders = updateHandler(orders)
-    util.setStoredOrderList(nextOrders)
-    if (successText) {
-      util.showToast(successText, 'success')
-    }
-    this.loadOrders()
-  },
-
   switchTab(e) {
     const tab = e.currentTarget.dataset.tab
     if (this.data.currentTab === tab) return
@@ -159,14 +124,21 @@ Page({
 
   onPayOrder(e) {
     const order = e.detail.order
-    util.showModal('确认支付', `支付 ¥${((order.payAmount || order.price) / 100).toFixed(2)} 后将生成核销码`).then((confirm) => {
+    util.showModal('确认支付', `支付 ¥${((order.payAmount || order.price) / 100).toFixed(2)}`).then((confirm) => {
       if (!confirm) return
-      this.setData({ currentTab: 'UNUSED' }, () => {
-        this.updateOrderList(
-          (orders) => orders.map((item) => (item.orderNo === order.orderNo ? util.transitionOrderToPaidUnused(item) : item)),
-          '支付成功'
-        )
-      })
+      util.showLoading('拉起支付...')
+      orderApi.createPayOrder({ orderNo: order.orderNo, openId: app.globalData && app.globalData.userInfo ? app.globalData.userInfo.openId : '' })
+        .then((res) => util.requestPayment(res.data || res))
+        .then(() => orderApi.queryOrder(order.orderNo))
+        .then(() => {
+          util.hideLoading()
+          util.showToast('支付处理中，请稍后刷新', 'success')
+          this.loadOrders()
+        })
+        .catch((err) => {
+          util.hideLoading()
+          util.showToast(err && err.message ? err.message : '支付失败')
+        })
     })
   },
 
@@ -182,11 +154,14 @@ Page({
     const order = e.detail.order
     util.showModal('申请退款', '确认发起退款申请？').then((confirm) => {
       if (!confirm) return
-      this.setData({ currentTab: 'AFTER_SALE' }, () => {
-        this.updateOrderList(
-          (orders) => orders.map((item) => (item.orderNo === order.orderNo ? util.transitionOrderToRefunding(item) : item)),
-          '退款申请已提交'
-        )
+      refundApi.applyRefund({
+        orderNo: order.orderNo,
+        refundReason: '用户申请退款'
+      }).then(() => {
+        util.showToast('退款申请已提交', 'success')
+        this.setData({ currentTab: 'AFTER_SALE' }, () => this.loadOrders())
+      }).catch((err) => {
+        util.showToast(err && err.message ? err.message : '申请失败')
       })
     })
   },

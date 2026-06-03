@@ -170,28 +170,6 @@
   font-weight: 700;
 }
 
-.search-bar {
-  margin-top: 22rpx;
-  height: 78rpx;
-  display: flex;
-  align-items: center;
-  padding: 0 26rpx;
-  border-radius: 26rpx;
-  background: #fff;
-  box-shadow: 0 14rpx 38rpx rgba(20, 55, 105, 0.06);
-}
-
-.search-icon {
-  color: #1677ff;
-  font-size: 30rpx;
-}
-
-.search-text {
-  margin-left: 14rpx;
-  color: #8a96a8;
-  font-size: 26rpx;
-}
-
 .store-tabs {
   margin-top: 28rpx;
   display: flex;

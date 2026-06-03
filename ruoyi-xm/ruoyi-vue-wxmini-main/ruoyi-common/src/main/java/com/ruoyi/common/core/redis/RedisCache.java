@@ -34,12 +34,21 @@ public class RedisCache
 {
     private static final Logger log = LoggerFactory.getLogger(RedisCache.class);
 
+    private final RedisModeProperties redisModeProperties;
+
     private final Map<String, LocalCacheEntry> localCache = new ConcurrentHashMap<>();
+
+    public RedisCache(RedisModeProperties redisModeProperties)
+    {
+        this.redisModeProperties = redisModeProperties;
+    }
 
     @Autowired(required = false)
     public RedisTemplate redisTemplate;
 
     private volatile boolean localModeLogged = false;
+
+    private volatile boolean localDisabledLogged = false;
 
     /**
      * 缓存基本的对象，Integer、String、实体类等
@@ -391,7 +400,7 @@ public class RedisCache
 
     private <T> T execute(RedisSupplier<T> redisAction, LocalSupplier<T> localAction)
     {
-        if (redisTemplate != null)
+        if (shouldUseRedis())
         {
             try
             {
@@ -399,15 +408,19 @@ public class RedisCache
             }
             catch (DataAccessException e)
             {
-                logLocalMode(e);
+                logRedisFailure(e);
             }
+        }
+        else
+        {
+            logLocalDisabledMode();
         }
         return localAction.get();
     }
 
     private void executeVoid(RedisRunnable redisAction, LocalRunnable localAction)
     {
-        if (redisTemplate != null)
+        if (shouldUseRedis())
         {
             try
             {
@@ -416,13 +429,22 @@ public class RedisCache
             }
             catch (DataAccessException e)
             {
-                logLocalMode(e);
+                logRedisFailure(e);
             }
+        }
+        else
+        {
+            logLocalDisabledMode();
         }
         localAction.run();
     }
 
-    private void logLocalMode(Exception e)
+    private boolean shouldUseRedis()
+    {
+        return redisModeProperties.isEnabled() && redisTemplate != null;
+    }
+
+    private void logRedisFailure(Exception e)
     {
         if (!localModeLogged)
         {
@@ -432,6 +454,21 @@ public class RedisCache
                 {
                     log.warn("Redis 不可用，已自动切换到本地内存缓存模式：{}", e.getMessage());
                     localModeLogged = true;
+                }
+            }
+        }
+    }
+
+    private void logLocalDisabledMode()
+    {
+        if (!redisModeProperties.isEnabled() && !localDisabledLogged)
+        {
+            synchronized (this)
+            {
+                if (!redisModeProperties.isEnabled() && !localDisabledLogged)
+                {
+                    log.info("Redis 已禁用，当前使用本地内存缓存模式");
+                    localDisabledLogged = true;
                 }
             }
         }
