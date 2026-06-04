@@ -204,12 +204,7 @@ public class MallMerchantController extends BaseController {
     public AjaxResult remove(@PathVariable Long[] ids) {
         Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
         if (effDistributorId != null) {
-            for (Long id : ids) {
-                Merchant merchant = merchantService.selectMerchantById(id);
-                if (merchant != null && !effDistributorId.equals(merchant.getDistributorId())) {
-                    return AjaxResult.error("无权限删除该商家");
-                }
-            }
+            return AjaxResult.error("分销商不可删除商家，请联系平台管理员处理");
         }
         return toAjax(merchantService.deleteMerchantByIds(ids));
     }

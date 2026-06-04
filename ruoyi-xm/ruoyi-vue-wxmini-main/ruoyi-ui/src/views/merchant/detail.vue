@@ -1217,9 +1217,9 @@ export default {
       })
     },
     handleResetPwd(row) {
-      this.$confirm(`确认将 ${row.username} 的密码重置为 123456？`, '提示', { type: 'warning' }).then(async () => {
-        await resetMerchantUserPwd(row.id, '123456')
-        this.$message.success('密码已重置为 123456')
+      this.$confirm(`确认重置 ${row.username} 的密码为系统默认密码？`, '提示', { type: 'warning' }).then(async () => {
+        await resetMerchantUserPwd(row.id, '')
+        this.$message.success('密码已重置为系统默认密码')
       }).catch(() => {})
     },
     handleToggleAccountStatus(row) {

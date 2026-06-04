@@ -12,4 +12,6 @@ public interface MerchantUserMapper {
     int updateMerchantUser(MerchantUser merchantUser);
     int deleteMerchantUserById(Long id);
     int deleteMerchantUserByIds(Long[] ids);
+    int deleteMerchantUserByMerchantId(Long merchantId);
+    int deleteMerchantUserByMerchantIds(Long[] merchantIds);
 }

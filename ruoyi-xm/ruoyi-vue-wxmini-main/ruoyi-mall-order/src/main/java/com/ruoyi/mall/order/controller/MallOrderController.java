@@ -23,7 +23,7 @@ public class MallOrderController extends BaseController {
     @Autowired
     private IMallOrderService mallOrderService;
 
-    @DataScopeBiz(merchantAlias = "mall_order")
+    @DataScopeBiz(merchantAlias = "o", distributorAlias = "m")
     @PreAuthorize("@ss.hasPermi('mall:order:list')")
     @GetMapping("/list")
     public TableDataInfo list(MallOrder query) {
@@ -45,7 +45,7 @@ public class MallOrderController extends BaseController {
             return AjaxResult.error("无权限查看该订单");
         }
         Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
-        if (effDistributorId != null && order.getDistributorId() != null && !effDistributorId.equals(order.getDistributorId())) {
+        if (effDistributorId != null && !effDistributorId.equals(order.getDistributorId())) {
             return AjaxResult.error("无权限查看该订单");
         }
         List<OrderItem> items = mallOrderService.selectOrderItemListByOrderId(id);
@@ -58,6 +58,22 @@ public class MallOrderController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:order:edit')")
     @PutMapping
     public AjaxResult edit(@RequestBody MallOrder mallOrder) {
-        return toAjax(mallOrderService.updateMallOrder(mallOrder));
+        MallOrder existing = mallOrderService.selectMallOrderById(mallOrder.getId());
+        if (existing == null) {
+            return AjaxResult.error("订单不存在");
+        }
+        Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        if (effMerchantId != null && !effMerchantId.equals(existing.getMerchantId())) {
+            return AjaxResult.error("无权限修改该订单");
+        }
+        Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effDistributorId != null && !effDistributorId.equals(existing.getDistributorId())) {
+            return AjaxResult.error("无权限修改该订单");
+        }
+        
+        MallOrder updateObj = new MallOrder();
+        updateObj.setId(mallOrder.getId());
+        updateObj.setRemark(mallOrder.getRemark());
+        return toAjax(mallOrderService.updateMallOrder(updateObj));
     }
 }

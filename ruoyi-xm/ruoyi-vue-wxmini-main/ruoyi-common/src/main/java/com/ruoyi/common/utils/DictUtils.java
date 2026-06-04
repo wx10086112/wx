@@ -2,6 +2,7 @@ package com.ruoyi.common.utils;
 
 import java.util.Collection;
 import java.util.List;
+import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.ruoyi.common.constant.CacheConstants;
 import com.ruoyi.common.core.domain.entity.SysDictData;
@@ -39,12 +40,24 @@ public class DictUtils
      */
     public static List<SysDictData> getDictCache(String key)
     {
-        JSONArray arrayCache = SpringUtils.getBean(RedisCache.class).getCacheObject(getCacheKey(key));
-        if (StringUtils.isNotNull(arrayCache))
+        Object cacheObject = SpringUtils.getBean(RedisCache.class).getCacheObject(getCacheKey(key));
+        if (StringUtils.isNull(cacheObject))
         {
-            return arrayCache.toList(SysDictData.class);
+            return null;
         }
-        return null;
+        if (cacheObject instanceof JSONArray)
+        {
+            return ((JSONArray) cacheObject).toList(SysDictData.class);
+        }
+        if (cacheObject instanceof List)
+        {
+            return JSON.parseArray(JSON.toJSONString(cacheObject), SysDictData.class);
+        }
+        if (cacheObject instanceof String)
+        {
+            return JSON.parseArray((String) cacheObject, SysDictData.class);
+        }
+        return JSON.parseArray(JSON.toJSONString(cacheObject), SysDictData.class);
     }
 
     /**

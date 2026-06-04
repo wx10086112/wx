@@ -4,6 +4,7 @@ import com.ruoyi.common.annotation.DataScopeBiz;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.common.utils.MallDataScopeHelper;
 import com.ruoyi.mall.finance.domain.DistributorSettlementRecord;
 import com.ruoyi.mall.finance.domain.MerchantSettlementRecord;
 import com.ruoyi.mall.finance.domain.OrderProfitLedger;
@@ -34,7 +35,7 @@ public class MallSettlementController extends BaseController {
 
     // ==================== 商家结算 ====================
 
-    @DataScopeBiz(merchantAlias = "merchant_settlement_record")
+    @DataScopeBiz(merchantAlias = "msr", distributorAlias = "msr")
     @PreAuthorize("@ss.hasPermi('mall:settlement:list')")
     @GetMapping("/merchant/list")
     public TableDataInfo merchantList(MerchantSettlementRecord query) {
@@ -46,52 +47,40 @@ public class MallSettlementController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:settlement:list')")
     @GetMapping("/merchant/{id}")
     public AjaxResult merchantDetail(@PathVariable Long id) {
-        return AjaxResult.success(merchantSettlementService.selectById(id));
+        MerchantSettlementRecord record = merchantSettlementService.selectById(id);
+        AjaxResult denied = checkAccess(record != null ? record.getMerchantId() : null,
+                record != null ? record.getDistributorId() : null,
+                "商家结算记录");
+        if (denied != null) {
+            return denied;
+        }
+        return AjaxResult.success(record);
     }
 
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")
     @PostMapping("/merchant/batch-transfer")
     public AjaxResult merchantBatchTransfer(@RequestBody List<Long> ids) {
-        for (Long id : ids) {
-            MerchantSettlementRecord record = merchantSettlementService.selectById(id);
-            if (record != null && "WAITING_T1".equals(record.getStatus())) {
-                record.setStatus("TRANSFERRING");
-                record.setTransferTime(new Date());
-                merchantSettlementService.updateById(record);
-            }
-        }
+        merchantSettlementService.batchTransfer(ids);
         return AjaxResult.success();
     }
 
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")
     @PostMapping("/merchant/mark-arrived")
     public AjaxResult merchantMarkArrived(@RequestBody List<Long> ids) {
-        for (Long id : ids) {
-            MerchantSettlementRecord record = merchantSettlementService.selectById(id);
-            if (record != null && !"ARRIVED".equals(record.getStatus()) && !"CANCELLED".equals(record.getStatus())) {
-                record.setStatus("ARRIVED");
-                record.setArriveTime(new Date());
-                merchantSettlementService.updateById(record);
-            }
-        }
+        merchantSettlementService.batchMarkArrived(ids);
         return AjaxResult.success();
     }
 
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")
     @PostMapping("/merchant/mark-failed")
     public AjaxResult merchantMarkFailed(@RequestBody MerchantSettlementRecord params) {
-        MerchantSettlementRecord record = merchantSettlementService.selectById(params.getId());
-        if (record != null) {
-            record.setStatus("FAILED");
-            record.setFailReason(params.getFailReason());
-            merchantSettlementService.updateById(record);
-        }
+        merchantSettlementService.markFailed(params.getId(), params.getFailReason());
         return AjaxResult.success();
     }
 
     // ==================== 分销商结算 ====================
 
-    @DataScopeBiz(distributorAlias = "distributor_settlement_record")
+    @DataScopeBiz(merchantAlias = "dsr", distributorAlias = "dsr")
     @PreAuthorize("@ss.hasPermi('mall:settlement:list')")
     @GetMapping("/distributor/list")
     public TableDataInfo distributorList(DistributorSettlementRecord query) {
@@ -103,7 +92,14 @@ public class MallSettlementController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:settlement:list')")
     @GetMapping("/distributor/{id}")
     public AjaxResult distributorDetail(@PathVariable Long id) {
-        return AjaxResult.success(distributorSettlementService.selectById(id));
+        DistributorSettlementRecord record = distributorSettlementService.selectById(id);
+        AjaxResult denied = checkAccess(record != null ? record.getMerchantId() : null,
+                record != null ? record.getDistributorId() : null,
+                "分销商结算记录");
+        if (denied != null) {
+            return denied;
+        }
+        return AjaxResult.success(record);
     }
 
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")
@@ -122,6 +118,7 @@ public class MallSettlementController extends BaseController {
 
     // ==================== 分账流水 ====================
 
+    @DataScopeBiz(merchantAlias = "opl", distributorAlias = "opl")
     @PreAuthorize("@ss.hasPermi('mall:settlement:list')")
     @GetMapping("/profit-ledger/list")
     public TableDataInfo profitLedgerList(OrderProfitLedger query) {
@@ -133,7 +130,14 @@ public class MallSettlementController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:settlement:list')")
     @GetMapping("/profit-ledger/{id}")
     public AjaxResult profitLedgerDetail(@PathVariable Long id) {
-        return AjaxResult.success(profitLedgerService.selectById(id));
+        OrderProfitLedger record = profitLedgerService.selectById(id);
+        AjaxResult denied = checkAccess(record != null ? record.getMerchantId() : null,
+                record != null ? record.getDistributorId() : null,
+                "分账流水");
+        if (denied != null) {
+            return denied;
+        }
+        return AjaxResult.success(record);
     }
 
     // ==================== 商家微信转账 ====================
@@ -157,7 +161,14 @@ public class MallSettlementController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:settlement:list')")
     @GetMapping("/merchant/transfer/{transferNo}")
     public AjaxResult merchantTransferDetail(@PathVariable String transferNo) {
-        return AjaxResult.success(platformTransferService.selectByTransferNo(transferNo));
+        PlatformTransferRecord record = platformTransferService.selectByTransferNo(transferNo);
+        AjaxResult denied = checkAccess(record != null ? record.getMerchantId() : null,
+                record != null ? record.getDistributorId() : null,
+                "转账记录");
+        if (denied != null) {
+            return denied;
+        }
+        return AjaxResult.success(record);
     }
 
     // ==================== 分销商微信转账 ====================
@@ -181,16 +192,39 @@ public class MallSettlementController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:settlement:list')")
     @GetMapping("/distributor/transfer/{transferNo}")
     public AjaxResult distributorTransferDetail(@PathVariable String transferNo) {
-        return AjaxResult.success(platformTransferService.selectByTransferNo(transferNo));
+        PlatformTransferRecord record = platformTransferService.selectByTransferNo(transferNo);
+        AjaxResult denied = checkAccess(record != null ? record.getMerchantId() : null,
+                record != null ? record.getDistributorId() : null,
+                "转账记录");
+        if (denied != null) {
+            return denied;
+        }
+        return AjaxResult.success(record);
     }
 
     // ==================== 转账记录 ====================
 
+    @DataScopeBiz(merchantAlias = "t", distributorAlias = "t")
     @PreAuthorize("@ss.hasPermi('mall:settlement:list')")
     @GetMapping("/transfer/list")
     public TableDataInfo transferList(PlatformTransferRecord query) {
         startPage();
         List<PlatformTransferRecord> list = platformTransferService.selectList(query);
         return getDataTable(list);
+    }
+
+    private AjaxResult checkAccess(Long merchantId, Long distributorId, String label) {
+        if (merchantId == null && distributorId == null) {
+            return AjaxResult.error(label + "不存在");
+        }
+        Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        if (effMerchantId != null && !effMerchantId.equals(merchantId)) {
+            return AjaxResult.error("无权限查看该" + label);
+        }
+        Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effDistributorId != null && !effDistributorId.equals(distributorId)) {
+            return AjaxResult.error("无权限查看该" + label);
+        }
+        return null;
     }
 }

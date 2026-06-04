@@ -225,10 +225,11 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
 
     /**
      * 白名单：仅放行登录、门户、公开数据、支付回调等无需登录的接口
-     * 注意：/wxmini/login/test 不在白名单中，需要配置开启 + token 才能访问
+     * /wxmini/login/test 仅在 dev profile 且配置开启时由控制器提供，用于本地联调 C 端登录态。
      */
     private boolean checkIsExcludeUri(String path) {
         return path.equals("/wxmini/login")
+                || path.equals("/wxmini/login/test")
                 || path.startsWith("/wxmini/portal")
                 || path.startsWith("/wxmini/public")
                 || path.startsWith("/wxmini/pay/notify")

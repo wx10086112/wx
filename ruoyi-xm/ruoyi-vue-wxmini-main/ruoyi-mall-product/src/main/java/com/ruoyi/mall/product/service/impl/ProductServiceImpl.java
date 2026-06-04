@@ -53,4 +53,20 @@ public class ProductServiceImpl implements IProductService {
     public int countProductByMerchantId(Long merchantId) {
         return productMapper.countProductByMerchantId(merchantId);
     }
+
+    @Override
+    public boolean isMerchantAccessibleByDistributor(Long merchantId, Long distributorId) {
+        if (merchantId == null || distributorId == null) {
+            return false;
+        }
+        return productMapper.countMerchantByDistributor(merchantId, distributorId) > 0;
+    }
+
+    @Override
+    public boolean isProductAccessibleByDistributor(Long productId, Long distributorId) {
+        if (productId == null || distributorId == null) {
+            return false;
+        }
+        return productMapper.countProductByDistributor(productId, distributorId) > 0;
+    }
 }

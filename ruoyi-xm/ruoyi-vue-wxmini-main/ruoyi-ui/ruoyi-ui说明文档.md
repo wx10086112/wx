@@ -8,7 +8,9 @@
 ## 一、项目位置
 
 ```
-f:\wx\ruoyi-xm\ruoyi-vue-wxmini-main\ruoyi-ui
+cd F:\wx\ruoyi-xm\ruoyi-vue-wxmini-main\ruoyi-ui
+npm run dev
+
 ```
 
 ---
@@ -25,7 +27,7 @@ f:\wx\ruoyi-xm\ruoyi-vue-wxmini-main\ruoyi-ui
 
 ```bash
 # 1. 进入项目目录
-cd E:\ruoyi\ruoyi-xm\ruoyi-vue-wxmini-main\ruoyi-ui
+cd F:\wx\ruoyi-xm\ruoyi-vue-wxmini-main\ruoyi-ui
 # 2. 安装依赖（如果node_modules丢失）
 npm install
 

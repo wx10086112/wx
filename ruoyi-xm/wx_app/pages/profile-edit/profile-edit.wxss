@@ -94,7 +94,14 @@
 .save-section {
   margin-top: 48rpx;
   display: flex;
+  flex-direction: column;
+  gap: 22rpx;
+  align-items: center;
   justify-content: center;
+}
+
+.profile-agreement {
+  width: 100%;
 }
 
 .save-btn {

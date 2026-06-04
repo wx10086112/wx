@@ -37,6 +37,7 @@
   </view>
 
   <view class="save-section">
+    <agreement-consent class="profile-agreement"></agreement-consent>
     <button class="save-btn" bindtap="saveProfile" disabled="{{saving}}">
       {{saving ? '保存中...' : '保存'}}
     </button>

@@ -1,5 +1,6 @@
 const api = require('../../../api/merchant-mini/index')
 const util = require('../../../utils/merchant-util')
+const agreement = require('../../../utils/agreement')
 
 const app = getApp()
 
@@ -91,6 +92,8 @@ Page({
       util.showToast('请先通过商家后台入口码进入')
       return
     }
+
+    if (!agreement.assertAgreementAccepted()) return
 
     if (!username) {
       util.showToast('请输入登录账号')

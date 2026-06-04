@@ -73,6 +73,9 @@ public class MerchantServiceImpl implements IMerchantService {
         }
     }
 
+    @org.springframework.beans.factory.annotation.Value("${mall.merchant.defaultPassword:123456}")
+    private String defaultPassword;
+
     private void ensureMerchantOwnerAccount(Merchant merchant) {
         List<MerchantUser> merchantUsers = merchantUserMapper.selectMerchantUserByMerchantId(merchant.getId());
         for (MerchantUser merchantUser : merchantUsers) {
@@ -84,7 +87,7 @@ public class MerchantServiceImpl implements IMerchantService {
         MerchantUser owner = new MerchantUser();
         owner.setMerchantId(merchant.getId());
         owner.setUsername(buildDefaultOwnerUsername(merchant.getId()));
-        owner.setPassword(SecurityUtils.encryptPassword("123456"));
+        owner.setPassword(SecurityUtils.encryptPassword(defaultPassword));
         owner.setRealName(resolveOwnerRealName(merchant));
         owner.setPhone(merchant.getPhone());
         owner.setRole("owner");
@@ -115,6 +118,21 @@ public class MerchantServiceImpl implements IMerchantService {
     @Override
     public int deleteMerchantByIds(Long[] ids) {
         return merchantMapper.deleteMerchantByIds(ids);
+    }
+
+    @Override
+    public Merchant selectMerchantByIdAnyStatus(Long id) {
+        return merchantMapper.selectMerchantByIdAnyStatus(id);
+    }
+
+    @Override
+    public int clearDistributorBindingsByDistributorIds(Long[] ids) {
+        return merchantMapper.clearDistributorBindingsByDistributorIds(ids);
+    }
+
+    @Override
+    public int clearRevivedDistributorBindings(Long distributorId) {
+        return merchantMapper.clearRevivedDistributorBindings(distributorId);
     }
 
     @Override

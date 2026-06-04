@@ -15,16 +15,6 @@ public class MallFinanceExtendController extends BaseController {
     private IFinanceService financeService;
 
     /**
-     * 审批提现申请
-     */
-    @PreAuthorize("@ss.hasPermi('mall:finance:edit')")
-    @PostMapping("/withdraw/approve/{id}/{status}")
-    public AjaxResult approveWithdraw(@PathVariable Long id, @PathVariable Integer status) {
-        boolean ok = financeService.approveWithdraw(id, status);
-        return ok ? AjaxResult.success() : AjaxResult.error("提现记录不存在");
-    }
-
-    /**
      * 获取收入统计
      */
     @PreAuthorize("@ss.hasPermi('mall:finance:list')")

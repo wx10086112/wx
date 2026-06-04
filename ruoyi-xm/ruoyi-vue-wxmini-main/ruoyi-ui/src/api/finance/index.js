@@ -18,24 +18,6 @@ export function getProfitShareList(query) {
   })
 }
 
-// 提现列表
-export function getWithdrawList(query) {
-  return request({
-    url: '/mall/finance/withdraw/list',
-    method: 'get',
-    params: query
-  })
-}
-
-// 审批提现
-export function approveWithdraw(id, status, data) {
-  return request({
-    url: '/mall/finance/withdraw/approve/' + id + '/' + status,
-    method: 'post',
-    data: data
-  })
-}
-
 // 收益统计
 export function getIncomeStats() {
   return request({

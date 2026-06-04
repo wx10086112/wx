@@ -18,4 +18,8 @@ public interface IProductService {
     int deleteProductByIds(Long[] ids);
 
     int countProductByMerchantId(Long merchantId);
+
+    boolean isMerchantAccessibleByDistributor(Long merchantId, Long distributorId);
+
+    boolean isProductAccessibleByDistributor(Long productId, Long distributorId);
 }

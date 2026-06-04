@@ -4,3 +4,7 @@
 wx:
   pay:
     stub-enabled: true
+
+wxmini:
+  login:
+    test-enabled: true

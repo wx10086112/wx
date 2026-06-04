@@ -3,6 +3,7 @@ const templateService = require('../../services/template')
 const orderApi = require('../../api/order')
 const productApi = require('../../api/product')
 const merchantApi = require('../../api/merchant')
+const agreement = require('../../utils/agreement')
 const app = getApp()
 
 Page({
@@ -103,6 +104,7 @@ Page({
 
   submitOrder() {
     if (!app.needLogin()) return
+    if (!agreement.assertAgreementAccepted()) return
     if (!this.data.phone) {
       util.showToast('请先填写手机号')
       return

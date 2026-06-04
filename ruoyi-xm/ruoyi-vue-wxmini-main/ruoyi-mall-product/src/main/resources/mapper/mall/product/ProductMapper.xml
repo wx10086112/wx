@@ -30,36 +30,37 @@
     </resultMap>
 
     <sql id="selectProductVo">
-        select id, merchant_id, category_id, groupon_id, name, cover_image, images,
-               main_image, price, original_price, stock, sales, status, verify_type,
-               valid_days, description, store_ids, sort, create_time, update_time, remark
-        from product
+        select p.id, p.merchant_id, p.category_id, p.groupon_id, p.name, p.cover_image, p.images,
+               p.main_image, p.price, p.original_price, p.stock, p.sales, p.status, p.verify_type,
+               p.valid_days, p.description, p.store_ids, p.sort, p.create_time, p.update_time, p.remark
+        from product p
+        left join merchant m on m.id = p.merchant_id and m.del_flag = '0'
     </sql>
 
     <select id="selectProductList" parameterType="com.ruoyi.mall.product.domain.Product" resultMap="ProductResult">
         <include refid="selectProductVo"/>
         <where>
-            and del_flag = '0'
-            <if test="name != null and name != ''">and name like concat('%', #{name}, '%')</if>
-            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
-            <if test="categoryId != null">and category_id = #{categoryId}</if>
-            <if test="status != null">and status = #{status}</if>
+            and p.del_flag = '0'
+            <if test="name != null and name != ''">and p.name like concat('%', #{name}, '%')</if>
+            <if test="merchantId != null">and p.merchant_id = #{merchantId}</if>
+            <if test="categoryId != null">and p.category_id = #{categoryId}</if>
+            <if test="status != null">and p.status = #{status}</if>
             <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">
                 ${params.dataScopeBiz}
             </if>
         </where>
-        order by sort asc, create_time desc
+        order by p.sort asc, p.create_time desc
     </select>
 
     <select id="selectProductById" parameterType="Long" resultMap="ProductResult">
         <include refid="selectProductVo"/>
-        where id = #{id} AND del_flag = '0'
+        where p.id = #{id} AND p.del_flag = '0'
     </select>
 
     <select id="selectProductByMerchantId" parameterType="Long" resultMap="ProductResult">
         <include refid="selectProductVo"/>
-        where merchant_id = #{merchantId} AND del_flag = '0'
-        order by sort asc, create_time desc
+        where p.merchant_id = #{merchantId} AND p.del_flag = '0'
+        order by p.sort asc, p.create_time desc
     </select>
 
     <insert id="insertProduct" parameterType="com.ruoyi.mall.product.domain.Product" useGeneratedKeys="true" keyProperty="id">

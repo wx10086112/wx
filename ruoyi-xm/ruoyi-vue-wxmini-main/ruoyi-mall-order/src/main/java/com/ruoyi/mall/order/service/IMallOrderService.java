@@ -24,6 +24,8 @@ public interface IMallOrderService {
 
     int handleRefund(Long id, Integer status, String operator, String rejectReason);
 
+    boolean isMerchantAccessibleByDistributor(Long merchantId, Long distributorId);
+
     MallOrder selectMallOrderByOrderNo(String orderNo);
 
     int insertMallOrder(MallOrder mallOrder);

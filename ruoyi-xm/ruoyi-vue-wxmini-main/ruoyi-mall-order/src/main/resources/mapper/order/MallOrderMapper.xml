@@ -8,6 +8,7 @@
         <result property="id" column="id"/>
         <result property="orderNo" column="order_no"/>
         <result property="merchantId" column="merchant_id"/>
+        <result property="distributorId" column="distributor_id"/>
         <result property="merchantName" column="merchant_name"/>
         <result property="userId" column="user_id"/>
         <result property="userName" column="user_name"/>
@@ -37,7 +38,7 @@
     </resultMap>
 
     <sql id="selectMallOrderVo">
-        select o.id, o.order_no, o.merchant_id, m.name as merchant_name,
+        select o.id, o.order_no, o.merchant_id, m.distributor_id, m.name as merchant_name,
                o.user_id, u.nickname as user_name, o.store_id, o.total_amount, o.pay_amount,
                o.commission, o.merchant_income, o.coupon_id, o.coupon_amount, o.groupon_id, o.status,
                o.write_off_code, o.write_off_status, o.write_off_time, o.write_off_user_id,

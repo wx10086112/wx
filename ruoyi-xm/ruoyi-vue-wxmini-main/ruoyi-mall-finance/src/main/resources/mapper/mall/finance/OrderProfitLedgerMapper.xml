@@ -54,6 +54,7 @@
             <if test="distributorId != null">and opl.distributor_id = #{distributorId}</if>
             <if test="orderNo != null and orderNo != ''">and opl.order_no = #{orderNo}</if>
             <if test="status != null and status != ''">and opl.status = #{status}</if>
+            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
         </where>
         order by opl.create_time desc
     </select>

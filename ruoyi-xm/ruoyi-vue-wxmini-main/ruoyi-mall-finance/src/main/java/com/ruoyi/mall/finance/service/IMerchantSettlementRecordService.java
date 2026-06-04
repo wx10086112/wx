@@ -9,6 +9,8 @@ public interface IMerchantSettlementRecordService {
 
     MerchantSettlementRecord selectById(Long id);
 
+    MerchantSettlementRecord selectByIdForUpdate(Long id);
+
     MerchantSettlementRecord selectBySettlementNo(String settlementNo);
 
     MerchantSettlementRecord selectByOrderNo(String orderNo);
@@ -20,6 +22,12 @@ public interface IMerchantSettlementRecordService {
     int insert(MerchantSettlementRecord record);
 
     int updateById(MerchantSettlementRecord record);
+
+    void batchTransfer(List<Long> ids);
+
+    void batchMarkArrived(List<Long> ids);
+
+    void markFailed(Long id, String failReason);
 
     /**
      * 为订单生成结算记录（幂等，同一order_no不会重复生成）

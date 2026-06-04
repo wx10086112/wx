@@ -1,4 +1,5 @@
 const util = require('../../utils/util')
+const agreement = require('../../utils/agreement')
 const orderApi = require('../../api/order')
 const refundApi = require('../../api/refund')
 const app = getApp()
@@ -123,6 +124,8 @@ Page({
   },
 
   onPayOrder(e) {
+    if (!agreement.assertAgreementAccepted()) return
+
     const order = e.detail.order
     util.showModal('确认支付', `支付 ¥${((order.payAmount || order.price) / 100).toFixed(2)}`).then((confirm) => {
       if (!confirm) return

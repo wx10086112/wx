@@ -1,98 +1,50 @@
-<view class="mine-page">
-  <view class="user-section">
-    <view wx:if="{{isLoggedIn}}" class="user-info" bindtap="goProfileEdit">
-      <image src="{{userInfo.avatarUrl}}" class="user-avatar" mode="aspectFill"></image>
-      <view class="user-text">
-        <text class="nickname">{{userInfo.nickName || '微信用户'}}</text>
-        <text class="phone">{{userInfo.phone || '未绑定手机号'}}</text>
+<view wx:if="{{isLoggedIn}}" class="mine-page">
+  <view class="mine-top">
+    <view class="user-row">
+      <view class="user-main" bindtap="goProfileEdit">
+        <image class="avatar" src="{{userInfo.avatarUrl || '/assets/images/avatar.svg'}}" mode="aspectFill"></image>
+        <view class="user-name-row">
+          <text class="user-name">{{userInfo.nickName || '微信用户'}}</text>
+          <text class="user-arrow">›</text>
+        </view>
       </view>
-      <text class="profile-link">编辑资料</text>
+      <view class="settings-btn" bindtap="goSettings" aria-label="设置">
+        <view class="settings-ring"></view>
+      </view>
     </view>
 
-    <view wx:elif="{{loginStep === 'phone'}}" class="login-prompt">
-      <view class="login-avatar">
-        <text class="avatar-placeholder">◉</text>
+    <view class="benefit-banner" bindtap="goOrder">
+      <view class="banner-left">
+        <view class="diamond-icon"></view>
+        <text class="banner-title">订单服务</text>
+        <text class="banner-subtitle">到店核销与售后进度</text>
       </view>
-      <view class="login-text">
-        <text class="login-title">授权手机号</text>
-      </view>
+      <view class="banner-action">立即查看</view>
+    </view>
+  </view>
+
+  <view class="menu-card">
+    <block wx:for="{{menuList}}" wx:key="label">
       <button
-        class="phone-auth-btn"
-        open-type="getPhoneNumber"
-        bindgetphonenumber="handlePhoneAuth"
-      >授权</button>
-    </view>
-
-    <view wx:else class="login-prompt" bindtap="handleLogin">
-      <view class="login-avatar">
-        <text class="avatar-placeholder">◉</text>
-      </view>
-      <view class="login-text">
-        <text class="login-title">点击登录</text>
-      </view>
-    </view>
-  </view>
-
-  <view class="merchant-section">
-    <view class="about-store-card">
-      <view class="about-store-main" bindtap="goMerchantDetail">
-        <view class="about-store-info">
-          <view class="about-store-name-row">
-            <text class="about-store-name">{{merchantInfo.name}}</text>
-            <view wx:if="{{merchantInfo.businessStatusText}}" class="about-store-status {{merchantInfo.businessStatus ? 'open' : 'closed'}}">
-              {{merchantInfo.businessStatusText}}
-            </view>
-          </view>
-          <view wx:if="{{merchantInfo.displayTags.length}}" class="about-store-tag-row">
-            <text wx:for="{{merchantInfo.displayTags}}" wx:key="index" class="about-store-tag">{{item}}</text>
-          </view>
-        </view>
-      </view>
-
-      <view class="about-store-time-row">
-        <text class="time-strong">今日 {{merchantInfo.businessHours || '暂无营业时间'}}</text>
-        <text wx:if="{{merchantInfo.bookingText}}" class="mini-tag">{{merchantInfo.bookingText}}</text>
-        <text class="detail-link" bindtap="goMerchantDetail">商家详情 ›</text>
-      </view>
-
-      <view class="about-store-address-row">
-        <view class="address-main" bindtap="goMerchantDetail">
-          <text class="about-store-address">{{merchantInfo.address}}</text>
-          <text wx:if="{{merchantInfo.distance}}" class="distance-text">距您 {{merchantInfo.distance}}</text>
-        </view>
-        <view class="about-store-actions">
-          <view class="about-store-action" catchtap="openMerchantMap">
-            <text class="action-icon">⌖</text>
-            <text>导航</text>
-          </view>
-          <view class="about-store-action" catchtap="callMerchant">
-            <text class="action-icon">☎</text>
-            <text>电话</text>
-          </view>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <view class="menu-section">
-    <view class="section-header">
-      <text class="header-title">常用服务</text>
-    </view>
-    <view class="service-grid">
-      <view
-        wx:for="{{serviceMenuList}}"
-        wx:key="label"
-        class="service-card"
-        bindtap="goPage"
-        data-url="{{item.url}}"
+        wx:if="{{item.type === 'share'}}"
+        class="menu-row"
+        open-type="share"
       >
-        <text class="service-title">{{item.label}}</text>
-        <text class="service-desc">{{item.desc}}</text>
+        <view class="menu-icon icon-{{item.icon}}"></view>
+        <text class="menu-title">{{item.label}}</text>
+        <text class="menu-arrow">›</text>
+      </button>
+      <view
+        wx:else
+        class="menu-row"
+        bindtap="goMenu"
+        data-type="{{item.type}}"
+      >
+        <view class="menu-icon icon-{{item.icon}}"></view>
+        <text class="menu-title">{{item.label}}</text>
+        <text class="menu-arrow">›</text>
       </view>
-    </view>
+    </block>
   </view>
 
-  <view wx:if="{{isLoggedIn}}" class="logout-section">
-    <button class="logout-btn" bindtap="handleLogout">退出登录</button>
-  </view>
 </view>

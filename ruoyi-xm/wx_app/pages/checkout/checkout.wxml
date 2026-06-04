@@ -57,10 +57,13 @@
   </view>
 
   <view class="pay-bar safe-area-bottom">
-    <view class="pay-summary">
-      <text class="summary-label">{{checkoutConfig.paySummaryLabel}}</text>
-      <text class="summary-price">¥{{payAmountText}}</text>
+    <agreement-consent class="pay-agreement"></agreement-consent>
+    <view class="pay-row">
+      <view class="pay-summary">
+        <text class="summary-label">{{checkoutConfig.paySummaryLabel}}</text>
+        <text class="summary-price">¥{{payAmountText}}</text>
+      </view>
+      <button class="pay-btn" bindtap="submitOrder">{{checkoutConfig.submitButtonText}}</button>
     </view>
-    <button class="pay-btn" bindtap="submitOrder">{{checkoutConfig.submitButtonText}}</button>
   </view>
 </view>

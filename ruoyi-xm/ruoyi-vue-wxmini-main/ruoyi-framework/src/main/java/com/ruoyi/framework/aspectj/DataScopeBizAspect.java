@@ -46,7 +46,7 @@ public class DataScopeBizAspect
                     && StringUtils.isNotBlank(dataScopeBiz.distributorAlias()))
             {
                 sqlString.append(StringUtils.format(" AND {}.distributor_id = {} ",
-                        dataScopeBiz.distributorAlias(), loginUser.getActiveDistributorId()));
+                        checkAlias(dataScopeBiz.distributorAlias()), loginUser.getActiveDistributorId()));
             }
             else
             {
@@ -63,12 +63,12 @@ public class DataScopeBizAspect
             if (effectiveDistributorId != null && StringUtils.isNotBlank(dataScopeBiz.distributorAlias()))
             {
                 sqlString.append(StringUtils.format(" AND {}.distributor_id = {} ",
-                        dataScopeBiz.distributorAlias(), effectiveDistributorId));
+                        checkAlias(dataScopeBiz.distributorAlias()), effectiveDistributorId));
             }
             else if (effectiveMerchantId != null && StringUtils.isNotBlank(dataScopeBiz.merchantAlias()))
             {
                 sqlString.append(StringUtils.format(" AND {}.merchant_id = {} ",
-                        dataScopeBiz.merchantAlias(), effectiveMerchantId));
+                        checkAlias(dataScopeBiz.merchantAlias()), effectiveMerchantId));
             }
         }
 
@@ -91,5 +91,12 @@ public class DataScopeBizAspect
             BaseEntity baseEntity = (BaseEntity) params;
             baseEntity.getParams().put(DATA_SCOPE_BIZ, "");
         }
+    }
+
+    private String checkAlias(String alias) {
+        if (StringUtils.isNotBlank(alias) && !alias.matches("^[a-zA-Z0-9_]+$")) {
+            throw new IllegalArgumentException("Invalid data scope alias");
+        }
+        return alias;
     }
 }

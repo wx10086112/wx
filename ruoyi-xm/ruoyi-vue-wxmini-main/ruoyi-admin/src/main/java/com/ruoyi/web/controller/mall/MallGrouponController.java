@@ -136,6 +136,7 @@ public class MallGrouponController extends BaseController {
      * 获取商家的团购活动选项
      */
     @GetMapping("/options")
+    @PreAuthorize("@ss.hasPermi('mall:groupon:list')")
     public AjaxResult options(@RequestParam(required = false) Long merchantId) {
         List<GrouponActivity> list;
         if (merchantId != null) {
@@ -196,6 +197,9 @@ public class MallGrouponController extends BaseController {
             if (grouponId != null) {
                 dirBuilder.append(grouponId).append(File.separator);
             } else if (tempToken != null) {
+                if (!tempToken.matches("^[a-zA-Z0-9_-]{1,64}$")) {
+                    return AjaxResult.error("无效的tempToken");
+                }
                 dirBuilder.append("temp").append(File.separator).append(tempToken).append(File.separator);
             } else {
                 dirBuilder.append("temp").append(File.separator);

@@ -9,6 +9,8 @@ public interface IDistributorSettlementRecordService {
 
     DistributorSettlementRecord selectById(Long id);
 
+    DistributorSettlementRecord selectByIdForUpdate(Long id);
+
     DistributorSettlementRecord selectBySettlementNo(String settlementNo);
 
     List<DistributorSettlementRecord> selectList(DistributorSettlementRecord query);

@@ -93,6 +93,11 @@
         where m.id = #{id} AND m.del_flag = '0'
     </select>
 
+    <select id="selectMerchantByIdAnyStatus" parameterType="Long" resultMap="MerchantResult">
+        <include refid="selectMerchantVo"/>
+        where m.id = #{id} AND m.del_flag = '0'
+    </select>
+
     <insert id="insertMerchant" parameterType="com.ruoyi.mall.merchant.domain.Merchant" useGeneratedKeys="true" keyProperty="id">
         insert into merchant
         <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -265,6 +270,27 @@
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
+    </update>
+
+    <update id="clearDistributorBindingsByDistributorIds" parameterType="map">
+        update merchant
+        set distributor_id = null,
+            update_time = now()
+        where del_flag = '0'
+          and distributor_id in
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <update id="clearRevivedDistributorBindings" parameterType="Long">
+        update merchant m
+        inner join distributor d on d.id = m.distributor_id and d.del_flag = '0'
+        set m.distributor_id = null,
+            m.update_time = now()
+        where m.del_flag = '0'
+          and m.distributor_id = #{distributorId}
+          and coalesce(m.update_time, m.create_time) &lt; d.create_time
     </update>
 
 </mapper>

@@ -19,19 +19,9 @@ public interface IFinanceService {
     List<PlatformIncome> selectProfitShareList(PlatformIncome platformIncome);
 
     /**
-     * 查询提现记录列表
-     */
-    List selectWithdrawList(com.ruoyi.mall.finance.domain.WithdrawRecord withdrawRecord);
-
-    /**
      * 查询商户流水列表
      */
     List<TransactionRecord> selectMerchantFlowList(TransactionRecord query);
-
-    /**
-     * 审批提现申请
-     */
-    boolean approveWithdraw(Long id, Integer status);
 
     /**
      * 获取收入统计

@@ -35,36 +35,37 @@
     </resultMap>
 
     <sql id="selectGrouponActivityItemVo">
-        select id, merchant_id, groupon_id, name, title, content, description,
-               cover_image, detail_images, original_price, groupon_price, discount_rate,
-               stock, sales, limit_per_user, valid_days, store_ids,
-               dish_groups, dish_total_price, direct_total_price, dish_count, available_dish_count,
-               status, sort, create_time, update_time, del_flag
-        from groupon_activity_item
+        select gai.id, gai.merchant_id, gai.groupon_id, gai.name, gai.title, gai.content, gai.description,
+               gai.cover_image, gai.detail_images, gai.original_price, gai.groupon_price, gai.discount_rate,
+               gai.stock, gai.sales, gai.limit_per_user, gai.valid_days, gai.store_ids,
+               gai.dish_groups, gai.dish_total_price, gai.direct_total_price, gai.dish_count, gai.available_dish_count,
+               gai.status, gai.sort, gai.create_time, gai.update_time, gai.del_flag
+        from groupon_activity_item gai
+        left join merchant m on m.id = gai.merchant_id and m.del_flag = '0'
     </sql>
 
     <select id="selectGrouponActivityItemById" parameterType="Long" resultMap="GrouponActivityItemResult">
         <include refid="selectGrouponActivityItemVo"/>
-        where id = #{id} AND del_flag = '0'
+        where gai.id = #{id} AND gai.del_flag = '0'
     </select>
 
     <select id="selectGrouponActivityItemList" parameterType="com.ruoyi.mall.product.domain.GrouponActivityItem" resultMap="GrouponActivityItemResult">
         <include refid="selectGrouponActivityItemVo"/>
         <where>
-            del_flag = '0'
-            <if test="name != null and name != ''">and name like concat('%', #{name}, '%')</if>
-            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
-            <if test="grouponId != null">and groupon_id = #{grouponId}</if>
-            <if test="status != null">and status = #{status}</if>
+            gai.del_flag = '0'
+            <if test="name != null and name != ''">and gai.name like concat('%', #{name}, '%')</if>
+            <if test="merchantId != null">and gai.merchant_id = #{merchantId}</if>
+            <if test="grouponId != null">and gai.groupon_id = #{grouponId}</if>
+            <if test="status != null">and gai.status = #{status}</if>
             <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
         </where>
-        order by sort desc, create_time desc
+        order by gai.sort desc, gai.create_time desc
     </select>
 
     <select id="selectByGrouponId" parameterType="Long" resultMap="GrouponActivityItemResult">
         <include refid="selectGrouponActivityItemVo"/>
-        where groupon_id = #{grouponId} AND del_flag = '0'
-        order by sort desc, create_time desc
+        where gai.groupon_id = #{grouponId} AND gai.del_flag = '0'
+        order by gai.sort desc, gai.create_time desc
     </select>
 
     <insert id="insertGrouponActivityItem" parameterType="com.ruoyi.mall.product.domain.GrouponActivityItem" useGeneratedKeys="true" keyProperty="id">

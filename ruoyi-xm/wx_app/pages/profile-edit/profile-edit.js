@@ -1,5 +1,6 @@
 const app = getApp()
 const util = require('../../utils/util')
+const agreement = require('../../utils/agreement')
 const userApi = require('../../api/user')
 
 Page({
@@ -33,6 +34,8 @@ Page({
   },
 
   saveProfile() {
+    if (!agreement.assertAgreementAccepted()) return
+
     const { nickName, avatarUrl, userInfo } = this.data
     const trimmedName = (nickName || '').trim()
 

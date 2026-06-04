@@ -10,6 +10,8 @@ public interface MerchantSettlementRecordMapper {
 
     MerchantSettlementRecord selectById(Long id);
 
+    MerchantSettlementRecord selectByIdForUpdate(Long id);
+
     MerchantSettlementRecord selectBySettlementNo(String settlementNo);
 
     MerchantSettlementRecord selectByOrderNo(String orderNo);

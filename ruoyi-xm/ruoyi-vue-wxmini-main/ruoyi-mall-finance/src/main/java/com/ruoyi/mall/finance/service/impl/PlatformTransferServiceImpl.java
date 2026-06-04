@@ -52,6 +52,9 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
     private IDistributorService distributorService;
     @Autowired(required = false)
     private com.github.binarywang.wxpay.service.WxPayService wxPayService;
+    @Autowired
+    @org.springframework.context.annotation.Lazy
+    private PlatformTransferServiceImpl self;
 
     @Override
     public PlatformTransferRecord selectById(Long id) {
@@ -71,7 +74,7 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PlatformTransferRecord createMerchantTransfer(Long settlementId, String operatorId) {
-        MerchantSettlementRecord settlement = merchantSettlementService.selectById(settlementId);
+        MerchantSettlementRecord settlement = merchantSettlementService.selectByIdForUpdate(settlementId);
         if (settlement == null) {
             throw new RuntimeException("结算记录不存在");
         }
@@ -123,7 +126,7 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
         List<PlatformTransferRecord> results = new ArrayList<>();
         for (Long id : settlementIds) {
             try {
-                results.add(doSingleMerchantTransfer(id, operatorId));
+                results.add(self.doSingleMerchantTransfer(id, operatorId));
             } catch (Exception e) {
                 log.error("批量转账-商家结算 {} 失败: {}", id, e.getMessage());
             }
@@ -142,7 +145,7 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PlatformTransferRecord createDistributorTransfer(Long settlementId, String operatorId) {
-        DistributorSettlementRecord settlement = distributorSettlementService.selectById(settlementId);
+        DistributorSettlementRecord settlement = distributorSettlementService.selectByIdForUpdate(settlementId);
         if (settlement == null) {
             throw new RuntimeException("分销商结算记录不存在");
         }
@@ -195,7 +198,7 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
         List<PlatformTransferRecord> results = new ArrayList<>();
         for (Long id : settlementIds) {
             try {
-                results.add(doSingleDistributorTransfer(id, operatorId));
+                results.add(self.doSingleDistributorTransfer(id, operatorId));
             } catch (Exception e) {
                 log.error("批量转账-分销商结算 {} 失败: {}", id, e.getMessage());
             }
@@ -404,13 +407,13 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
             request.setOutBatchNo(record.getTransferNo());
             request.setBatchName("结算转账-" + record.getSettlementNo());
             request.setBatchRemark("商家/分销商结算打款");
-            request.setTotalAmount(record.getAmount().multiply(BigDecimal.valueOf(100)).intValue());
+            request.setTotalAmount(record.getAmount().multiply(BigDecimal.valueOf(100)).setScale(0, java.math.RoundingMode.HALF_UP).intValueExact());
             request.setTotalNum(1);
 
             com.github.binarywang.wxpay.bean.merchanttransfer.TransferCreateRequest.TransferDetailList detail =
                     new com.github.binarywang.wxpay.bean.merchanttransfer.TransferCreateRequest.TransferDetailList();
             detail.setOutDetailNo(record.getTransferNo());
-            detail.setTransferAmount(record.getAmount().multiply(BigDecimal.valueOf(100)).intValue());
+            detail.setTransferAmount(record.getAmount().multiply(BigDecimal.valueOf(100)).setScale(0, java.math.RoundingMode.HALF_UP).intValueExact());
             detail.setOpenid(record.getReceiverOpenid());
 
             // RSA加密收款人真实姓名
@@ -495,7 +498,7 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
             return java.util.Base64.getEncoder().encodeToString(encrypted);
         } catch (Exception e) {
             log.error("RSA加密收款人姓名失败: error={}", e.getMessage(), e);
-            return null;
+            throw new RuntimeException("RSA加密收款人姓名失败");
         }
     }
 

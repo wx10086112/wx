@@ -107,6 +107,9 @@ public class MallMerchantUserController extends BaseController {
         return toAjax(merchantUserService.deleteMerchantUserByIds(ids));
     }
 
+    @Autowired
+    private com.ruoyi.system.service.ISysConfigService configService;
+
     /**
      * 重置密码
      */
@@ -118,7 +121,8 @@ public class MallMerchantUserController extends BaseController {
         if (check != null) return check;
         String newPassword = body != null ? body.get("password") : null;
         if (newPassword == null || newPassword.trim().isEmpty()) {
-            newPassword = "123456";
+            newPassword = configService.selectConfigByKey("sys.user.initPassword");
+            if (newPassword == null) newPassword = "123456";
         }
         merchantUserService.resetPassword(id, newPassword);
         return success();

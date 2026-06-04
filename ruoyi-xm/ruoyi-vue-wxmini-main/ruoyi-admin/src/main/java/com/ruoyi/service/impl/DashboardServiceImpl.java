@@ -1,11 +1,11 @@
 package com.ruoyi.service.impl;
 
-import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.common.utils.MallDataScopeHelper;
 import com.ruoyi.mall.common.service.IDashboardService;
-import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.merchant.mapper.MerchantMapper;
-import com.ruoyi.mall.user.mapper.MallUserMapper;
+import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.product.mapper.ProductMapper;
+import com.ruoyi.mall.user.mapper.MallUserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,13 +31,20 @@ public class DashboardServiceImpl implements IDashboardService {
 
     @Override
     public Map<String, Object> selectDashboardStats() {
+        Long merchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        Long distributorId = MallDataScopeHelper.currentEffectiveDistributorId();
         Map<String, Object> stats = new HashMap<>();
-        stats.put("todayAmount", mallOrderMapper.sumTodayAmount());
-        stats.put("totalFlow", mallOrderMapper.sumTotalFlow());
-        stats.put("todayOrders", mallOrderMapper.countTodayOrders());
-        stats.put("merchantCount", merchantMapper.countActiveMerchant());
-        stats.put("userTotal", mallUserMapper.countTotal());
-        stats.put("userTodayNew", mallUserMapper.countTodayNew());
+        stats.put("todayAmount", mallOrderMapper.sumTodayAmountScoped(merchantId, distributorId));
+        stats.put("totalFlow", mallOrderMapper.sumTotalFlowScoped(merchantId, distributorId));
+        stats.put("todayOrders", mallOrderMapper.countTodayOrdersScoped(merchantId, distributorId));
+        stats.put("merchantCount", merchantMapper.countActiveMerchantScoped(merchantId, distributorId));
+        if (merchantId == null && distributorId == null) {
+            stats.put("userTotal", mallUserMapper.countTotal());
+            stats.put("userTodayNew", mallUserMapper.countTodayNew());
+        } else {
+            stats.put("userTotal", mallUserMapper.countTotalScoped(merchantId, distributorId));
+            stats.put("userTodayNew", mallUserMapper.countTodayNewScoped(merchantId, distributorId));
+        }
         return stats;
     }
 
@@ -77,7 +84,9 @@ public class DashboardServiceImpl implements IDashboardService {
             amountMap.put(dateStr, BigDecimal.ZERO);
         }
 
-        List<Map<String, Object>> dbData = mallOrderMapper.selectTrendByDay(7);
+        Long merchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        Long distributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        List<Map<String, Object>> dbData = mallOrderMapper.selectTrendByDayScoped(7, merchantId, distributorId);
         SimpleDateFormat dbSdf = new SimpleDateFormat("MM-dd");
         for (Map<String, Object> row : dbData) {
             Object dateObj = row.get("date");
@@ -107,7 +116,9 @@ public class DashboardServiceImpl implements IDashboardService {
         List<Integer> orderCounts = new ArrayList<>();
         List<BigDecimal> amounts = new ArrayList<>();
 
-        List<Map<String, Object>> dbData = mallOrderMapper.selectTrendByWeek(7);
+        Long merchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        Long distributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        List<Map<String, Object>> dbData = mallOrderMapper.selectTrendByWeekScoped(7, merchantId, distributorId);
         for (Map<String, Object> row : dbData) {
             String week = "第" + row.get("weekNum") + "周";
             dates.add(week);
@@ -127,7 +138,9 @@ public class DashboardServiceImpl implements IDashboardService {
         List<Integer> orderCounts = new ArrayList<>();
         List<BigDecimal> amounts = new ArrayList<>();
 
-        List<Map<String, Object>> dbData = mallOrderMapper.selectTrendByMonth(12);
+        Long merchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        Long distributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        List<Map<String, Object>> dbData = mallOrderMapper.selectTrendByMonthScoped(12, merchantId, distributorId);
         for (Map<String, Object> row : dbData) {
             String month = row.get("monthNum") + "月";
             dates.add(month);
@@ -147,7 +160,9 @@ public class DashboardServiceImpl implements IDashboardService {
         List<Integer> orderCounts = new ArrayList<>();
         List<BigDecimal> amounts = new ArrayList<>();
 
-        List<Map<String, Object>> dbData = mallOrderMapper.selectTrendByYear(5);
+        Long merchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        Long distributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        List<Map<String, Object>> dbData = mallOrderMapper.selectTrendByYearScoped(5, merchantId, distributorId);
         for (Map<String, Object> row : dbData) {
             String year = row.get("yearNum") + "年";
             dates.add(year);
@@ -170,7 +185,9 @@ public class DashboardServiceImpl implements IDashboardService {
             countMap.put(i, 0);
         }
 
-        List<Map<String, Object>> dbData = mallOrderMapper.selectOrderStatsByStatus();
+        Long merchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        Long distributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        List<Map<String, Object>> dbData = mallOrderMapper.selectOrderStatsByStatusScoped(merchantId, distributorId);
         for (Map<String, Object> row : dbData) {
             Integer status = ((Number) row.get("status")).intValue();
             Integer count = ((Number) row.get("cnt")).intValue();
@@ -191,13 +208,17 @@ public class DashboardServiceImpl implements IDashboardService {
     @Override
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> selectHotProducts() {
-        return (List) productMapper.selectHotProducts(5);
+        Long merchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        Long distributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        return (List) productMapper.selectHotProductsScoped(5, merchantId, distributorId);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> selectMerchantRank() {
-        return (List) merchantMapper.selectMerchantRankByIncome(5);
+        Long merchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        Long distributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        return (List) merchantMapper.selectMerchantRankByIncomeScoped(5, merchantId, distributorId);
     }
 
     @Override
@@ -208,14 +229,15 @@ public class DashboardServiceImpl implements IDashboardService {
         int pageSize = params.get("pageSize") != null ? Integer.parseInt(params.get("pageSize").toString()) : 10;
         int offset = (pageNum - 1) * pageSize;
 
-        Long distributorId = null;
-        String accountType = SecurityUtils.getAccountType();
-        if ("DISTRIBUTOR".equals(accountType)) {
-            distributorId = SecurityUtils.getDistributorId();
-        }
+        Long merchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        Long distributorId = MallDataScopeHelper.currentEffectiveDistributorId();
 
         int total = mallOrderMapper.countMerchantRankForAnalysis(keyword, distributorId);
         List<Map<String, Object>> rows = mallOrderMapper.selectMerchantRankForAnalysis(keyword, sortBy, distributorId, offset, pageSize);
+        if (merchantId != null) {
+            rows.removeIf(row -> !merchantId.equals(((Number) row.get("id")).longValue()));
+            total = rows.size();
+        }
 
         // 计算完成率和退款率
         for (Map<String, Object> row : rows) {
@@ -236,8 +258,10 @@ public class DashboardServiceImpl implements IDashboardService {
 
     @Override
     public Map<String, Object> selectSalesStats() {
+        Long merchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        Long distributorId = MallDataScopeHelper.currentEffectiveDistributorId();
         Map<String, Object> stats = new HashMap<>();
-        Map<String, Object> sales = mallOrderMapper.selectSalesStats();
+        Map<String, Object> sales = mallOrderMapper.selectSalesStatsScoped(merchantId, distributorId);
         BigDecimal totalAmount = (BigDecimal) sales.get("totalAmount");
         Long totalOrders = ((Number) sales.get("totalOrders")).longValue();
 
@@ -246,7 +270,7 @@ public class DashboardServiceImpl implements IDashboardService {
             avgOrderAmount = totalAmount.divide(BigDecimal.valueOf(totalOrders), 2, RoundingMode.HALF_UP);
         }
 
-        int completedCount = mallOrderMapper.countByStatus(2);
+        int completedCount = mallOrderMapper.countByStatusScoped(2, merchantId, distributorId);
         BigDecimal conversionRate = BigDecimal.ZERO;
         if (totalOrders != null && totalOrders > 0) {
             conversionRate = BigDecimal.valueOf(completedCount)
@@ -273,7 +297,7 @@ public class DashboardServiceImpl implements IDashboardService {
             trendAmountMap.put(dateStr, BigDecimal.ZERO);
             trendCountMap.put(dateStr, 0);
         }
-        List<Map<String, Object>> trendDb = mallOrderMapper.selectTrendByDay(7);
+        List<Map<String, Object>> trendDb = mallOrderMapper.selectTrendByDayScoped(7, merchantId, distributorId);
         SimpleDateFormat dbSdf = new SimpleDateFormat("MM-dd");
         for (Map<String, Object> row : trendDb) {
             Object dateObj = row.get("date");
@@ -300,9 +324,11 @@ public class DashboardServiceImpl implements IDashboardService {
 
     @Override
     public Map<String, Object> selectOrderStats() {
+        Long merchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        Long distributorId = MallDataScopeHelper.currentEffectiveDistributorId();
         Map<String, Object> stats = new HashMap<>();
 
-        List<Map<String, Object>> statusList = mallOrderMapper.selectOrderStatsByStatus();
+        List<Map<String, Object>> statusList = mallOrderMapper.selectOrderStatsByStatusScoped(merchantId, distributorId);
         int totalOrders = 0, completedOrders = 0, refundOrders = 0, abnormalOrders = 0;
         for (Map<String, Object> item : statusList) {
             Integer status = ((Number) item.get("status")).intValue();
@@ -314,7 +340,7 @@ public class DashboardServiceImpl implements IDashboardService {
         }
 
         // 按日期+状态分组的每日明细
-        List<Map<String, Object>> rawDaily = mallOrderMapper.selectDailyOrderStatsByStatus();
+        List<Map<String, Object>> rawDaily = mallOrderMapper.selectDailyOrderStatsByStatusScoped(merchantId, distributorId);
         // 按日期聚合: date -> { date, newOrders, completed, refund }
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Calendar cal = Calendar.getInstance();

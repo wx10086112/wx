@@ -40,6 +40,13 @@
         where dsr.id = #{id} and dsr.del_flag = '0'
     </select>
 
+    <select id="selectByIdForUpdate" parameterType="Long" resultMap="DistSettlementResult">
+        select <include refid="selectColumns"/> from distributor_settlement_record dsr
+        LEFT JOIN merchant m ON dsr.merchant_id = m.id
+        LEFT JOIN distributor d ON dsr.distributor_id = d.id
+        where dsr.id = #{id} and dsr.del_flag = '0' FOR UPDATE
+    </select>
+
     <select id="selectBySettlementNo" parameterType="String" resultMap="DistSettlementResult">
         select <include refid="selectColumns"/> from distributor_settlement_record dsr
         LEFT JOIN merchant m ON dsr.merchant_id = m.id

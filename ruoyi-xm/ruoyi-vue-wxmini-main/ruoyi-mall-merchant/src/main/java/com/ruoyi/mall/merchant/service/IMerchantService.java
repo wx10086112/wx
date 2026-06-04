@@ -7,6 +7,8 @@ public interface IMerchantService {
 
     Merchant selectMerchantById(Long id);
 
+    Merchant selectMerchantByIdAnyStatus(Long id);
+
     List<Merchant> selectMerchantList(Merchant merchant);
 
     int insertMerchant(Merchant merchant);
@@ -16,6 +18,10 @@ public interface IMerchantService {
     int deleteMerchantById(Long id);
 
     int deleteMerchantByIds(Long[] ids);
+
+    int clearDistributorBindingsByDistributorIds(Long[] ids);
+
+    int clearRevivedDistributorBindings(Long distributorId);
 
     Merchant selectMerchantByCAppId(String cMiniAppId);
 

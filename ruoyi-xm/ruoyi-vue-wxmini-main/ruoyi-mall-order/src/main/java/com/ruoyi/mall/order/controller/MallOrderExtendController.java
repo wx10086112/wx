@@ -20,7 +20,7 @@ public class MallOrderExtendController extends BaseController {
     @Autowired
     private MallOrderMapper mallOrderMapper;
 
-    @DataScopeBiz(merchantAlias = "mall_order")
+    @DataScopeBiz(merchantAlias = "o", distributorAlias = "m")
     @PreAuthorize("@ss.hasPermi('mall:order:list')")
     @GetMapping("/abnormal/list")
     public TableDataInfo abnormalList(MallOrder query) {
@@ -33,7 +33,7 @@ public class MallOrderExtendController extends BaseController {
         return getDataTable(list);
     }
 
-    @DataScopeBiz(merchantAlias = "mall_order")
+    @DataScopeBiz(merchantAlias = "o", distributorAlias = "m")
     @PreAuthorize("@ss.hasPermi('mall:order:list')")
     @GetMapping("/after-sale/list")
     public TableDataInfo afterSaleList(MallOrder query) {

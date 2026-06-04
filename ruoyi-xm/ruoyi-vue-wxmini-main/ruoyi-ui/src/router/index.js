@@ -88,6 +88,11 @@ export const constantRoutes = [
       }
     ]
   },
+
+]
+
+// 动态路由，基于用户权限动态去加载
+export const dynamicRoutes = [
   // ========== 商家管理 ==========
   {
     path: '/merchant',
@@ -99,7 +104,6 @@ export const constantRoutes = [
       { path: 'add', component: () => import('@/views/merchant/add'), name: 'MerchantAdd', meta: { title: '添加商户', activeMenu: '/merchant/list' }, hidden: true },
       { path: 'detail/:id', component: () => import('@/views/merchant/detail'), name: 'MerchantDetail', meta: { title: '商家详情', activeMenu: '/merchant/list' }, hidden: true },
       { path: 'user', component: () => import('@/views/merchant/user'), name: 'MerchantUser', meta: { title: '商家用户' } },
-      { path: 'withdraw', component: () => import('@/views/merchant/withdraw'), name: 'MerchantWithdraw', meta: { title: '商家提现' } },
       { path: 'audit', component: () => import('@/views/merchant/audit'), name: 'MerchantAudit', meta: { title: '入驻审核' } }
     ]
   },
@@ -127,7 +131,6 @@ export const constantRoutes = [
       { path: 'abnormal', component: () => import('@/views/order/abnormal'), name: 'OrderAbnormal', meta: { title: '异常订单' } },
       { path: 'platform-flow', component: () => import('@/views/finance/platform-flow'), name: 'PlatformIncome', meta: { title: '平台流水' } },
       { path: 'profit-sharing', component: () => import('@/views/finance/profit-sharing'), name: 'ProfitSharing', meta: { title: '商家分账' } },
-      { path: 'withdraw-record', component: () => import('@/views/finance/withdraw-record'), name: 'WithdrawRecord', meta: { title: '提现记录' } },
       { path: 'report', component: () => import('@/views/finance/report'), name: 'FinanceReport', meta: { title: '财务报表' } },
       { path: 'income', component: () => import('@/views/finance/income'), name: 'IncomeStats', meta: { title: '收益统计' } }
     ]
@@ -157,11 +160,7 @@ export const constantRoutes = [
       { path: 'login-log', component: () => import('@/views/ops-log/login'), name: 'LoginLog', meta: { title: '登录日志' } },
       { path: 'operation-log', component: () => import('@/views/ops-log/operation'), name: 'OperationLog', meta: { title: '操作日志' } }
     ]
-  }
-]
-
-// 动态路由，基于用户权限动态去加载
-export const dynamicRoutes = [
+  },
   {
     path: '/system/role-auth',
     component: Layout,

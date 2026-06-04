@@ -22,7 +22,7 @@ public class MallMerchantFlowController extends BaseController {
      * 商家流水列表
      * 接收 TransactionRecord 作为第一个参数以支持 @DataScopeBiz aspect 注入
      */
-    @DataScopeBiz(merchantAlias = "t")
+    @DataScopeBiz(merchantAlias = "t", distributorAlias = "m")
     @PreAuthorize("@ss.hasPermi('mall:merchant:list')")
     @GetMapping("/flow/list")
     public TableDataInfo flowList(TransactionRecord query) {

@@ -46,6 +46,11 @@ public class MerchantSettlementRecordServiceImpl implements IMerchantSettlementR
     }
 
     @Override
+    public MerchantSettlementRecord selectByIdForUpdate(Long id) {
+        return settlementMapper.selectByIdForUpdate(id);
+    }
+
+    @Override
     public MerchantSettlementRecord selectBySettlementNo(String settlementNo) {
         return settlementMapper.selectBySettlementNo(settlementNo);
     }
@@ -73,6 +78,43 @@ public class MerchantSettlementRecordServiceImpl implements IMerchantSettlementR
     @Override
     public int updateById(MerchantSettlementRecord record) {
         return settlementMapper.updateById(record);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchTransfer(List<Long> ids) {
+        for (Long id : ids) {
+            MerchantSettlementRecord record = settlementMapper.selectById(id);
+            if (record != null && STATUS_WAITING_T1.equals(record.getStatus())) {
+                record.setStatus(STATUS_TRANSFERRING);
+                record.setTransferTime(new Date());
+                settlementMapper.updateById(record);
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchMarkArrived(List<Long> ids) {
+        for (Long id : ids) {
+            MerchantSettlementRecord record = settlementMapper.selectById(id);
+            if (record != null && !STATUS_ARRIVED.equals(record.getStatus()) && !STATUS_CANCELLED.equals(record.getStatus())) {
+                record.setStatus(STATUS_ARRIVED);
+                record.setArriveTime(new Date());
+                settlementMapper.updateById(record);
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void markFailed(Long id, String failReason) {
+        MerchantSettlementRecord record = settlementMapper.selectById(id);
+        if (record != null) {
+            record.setStatus(STATUS_FAILED);
+            record.setFailReason(failReason);
+            settlementMapper.updateById(record);
+        }
     }
 
     @Override

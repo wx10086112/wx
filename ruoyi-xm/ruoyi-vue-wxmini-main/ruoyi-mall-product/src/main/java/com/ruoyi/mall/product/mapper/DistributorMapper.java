@@ -12,6 +12,8 @@ public interface DistributorMapper {
 
     Distributor selectByUsername(@Param("username") String username);
 
+    Distributor selectByUsernameAny(@Param("username") String username);
+
     int insertDistributor(Distributor distributor);
 
     int updateDistributor(Distributor distributor);

@@ -30,6 +30,11 @@ public class DistributorSettlementRecordServiceImpl implements IDistributorSettl
     }
 
     @Override
+    public DistributorSettlementRecord selectByIdForUpdate(Long id) {
+        return distributorSettlementMapper.selectByIdForUpdate(id);
+    }
+
+    @Override
     public DistributorSettlementRecord selectBySettlementNo(String settlementNo) {
         return distributorSettlementMapper.selectBySettlementNo(settlementNo);
     }

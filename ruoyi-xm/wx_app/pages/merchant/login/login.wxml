@@ -29,6 +29,7 @@
       <text class="panel-label">密码</text>
       <input class="login-input" password placeholder="请输入密码" value="{{password}}" bindinput="onPasswordInput" />
     </view>
+    <agreement-consent></agreement-consent>
     <button class="primary-btn login-btn" bindtap="submitLogin" loading="{{submitting}}" disabled="{{submitting}}">登录</button>
     <view class="login-tip">
       <text>账号和密码由平台后台或店长创建；员工也使用这里登录当前商家后台。</text>

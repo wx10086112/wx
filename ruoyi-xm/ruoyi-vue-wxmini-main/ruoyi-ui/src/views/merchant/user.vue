@@ -97,7 +97,7 @@
           <el-input v-model="formData.username" placeholder="请输入登录账号" :disabled="isEdit" />
         </el-form-item>
         <el-form-item v-if="!isEdit" label="初始密码" prop="password">
-          <el-input v-model="formData.password" placeholder="默认 123456" show-password />
+          <el-input v-model="formData.password" placeholder="留空则使用系统默认密码" show-password />
         </el-form-item>
         <el-form-item label="姓名" prop="realName">
           <el-input v-model="formData.realName" placeholder="请输入姓名" />
@@ -134,7 +134,7 @@
           <span>{{ resetPwdRow.realName }}（{{ resetPwdRow.username }}）</span>
         </el-form-item>
         <el-form-item label="新密码">
-          <el-input v-model="newPassword" placeholder="留空则默认 123456" show-password />
+          <el-input v-model="newPassword" placeholder="留空则使用系统默认密码" show-password />
         </el-form-item>
       </el-form>
       <span slot="footer">
@@ -300,9 +300,6 @@ export default {
             this.$message.success('修改成功')
           } else {
             const data = { ...this.formData }
-            if (!data.password) {
-              data.password = '123456'
-            }
             await addMerchantUser(data)
             this.$message.success('新增成功')
           }
@@ -345,8 +342,12 @@ export default {
     async submitResetPwd() {
       this.resetPwdLoading = true
       try {
-        await resetMerchantUserPwd(this.resetPwdRow.id, this.newPassword || '123456')
-        this.$message.success('密码已重置为: ' + (this.newPassword || '123456'))
+        await resetMerchantUserPwd(this.resetPwdRow.id, this.newPassword)
+        if (this.newPassword) {
+          this.$message.success('密码重置成功')
+        } else {
+          this.$message.success('已重置为系统默认密码')
+        }
         this.resetPwdDialogVisible = false
       } catch (e) {
         this.$message.error('重置失败')

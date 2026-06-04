@@ -21,40 +21,41 @@
     </resultMap>
 
     <sql id="selectMerchantUserVo">
-        select id, merchant_id, username, password, real_name, phone, role,
-               status, last_login_time, create_time, update_time, remark
-        from merchant_user
+        select mu.id, mu.merchant_id, mu.username, mu.password, mu.real_name, mu.phone, mu.role,
+               mu.status, mu.last_login_time, mu.create_time, mu.update_time, mu.remark
+        from merchant_user mu
+        left join merchant m on m.id = mu.merchant_id and m.del_flag = '0'
     </sql>
 
     <select id="selectMerchantUserList" parameterType="com.ruoyi.mall.merchant.domain.MerchantUser" resultMap="MerchantUserResult">
         <include refid="selectMerchantUserVo"/>
         <where>
-            and del_flag = '0'
-            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
-            <if test="username != null and username != ''">and username like concat('%', #{username}, '%')</if>
-            <if test="realName != null and realName != ''">and real_name like concat('%', #{realName}, '%')</if>
-            <if test="phone != null and phone != ''">and phone = #{phone}</if>
-            <if test="role != null and role != ''">and role = #{role}</if>
-            <if test="status != null">and status = #{status}</if>
+            and mu.del_flag = '0'
+            <if test="merchantId != null">and mu.merchant_id = #{merchantId}</if>
+            <if test="username != null and username != ''">and mu.username like concat('%', #{username}, '%')</if>
+            <if test="realName != null and realName != ''">and mu.real_name like concat('%', #{realName}, '%')</if>
+            <if test="phone != null and phone != ''">and mu.phone = #{phone}</if>
+            <if test="role != null and role != ''">and mu.role = #{role}</if>
+            <if test="status != null">and mu.status = #{status}</if>
             <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
         </where>
-        order by id desc
+        order by mu.id desc
     </select>
 
     <select id="selectMerchantUserById" parameterType="Long" resultMap="MerchantUserResult">
         <include refid="selectMerchantUserVo"/>
-        where id = #{id} AND del_flag = '0'
+        where mu.id = #{id} AND mu.del_flag = '0'
     </select>
 
     <select id="selectMerchantUserByUsername" parameterType="String" resultMap="MerchantUserResult">
         <include refid="selectMerchantUserVo"/>
-        where username = #{username} AND del_flag = '0'
+        where mu.username = #{username} AND mu.del_flag = '0'
     </select>
 
     <select id="selectMerchantUserByMerchantId" parameterType="Long" resultMap="MerchantUserResult">
         <include refid="selectMerchantUserVo"/>
-        where merchant_id = #{merchantId} AND del_flag = '0'
-        order by id asc
+        where mu.merchant_id = #{merchantId} AND mu.del_flag = '0'
+        order by mu.id asc
     </select>
 
     <insert id="insertMerchantUser" parameterType="com.ruoyi.mall.merchant.domain.MerchantUser" useGeneratedKeys="true" keyProperty="id">
@@ -107,6 +108,17 @@
         update merchant_user set del_flag = '2' where id in
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
+        </foreach>
+    </update>
+
+    <update id="deleteMerchantUserByMerchantId" parameterType="Long">
+        update merchant_user set del_flag = '2' where merchant_id = #{merchantId}
+    </update>
+
+    <update id="deleteMerchantUserByMerchantIds" parameterType="Long">
+        update merchant_user set del_flag = '2' where merchant_id in
+        <foreach item="merchantId" collection="array" open="(" separator="," close=")">
+            #{merchantId}
         </foreach>
     </update>
 

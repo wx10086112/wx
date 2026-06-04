@@ -83,6 +83,7 @@
             <if test="distributorId != null">and t.distributor_id = #{distributorId}</if>
             <if test="orderNo != null and orderNo != ''">and t.order_no like concat('%', #{orderNo}, '%')</if>
             <if test="status != null and status != ''">and t.status = #{status}</if>
+            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
         </where>
         order by t.create_time desc
     </select>

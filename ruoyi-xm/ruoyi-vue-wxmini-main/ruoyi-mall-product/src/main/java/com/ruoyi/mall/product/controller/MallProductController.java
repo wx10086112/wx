@@ -141,6 +141,9 @@ public class MallProductController extends BaseController {
             if (productId != null) {
                 dirBuilder.append(productId).append(File.separator);
             } else if (tempToken != null) {
+                if (!tempToken.matches("^[a-zA-Z0-9_-]{1,64}$")) {
+                    return AjaxResult.error("无效的tempToken");
+                }
                 dirBuilder.append("temp").append(File.separator).append(tempToken).append(File.separator);
             } else {
                 dirBuilder.append("temp").append(File.separator);

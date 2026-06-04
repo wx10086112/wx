@@ -35,4 +35,34 @@ public interface TransactionRecordMapper {
 
     @Select("SELECT DATE_FORMAT(create_time, '%Y-%m') AS month, SUM(amount) AS totalAmount, type FROM transaction_record GROUP BY DATE_FORMAT(create_time, '%Y-%m'), type ORDER BY month DESC")
     List<Map> selectMonthlyReport();
+
+    @Select({"<script>",
+            "SELECT COALESCE(SUM(t.amount), 0) FROM transaction_record t",
+            "LEFT JOIN merchant m ON t.merchant_id = m.id",
+            "WHERE t.del_flag = '0' AND t.type = #{type} AND DATE(t.create_time) = CURDATE()",
+            "<if test='merchantId != null'>AND t.merchant_id = #{merchantId}</if>",
+            "<if test='distributorId != null'>AND m.distributor_id = #{distributorId}</if>",
+            "</script>"})
+    BigDecimal sumTodayByTypeScoped(@Param("type") Integer type, @Param("merchantId") Long merchantId, @Param("distributorId") Long distributorId);
+
+    @Select({"<script>",
+            "SELECT COALESCE(SUM(t.amount), 0) FROM transaction_record t",
+            "LEFT JOIN merchant m ON t.merchant_id = m.id",
+            "WHERE t.del_flag = '0' AND t.type = #{type}",
+            "AND YEAR(t.create_time) = YEAR(NOW()) AND MONTH(t.create_time) = MONTH(NOW())",
+            "<if test='merchantId != null'>AND t.merchant_id = #{merchantId}</if>",
+            "<if test='distributorId != null'>AND m.distributor_id = #{distributorId}</if>",
+            "</script>"})
+    BigDecimal sumMonthByTypeScoped(@Param("type") Integer type, @Param("merchantId") Long merchantId, @Param("distributorId") Long distributorId);
+
+    @Select({"<script>",
+            "SELECT DATE_FORMAT(t.create_time, '%Y-%m') AS month, SUM(t.amount) AS totalAmount, t.type",
+            "FROM transaction_record t",
+            "LEFT JOIN merchant m ON t.merchant_id = m.id",
+            "WHERE t.del_flag = '0'",
+            "<if test='merchantId != null'>AND t.merchant_id = #{merchantId}</if>",
+            "<if test='distributorId != null'>AND m.distributor_id = #{distributorId}</if>",
+            "GROUP BY DATE_FORMAT(t.create_time, '%Y-%m'), t.type ORDER BY month DESC",
+            "</script>"})
+    List<Map> selectMonthlyReportScoped(@Param("merchantId") Long merchantId, @Param("distributorId") Long distributorId);
 }

@@ -1,4 +1,5 @@
 const util = require('../../utils/util')
+const agreement = require('../../utils/agreement')
 const orderApi = require('../../api/order')
 const refundApi = require('../../api/refund')
 
@@ -81,6 +82,8 @@ Page({
   },
 
   payOrder() {
+    if (!agreement.assertAgreementAccepted()) return
+
     util.showModal('确认支付', `确认支付 ¥${this.data.order.payAmountText} 吗？`).then((confirm) => {
       if (!confirm) return
       util.showLoading('支付中...')
@@ -96,7 +99,9 @@ Page({
         .then(() => {
           util.hideLoading()
           util.showToast('支付成功', 'success')
-          this.loadOrderDetail()
+          util.requestSubscribeMessage().then(() => {
+            this.loadOrderDetail()
+          })
         })
         .catch((err) => {
           util.hideLoading()

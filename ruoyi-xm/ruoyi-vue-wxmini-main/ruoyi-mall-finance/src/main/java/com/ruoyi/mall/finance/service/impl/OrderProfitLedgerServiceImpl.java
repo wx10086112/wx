@@ -76,8 +76,9 @@ public class OrderProfitLedgerServiceImpl implements IOrderProfitLedgerService {
             BigDecimal pRate = new BigDecimal(platformRateWithDist);
             BigDecimal dRate = new BigDecimal(distributorRateVal);
             BigDecimal merchantAmt = payAmount.multiply(mRate).divide(HUNDRED, 2, RoundingMode.DOWN);
-            BigDecimal platformAmt = payAmount.multiply(pRate).divide(HUNDRED, 2, RoundingMode.DOWN);
-            BigDecimal distributorAmt = payAmount.subtract(merchantAmt).subtract(platformAmt);
+            BigDecimal distributorAmt = payAmount.multiply(dRate).divide(HUNDRED, 2, RoundingMode.DOWN);
+            // 剩余的所有尾差和平台份额全部归属平台（技术入股的福利）
+            BigDecimal platformAmt = payAmount.subtract(merchantAmt).subtract(distributorAmt);
 
             ledger.setMerchantAmount(merchantAmt);
             ledger.setPlatformAmount(platformAmt);

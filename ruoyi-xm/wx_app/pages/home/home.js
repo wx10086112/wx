@@ -2,6 +2,7 @@ const util = require('../../utils/util')
 const templateService = require('../../services/template')
 const merchantApi = require('../../api/merchant')
 const productApi = require('../../api/product')
+const privacy = require('../../utils/privacy')
 
 Page({
   data: {
@@ -82,18 +83,25 @@ Page({
 
   getUserLocation() {
     return new Promise((resolve) => {
-      wx.getLocation({
-        type: 'gcj02',
-        success: (res) => {
-          resolve({
-            latitude: res.latitude,
-            longitude: res.longitude,
-            accuracy: res.accuracy
-          })
-        },
-        fail: () => {
+      privacy.ensurePrivacyAuthorized().then((authorized) => {
+        if (!authorized) {
           resolve(null)
+          return
         }
+
+        wx.getLocation({
+          type: 'gcj02',
+          success: (res) => {
+            resolve({
+              latitude: res.latitude,
+              longitude: res.longitude,
+              accuracy: res.accuracy
+            })
+          },
+          fail: () => {
+            resolve(null)
+          }
+        })
       })
     })
   },

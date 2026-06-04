@@ -59,8 +59,12 @@ public class AdminViewSwitchController extends BaseController {
     /**
      * 返回平台视角
      */
+    @PreAuthorize("@ss.hasPermi('mall:distributor:switch')")
     @PostMapping("/back-platform")
     public AjaxResult backPlatform() {
+        if (!MallDataScopeHelper.isSuperAdmin()) {
+            return AjaxResult.error("无权限操作");
+        }
         LoginUser loginUser = SecurityUtils.getLoginUser();
         loginUser.setActiveViewType("PLATFORM");
         loginUser.setActiveDistributorId(null);

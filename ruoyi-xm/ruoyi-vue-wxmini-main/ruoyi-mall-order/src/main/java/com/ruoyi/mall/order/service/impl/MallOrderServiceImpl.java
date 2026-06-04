@@ -75,15 +75,31 @@ public class MallOrderServiceImpl implements IMallOrderService {
             throw new RuntimeException("退款记录不存在");
         }
 
+        if (refundRecord.getStatus() != null && refundRecord.getStatus() != 1) {
+            throw new RuntimeException("退款记录非待处理状态，无法操作");
+        }
+
         refundRecord.setStatus(status);
         refundRecord.setOperator(operator);
         refundRecord.setAuditTime(new Date());
-        if (rejectReason != null && !rejectReason.isEmpty()) {
-            refundRecord.setRejectReason(rejectReason);
-        } else {
+        
+        if (status != null && status == 3) {
+            if (rejectReason != null && !rejectReason.isEmpty()) {
+                refundRecord.setRejectReason(rejectReason);
+            }
+        } else if (status != null && status == 2) {
             refundRecord.setRefundTime(new Date());
         }
+
+        if (refundRecord.getParams() == null) {
+            refundRecord.setParams(new java.util.HashMap<>());
+        }
+        refundRecord.getParams().put("oldStatus", 1);
+
         int result = refundRecordMapper.updateRefundRecord(refundRecord);
+        if (result == 0) {
+            throw new RuntimeException("退款记录状态已变更，请刷新后重试");
+        }
 
         // 退款审批通过（status=2）→ 发布事件触发结算逆向
         if (status != null && status == 2 && refundRecord.getOrderNo() != null) {
@@ -100,6 +116,14 @@ public class MallOrderServiceImpl implements IMallOrderService {
         }
 
         return result;
+    }
+
+    @Override
+    public boolean isMerchantAccessibleByDistributor(Long merchantId, Long distributorId) {
+        if (merchantId == null || distributorId == null) {
+            return false;
+        }
+        return mallOrderMapper.countMerchantByDistributor(merchantId, distributorId) > 0;
     }
 
     @Override

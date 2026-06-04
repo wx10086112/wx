@@ -3,6 +3,7 @@
     "pages/home/home",
     "pages/order/order",
     "pages/mine/mine",
+    "pages/login/login",
     "pages/merchant-detail/merchant-detail",
     "pages/product-detail/product-detail",
     "pages/checkout/checkout",
@@ -10,6 +11,7 @@
     "pages/coupon/coupon",
     "pages/contact/contact",
     "pages/profile-edit/profile-edit",
+    "pages/settings/settings",
     "pages/merchant/login/login",
     "pages/merchant/workbench/workbench",
     "pages/merchant/order/order",
@@ -36,6 +38,7 @@
       "desc": "用于展示你到本店的距离"
     }
   },
+  "__usePrivacyCheck__": true,
   "requiredPrivateInfos": [
     "getLocation"
   ],

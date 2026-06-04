@@ -1,0 +1,220 @@
+.login-page {
+  min-height: 100vh;
+  padding: 120rpx 48rpx 58rpx;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at 74% 30%, rgba(255, 231, 164, 0.72), transparent 32%),
+    radial-gradient(circle at 22% 24%, rgba(226, 240, 255, 0.9), transparent 36%),
+    linear-gradient(180deg, #edf6ff 0%, #fff1e8 58%, #fff8f3 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.login-hero {
+  flex: 1;
+  min-height: 620rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.brand-mark {
+  width: 132rpx;
+  height: 132rpx;
+  border-radius: 34rpx;
+  background: linear-gradient(145deg, #ff6b5b 0%, #ff3f63 100%);
+  box-shadow: 0 20rpx 48rpx rgba(255, 88, 91, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-mark__text {
+  color: #fff;
+  font-size: 58rpx;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.brand-title {
+  display: block;
+  max-width: 620rpx;
+  margin-top: 54rpx;
+  color: #202734;
+  font-size: 48rpx;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.brand-subtitle {
+  display: block;
+  max-width: 560rpx;
+  margin-top: 22rpx;
+  color: #6f7785;
+  font-size: 27rpx;
+  line-height: 1.6;
+}
+
+.login-actions {
+  width: 100%;
+}
+
+.wechat-login-btn {
+  width: 100%;
+  height: 94rpx;
+  margin: 0;
+  padding: 0 40rpx;
+  border-radius: 47rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.78);
+  color: #222936;
+  font-size: 31rpx;
+  font-weight: 500;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12rpx 40rpx rgba(118, 91, 74, 0.08);
+}
+
+.wechat-login-btn::after,
+.modal-btn::after {
+  border: none;
+}
+
+.wechat-icon {
+  position: absolute;
+  left: 54rpx;
+  width: 54rpx;
+  height: 42rpx;
+}
+
+.agreement-line {
+  min-height: 56rpx;
+  margin-top: 28rpx;
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+}
+
+.agreement-check {
+  width: 32rpx;
+  height: 32rpx;
+  margin-top: 5rpx;
+  border-radius: 50%;
+  border: 2rpx solid rgba(128, 138, 151, 0.42);
+  color: #fff;
+  font-size: 22rpx;
+  line-height: 30rpx;
+  text-align: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.agreement-check.checked {
+  border-color: #2f7cff;
+  background: #2f7cff;
+}
+
+.agreement-copy {
+  flex: 1;
+  min-width: 0;
+  color: #8a92a0;
+  font-size: 25rpx;
+  line-height: 1.65;
+}
+
+.agreement-link {
+  color: #2477e9;
+  font-weight: 650;
+}
+
+.login-footer {
+  height: 72rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  color: #8a92a0;
+  font-size: 27rpx;
+}
+
+.agreement-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 48rpx;
+  box-sizing: border-box;
+}
+
+.modal-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.48);
+}
+
+.modal-card {
+  position: relative;
+  width: 100%;
+  padding: 52rpx 48rpx 46rpx;
+  border-radius: 34rpx;
+  background: #fff;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.modal-title {
+  display: block;
+  color: #202734;
+  font-size: 36rpx;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.modal-content {
+  margin-top: 34rpx;
+  color: #6f7785;
+  font-size: 29rpx;
+  line-height: 1.65;
+}
+
+.modal-link {
+  color: #2477e9;
+  font-weight: 650;
+}
+
+.modal-actions {
+  margin-top: 44rpx;
+  display: flex;
+  gap: 22rpx;
+}
+
+.modal-btn {
+  flex: 1;
+  height: 88rpx;
+  line-height: 1;
+  margin: 0;
+  border-radius: 44rpx;
+  font-size: 31rpx;
+  font-weight: 650;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 4rpx;
+  box-sizing: border-box;
+}
+
+.modal-btn--secondary {
+  color: #202734;
+  background: #fff;
+  border: 1rpx solid #d7dbe2;
+}
+
+.modal-btn--primary {
+  color: #fff;
+  background: #ff5d45;
+}

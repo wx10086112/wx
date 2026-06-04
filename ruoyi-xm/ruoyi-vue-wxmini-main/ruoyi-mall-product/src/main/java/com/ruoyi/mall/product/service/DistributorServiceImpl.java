@@ -4,6 +4,7 @@ import com.ruoyi.mall.product.domain.Distributor;
 import com.ruoyi.mall.product.mapper.DistributorMapper;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -33,12 +34,20 @@ public class DistributorServiceImpl implements IDistributorService {
 
     @Override
     public int insertDistributor(Distributor distributor) {
-        // 检查账号是否已存在
-        Distributor existing = distributorMapper.selectByUsername(distributor.getUsername());
-        if (existing != null) {
-            throw new RuntimeException("登录账号已存在");
+        String username = normalize(distributor.getUsername());
+        if (!StringUtils.hasText(username)) {
+            throw new RuntimeException("登录账号不能为空");
         }
-        // 密码加密
+        distributor.setUsername(username);
+
+        Distributor existing = distributorMapper.selectByUsernameAny(username);
+        if (existing != null) {
+            if ("0".equals(existing.getDelFlag())) {
+                throw new RuntimeException("登录账号已存在");
+            }
+            throw new RuntimeException("登录账号被历史已删除分销商占用，请先执行分销商账号热修 SQL");
+        }
+
         if (distributor.getPassword() != null && !distributor.getPassword().isEmpty()) {
             distributor.setPassword(encoder.encode(distributor.getPassword()));
         }
@@ -71,5 +80,13 @@ public class DistributorServiceImpl implements IDistributorService {
         distributor.setId(id);
         distributor.setPassword(encoder.encode(newPassword));
         return distributorMapper.updateDistributor(distributor);
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

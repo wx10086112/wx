@@ -32,25 +32,49 @@ const permission = {
     // 生成路由
     GenerateRoutes({ commit }) {
       return new Promise(resolve => {
-        // 过滤有权限要求的业务路由
-        const filteredRoutes = constantRoutes.filter(route => {
-          if (route.permissions) {
-            return auth.hasPermiOr(route.permissions)
-          }
-          return true
-        })
-        const sidebarRoutes = filteredRoutes.filter(r => !r.hidden)
+        const filteredRoutes = filterPermissionRoutes(constantRoutes)
         const asyncRoutes = filterDynamicRoutes(dynamicRoutes)
+        const allRoutes = filteredRoutes.concat(asyncRoutes)
+        const sidebarRoutes = allRoutes.filter(r => !r.hidden)
+        
         const rewriteRoutes = [{ path: '*', redirect: '/404', hidden: true }]
         router.addRoutes(asyncRoutes)
-        commit('SET_ROUTES', rewriteRoutes)
-        commit('SET_SIDEBAR_ROUTERS', filteredRoutes)
+        commit('SET_ROUTES', asyncRoutes.concat(rewriteRoutes))
+        commit('SET_SIDEBAR_ROUTERS', allRoutes)
         commit('SET_DEFAULT_ROUTES', sidebarRoutes)
         commit('SET_TOPBAR_ROUTES', sidebarRoutes)
         resolve(rewriteRoutes)
       })
     }
   }
+}
+
+function hasRoutePermission(route) {
+  if (route.permissions) {
+    return auth.hasPermiOr(route.permissions)
+  }
+  if (route.roles) {
+    return auth.hasRoleOr(route.roles)
+  }
+  return true
+}
+
+function filterPermissionRoutes(routes) {
+  const res = []
+  routes.forEach(route => {
+    if (!hasRoutePermission(route)) {
+      return
+    }
+    const current = { ...route }
+    if (current.children) {
+      current.children = filterPermissionRoutes(current.children)
+      if (!current.children.length) {
+        delete current.children
+      }
+    }
+    res.push(current)
+  })
+  return res
 }
 
 // 遍历后台传来的路由字符串，转换为组件对象
