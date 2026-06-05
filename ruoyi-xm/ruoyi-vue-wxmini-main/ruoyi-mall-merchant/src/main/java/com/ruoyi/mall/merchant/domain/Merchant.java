@@ -1,6 +1,5 @@
 package com.ruoyi.mall.merchant.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ruoyi.common.core.domain.BaseEntity;
 import java.math.BigDecimal;
 
@@ -27,16 +26,15 @@ public class Merchant extends BaseEntity {
     private String avatar;
     private String description;
     private String businessHours;
+    private Integer supportRefund;
+    private Integer supportBooking;
     private Integer productCount;
     private Integer storeCount;
     private String cMiniAppId;
-    @JsonIgnore
     private String cMiniAppSecret;
     private String mMiniAppId;
-    @JsonIgnore
     private String mMiniAppSecret;
     private String wxPayMchId;
-    @JsonIgnore
     private String wxPayApiKey;
     private String receiverOpenid;
     private String receiverType;
@@ -102,6 +100,10 @@ public class Merchant extends BaseEntity {
     public void setDescription(String description) { this.description = description; }
     public String getBusinessHours() { return businessHours; }
     public void setBusinessHours(String businessHours) { this.businessHours = businessHours; }
+    public Integer getSupportRefund() { return supportRefund; }
+    public void setSupportRefund(Integer supportRefund) { this.supportRefund = supportRefund; }
+    public Integer getSupportBooking() { return supportBooking; }
+    public void setSupportBooking(Integer supportBooking) { this.supportBooking = supportBooking; }
     public Integer getProductCount() { return productCount; }
     public void setProductCount(Integer productCount) { this.productCount = productCount; }
     public Integer getStoreCount() { return storeCount; }

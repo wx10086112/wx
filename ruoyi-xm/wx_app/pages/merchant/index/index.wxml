@@ -1,15 +1,27 @@
+<wxs module="greet">
+var salute = function() {
+  var hour = getDate().getHours();
+  if (hour < 6) return '凌晨好';
+  if (hour < 12) return '早上好';
+  if (hour < 14) return '中午好';
+  if (hour < 18) return '下午好';
+  return '晚上好';
+};
+module.exports = { salute: salute };
+</wxs>
 <view class="merchant-shell">
   <view hidden="{{currentTab !== 'workbench'}}" class="tab-view">
     <view class="workbench-card panel">
-      <view class="store-headline">
-        <view class="store-headline-main">
-          <view class="store-name-line">
-            <text class="workbench-store-name">{{storeInfo.storeName}}</text>
-            <text class="status-tag {{storeInfo.businessStatus ? 'green' : 'gray'}}">{{storeInfo.businessStatus ? '营业中' : '休息中'}}</text>
-          </view>
-          <text class="workbench-role">{{staffUser.name}} · {{staffUser.roleName}}</text>
-        </view>
+      <view class="workbench-greeting">
+        <text class="greeting-text">{{greet.salute()}}，{{staffUser.name}}</text>
+        <view
+          class="status-tag tappable {{storeInfo.businessStatus ? 'green' : 'gray'}}"
+          hover-class="tappable--hover"
+          bindtap="toggleBusinessStatus"
+        >{{storeInfo.businessStatus ? '营业中' : '休息中'}}</view>
       </view>
+      <text class="workbench-store-name">{{storeInfo.storeName}}</text>
+      <text class="workbench-role">{{staffUser.roleName}} · {{staffUser.phone}}</text>
 
       <view class="income-card">
         <view class="income-main">
@@ -54,17 +66,18 @@
     <view wx:if="{{orderList.length}}">
       <view wx:for="{{orderList}}" wx:key="orderNo" class="order-card panel" bindtap="goOrderDetail" data-orderno="{{item.orderNo}}">
         <view class="order-top">
-          <text class="order-no">{{item.orderNo}}</text>
-          <view class="status-tag {{item.statusMeta.className}}">{{item.statusMeta.text}}</view>
-        </view>
-        <text class="order-title">{{item.title}}</text>
-        <text class="order-meta">{{item.customerName}} · {{item.customerPhone}} · {{item.payTimeText}}</text>
-        <view class="order-bottom">
-          <view>
-            <text class="order-amount">¥{{item.payAmountText}}</text>
-            <text wx:if="{{item.writeOffCode}}" class="order-code">核销码 {{item.writeOffCode}}</text>
+          <view class="order-main">
+            <text class="order-title">{{item.title}}</text>
+            <text class="order-no">订单号 {{item.orderNo}}</text>
           </view>
-          <button wx:if="{{item.status === 'PENDING_VERIFY'}}" class="primary-btn mini-btn" catchtap="goVerifyOrder" data-orderno="{{item.orderNo}}">去核销</button>
+          <view class="order-side">
+            <view class="status-tag {{item.statusMeta.className}}">{{item.statusMeta.text}}</view>
+            <text class="order-time">{{item.payTimeText}}</text>
+          </view>
+        </view>
+        <text class="order-meta">{{item.customerName}} · {{item.customerPhone}}</text>
+        <view class="order-bottom">
+          <text class="order-amount">¥{{item.payAmountText}}</text>
         </view>
       </view>
     </view>
@@ -72,14 +85,33 @@
   </view>
 
   <view hidden="{{currentTab !== 'verify'}}" class="tab-view">
-    <view class="verify-hero panel"><text class="section-title light">到店核销</text></view>
-    <view class="input-panel panel">
-      <input class="code-input" value="{{manualCode}}" placeholder="请输入核销码或订单号" bindinput="handleCodeInput" />
-      <view class="action-row">
-        <button class="ghost-btn half-btn" bindtap="scanCode">扫码核销</button>
-        <button class="primary-btn half-btn" bindtap="submitManualVerify">手动核销</button>
-      </view>
+    <view class="verify-header">
+      <text class="verify-page-title">到店核销</text>
     </view>
+
+    <view class="scan-card" bindtap="scanCode" hover-class="scan-card--hover">
+      <view class="scan-card__icon">
+        <view class="scan-card__corner scan-card__corner--tl"></view>
+        <view class="scan-card__corner scan-card__corner--tr"></view>
+        <view class="scan-card__corner scan-card__corner--bl"></view>
+        <view class="scan-card__corner scan-card__corner--br"></view>
+        <view class="scan-card__line"></view>
+      </view>
+      <view class="scan-card__body">
+        <text class="scan-card__title">扫码核销</text>
+        <text class="scan-card__desc">点击后调用摄像头，快速识别顾客核销码</text>
+      </view>
+      <text class="scan-card__arrow">›</text>
+    </view>
+
+    <view class="manual-panel panel">
+      <view class="manual-panel__head">
+        <text class="manual-panel__title">手动核销</text>
+      </view>
+      <input class="manual-panel__input" value="{{manualCode}}" placeholder="请输入核销码或订单号" bindinput="handleCodeInput" />
+      <view class="manual-panel__action" bindtap="submitManualVerify">手动核销</view>
+    </view>
+
     <view wx:if="{{verifyResult}}" class="result-panel panel">
       <text class="section-title">本次核销结果</text>
       <text class="row-title">{{verifyResult.title}}</text>
@@ -102,27 +134,52 @@
   </view>
 
   <view hidden="{{currentTab !== 'goods'}}" class="tab-view">
-    <view class="tabs panel">
-      <view wx:for="{{goodsTabs}}" wx:key="value" class="tab-item {{goodsCurrentTab === item.value ? 'active' : ''}}" bindtap="switchGoodsTab" data-tab="{{item.value}}">{{item.label}}</view>
+    <view class="merchant-goods-filter panel">
+      <view
+        wx:for="{{goodsTabs}}"
+        wx:key="value"
+        class="merchant-goods-filter__item {{goodsCurrentTab === item.value ? 'is-active' : ''}}"
+        bindtap="switchGoodsTab"
+        data-tab="{{item.value}}"
+      >
+        {{item.label}}
+      </view>
     </view>
-    <view class="toolbar"><button class="primary-btn toolbar-btn" bindtap="goEditGoods">+ 新增套餐</button></view>
-    <view wx:if="{{goodsList.length}}">
-      <view wx:for="{{goodsList}}" wx:key="goodsId" class="goods-card panel">
-        <view class="goods-cover {{item.imageUrl ? '' : 'empty'}}">
-          <image wx:if="{{item.imageUrl}}" class="goods-cover-image" src="{{item.imageUrl}}" mode="aspectFill" style="{{item.imageCropStyle}}"></image>
-          <text wx:else>暂无图片</text>
+    <view class="merchant-goods-toolbar">
+      <view class="merchant-goods-toolbar__intro">
+        <text class="merchant-goods-toolbar__title">商品列表</text>
+        <text class="merchant-goods-toolbar__desc">管理当前门店上架套餐</text>
+      </view>
+      <view class="merchant-goods-toolbar__action" bindtap="goEditGoods">新增套餐</view>
+    </view>
+    <view wx:if="{{goodsList.length}}" class="merchant-goods-list">
+      <view wx:for="{{goodsList}}" wx:key="goodsId" class="merchant-goods-card panel">
+        <view class="merchant-goods-card__cover {{item.imageUrl ? '' : 'is-empty'}}">
+          <image
+            wx:if="{{item.imageUrl}}"
+            class="merchant-goods-card__cover-image"
+            src="{{item.imageUrl}}"
+            mode="aspectFill"
+            style="{{item.imageCropStyle}}"
+          ></image>
+          <text wx:else class="merchant-goods-card__cover-empty">暂无图片</text>
         </view>
-        <view class="goods-top">
-          <view>
-            <text class="goods-title">{{item.title}}</text>
-            <text class="goods-meta">{{item.categoryName}} · 库存 {{item.stock}} · 销量 {{item.sales}}</text>
+          <view class="merchant-goods-card__head">
+            <view class="merchant-goods-card__summary">
+              <text class="merchant-goods-card__title">{{item.title}}</text>
+              <text class="merchant-goods-card__meta">库存 {{item.stock}} · 销量 {{item.sales}}</text>
+            </view>
+          <view class="merchant-goods-card__status {{item.status === 'ON_SHELF' ? 'is-on' : 'is-off'}}">
+            {{item.status === 'ON_SHELF' ? '上架中' : '已下架'}}
           </view>
-          <view class="status-tag {{item.status === 'ON_SHELF' ? 'green' : 'gray'}}">{{item.status === 'ON_SHELF' ? '上架中' : '已下架'}}</view>
         </view>
-        <text class="goods-subtitle">{{item.subtitle}}</text>
-        <view class="goods-actions">
-          <text class="goods-price">¥{{item.priceText}}</text>
-          <button class="primary-btn mini-btn" bindtap="goEditGoods" data-id="{{item.goodsId}}">编辑</button>
+        <text class="merchant-goods-card__subtitle">{{item.subtitle}}</text>
+        <view class="merchant-goods-card__footer">
+          <view class="merchant-goods-card__price-block">
+            <text class="merchant-goods-card__price">¥{{item.priceText}}</text>
+            <text class="merchant-goods-card__origin">¥{{item.originalPriceText}}</text>
+          </view>
+          <view class="merchant-goods-card__action" bindtap="goEditGoods" data-id="{{item.goodsId}}">编辑</view>
         </view>
       </view>
     </view>
@@ -130,31 +187,48 @@
   </view>
 
   <view hidden="{{currentTab !== 'mine'}}" class="tab-view">
-    <view class="profile-card">
-      <view class="profile-top">
-        <view class="avatar-mark">{{staffUser.roleKey === 'owner' ? '长' : '员'}}</view>
-        <view class="profile-main">
-          <text class="user-name">{{staffUser.name}}</text>
-          <text class="user-meta">{{staffUser.phone}}</text>
+    <view class="mine-profile panel">
+      <view class="mine-profile__main">
+        <text class="mine-profile__name">{{staffUser.name}}</text>
+        <text class="mine-profile__meta">{{staffUser.roleName}} · {{staffUser.phone}}</text>
+      </view>
+      <view
+        class="mine-profile__switch"
+        hover-class="mine-profile__switch--hover"
+        bindtap="toggleBusinessStatus"
+      >{{storeInfo.businessStatus ? '切换休息' : '恢复营业'}}</view>
+    </view>
+
+    <view class="mine-store panel">
+      <view class="mine-store__main">
+        <text class="mine-store__name">{{storeInfo.storeName || '门店信息待完善'}}</text>
+        <text wx:if="{{storeInfo.businessHours}}" class="mine-store__desc">营业时间 {{storeInfo.businessHours}}</text>
+      </view>
+      <view class="mine-store__status {{storeInfo.businessStatus ? 'is-on' : 'is-off'}}">
+        <view class="mine-store__dot"></view>
+        <text>{{storeInfo.businessStatus ? '营业中' : '休息中'}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{operationList.length}}" class="mine-group">
+      <text class="mine-group__title">日常操作</text>
+      <view class="section panel">
+        <view wx:for="{{operationList}}" wx:key="title" class="menu-item" bindtap="goAction" data-tab="{{item.tab}}" data-url="{{item.url}}">
+          <text class="menu-label">{{item.title}}</text><text class="menu-arrow">›</text>
         </view>
-        <button class="mine-status-switch" bindtap="toggleBusinessStatus">{{storeInfo.businessStatus ? '切换休息' : '恢复营业'}}</button>
-      </view>
-      <view class="store-block">
-        <text class="store-name">{{storeInfo.storeName}}</text>
-        <text class="store-desc">{{storeInfo.businessHours}} · {{storeInfo.shortName}} · {{storeInfo.businessStatus ? '营业中' : '休息中'}}</text>
       </view>
     </view>
-    <view wx:if="{{operationList.length}}" class="section panel">
-      <view wx:for="{{operationList}}" wx:key="title" class="menu-item" bindtap="goAction" data-tab="{{item.tab}}" data-url="{{item.url}}">
-        <text class="menu-label">{{item.title}}</text><text class="menu-arrow">›</text>
+
+    <view wx:if="{{managementList.length}}" class="mine-group">
+      <text class="mine-group__title">门店管理</text>
+      <view class="section panel">
+        <view wx:for="{{managementList}}" wx:key="title" class="menu-item" bindtap="goAction" data-url="{{item.url}}">
+          <text class="menu-label">{{item.title}}</text><text class="menu-arrow">›</text>
+        </view>
       </view>
     </view>
-    <view wx:if="{{managementList.length}}" class="section panel">
-      <view wx:for="{{managementList}}" wx:key="title" class="menu-item" bindtap="goAction" data-url="{{item.url}}">
-        <text class="menu-label">{{item.title}}</text><text class="menu-arrow">›</text>
-      </view>
-    </view>
-    <button class="logout-btn" bindtap="logout">退出登录</button>
+
+    <view class="logout-btn" bindtap="logout" hover-class="logout-btn--hover">退出登录</view>
   </view>
 
   <view class="merchant-tabbar safe-area-bottom">

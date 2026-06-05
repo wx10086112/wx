@@ -58,7 +58,7 @@ Page({
 
   handleCodeInput(e) {
     this.setData({
-      manualCode: e.detail.value.trim()
+      manualCode: String(e.detail.value || '').trim().toUpperCase()
     })
   },
 
@@ -80,12 +80,13 @@ Page({
       util.showToast('请输入核销码')
       return
     }
-    this.processVerifyCode(this.data.manualCode)
+    this.processVerifyCode(String(this.data.manualCode || '').trim().toUpperCase())
   },
 
   processVerifyCode(code) {
+    const normalizedCode = String(code || '').trim().toUpperCase()
     api
-      .writeOffByCode(code)
+        .writeOffByCode(normalizedCode)
       .then((response) => {
         this.setData({
           verifyResult: {
@@ -99,7 +100,7 @@ Page({
         this.loadRecentRecords()
       })
       .catch(() => {
-        const result = util.verifyOrderByCode(code, app.globalData.staffUser || {})
+        const result = util.verifyOrderByCode(normalizedCode, app.globalData.staffUser || {})
         this.setData({
           verifyResult: result.order
             ? {
@@ -112,14 +113,14 @@ Page({
         util.showToast(result.message, result.success ? 'success' : 'none')
         if (result.success) {
           this.loadRecentRecords()
-          this.setData({
-            manualCode: ''
-          })
-        } else {
-          this.loadRecentRecords()
-        }
-      })
-  },
+            this.setData({
+              manualCode: ''
+            })
+          } else {
+            this.loadRecentRecords()
+          }
+        })
+    },
 
   goVerifyRecords() {
     if (!app.needPermission(['verify.record', 'verify.scan', 'verify.manual'])) return

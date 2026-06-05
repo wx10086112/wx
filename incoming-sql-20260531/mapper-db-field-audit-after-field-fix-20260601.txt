@@ -1,3 +1,0 @@
-prod_tables=64
-mapper_files=42
-findings=0

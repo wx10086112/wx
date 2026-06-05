@@ -150,13 +150,6 @@
   line-height: 1;
 }
 
-.stats-caption {
-  display: block;
-  margin-top: 10rpx;
-  font-size: 22rpx;
-  color: #aaa49b;
-}
-
 .section-panel {
   margin-top: 32rpx;
   padding: 32rpx;

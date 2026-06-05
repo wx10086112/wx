@@ -26,6 +26,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/wxmini/order")
 public class WxOrderController {
+    private static final int MAX_WRITE_OFF_CODE_RETRIES = 10;
 
     private static final int ORDER_STATUS_PENDING = 0;
     private static final int ORDER_STATUS_PAID = 1;
@@ -97,7 +98,12 @@ public class WxOrderController {
         BigDecimal couponAmount = BigDecimal.ZERO;
         BigDecimal payAmount = totalAmount.subtract(couponAmount);
         String orderNo = generateOrderNo();
-        String writeOffCode = generateWriteOffCode();
+        String writeOffCode;
+        try {
+            writeOffCode = generateUniqueWriteOffCode();
+        } catch (IllegalStateException e) {
+            return AjaxResult.error("核销码生成失败，请稍后重试");
+        }
 
         MallOrder order = new MallOrder();
         order.setOrderNo(orderNo);
@@ -284,7 +290,13 @@ public class WxOrderController {
         return "ORD" + datePart + randomPart;
     }
 
-    private String generateWriteOffCode() {
-        return writeOffCodeGenerator.generate();
+    private String generateUniqueWriteOffCode() {
+        for (int i = 0; i < MAX_WRITE_OFF_CODE_RETRIES; i++) {
+            String code = writeOffCodeGenerator.generate();
+            if (mallOrderService.selectOrderByWriteOffCode(code) == null) {
+                return code;
+            }
+        }
+        throw new IllegalStateException("write off code collision");
     }
 }

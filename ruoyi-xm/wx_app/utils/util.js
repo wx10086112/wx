@@ -216,7 +216,13 @@ const generateOrderNo = () => {
 }
 
 const createWriteOffCode = () => {
-  return 'LY' + Math.floor(1000 + Math.random() * 9000)
+  const randomChars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
+  const datePart = formatDate(new Date(), 'YYYYMMDD')
+  let randomPart = ''
+  for (let i = 0; i < 8; i += 1) {
+    randomPart += randomChars.charAt(Math.floor(Math.random() * randomChars.length))
+  }
+  return `LY${datePart}${randomPart}`
 }
 
 const transitionOrderToCancelled = (order = {}, reason = '用户主动取消') => {

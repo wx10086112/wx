@@ -1,14 +1,18 @@
 <view class="order-page">
-  <view class="order-header-card">
-    <view class="order-heading">
-      <text class="order-title">我的订单</text>
-      <text class="order-subtitle">查看支付、核销与售后进度</text>
-    </view>
-    <view class="order-stats">
-      <view wx:for="{{orderStats}}" wx:key="label" class="order-stat-card">
-        <text class="order-stat-value">{{item.value}}</text>
-        <text class="order-stat-label">{{item.label}}</text>
-      </view>
+  <view class="page-intro">
+    <text class="page-title">我的订单</text>
+  </view>
+
+  <view class="overview-strip">
+    <view
+      wx:for="{{orderStats}}"
+      wx:key="label"
+      class="overview-item {{currentTab === item.tab ? 'active' : ''}}"
+      bindtap="onQuickFilterTap"
+      data-tab="{{item.tab}}"
+    >
+      <text class="overview-value">{{item.value}}</text>
+      <text class="overview-label">{{item.label}}</text>
     </view>
   </view>
 
@@ -24,34 +28,32 @@
     </view>
   </view>
 
-  <view class="order-list">
-    <order-card
-      wx:for="{{orderList}}"
-      wx:key="id"
-      order="{{item}}"
-      showActions="{{true}}"
-      bind:click="onOrderTap"
-      bind:cancel="onCancelOrder"
-      bind:pay="onPayOrder"
-      bind:viewCode="onViewCode"
-      bind:refund="onRefundOrder"
-      bind:rebuy="onRebuyOrder"
-    ></order-card>
-  </view>
-
-  <view wx:if="{{!loading && orderList.length === 0}}" class="order-empty">
-    <view class="empty-visual">
-      <view class="empty-line"></view>
-      <view class="empty-line short"></view>
-    </view>
-    <text class="empty-title">暂无相关订单</text>
-    <text class="empty-desc">下单后可以在这里查看支付、核销和售后进度</text>
-    <button class="empty-btn" bindtap="goShopping">去逛逛</button>
-  </view>
-
-  <view class="loading-state" wx:if="{{loading}}">
+  <view wx:if="{{loading}}" class="loading-card">
     <view class="loading-dot"></view>
     <text class="loading-text">正在加载订单</text>
+  </view>
+
+  <block wx:elif="{{orderList.length}}">
+    <view class="order-list">
+      <order-card
+        wx:for="{{orderList}}"
+        wx:key="id"
+        order="{{item}}"
+        showActions="{{true}}"
+        bind:click="onOrderTap"
+        bind:cancel="onCancelOrder"
+        bind:pay="onPayOrder"
+        bind:viewCode="onViewCode"
+        bind:refund="onRefundOrder"
+        bind:rebuy="onRebuyOrder"
+      ></order-card>
+    </view>
+  </block>
+
+  <view wx:else class="empty-card">
+    <view class="empty-badge">订单</view>
+    <text class="empty-title">暂无相关订单</text>
+    <view class="empty-action" bindtap="goShopping">去逛逛</view>
   </view>
 
   <view class="write-off-modal" wx:if="{{showWriteOffModal}}" catchtouchmove="preventMove">
@@ -62,11 +64,11 @@
         <text class="modal-close" bindtap="closeWriteOffModal">×</text>
       </view>
       <view class="write-off-info">
-        <view class="order-preview flex flex-align-center">
+        <view class="order-preview">
           <image src="{{currentOrder.image}}" class="preview-image" mode="aspectFill"></image>
-          <view class="preview-info ml-20 flex-1">
-            <text class="preview-title text-ellipsis-2 fs-28">{{currentOrder.title}}</text>
-            <text class="preview-merchant text-muted fs-24 mt-8">{{currentOrder.merchantName}}</text>
+          <view class="preview-info">
+            <text class="preview-title">{{currentOrder.title}}</text>
+            <text class="preview-merchant">{{currentOrder.merchantName}}</text>
           </view>
         </view>
         <view class="write-off-code-section">
@@ -74,7 +76,7 @@
           <view class="code-display">
             <text class="code-text">{{currentOrder.writeOffCode}}</text>
           </view>
-          <text class="code-tip text-muted fs-24 mt-16">有效期至：{{currentOrder.writeOffDeadlineText}}</text>
+          <text class="code-tip">有效期至：{{currentOrder.writeOffDeadlineText}}</text>
         </view>
         <view class="qr-code-section">
           <qrcode text="{{currentOrder.writeOffCode}}" size="{{280}}" />

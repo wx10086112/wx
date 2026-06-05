@@ -64,10 +64,6 @@
       <text class="field-label">副标题</text>
       <input class="field-input" value="{{form.subtitle}}" data-key="subtitle" bindinput="handleInput" placeholder="请输入副标题" />
     </view>
-    <view class="field">
-      <text class="field-label">分类</text>
-      <input class="field-input" value="{{form.categoryName}}" data-key="categoryName" bindinput="handleInput" placeholder="请输入分类名称" />
-    </view>
     <view class="field two-col">
       <view class="field-half">
         <text class="field-label">现价</text>
@@ -83,8 +79,8 @@
       <input class="field-input" type="number" value="{{form.stock}}" data-key="stock" bindinput="handleInput" placeholder="请输入库存" />
     </view>
     <view class="field">
-      <text class="field-label">有效期</text>
-      <input class="field-input" value="{{form.validPeriod}}" data-key="validPeriod" bindinput="handleInput" placeholder="例如 2026-05-01 至 2026-06-30" />
+      <text class="field-label">有效天数</text>
+      <input class="field-input" type="number" value="{{form.validPeriod}}" data-key="validPeriod" bindinput="handleInput" placeholder="例如 30" />
     </view>
     <view class="field">
       <text class="field-label">核销说明</text>

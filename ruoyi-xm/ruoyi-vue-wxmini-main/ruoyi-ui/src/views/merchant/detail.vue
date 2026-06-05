@@ -17,8 +17,8 @@
             <el-tag :type="statusTagType(merchant.status)" size="small">{{ statusText(merchant.status) }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="入驻时间">{{ merchant.createTime }}</el-descriptions-item>
-          <el-descriptions-item label="商品数">{{ merchant.products }}</el-descriptions-item>
-          <el-descriptions-item label="月销售额">¥{{ (merchant.monthlySales || 0).toLocaleString() }}</el-descriptions-item>
+          <el-descriptions-item label="商品数">{{ merchant.productCount || 0 }}</el-descriptions-item>
+          <el-descriptions-item label="累计收入">¥{{ Number(merchant.totalIncome || 0).toLocaleString() }}</el-descriptions-item>
           <el-descriptions-item label="商家ID">{{ merchant.id }}</el-descriptions-item>
         </el-descriptions>
 
@@ -41,12 +41,16 @@
               <el-button type="primary" icon="el-icon-edit" size="small" @click="handleEditMiniApp">编辑配置</el-button>
             </div>
             <el-descriptions :column="2" border style="margin-top: 10px;">
-              <el-descriptions-item label="统一 C 端 AppID">{{ merchant.cMiniAppId || '未配置' }}</el-descriptions-item>
-              <el-descriptions-item label="统一 C 端 Secret">{{ merchant.cMiniAppSecretConfigured ? '******' : '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="统一 C 端 AppID">{{ configText(merchant.cMiniAppId) }}</el-descriptions-item>
+              <el-descriptions-item label="统一 C 端 Secret">{{ configText(merchant.cMiniAppSecret) }}</el-descriptions-item>
+              <el-descriptions-item label="当前入口 AppID">{{ configText(merchantEntry.entryAppId || merchant.cMiniAppId, '待生成入口码') }}</el-descriptions-item>
+              <el-descriptions-item label="配置状态">
+                <el-tag :type="merchant.cMiniAppId ? 'success' : 'warning'" size="small">{{ merchant.cMiniAppId ? '小程序已配置' : '小程序待填写' }}</el-tag>
+              </el-descriptions-item>
               <el-descriptions-item label="B 端登录方式">商家专属入口码扫码后进入后台登录页</el-descriptions-item>
-              <el-descriptions-item label="旧商家端 AppID">{{ merchant.mMiniAppId || '已停用/未配置' }}</el-descriptions-item>
-              <el-descriptions-item label="微信商户号">{{ merchant.wxPayMchId || '未配置' }}</el-descriptions-item>
-              <el-descriptions-item label="支付API密钥">{{ merchant.wxPayApiKeyConfigured ? '******' : '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="旧商家端 AppID">{{ merchant.mMiniAppId || '已停用' }}</el-descriptions-item>
+              <el-descriptions-item label="微信商户号">{{ configText(merchant.wxPayMchId) }}</el-descriptions-item>
+              <el-descriptions-item label="支付API密钥">{{ configText(merchant.wxPayApiKey) }}</el-descriptions-item>
             </el-descriptions>
 
             <div class="entry-panel">
@@ -76,6 +80,10 @@
                 <div class="entry-panel__path">
                   <span class="entry-panel__path-label">入口页</span>
                   <span class="entry-panel__path-value">{{ entryLoginPage }}</span>
+                </div>
+                <div class="entry-panel__path">
+                  <span class="entry-panel__path-label">请求参数</span>
+                  <span class="entry-panel__path-value">merchantId={{ merchantId }}</span>
                 </div>
 
                 <div class="entry-panel__steps">
@@ -111,9 +119,9 @@
               <el-descriptions-item label="认领状态">
                 <el-tag :type="mapClaimStatusType(merchant.mapClaimStatus)" size="small">{{ mapClaimStatusText(merchant.mapClaimStatus) }}</el-tag>
               </el-descriptions-item>
-              <el-descriptions-item label="POI ID">{{ merchant.mapPoiId || '未配置' }}</el-descriptions-item>
-              <el-descriptions-item label="认领链接">{{ merchant.mapClaimUrl || '未配置' }}</el-descriptions-item>
-              <el-descriptions-item label="认领时间">{{ merchant.mapClaimTime || '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="POI ID">{{ configText(merchant.mapPoiId) }}</el-descriptions-item>
+              <el-descriptions-item label="认领链接">{{ configText(merchant.mapClaimUrl) }}</el-descriptions-item>
+              <el-descriptions-item label="认领时间">{{ configText(merchant.mapClaimTime, '待认领完成') }}</el-descriptions-item>
               <el-descriptions-item label="备注" :span="2">{{ merchant.mapClaimRemark || '无' }}</el-descriptions-item>
             </el-descriptions>
 
@@ -123,8 +131,8 @@
             </div>
             <el-descriptions :column="2" border style="margin-top: 10px;">
               <el-descriptions-item label="接入方式">{{ wxPaymentAccessTypeText(merchant.wxPaymentAccessType) }}</el-descriptions-item>
-              <el-descriptions-item label="商家商户号">{{ merchant.effectiveMerchantWxMchId || '未配置' }}</el-descriptions-item>
-              <el-descriptions-item label="商户名称">{{ merchant.merchantWxMchName || '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="商家商户号">{{ configText(merchant.effectiveMerchantWxMchId || merchant.merchantWxMchId) }}</el-descriptions-item>
+              <el-descriptions-item label="商户名称">{{ configText(merchant.merchantWxMchName) }}</el-descriptions-item>
               <el-descriptions-item label="分账开关">
                 <el-tag :type="merchant.wxProfitSharingEnabled === 1 ? 'success' : 'info'" size="small">{{ merchant.wxProfitSharingEnabled === 1 ? '已开启' : '未开启' }}</el-tag>
               </el-descriptions-item>
@@ -132,8 +140,8 @@
               <el-descriptions-item label="平台分账">{{ percentText(merchant.platformShareRate) }}</el-descriptions-item>
               <el-descriptions-item label="分销商分账">{{ percentText(merchant.distributorShareRate) }}</el-descriptions-item>
               <el-descriptions-item label="到账周期">{{ merchant.settlementCycle || 'T1' }}</el-descriptions-item>
-              <el-descriptions-item label="平台接收方">{{ merchant.platformReceiverMchId || '未配置' }}</el-descriptions-item>
-              <el-descriptions-item label="分销商接收方">{{ merchant.distributorReceiverMchId || '未配置' }}</el-descriptions-item>
+              <el-descriptions-item label="平台接收方">{{ configText(merchant.platformReceiverMchId, merchant.platformShareRate > 0 ? '待填写' : '无分账比例') }}</el-descriptions-item>
+              <el-descriptions-item label="分销商接收方">{{ configText(merchant.distributorReceiverMchId, merchant.distributorShareRate > 0 ? '待填写' : '无分账比例') }}</el-descriptions-item>
               <el-descriptions-item label="运营准入" :span="2">
                 <el-tag :type="merchant.canOperate ? 'success' : 'warning'" size="small">{{ merchant.canOperate ? '可运营' : (merchant.operateBlockReason || '配置未完成') }}</el-tag>
               </el-descriptions-item>
@@ -153,14 +161,26 @@
             </div>
 
             <el-table v-loading="productLoading" :data="productList" border size="small">
+              <el-table-column label="主图" width="80" align="center">
+                <template slot-scope="scope">
+                  <el-image
+                    v-if="scope.row.mainImage || scope.row.coverImage"
+                    :src="displayImageUrl(scope.row.mainImage || scope.row.coverImage)"
+                    style="width: 50px; height: 50px;"
+                    fit="cover"
+                    :preview-src-list="[displayImageUrl(scope.row.mainImage || scope.row.coverImage)]"
+                  />
+                  <span v-else style="color: #ccc;">无</span>
+                </template>
+              </el-table-column>
               <el-table-column label="商品名称" prop="name" min-width="180" show-overflow-tooltip />
               <el-table-column label="分类" prop="categoryId" width="80" />
               <el-table-column label="原价" width="90">
-                <template slot-scope="scope">¥{{ scope.row.originalPrice.toFixed(2) }}</template>
+                <template slot-scope="scope">¥{{ moneyText(scope.row.originalPrice) }}</template>
               </el-table-column>
               <el-table-column label="现价" width="90">
                 <template slot-scope="scope">
-                  <span class="text-danger">¥{{ scope.row.price.toFixed(2) }}</span>
+                  <span class="text-danger">¥{{ moneyText(scope.row.price) }}</span>
                 </template>
               </el-table-column>
               <el-table-column label="库存" prop="stock" width="70" align="center" />
@@ -208,7 +228,7 @@
               <el-table-column label="ID" prop="id" width="60" align="center" />
               <el-table-column label="封面" width="80" align="center">
                 <template slot-scope="scope">
-                  <el-image v-if="scope.row.coverImage" :src="scope.row.coverImage" style="width: 50px; height: 50px;" fit="cover" :preview-src-list="[scope.row.coverImage]" />
+                  <el-image v-if="scope.row.coverImage" :src="displayImageUrl(scope.row.coverImage)" style="width: 50px; height: 50px;" fit="cover" :preview-src-list="[displayImageUrl(scope.row.coverImage)]" />
                   <span v-else style="color: #ccc;">无</span>
                 </template>
               </el-table-column>
@@ -258,11 +278,11 @@
               <el-table-column label="订单号" prop="orderNo" width="180" />
               <el-table-column label="用户" prop="userId" width="100" />
               <el-table-column label="金额" width="100">
-                <template slot-scope="scope">¥{{ scope.row.payAmount.toFixed(2) }}</template>
+                <template slot-scope="scope">¥{{ moneyText(scope.row.payAmount) }}</template>
               </el-table-column>
               <el-table-column label="状态" width="90" align="center">
                 <template slot-scope="scope">
-                  <el-tag :type="orderStatusMap[scope.row.status].type" size="small">{{ orderStatusMap[scope.row.status].text }}</el-tag>
+                  <el-tag :type="orderStatusInfo(scope.row.status).type" size="small">{{ orderStatusInfo(scope.row.status).text }}</el-tag>
                 </template>
               </el-table-column>
               <el-table-column label="下单时间" prop="createTime" width="160" />
@@ -287,7 +307,7 @@
               <el-table-column label="金额" width="120">
                 <template slot-scope="scope">
                   <span :class="scope.row.totalAmount >= 0 ? 'text-success' : 'text-danger'">
-                    {{ scope.row.totalAmount >= 0 ? '+' : '' }}¥{{ scope.row.totalAmount.toFixed(2) }}
+                    {{ Number(scope.row.totalAmount || 0) >= 0 ? '+' : '' }}¥{{ moneyText(scope.row.totalAmount) }}
                   </span>
                 </template>
               </el-table-column>
@@ -385,7 +405,7 @@
             :before-upload="beforeImageUpload"
             :data="uploadData"
           >
-            <img v-if="productForm.mainImage || productForm.coverImage" :src="productForm.mainImage || productForm.coverImage" class="image-preview">
+            <img v-if="productForm.mainImage || productForm.coverImage" :src="displayImageUrl(productForm.mainImage || productForm.coverImage)" class="image-preview">
             <i v-else class="el-icon-plus image-uploader-icon"></i>
           </el-upload>
           <div class="upload-tip">支持 jpg/jpeg/png/webp 格式，单张不超过5MB</div>
@@ -501,27 +521,13 @@
         <el-form-item label="商户名称">
           <el-input v-model="wxApplymentForm.merchantWxMchName" placeholder="商家微信支付商户名称" />
         </el-form-item>
-        <template v-if="wxApplymentForm.wxPaymentAccessType === 'APPLYMENT_ASSISTED'">
-          <el-divider content-position="left">协助申请信息</el-divider>
-          <el-form-item label="申请单号">
-            <el-input v-model="wxApplymentForm.wxApplymentId" placeholder="平台协助申请时填写，已有商户号可不填" />
-          </el-form-item>
-          <el-form-item label="申请状态">
-            <el-select v-model="wxApplymentForm.wxApplymentState" placeholder="请选择状态" style="width: 100%;">
-              <el-option label="未提交" value="NOT_SUBMITTED" />
-              <el-option label="已提交" value="SUBMITTED" />
-              <el-option label="审核中" value="AUDITING" />
-              <el-option label="待账户验证" value="NEED_VERIFY" />
-              <el-option label="待签约" value="NEED_SIGN" />
-              <el-option label="已完成" value="FINISHED" />
-              <el-option label="已驳回" value="REJECTED" />
-              <el-option label="已冻结" value="FROZEN" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="驳回原因">
-            <el-input v-model="wxApplymentForm.wxApplymentRejectReason" type="textarea" :rows="2" placeholder="平台协助申请失败时填写" />
-          </el-form-item>
-        </template>
+        <el-alert
+          v-if="wxApplymentForm.wxPaymentAccessType === 'APPLYMENT_ASSISTED'"
+          title="平台仅协助商家完成微信支付商户号申请，申请完成后在此填写商户号即可。"
+          type="info"
+          :closable="false"
+          style="margin-bottom: 16px;"
+        />
         <el-divider content-position="left">微信分账配置</el-divider>
         <el-form-item label="启用分账">
           <el-switch v-model="wxApplymentForm.wxProfitSharingEnabled" :active-value="1" :inactive-value="0" />
@@ -606,7 +612,7 @@
             :before-upload="beforeImageUpload"
             :data="grouponUploadData('cover')"
           >
-            <img v-if="grouponForm.coverImage" :src="grouponForm.coverImage" class="image-preview">
+            <img v-if="grouponForm.coverImage" :src="displayImageUrl(grouponForm.coverImage)" class="image-preview">
             <i v-else class="el-icon-plus image-uploader-icon"></i>
           </el-upload>
           <div class="upload-tip">封面图，支持 jpg/jpeg/png/webp，不超过5MB</div>
@@ -621,7 +627,7 @@
             :before-upload="beforeImageUpload"
             :data="grouponUploadData('poster')"
           >
-            <img v-if="grouponForm.posterImage" :src="grouponForm.posterImage" class="image-preview">
+            <img v-if="grouponForm.posterImage" :src="displayImageUrl(grouponForm.posterImage)" class="image-preview">
             <i v-else class="el-icon-plus image-uploader-icon"></i>
           </el-upload>
           <div class="upload-tip">海报图，可选</div>
@@ -661,20 +667,20 @@
         <el-table-column label="ID" prop="id" width="55" align="center" />
         <el-table-column label="封面" width="70" align="center">
           <template slot-scope="scope">
-            <el-image v-if="scope.row.coverImage" :src="scope.row.coverImage" style="width: 45px; height: 45px;" fit="cover" :preview-src-list="[scope.row.coverImage]" />
+          <el-image v-if="scope.row.coverImage" :src="displayImageUrl(scope.row.coverImage)" style="width: 45px; height: 45px;" fit="cover" :preview-src-list="[displayImageUrl(scope.row.coverImage)]" />
             <span v-else style="color: #ccc;">无</span>
           </template>
         </el-table-column>
         <el-table-column label="商品名称" prop="name" min-width="120" show-overflow-tooltip />
         <el-table-column label="套餐内容" prop="content" min-width="150" show-overflow-tooltip />
         <el-table-column label="原价" width="80" align="center">
-          <template slot-scope="scope">{{ (scope.row.originalPrice / 100).toFixed(2) }}</template>
+          <template slot-scope="scope">{{ centMoneyText(scope.row.originalPrice) }}</template>
         </el-table-column>
         <el-table-column label="团购价" width="80" align="center">
-          <template slot-scope="scope"><span class="text-danger">{{ (scope.row.grouponPrice / 100).toFixed(2) }}</span></template>
+          <template slot-scope="scope"><span class="text-danger">{{ centMoneyText(scope.row.grouponPrice) }}</span></template>
         </el-table-column>
         <el-table-column label="折扣" width="65" align="center">
-          <template slot-scope="scope">{{ scope.row.discountRate ? scope.row.discountRate.toFixed(1) + '折' : '-' }}</template>
+          <template slot-scope="scope">{{ discountText(scope.row.discountRate) }}</template>
         </el-table-column>
         <el-table-column label="库存" prop="stock" width="55" align="center" />
         <el-table-column label="已售" prop="sales" width="55" align="center" />
@@ -776,7 +782,7 @@
             :before-upload="beforeImageUpload"
             :data="itemUploadData('cover')"
           >
-            <img v-if="itemForm.coverImage" :src="itemForm.coverImage" class="image-preview">
+            <img v-if="itemForm.coverImage" :src="displayImageUrl(itemForm.coverImage)" class="image-preview">
             <i v-else class="el-icon-plus image-uploader-icon"></i>
           </el-upload>
           <div class="upload-tip">封面图，支持 jpg/jpeg/png/webp，不超过5MB</div>
@@ -882,10 +888,10 @@ export default {
       productQuery: { name: '', status: '', pageNum: 1, pageSize: 10 },
       productDialogVisible: false,
       productDialogTitle: '新增商品',
-      productForm: { id: null, name: '', category: '', originalPrice: 0, price: 0, stock: 0, validDays: 30, mainImage: '', coverImage: '', description: '' },
+      productForm: { id: null, name: '', categoryId: null, originalPrice: 0, price: 0, stock: 0, validDays: 30, mainImage: '', coverImage: '', description: '' },
       productRules: {
         name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
-        category: [{ required: true, message: '请输入分类', trigger: 'blur' }],
+        categoryId: [{ required: true, message: '请输入分类', trigger: 'blur' }],
         price: [{ required: true, message: '请输入现价', trigger: 'blur' }]
       },
 
@@ -924,7 +930,6 @@ export default {
       // 微信特约商户
       wxApplymentDialogVisible: false,
       wxApplymentForm: {
-        wxApplymentId: '', wxApplymentState: 'NOT_SUBMITTED', wxApplymentRejectReason: '',
         wxPaymentAccessType: 'EXISTING_MCH', merchantWxMchId: '', merchantWxMchName: '',
         wxProfitSharingEnabled: 0, platformReceiverMchId: '', distributorReceiverMchId: '',
         merchantShareRate: 100, platformShareRate: 0, distributorShareRate: 0, settlementCycle: 'T1'
@@ -1035,7 +1040,29 @@ export default {
       return isValidType && isLt5M
     },
     getUploadFileUrl(file) {
-      return file.url || (file.response && file.response.data && file.response.data.url) || ''
+      return file.rawUrl || (file.response && file.response.data && file.response.data.url) || file.url || ''
+    },
+    displayImageUrl(url) {
+      if (!url || /^(https?:)?\/\//i.test(url) || url.startsWith('data:') || url.startsWith('blob:')) {
+        return url || ''
+      }
+      const baseApi = (process.env.VUE_APP_BASE_API || '').replace(/\/+$/, '')
+      return baseApi + (url.startsWith('/') ? url : '/' + url)
+    },
+    moneyText(value) {
+      const amount = Number(value || 0)
+      return Number.isFinite(amount) ? amount.toFixed(2) : '0.00'
+    },
+    centMoneyText(value) {
+      const amount = Number(value || 0) / 100
+      return Number.isFinite(amount) ? amount.toFixed(2) : '0.00'
+    },
+    discountText(value) {
+      const discount = Number(value)
+      return Number.isFinite(discount) && discount > 0 ? discount.toFixed(1) + '折' : '-'
+    },
+    orderStatusInfo(status) {
+      return this.orderStatusMap[status] || { text: '未知状态', type: 'info' }
     },
     handleImageSuccess(res) {
       if (res.code === 200) {
@@ -1050,12 +1077,32 @@ export default {
       this.loading = true
       try {
         const res = await getMerchantDetail(this.merchantId)
-        this.merchant = res.data
+        this.merchant = this.normalizeMerchantDetail(res.data)
       } catch (e) {
         this.$message.error('获取商家详情失败')
       } finally {
         this.loading = false
       }
+    },
+    normalizeMerchantDetail(data) {
+      const merchant = data || {}
+      return {
+        ...merchant,
+        productCount: Number(merchant.productCount || 0),
+        totalIncome: Number(merchant.totalIncome || 0),
+        wxProfitSharingEnabled: Number(merchant.wxProfitSharingEnabled || 0),
+        merchantShareRate: merchant.merchantShareRate === null || merchant.merchantShareRate === undefined ? 100 : Number(merchant.merchantShareRate),
+        platformShareRate: merchant.platformShareRate === null || merchant.platformShareRate === undefined ? 0 : Number(merchant.platformShareRate),
+        distributorShareRate: merchant.distributorShareRate === null || merchant.distributorShareRate === undefined ? 0 : Number(merchant.distributorShareRate),
+        settlementCycle: merchant.settlementCycle || 'T1'
+      }
+    },
+    applySavedMerchant(res) {
+      if (res && res.data) {
+        this.merchant = this.normalizeMerchantDetail(res.data)
+        return true
+      }
+      return false
     },
 
     async loadMerchantEntryQrCode(silent = false) {
@@ -1109,13 +1156,19 @@ export default {
     },
     handleAddProduct() {
       this.productDialogTitle = '新增商品'
-      this.productForm = { id: null, name: '', category: '', originalPrice: 0, price: 0, stock: 0, validDays: 30, mainImage: '', coverImage: '', description: '' }
+      this.productForm = { id: null, merchantId: this.merchantId, name: '', categoryId: null, originalPrice: 0, price: 0, stock: 0, validDays: 30, mainImage: '', coverImage: '', description: '' }
       this.productDialogVisible = true
       this.$nextTick(() => { this.$refs.productForm && this.$refs.productForm.clearValidate() })
     },
     handleEditProduct(row) {
       this.productDialogTitle = '编辑商品'
-      this.productForm = { ...row }
+      this.productForm = {
+        ...row,
+        originalPrice: Number(row.originalPrice || 0),
+        price: Number(row.price || 0),
+        stock: Number(row.stock || 0),
+        validDays: Number(row.validDays || 30)
+      }
       this.productDialogVisible = true
       this.$nextTick(() => { this.$refs.productForm && this.$refs.productForm.clearValidate() })
     },
@@ -1237,17 +1290,19 @@ export default {
       this.miniAppForm = {
         id: this.merchant.id,
         cMiniAppId: this.merchant.cMiniAppId || '',
-        cMiniAppSecret: this.merchant.cMiniAppSecretConfigured ? '******' : '',
+        cMiniAppSecret: this.merchant.cMiniAppSecret || '',
         wxPayMchId: this.merchant.wxPayMchId || '',
-        wxPayApiKey: this.merchant.wxPayApiKeyConfigured ? '******' : ''
+        wxPayApiKey: this.merchant.wxPayApiKey || ''
       }
       this.miniAppDialogVisible = true
     },
     async submitMiniAppForm() {
-      await updateMerchant(this.miniAppForm)
-      this.$message.success('保存成功')
+      const payload = { ...this.miniAppForm }
+      const res = await updateMerchant(payload)
+      if (!this.applySavedMerchant(res)) await this.fetchDetail()
+      await this.loadMerchantEntryQrCode(true)
       this.miniAppDialogVisible = false
-      this.fetchDetail()
+      this.$message.success('保存成功，详情已刷新')
     },
 
     // ========== 腾讯地图认领 ==========
@@ -1270,42 +1325,26 @@ export default {
       this.mapClaimDialogVisible = true
     },
     async submitMapClaimForm() {
-      await updateMerchant(this.mapClaimForm)
-      this.$message.success('保存成功')
+      const res = await updateMerchant(this.mapClaimForm)
+      if (!this.applySavedMerchant(res)) await this.fetchDetail()
       this.mapClaimDialogVisible = false
-      this.fetchDetail()
+      this.$message.success('保存成功，详情已刷新')
     },
 
     // ========== 微信特约商户 ==========
-    wxApplymentStateText(state) {
-      const map = {
-        NOT_SUBMITTED: '未提交', SUBMITTED: '已提交', AUDITING: '审核中',
-        NEED_VERIFY: '待账户验证', NEED_SIGN: '待签约', FINISHED: '已完成',
-        REJECTED: '已驳回', FROZEN: '已冻结'
-      }
-      return map[state] || '未提交'
-    },
-    wxApplymentStateType(state) {
-      const map = {
-        NOT_SUBMITTED: 'info', SUBMITTED: 'warning', AUDITING: 'warning',
-        NEED_VERIFY: 'warning', NEED_SIGN: 'warning', FINISHED: 'success',
-        REJECTED: 'danger', FROZEN: 'danger'
-      }
-      return map[state] || 'info'
-    },
     wxPaymentAccessTypeText(type) {
       const map = { EXISTING_MCH: '已有微信支付商户号', APPLYMENT_ASSISTED: '平台协助申请' }
       return map[type] || '已有微信支付商户号'
     },
     percentText(value) {
-      return value === null || value === undefined || value === '' ? '未配置' : value + '%'
+      return value === null || value === undefined || value === '' ? '待填写' : value + '%'
+    },
+    configText(value, emptyText = '待填写') {
+      return value === null || value === undefined || String(value).trim() === '' ? emptyText : value
     },
     handleEditWxApplyment() {
       this.wxApplymentForm = {
         id: this.merchant.id,
-        wxApplymentId: this.merchant.wxApplymentId || '',
-        wxApplymentState: this.merchant.wxApplymentState || 'NOT_SUBMITTED',
-        wxApplymentRejectReason: this.merchant.wxApplymentRejectReason || '',
         wxPaymentAccessType: this.merchant.wxPaymentAccessType || 'EXISTING_MCH',
         merchantWxMchId: this.merchant.merchantWxMchId || '',
         merchantWxMchName: this.merchant.merchantWxMchName || '',
@@ -1325,10 +1364,10 @@ export default {
         this.$message.error('商家、平台、分销商三方分账比例合计必须等于100%')
         return
       }
-      await updateMerchant(this.wxApplymentForm)
-      this.$message.success('保存成功')
+      const res = await updateMerchant(this.wxApplymentForm)
+      if (!this.applySavedMerchant(res)) await this.fetchDetail()
       this.wxApplymentDialogVisible = false
-      this.fetchDetail()
+      this.$message.success('保存成功，详情已刷新')
     },
 
     // ========== 团购活动 ==========
@@ -1365,7 +1404,7 @@ export default {
       getGroupon(row.id).then(res => {
         this.grouponForm = { ...res.data }
         if (!this.grouponForm.detailImages) this.grouponForm.detailImages = '[]'
-        this.detailFileList = JSON.parse(this.grouponForm.detailImages).map(url => ({ url, name: url.split('/').pop() }))
+        this.detailFileList = JSON.parse(this.grouponForm.detailImages).map(url => ({ rawUrl: url, url: this.displayImageUrl(url), name: url.split('/').pop() }))
         this.grouponDialogVisible = true
       })
     },
@@ -1429,7 +1468,8 @@ export default {
     },
     handleDetailImageSuccess(res, file) {
       if (res.code === 200) {
-        file.url = res.data.url
+        file.rawUrl = res.data.url
+        file.url = this.displayImageUrl(res.data.url)
         const list = JSON.parse(this.grouponForm.detailImages || '[]')
         list.push(res.data.url)
         this.grouponForm.detailImages = JSON.stringify(list)
@@ -1495,7 +1535,7 @@ export default {
         dishGroups: dishGroups
       }
       if (!this.itemForm.detailImages) this.itemForm.detailImages = '[]'
-      this.itemDetailFileList = JSON.parse(this.itemForm.detailImages).map(url => ({ url, name: url.split('/').pop() }))
+      this.itemDetailFileList = JSON.parse(this.itemForm.detailImages).map(url => ({ rawUrl: url, url: this.displayImageUrl(url), name: url.split('/').pop() }))
       this.itemDialogVisible = true
     },
     submitItemForm() {
@@ -1588,7 +1628,8 @@ export default {
     },
     handleItemDetailImageSuccess(res, file) {
       if (res.code === 200) {
-        file.url = res.data.url
+        file.rawUrl = res.data.url
+        file.url = this.displayImageUrl(res.data.url)
         const list = JSON.parse(this.itemForm.detailImages || '[]')
         list.push(res.data.url)
         this.itemForm.detailImages = JSON.stringify(list)
@@ -1645,11 +1686,11 @@ export default {
       this.$router.push({ path: '/merchant/list' })
     },
     statusText(status) {
-      const map = { 0: '禁用', 1: '正常', 2: '待审核' }
+      const map = { 0: '禁用', 1: '正常', 2: '待审核', 3: '停止合作' }
       return map[status] || '未知'
     },
     statusTagType(status) {
-      const map = { 0: 'info', 1: 'success', 2: 'warning' }
+      const map = { 0: 'info', 1: 'success', 2: 'warning', 3: 'danger' }
       return map[status] || 'info'
     }
   },

@@ -225,7 +225,12 @@ public class WxMerchantController {
         dto.setPhone(merchant.getPhone());
         dto.setBusinessHours(merchant.getBusinessHours());
         dto.setBusinessHoursText(merchant.getBusinessHours() != null ? "周一至周日 " + merchant.getBusinessHours() : null);
-        dto.setBusinessStatus(merchant.getStatus() != null && merchant.getStatus() == 1);
+        boolean businessStatus = store == null || store.getStatus() == null || store.getStatus() == 1;
+        boolean supportRefund = merchant.getSupportRefund() == null || merchant.getSupportRefund() == 1;
+        boolean supportBooking = merchant.getSupportBooking() == null || merchant.getSupportBooking() == 1;
+        dto.setBusinessStatus(businessStatus);
+        dto.setSupportRefund(supportRefund);
+        dto.setSupportBooking(supportBooking);
         dto.setNotice(merchant.getDescription());
         dto.setIsHot(false);
 
@@ -261,14 +266,16 @@ public class WxMerchantController {
         dto.setSales(productCount);
 
         List<String> tags = new ArrayList<>();
-        if (merchant.getStatus() != null && merchant.getStatus() == 1) {
+        if (businessStatus) {
             tags.add("营业中");
         }
         dto.setTags(tags);
 
         List<String> serviceAbilityTags = new ArrayList<>();
         serviceAbilityTags.add("到店核销");
-        serviceAbilityTags.add("支持退款");
+        if (supportRefund) {
+            serviceAbilityTags.add("支持退款");
+        }
         dto.setServiceAbilityTags(serviceAbilityTags);
 
         dto.setFacilityTags(new ArrayList<>());
@@ -339,6 +346,7 @@ public class WxMerchantController {
         if (product.getValidDays() != null && product.getValidDays() > 0) {
             dto.setValidPeriod("购买后" + product.getValidDays() + "天内有效");
         }
+        dto.setVerifyNotice(product.getVerifyNotice());
 
         List<String> tags = new ArrayList<>();
         if (product.getSales() != null && product.getSales() > 100) {

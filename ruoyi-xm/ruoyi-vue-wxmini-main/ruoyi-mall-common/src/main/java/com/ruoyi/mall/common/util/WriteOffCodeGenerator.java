@@ -1,81 +1,45 @@
 package com.ruoyi.mall.common.util;
 
+import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Resource;
-import com.ruoyi.common.core.redis.RedisModeProperties;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
 /**
  * 核销码生成器
- * 格式: LY202605250001 (前缀+日期8位+序列号4位)
+ * 格式: LY20260605A7K9M2QX (前缀+日期8位+随机码8位)
  */
 @Component
 public class WriteOffCodeGenerator
 {
-    private final RedisModeProperties redisModeProperties;
-
-    private final Map<String, AtomicInteger> localSequences = new ConcurrentHashMap<>();
-
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
-
     private static final String CODE_PREFIX = "LY";
-    private static final String REDIS_KEY_PREFIX = "write_off:code:seq:";
-    private static final int SEQ_LENGTH = 4;
+    private static final String RANDOM_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+    private static final int RANDOM_LENGTH = 8;
+    private static final Pattern CODE_PATTERN =
+            Pattern.compile("^" + CODE_PREFIX + "\\d{8}[" + RANDOM_CHARS + "]{" + RANDOM_LENGTH + "}$");
 
-    public WriteOffCodeGenerator(RedisModeProperties redisModeProperties)
-    {
-        this.redisModeProperties = redisModeProperties;
-    }
+    private final SecureRandom secureRandom = new SecureRandom();
 
     /**
      * 生成核销码
-     * @return 如 LY202605250001
+     * @return 如 LY20260605A7K9M2QX
      */
     public String generate()
     {
         String dateStr = new SimpleDateFormat("yyyyMMdd").format(new Date());
-        Long seq = generateByRedis(dateStr);
-        if (seq == null)
-        {
-            seq = generateByLocal(dateStr);
-        }
-        String seqStr = String.format("%0" + SEQ_LENGTH + "d", seq);
-        return CODE_PREFIX + dateStr + seqStr;
+        return CODE_PREFIX + dateStr + generateRandomSegment();
     }
 
-    private Long generateByRedis(String dateStr)
+    private String generateRandomSegment()
     {
-        if (!redisModeProperties.isEnabled() || stringRedisTemplate == null)
+        StringBuilder builder = new StringBuilder(RANDOM_LENGTH);
+        for (int i = 0; i < RANDOM_LENGTH; i++)
         {
-            return null;
+            int index = secureRandom.nextInt(RANDOM_CHARS.length());
+            builder.append(RANDOM_CHARS.charAt(index));
         }
-        try
-        {
-            String redisKey = REDIS_KEY_PREFIX + dateStr;
-            Long seq = stringRedisTemplate.opsForValue().increment(redisKey);
-            if (seq != null && seq == 1L)
-            {
-                stringRedisTemplate.expire(redisKey, 2, TimeUnit.DAYS);
-            }
-            return seq;
-        }
-        catch (Exception ignored)
-        {
-            return null;
-        }
-    }
-
-    private Long generateByLocal(String dateStr)
-    {
-        localSequences.keySet().removeIf(key -> !key.equals(dateStr));
-        return (long) localSequences.computeIfAbsent(dateStr, key -> new AtomicInteger()).incrementAndGet();
+        return builder.toString();
     }
 
     /**
@@ -85,16 +49,6 @@ public class WriteOffCodeGenerator
      */
     public boolean isValid(String code)
     {
-        if (code == null || code.length() != 14)
-        {
-            return false;
-        }
-        if (!code.startsWith(CODE_PREFIX))
-        {
-            return false;
-        }
-        String datePart = code.substring(2, 10);
-        String seqPart = code.substring(10);
-        return datePart.matches("\\d{8}") && seqPart.matches("\\d{4}");
+        return code != null && CODE_PATTERN.matcher(code).matches();
     }
 }

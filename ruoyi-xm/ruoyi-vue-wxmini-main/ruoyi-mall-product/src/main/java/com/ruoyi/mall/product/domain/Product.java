@@ -23,6 +23,7 @@ public class Product extends BaseEntity {
     /** 核销方式: 1在线核销 2到店自提 */
     private Integer verifyType;
     private Integer validDays;
+    private String verifyNotice;
     private String description;
     private String storeIds;
     private Integer sort;
@@ -73,6 +74,8 @@ public class Product extends BaseEntity {
 
     public Integer getValidDays() { return validDays; }
     public void setValidDays(Integer validDays) { this.validDays = validDays; }
+    public String getVerifyNotice() { return verifyNotice; }
+    public void setVerifyNotice(String verifyNotice) { this.verifyNotice = verifyNotice; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

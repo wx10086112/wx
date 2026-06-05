@@ -61,6 +61,8 @@ public class WxMerchantItemDto {
     private String notice;
     private Boolean isHot;
     private Boolean businessStatus;
+    private Boolean supportRefund;
+    private Boolean supportBooking;
 
     public Long getId() {
         return id;
@@ -484,5 +486,21 @@ public class WxMerchantItemDto {
 
     public void setBusinessStatus(Boolean businessStatus) {
         this.businessStatus = businessStatus;
+    }
+
+    public Boolean getSupportRefund() {
+        return supportRefund;
+    }
+
+    public void setSupportRefund(Boolean supportRefund) {
+        this.supportRefund = supportRefund;
+    }
+
+    public Boolean getSupportBooking() {
+        return supportBooking;
+    }
+
+    public void setSupportBooking(Boolean supportBooking) {
+        this.supportBooking = supportBooking;
     }
 }

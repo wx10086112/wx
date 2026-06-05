@@ -50,23 +50,8 @@
     </view>
 
     <view class="section-head">
-      <text class="section-title">{{activeStoreTab === 'deals' ? '团购优惠' : '服务项目'}}</text>
+      <text class="section-title">团购优惠</text>
       <text class="section-count">{{displayGrouponList.length}} 项</text>
-    </view>
-
-    <view class="segmented-control-wrapper">
-      <view class="segmented-control">
-        <view class="segment-indicator" style="transform: translateX({{activeStoreTab === 'deals' ? '0%' : '100%'}});"></view>
-        <view
-          wx:for="{{storeTabs}}"
-          wx:key="key"
-          class="segment-btn {{activeStoreTab === item.key ? 'active' : ''}}"
-          bindtap="onStoreTabTap"
-          data-key="{{item.key}}"
-        >
-          {{item.label}}
-        </view>
-      </view>
     </view>
 
     <view wx:if="{{displayGrouponList.length}}" class="service-list">

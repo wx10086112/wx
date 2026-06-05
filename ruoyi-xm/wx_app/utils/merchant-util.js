@@ -304,12 +304,13 @@ const appendVerifyRecord = (record) => {
 }
 
 const verifyOrderByCode = (code, staffUser) => {
+  const normalizedCode = String(code || '').trim().toUpperCase()
   const orderList = getOrderList()
-  const targetOrder = orderList.find((item) => item.writeOffCode === code || item.orderNo === code)
+  const targetOrder = orderList.find((item) => item.writeOffCode === normalizedCode || item.orderNo === normalizedCode)
 
   if (!targetOrder) {
     appendVerifyRecord({
-      inputCode: code,
+      inputCode: normalizedCode,
       title: '未知核销码',
       payAmount: 0,
       status: 'FAILED',
@@ -326,7 +327,7 @@ const verifyOrderByCode = (code, staffUser) => {
   if (targetOrder.status === 'COMPLETED') {
     appendVerifyRecord({
       ...targetOrder,
-      inputCode: code,
+      inputCode: normalizedCode,
       status: 'FAILED',
       failureReason: '该订单已核销完成',
       verifyStaffId: staffUser.staffId,
@@ -342,7 +343,7 @@ const verifyOrderByCode = (code, staffUser) => {
   if (targetOrder.status !== 'PENDING_VERIFY') {
     appendVerifyRecord({
       ...targetOrder,
-      inputCode: code,
+      inputCode: normalizedCode,
       status: 'FAILED',
       failureReason: '当前订单状态不可核销',
       verifyStaffId: staffUser.staffId,
@@ -358,7 +359,7 @@ const verifyOrderByCode = (code, staffUser) => {
   if (isGoodsExpired(targetOrder)) {
     appendVerifyRecord({
       ...targetOrder,
-      inputCode: code,
+      inputCode: normalizedCode,
       status: 'FAILED',
       failureReason: '团购券已过有效期',
       verifyStaffId: staffUser.staffId,
@@ -386,7 +387,7 @@ const verifyOrderByCode = (code, staffUser) => {
   const verifiedOrder = nextOrderList.find((item) => item.orderNo === targetOrder.orderNo)
   appendVerifyRecord({
     ...verifiedOrder,
-    inputCode: code,
+    inputCode: normalizedCode,
     status: 'SUCCESS',
     verifyStaffId: staffUser.staffId,
     verifyStaffName: staffUser.name
@@ -550,10 +551,6 @@ const rejectRefundOrder = (orderNo, reason = '') => {
   return { success: true, message: '已拒绝退款' }
 }
 
-const getLowStockGoods = (threshold = 20) => {
-  return getGoodsList().filter((item) => item.status === 'ON_SHELF' && Number(item.stock || 0) <= threshold)
-}
-
 const batchUpdateGoodsStatus = (goodsIds = [], status = 'OFF_SHELF') => {
   const goodsList = getGoodsList()
   const nextList = goodsList.map((item) =>
@@ -598,7 +595,6 @@ module.exports = {
   cancelOrder,
   approveRefundOrder,
   rejectRefundOrder,
-  getLowStockGoods,
   batchUpdateGoodsStatus,
   buildFinanceOverview
 }

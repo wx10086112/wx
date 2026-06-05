@@ -59,6 +59,7 @@ Page({
             productConfig.timeRangeRuleText,
             `是否预约：${product.bookingRequiredText}`,
             `预约说明：${rawProduct.bookingRule || '无需预约'}`,
+            `核销说明：${rawProduct.verifyNotice || '到店出示核销码即可使用'}`,
             `限购说明：${rawProduct.limitRule || '不限购'}`,
             `退款规则：${rawProduct.refundRule || '过期自动退款'}`
           ]

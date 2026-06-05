@@ -684,15 +684,15 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
     private List<MerchantMiniOrderDto> initOrderList() {
         List<MerchantMiniOrderDto> result = new ArrayList<>();
         result.add(buildOrder(1L, "M202605090001", 101L, "芳香舒压 SPA 90 分钟", "王女士", "138****2201",
-                1, 18800L, STATUS_PENDING_VERIFY, 1778269200000L, 1778269800000L, "LY8012", null, null, null));
+                1, 18800L, STATUS_PENDING_VERIFY, 1778269200000L, 1778269800000L, "LY20260605A7K9M2QX", null, null, null));
         result.add(buildOrder(2L, "M202605090002", 102L, "肩颈理疗放松套餐 60 分钟", "赵先生", "139****3202",
-                1, 13800L, STATUS_PENDING_VERIFY, 1778272800000L, 1778273100000L, "LY9321", null, null, null));
+                1, 13800L, STATUS_PENDING_VERIFY, 1778272800000L, 1778273100000L, "LY20260605D4R8W7KM", null, null, null));
         result.add(buildOrder(3L, "M202605080003", 101L, "芳香舒压 SPA 90 分钟", "孙女士", "136****1103",
-                1, 18800L, STATUS_COMPLETED, 1778186400000L, 1778187000000L, "LY7710", 1778190000000L, "周店员", null));
+                1, 18800L, STATUS_COMPLETED, 1778186400000L, 1778187000000L, "LY20260604B8N4T6RP", 1778190000000L, "周店员", null));
         result.add(buildOrder(4L, "M202605070004", 103L, "都市焕肤护理 75 分钟", "何女士", "137****5004",
-                1, 16800L, STATUS_REFUNDING, 1778100000000L, 1778100600000L, "LY5508", null, null, "临时无法到店"));
+                1, 16800L, STATUS_REFUNDING, 1778100000000L, 1778100600000L, "LY20260603C6X9P4HJ", null, null, "临时无法到店"));
         result.add(buildOrder(5L, "M202604300005", 104L, "过期测试团购券", "陈先生", "135****9005",
-                1, 9900L, STATUS_PENDING_VERIFY, 1777564800000L, 1777565400000L, "LY0005", null, null, null));
+                1, 9900L, STATUS_PENDING_VERIFY, 1777564800000L, 1777565400000L, "LY20260430F7M2K8QW", null, null, null));
         return result;
     }
 

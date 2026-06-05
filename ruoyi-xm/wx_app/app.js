@@ -49,6 +49,8 @@ const normalizeMerchantEntry = (entry = {}) => {
     merchantName: entry.merchantName || '',
     contact: entry.contact || '',
     phone: entry.phone || '',
+    entryAppId: entry.entryAppId || '',
+    miniAppConfigured: entry.miniAppConfigured === true,
     loginPage: entry.loginPage || `/pages/merchant/login/login?merchantId=${merchantId}`
   }
 }

@@ -54,7 +54,6 @@ const merchantInfo = {
   storeName: '蓝屿轻养·国贸旗舰店',
   shortName: '国贸店',
   brandSlogan: '团购到店核销运营端',
-  notice: '支持扫码核销、手动核销、商品上下架与单店员工账号管理',
   businessHours: '10:00-22:00',
   phone: '010-88886601',
   address: '北京市朝阳区建国路88号嘉里中心B1',
@@ -62,12 +61,9 @@ const merchantInfo = {
   longitude: 116.4591,
   avatar: '/assets/images/merchant-spa.png',
   coverImage: '/assets/images/merchant-spa.png',
-  serviceTags: ['到店核销', '团购优惠', '可预约', '支持退款'],
-  bannerTitles: ['午市轻养专场', '肩颈护理次卡', '晚间舒压热卖'],
   businessStatus: true,
   supportRefund: true,
-  supportBooking: true,
-  stockAlertThreshold: 20
+  supportBooking: true
 }
 
 const goodsList = [
@@ -83,7 +79,6 @@ const goodsList = [
     validPeriod: '2026-05-01 至 2026-06-30',
     verifyNotice: '到店出示核销码即可使用',
     status: 'ON_SHELF',
-    categoryName: 'SPA轻养',
     sort: 1
   },
   {
@@ -98,7 +93,6 @@ const goodsList = [
     validPeriod: '2026-05-01 至 2026-07-15',
     verifyNotice: '高峰期建议提前电话确认',
     status: 'ON_SHELF',
-    categoryName: '肩颈理疗',
     sort: 2
   },
   {
@@ -113,7 +107,6 @@ const goodsList = [
     validPeriod: '2026-05-01 至 2026-06-20',
     verifyNotice: '建议提前 1 天预约',
     status: 'ON_SHELF',
-    categoryName: '面部护理',
     sort: 3
   },
   {
@@ -128,7 +121,6 @@ const goodsList = [
     validPeriod: '2026-04-01 至 2026-04-30',
     verifyNotice: '过期后不可核销',
     status: 'OFF_SHELF',
-    categoryName: '系统测试',
     sort: 4
   }
 ]
@@ -147,7 +139,7 @@ const orderList = [
     orderType: 'GROUPON',
     createTime: 1778269200000,
     payTime: 1778269800000,
-    writeOffCode: 'LY8012',
+    writeOffCode: 'LY20260605A7K9M2QX',
     remark: ''
   },
   {
@@ -163,7 +155,7 @@ const orderList = [
     orderType: 'GROUPON',
     createTime: 1778272800000,
     payTime: 1778273100000,
-    writeOffCode: 'LY9321',
+    writeOffCode: 'LY20260605D4R8W7KM',
     remark: '到店前会电话确认'
   },
   {
@@ -179,7 +171,7 @@ const orderList = [
     orderType: 'GROUPON',
     createTime: 1778186400000,
     payTime: 1778187000000,
-    writeOffCode: 'LY7710',
+    writeOffCode: 'LY20260604B8N4T6RP',
     verifyTime: 1778190000000,
     verifyStaffName: '周店员',
     remark: ''
@@ -197,7 +189,7 @@ const orderList = [
     orderType: 'GROUPON',
     createTime: 1778100000000,
     payTime: 1778100600000,
-    writeOffCode: 'LY5508',
+    writeOffCode: 'LY20260603C6X9P4HJ',
     refundReason: '临时无法到店',
     remark: ''
   },
@@ -214,7 +206,7 @@ const orderList = [
     orderType: 'GROUPON',
     createTime: 1777564800000,
     payTime: 1777565400000,
-    writeOffCode: 'LY0005',
+    writeOffCode: 'LY20260430F7M2K8QW',
     remark: '用于过期核销校验'
   }
 ]

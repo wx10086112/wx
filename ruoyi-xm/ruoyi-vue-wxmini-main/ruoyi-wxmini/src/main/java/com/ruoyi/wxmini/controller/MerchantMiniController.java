@@ -123,6 +123,8 @@ public class MerchantMiniController {
         entryInfo.setContact(merchant.getContact());
         entryInfo.setPhone(merchant.getPhone());
         entryInfo.setLoginPage("/pages/merchant/login/login?merchantId=" + merchant.getId());
+        entryInfo.setEntryAppId(merchant.getCMiniAppId());
+        entryInfo.setMiniAppConfigured(StringUtils.isNotBlank(merchant.getCMiniAppId()));
         return AjaxResult.success(entryInfo);
     }
 

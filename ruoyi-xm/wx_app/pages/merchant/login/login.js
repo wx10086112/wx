@@ -57,6 +57,8 @@ Page({
           merchantName: response.merchantName,
           contact: response.contact,
           phone: response.phone,
+          entryAppId: response.entryAppId,
+          miniAppConfigured: response.miniAppConfigured,
           loginPage: response.loginPage
         })
         this.setData({

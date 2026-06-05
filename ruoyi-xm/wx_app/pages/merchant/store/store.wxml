@@ -6,12 +6,8 @@
       <input class="field-input" value="{{form.storeName}}" data-key="storeName" bindinput="handleInput" />
     </view>
     <view class="field">
-      <text class="field-label">品牌标语</text>
+      <text class="field-label">商家简介</text>
       <input class="field-input" value="{{form.brandSlogan}}" data-key="brandSlogan" bindinput="handleInput" />
-    </view>
-    <view class="field">
-      <text class="field-label">公告文案</text>
-      <textarea class="field-textarea" value="{{form.notice}}" data-key="notice" bindinput="handleInput"></textarea>
     </view>
 
     <text class="panel-title separator">营业设置</text>
@@ -28,16 +24,6 @@
       <input class="field-input" value="{{form.address}}" data-key="address" bindinput="handleInput" />
     </view>
 
-    <text class="panel-title separator">个性化</text>
-    <view class="field">
-      <text class="field-label">服务标签（用、分隔）</text>
-      <input class="field-input" value="{{form.serviceTagsText}}" data-key="serviceTagsText" bindinput="handleInput" />
-    </view>
-    <view class="field">
-      <text class="field-label">首页 Banner 文案（用、分隔）</text>
-      <input class="field-input" value="{{form.bannerTitlesText}}" data-key="bannerTitlesText" bindinput="handleInput" />
-    </view>
-
     <text class="panel-title separator">开关配置</text>
     <view class="switch-row">
       <text class="field-label">营业状态</text>
@@ -50,11 +36,6 @@
     <view class="switch-row">
       <text class="field-label">支持预约</text>
       <switch checked="{{form.supportBooking}}" color="#C8A46A" bindchange="handleSwitchChange" data-key="supportBooking" />
-    </view>
-    <view class="field">
-      <text class="field-label">库存预警阈值</text>
-      <text class="field-hint">商品库存低于此值时，在工作台和商品页提醒</text>
-      <input class="field-input" type="number" value="{{form.stockAlertThreshold}}" data-key="stockAlertThreshold" bindinput="handleInput" placeholder="默认 20" />
     </view>
     <button class="primary-btn save-btn" bindtap="saveStore">保存门店信息</button>
   </view>

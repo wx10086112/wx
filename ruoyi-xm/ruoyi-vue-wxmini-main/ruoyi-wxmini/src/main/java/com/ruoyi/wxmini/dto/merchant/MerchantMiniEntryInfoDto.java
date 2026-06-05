@@ -7,6 +7,8 @@ public class MerchantMiniEntryInfoDto {
     private String contact;
     private String phone;
     private String loginPage;
+    private String entryAppId;
+    private boolean miniAppConfigured;
 
     public Long getMerchantId() {
         return merchantId;
@@ -46,5 +48,21 @@ public class MerchantMiniEntryInfoDto {
 
     public void setLoginPage(String loginPage) {
         this.loginPage = loginPage;
+    }
+
+    public String getEntryAppId() {
+        return entryAppId;
+    }
+
+    public void setEntryAppId(String entryAppId) {
+        this.entryAppId = entryAppId;
+    }
+
+    public boolean isMiniAppConfigured() {
+        return miniAppConfigured;
+    }
+
+    public void setMiniAppConfigured(boolean miniAppConfigured) {
+        this.miniAppConfigured = miniAppConfigured;
     }
 }

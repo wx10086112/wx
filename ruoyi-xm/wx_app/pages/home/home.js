@@ -19,14 +19,8 @@ Page({
     hasMerchantData: false,
     currentMerchant: {},
     merchantList: [],
-    displayMerchantList: [],
     grouponList: [],
     displayGrouponList: [],
-    storeTabs: [
-      { label: '团购优惠', key: 'deals', type: 'products' },
-      { label: '服务项目', key: 'services', type: 'products' }
-    ],
-    activeStoreTab: 'deals',
     loading: true
   },
 
@@ -88,7 +82,6 @@ Page({
             currentMerchant,
             merchantList,
             grouponList,
-            displayMerchantList: filteredData.displayMerchantList,
             displayGrouponList: filteredData.displayGrouponList,
             loading: false
           })
@@ -100,7 +93,8 @@ Page({
           hasMerchantData: false,
           currentMerchant: this.buildEmptyMerchant(),
           merchantList: [],
-          displayMerchantList: [],
+          grouponList: [],
+          displayGrouponList: [],
           loading: false
         })
       })
@@ -167,23 +161,10 @@ Page({
     }
   },
 
-  buildFilteredLists({ merchantList = [], grouponList = [] }) {
+  buildFilteredLists({ grouponList = [] }) {
     return {
-      displayMerchantList: merchantList,
       displayGrouponList: grouponList
     }
-  },
-
-  applyFilters() {
-    const { merchantList, grouponList } = this.data
-    const filteredData = this.buildFilteredLists({
-      merchantList,
-      grouponList
-    })
-    this.setData({
-      displayMerchantList: filteredData.displayMerchantList,
-      displayGrouponList: filteredData.displayGrouponList
-    })
   },
 
   refreshLocation() {
@@ -211,24 +192,6 @@ Page({
         this.loadData()
       }
     })
-  },
-
-  onMerchantTap(e) {
-    const merchant = e.currentTarget.dataset.merchant
-    util.navigateTo(`/pages/merchant-detail/merchant-detail?id=${merchant.id}`)
-  },
-
-  onStoreTabTap(e) {
-    const tabKey = e.currentTarget.dataset.key
-
-    this.setData(
-      {
-        activeStoreTab: tabKey
-      },
-      () => {
-        this.applyFilters()
-      }
-    )
   },
 
   goMerchantDetail() {

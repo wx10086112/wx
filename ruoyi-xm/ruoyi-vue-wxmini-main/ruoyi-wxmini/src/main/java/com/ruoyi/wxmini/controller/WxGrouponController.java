@@ -127,6 +127,7 @@ public class WxGrouponController {
         if (product.getValidDays() != null && product.getValidDays() > 0) {
             dto.setValidPeriod("购买后" + product.getValidDays() + "天内有效");
         }
+        dto.setVerifyNotice(product.getVerifyNotice());
 
         List<String> tags = new ArrayList<>();
         if (product.getSales() != null && product.getSales() > 100) {

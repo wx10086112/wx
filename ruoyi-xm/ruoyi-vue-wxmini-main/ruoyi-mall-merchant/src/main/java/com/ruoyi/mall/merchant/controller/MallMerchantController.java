@@ -106,14 +106,15 @@ public class MallMerchantController extends BaseController {
             return AjaxResult.error("商家未审核通过，暂不能生成后台入口码");
         }
 
-        List<WxMaProperties.Config> configs = wxMaProperties.getConfigs();
-        if (configs == null || configs.isEmpty() || configs.get(0) == null) {
-            return AjaxResult.error("统一小程序配置缺失");
-        }
-
-        String appId = configs.get(0).getAppid();
+        String appId = trimToNull(merchant.getCMiniAppId());
         if (StringUtils.isBlank(appId)) {
-            return AjaxResult.error("统一小程序 AppID 未配置");
+            List<WxMaProperties.Config> configs = wxMaProperties.getConfigs();
+            if (configs != null && !configs.isEmpty() && configs.get(0) != null) {
+                appId = trimToNull(configs.get(0).getAppid());
+            }
+        }
+        if (StringUtils.isBlank(appId)) {
+            return AjaxResult.error("该商家尚未配置统一小程序 AppID");
         }
 
         String scene = "merchantId=" + id;
@@ -191,11 +192,12 @@ public class MallMerchantController extends BaseController {
         }
 
         int rows = merchantService.updateMerchant(merchant);
-        if (rows > 0) {
-            Merchant savedMerchant = merchantService.selectMerchantById(existing.getId());
-            syncWxMiniServices(existing, savedMerchant);
+        if (rows <= 0) {
+            return AjaxResult.error("保存失败");
         }
-        return toAjax(rows);
+        Merchant savedMerchant = merchantService.selectMerchantById(existing.getId());
+        syncWxMiniServices(existing, savedMerchant);
+        return AjaxResult.success("保存成功", toSafeMap(savedMerchant));
     }
 
     @PreAuthorize("@ss.hasPermi('mall:merchant:remove')")
@@ -272,7 +274,7 @@ public class MallMerchantController extends BaseController {
     private AjaxResult validateMiniAppPair(String label, String appId, String secret) {
         boolean hasAppId = StringUtils.isNotBlank(appId);
         boolean hasSecret = StringUtils.isNotBlank(secret);
-        if (hasAppId != hasSecret) {
+        if (!hasAppId && hasSecret) {
             return AjaxResult.error(label + " AppID 和 Secret 需同时填写");
         }
         return null;
@@ -396,14 +398,14 @@ public class MallMerchantController extends BaseController {
         map.put("createTime", merchant.getCreateTime());
 
         map.put("cMiniAppId", merchant.getCMiniAppId());
+        map.put("cMiniAppSecret", merchant.getCMiniAppSecret());
         map.put("cMiniAppSecretConfigured", StringUtils.isNotBlank(merchant.getCMiniAppSecret()));
-        map.put("cMiniAppSecretMasked", "******");
         map.put("mMiniAppId", merchant.getMMiniAppId());
+        map.put("mMiniAppSecret", merchant.getMMiniAppSecret());
         map.put("mMiniAppSecretConfigured", StringUtils.isNotBlank(merchant.getMMiniAppSecret()));
-        map.put("mMiniAppSecretMasked", "******");
         map.put("wxPayMchId", merchant.getWxPayMchId());
+        map.put("wxPayApiKey", merchant.getWxPayApiKey());
         map.put("wxPayApiKeyConfigured", StringUtils.isNotBlank(merchant.getWxPayApiKey()));
-        map.put("wxPayApiKeyMasked", "******");
 
         map.put("mapClaimStatus", merchant.getMapClaimStatus());
         map.put("mapPoiId", merchant.getMapPoiId());

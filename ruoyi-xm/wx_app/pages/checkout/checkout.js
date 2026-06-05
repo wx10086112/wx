@@ -41,6 +41,7 @@ Page({
         const merchantId = product.merchantId
         const useRuleList = [
           `有效期：${product.validPeriod || '购买后有效'}`,
+          `核销说明：${product.verifyNotice || '到店出示核销码即可使用'}`,
           `预约说明：${product.bookingRule || '无需预约'}`,
           `退款规则：${product.refundRule || '按商家规则处理'}`
         ]
