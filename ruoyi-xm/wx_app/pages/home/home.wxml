@@ -1,70 +1,75 @@
 <view class="home-page">
   <view class="loading-state" wx:if="{{loading}}">
-    <text class="loading-text">加载中...</text>
+    <view class="loading-dot"></view>
+    <text class="loading-text">正在加载门店服务</text>
   </view>
 
   <view wx:else class="content">
-    <view class="store-card">
-      <view class="store-main">
+    <view wx:if="{{hasMerchantData}}" class="store-card">
+      <view class="store-head">
         <image src="{{currentMerchant.avatar}}" class="store-avatar" mode="aspectFill"></image>
-        <view class="store-info">
-          <view class="store-name-row">
+        <view class="store-info" bindtap="goMerchantDetail">
+          <view class="store-title-line">
             <text class="store-name">{{currentMerchant.name}}</text>
-            <view wx:if="{{currentMerchant.businessStatusText}}" class="store-status {{currentMerchant.businessStatus ? 'open' : 'closed'}}">
-              {{currentMerchant.businessStatusText}}
-            </view>
+            <text class="store-arrow">›</text>
           </view>
-          <view class="store-sales-row">
-            <text>月售{{currentMerchant.sales}}</text>
-          </view>
-          <view class="store-tag-row">
-            <text wx:for="{{currentMerchant.displayTags}}" wx:key="index" class="store-tag">{{item}}</text>
+          <view class="store-subline">
+            <text class="status-pill {{currentMerchant.businessStatus ? 'open' : 'closed'}}">{{currentMerchant.businessStatusText}}</text>
+            <text>月售 {{currentMerchant.sales}}</text>
+            <text class="dot">·</text>
+            <text>{{currentMerchant.distance}}</text>
           </view>
         </view>
       </view>
 
-      <view class="store-time-row">
-        <text class="time-strong">今日 {{currentMerchant.businessHours}}</text>
-        <text class="mini-tag">{{currentMerchant.bookingText}}</text>
-        <text class="detail-link" bindtap="goMerchantDetail">商家详情 ›</text>
+      <view class="store-tags">
+        <text wx:for="{{currentMerchant.displayTags}}" wx:key="index" class="store-tag">{{item}}</text>
+        <text wx:if="{{currentMerchant.bookingText}}" class="store-tag highlight">{{currentMerchant.bookingText}}</text>
       </view>
 
-      <view class="store-address-row">
-        <view class="address-main">
-          <text class="store-address">{{currentMerchant.address}}</text>
-          <text class="distance-text">距您 {{currentMerchant.distance}}</text>
+      <view class="store-address" bindtap="goMerchantDetail">
+        <view class="pin-icon"></view>
+        <text class="store-address-text">{{currentMerchant.address}}</text>
+      </view>
+
+      <view class="store-actions">
+        <view class="action-btn" catchtap="callMerchant">
+          <view class="phone-icon"></view>
+          <text>联系门店</text>
         </view>
-        <view class="store-actions">
-          <view class="store-action" catchtap="openMerchantMap">
-            <text class="action-icon">⌖</text>
-            <text>导航</text>
-          </view>
-          <view class="store-action" catchtap="callMerchant">
-            <text class="action-icon">☎</text>
-            <text>电话</text>
-          </view>
+        <view class="action-btn primary" catchtap="openMerchantMap">
+          <view class="nav-icon"></view>
+          <text>一键导航</text>
         </view>
       </view>
     </view>
 
-    <view class="store-tabs">
-      <view
-        wx:for="{{storeTabs}}"
-        wx:key="label"
-        class="store-tab {{activeStoreTab === item.key ? 'active' : ''}}"
-        bindtap="onStoreTabTap"
-        data-key="{{item.key}}"
-      >
-        {{item.label}}
+    <view wx:else class="store-empty-card">
+      <text class="store-empty-title">暂未获取门店信息</text>
+      <text class="store-empty-desc">请先完成商户配置，或稍后刷新重试</text>
+    </view>
+
+    <view class="section-head">
+      <text class="section-title">{{activeStoreTab === 'deals' ? '团购优惠' : '服务项目'}}</text>
+      <text class="section-count">{{displayGrouponList.length}} 项</text>
+    </view>
+
+    <view class="segmented-control-wrapper">
+      <view class="segmented-control">
+        <view class="segment-indicator" style="transform: translateX({{activeStoreTab === 'deals' ? '0%' : '100%'}});"></view>
+        <view
+          wx:for="{{storeTabs}}"
+          wx:key="key"
+          class="segment-btn {{activeStoreTab === item.key ? 'active' : ''}}"
+          bindtap="onStoreTabTap"
+          data-key="{{item.key}}"
+        >
+          {{item.label}}
+        </view>
       </view>
     </view>
 
-    <view class="section-block product-section">
-      <view class="section-title-row">
-        <view>
-          <text class="section-title">{{homeConfig.productSectionTitle}}</text>
-        </view>
-      </view>
+    <view wx:if="{{displayGrouponList.length}}" class="service-list">
       <product-card
         wx:for="{{displayGrouponList}}"
         wx:key="id"
@@ -72,6 +77,11 @@
         bind:click="onProductTap"
         bind:buy="onProductBuy"
       ></product-card>
+    </view>
+
+    <view wx:else class="empty-card">
+      <text class="empty-title">暂无上架服务</text>
+      <text class="empty-desc">门店服务正在整理中，请稍后再来看看</text>
     </view>
   </view>
 </view>

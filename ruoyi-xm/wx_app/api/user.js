@@ -24,11 +24,16 @@ const updateUserInfo = (data) => {
   return put('/wxmini/user/info', data)
 }
 
+const cancelAccount = () => {
+  return del('/wxmini/user/account')
+}
+
 module.exports = {
   login,
   testLogin,
   quickLogin,
   bindPhoneByCode,
   getUserInfo,
-  updateUserInfo
+  updateUserInfo,
+  cancelAccount
 }

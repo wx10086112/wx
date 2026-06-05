@@ -79,6 +79,13 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
                     response.getWriter().write("{\"code\":401,\"msg\":\"登录已过期\"}");
                     return;
                 }
+                if (WxMiniAuthContext.USER_TYPE_WX_USER.equals(authContext.getUserType())
+                        && !isWxUserAvailable(authContext.getUserId())) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"code\":401,\"msg\":\"账号已注销，请重新登录\"}");
+                    return;
+                }
                 WxMiniUserContext.setCurrentUserContext(authContext);
             } catch (Exception e) {
                 log.error("JWT验证失败: {}", e.getMessage());
@@ -202,6 +209,22 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
         Method getter = target.getClass().getMethod(getterName);
         Object value = getter.invoke(target);
         return value instanceof String ? (String) value : null;
+    }
+
+    private boolean isWxUserAvailable(String userId) {
+        try {
+            Object userInfoService = applicationContext.getBean("userInfoServiceImpl");
+            Method selectByUserId = userInfoService.getClass().getMethod("selectUserInfoByUserId", String.class);
+            Object userInfo = selectByUserId.invoke(userInfoService, userId);
+            if (userInfo == null) {
+                return false;
+            }
+            String delFlag = readStringProperty(userInfo, "getDelFlag");
+            return StringUtils.isBlank(delFlag) || "0".equals(delFlag);
+        } catch (Exception e) {
+            log.error("C端用户状态校验异常: userId={}", userId, e);
+            return false;
+        }
     }
 
     /**

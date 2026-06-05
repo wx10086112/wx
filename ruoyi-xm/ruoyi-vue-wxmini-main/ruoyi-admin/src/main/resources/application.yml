@@ -150,3 +150,8 @@ wx:
     certSerialNo: test
     privateKeyPath: classpath:cert/apiclient_key.pem #apiclient_key.pem证书文件的绝对路径或者以classpath:开头的类路径
     privateCertPath: classpath:cert/apiclient_cert.pem #apiclient_cert.pem证书文件的绝对路径或者以classpath:开头的类路径
+
+wxmini:
+  account:
+    # 用户注销后再次使用同一微信身份注册的冷静期，防止反复注销/注册滥用权益
+    cancel-reregister-delay-days: 7

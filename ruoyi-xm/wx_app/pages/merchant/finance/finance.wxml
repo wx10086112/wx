@@ -1,50 +1,23 @@
 <view class="page-shell">
-  <view class="settlement-hero">
-    <text class="hero-kicker">结算中心</text>
-    <text class="hero-label">待自动到账</text>
-    <text class="hero-amount">¥{{overview.pendingAutoTransferText}}</text>
-    <text class="hero-meta">微信官方 {{overview.autoTransferMode || 'T+1'}} 自动打款</text>
-    <text class="hero-meta">预计下一次处理：{{overview.nextAutoTransferTimeText}}</text>
+  <view class="settlement-hero interactive-card" hover-class="card-pressed" hover-stay-time="80">
+    <view class="hero-topline">
+      <text class="hero-kicker">结算中心</text>
+      <text class="hero-badge">自动结算</text>
+    </view>
+    <view class="hero-content">
+      <text class="hero-label">待自动到账</text>
+      <text class="hero-amount">¥{{overview.pendingAutoTransferText}}</text>
+    </view>
   </view>
 
   <view class="stats-grid">
-    <view class="stats-card panel">
-      <text class="stats-value">¥{{overview.settledAmountText}}</text>
-      <text class="stats-label">已到账</text>
-    </view>
-    <view class="stats-card panel">
-      <text class="stats-value">¥{{overview.processingAmountText}}</text>
-      <text class="stats-label">打款中</text>
-    </view>
-    <view class="stats-card panel">
-      <text class="stats-value">¥{{overview.pendingSettleText}}</text>
-      <text class="stats-label">待结算</text>
-    </view>
-    <view class="stats-card panel">
-      <text class="stats-value">{{overview.completedOrderCount || 0}}</text>
-      <text class="stats-label">完成订单</text>
-    </view>
-  </view>
-
-  <view class="panel section-panel account-panel">
-    <view class="section-head account-head">
-      <view>
-        <text class="section-title">结算账户</text>
-        <text class="section-subtitle">当前门店微信支付自动打款账户</text>
+    <view wx:for="{{statsCards}}" wx:key="label" class="stats-card panel interactive-card" hover-class="card-pressed" hover-stay-time="80">
+      <view class="stats-head">
+        <text class="stats-dot {{item.tone}}"></text>
+        <text class="stats-label">{{item.label}}</text>
       </view>
-      <text class="account-status {{settlementAccount.status === 'VERIFIED' ? 'verified' : 'pending'}}">
-        {{settlementAccount.status === 'VERIFIED' ? '已验证' : '待确认'}}
-      </text>
-    </view>
-    <view class="account-grid">
-      <view class="account-item">
-        <text class="account-label">账户名称</text>
-        <text class="account-value">{{settlementAccount.accountName || '--'}}</text>
-      </view>
-      <view class="account-item">
-        <text class="account-label">到账方式</text>
-        <text class="account-value">{{settlementAccount.bankName || '--'}} 尾号 {{settlementAccount.accountNoTail || '--'}}</text>
-      </view>
+      <text class="stats-value">{{item.value}}</text>
+      <text class="stats-caption">实时结算统计</text>
     </view>
   </view>
 
@@ -62,19 +35,18 @@
       </view>
     </view>
     <view wx:if="{{settlementRecordList.length}}">
-      <view wx:for="{{settlementRecordList}}" wx:key="settlementId" class="ledger-row">
-        <view class="ledger-main">
-          <text class="ledger-title">{{item.title}}</text>
-          <text wx:if="{{item.orderNo}}" class="ledger-meta">{{item.orderNo}}</text>
-          <text class="ledger-meta">
+      <view wx:for="{{settlementRecordList}}" wx:key="settlementId" class="record-card interactive-card" hover-class="card-pressed" hover-stay-time="80">
+        <view class="record-main">
+          <text class="record-title">{{item.title}}</text>
+          <text wx:if="{{item.orderNo}}" class="record-meta">订单号：{{item.orderNo}}</text>
+          <text class="record-meta">
             {{item.status === 'ARRIVED' ? '到账时间' : '预计到账'}}：
             {{item.status === 'ARRIVED' ? item.arriveTimeText : item.expectedTransferTimeText}}
           </text>
-          <text class="ledger-meta">{{item.remark}}</text>
         </view>
-        <view class="ledger-side">
-          <text class="ledger-amount">¥{{item.amountText}}</text>
-          <text class="ledger-status {{item.status === 'ARRIVED' ? 'arrived' : item.status === 'FAILED' ? 'failed' : 'processing'}}">{{item.statusText}}</text>
+        <view class="record-side">
+          <text class="record-amount">¥{{item.amountText}}</text>
+          <text class="status-pill {{item.statusClass}}">{{item.statusText}}</text>
         </view>
       </view>
     </view>
@@ -87,20 +59,35 @@
     <view class="section-head">
       <view>
         <text class="section-title">结算流水</text>
-        <text class="section-subtitle">订单核销完成后进入微信自动结算链路</text>
       </view>
     </view>
     <view wx:if="{{ledgerList.length}}">
-      <view wx:for="{{ledgerList}}" wx:key="ledgerId" class="ledger-row">
-        <view class="ledger-main">
-          <text class="ledger-title">{{item.title}}</text>
-          <text class="ledger-meta">{{item.orderNo}} · 完成于 {{item.finishTimeText}}</text>
-          <text class="ledger-meta">预计打款 {{item.settleTimeText}}</text>
+      <view wx:for="{{ledgerList}}" wx:key="ledgerId" class="flow-card interactive-card" hover-class="card-pressed" hover-stay-time="80">
+        <view class="flow-row flow-title-row">
+          <text class="flow-label">订单</text>
+          <text class="flow-value flow-title">{{item.title}}</text>
         </view>
-        <view class="ledger-side">
-          <text class="ledger-amount">¥{{item.merchantAmountText}}</text>
-          <text class="ledger-fee">平台佣金 ¥{{item.platformFeeAmountText}}</text>
-          <text class="ledger-status">{{item.statusText}}</text>
+        <view class="flow-divider"></view>
+        <view class="flow-row">
+          <text class="flow-label">订单号</text>
+          <text class="flow-value">{{item.orderNo}}</text>
+        </view>
+        <view class="flow-row">
+          <text class="flow-label">完成时间</text>
+          <text class="flow-value">{{item.finishTimeText}}</text>
+        </view>
+        <view class="flow-row">
+          <text class="flow-label">预计打款</text>
+          <text class="flow-value">{{item.settleTimeText}}</text>
+        </view>
+        <view class="flow-summary">
+          <view>
+            <text class="flow-label">金额</text>
+            <text class="flow-money">¥{{item.merchantAmountText}}</text>
+          </view>
+          <view class="flow-summary-right">
+            <text class="status-pill {{item.statusClass}}">{{item.statusText}}</text>
+          </view>
         </view>
       </view>
     </view>

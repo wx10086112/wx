@@ -28,7 +28,8 @@ Page({
       title: '',
       desc: '',
       action: ''
-    }
+    },
+    merchantNavList: util.getMerchantNavList('goods')
   },
 
   onShow() {
@@ -203,5 +204,12 @@ Page({
     })
     this.closeConfirmModal()
     this.loadData()
+  },
+
+  goMerchantTab(e) {
+    const { url } = e.currentTarget.dataset
+    if (url) {
+      util.openMerchantMainPage(url)
+    }
   }
 })

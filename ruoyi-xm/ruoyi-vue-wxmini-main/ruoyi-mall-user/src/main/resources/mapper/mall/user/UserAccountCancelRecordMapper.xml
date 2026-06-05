@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.user.mapper.UserAccountCancelRecordMapper">
+
+    <resultMap type="com.ruoyi.mall.user.domain.UserAccountCancelRecord" id="UserAccountCancelRecordResult">
+        <result property="id" column="id"/>
+        <result property="appId" column="app_id"/>
+        <result property="openIdHash" column="open_id_hash"/>
+        <result property="userId" column="user_id"/>
+        <result property="cancelTime" column="cancel_time"/>
+        <result property="allowRegisterTime" column="allow_register_time"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="selectActiveByAppIdAndOpenIdHash" resultMap="UserAccountCancelRecordResult">
+        select id,
+               app_id,
+               open_id_hash,
+               user_id,
+               cancel_time,
+               allow_register_time,
+               create_time,
+               update_time
+        from user_account_cancel_record
+        where app_id = #{appId}
+          and open_id_hash = #{openIdHash}
+          and allow_register_time &gt; #{now}
+        order by allow_register_time desc
+        limit 1
+    </select>
+
+    <insert id="insertOrUpdateUserAccountCancelRecord" parameterType="com.ruoyi.mall.user.domain.UserAccountCancelRecord">
+        insert into user_account_cancel_record
+        (
+            app_id,
+            open_id_hash,
+            user_id,
+            cancel_time,
+            allow_register_time,
+            create_time,
+            update_time
+        )
+        values
+        (
+            #{appId},
+            #{openIdHash},
+            #{userId},
+            #{cancelTime},
+            #{allowRegisterTime},
+            #{createTime},
+            #{updateTime}
+        )
+        on duplicate key update
+            user_id = values(user_id),
+            cancel_time = values(cancel_time),
+            allow_register_time = values(allow_register_time),
+            update_time = values(update_time)
+    </insert>
+</mapper>

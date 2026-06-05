@@ -41,15 +41,15 @@
     <text class="panel-title separator">开关配置</text>
     <view class="switch-row">
       <text class="field-label">营业状态</text>
-      <switch checked="{{form.businessStatus}}" color="#1f6feb" bindchange="handleSwitchChange" data-key="businessStatus" />
+      <switch checked="{{form.businessStatus}}" color="#C8A46A" bindchange="handleSwitchChange" data-key="businessStatus" />
     </view>
     <view class="switch-row">
       <text class="field-label">支持退款</text>
-      <switch checked="{{form.supportRefund}}" color="#1f6feb" bindchange="handleSwitchChange" data-key="supportRefund" />
+      <switch checked="{{form.supportRefund}}" color="#C8A46A" bindchange="handleSwitchChange" data-key="supportRefund" />
     </view>
     <view class="switch-row">
       <text class="field-label">支持预约</text>
-      <switch checked="{{form.supportBooking}}" color="#1f6feb" bindchange="handleSwitchChange" data-key="supportBooking" />
+      <switch checked="{{form.supportBooking}}" color="#C8A46A" bindchange="handleSwitchChange" data-key="supportBooking" />
     </view>
     <view class="field">
       <text class="field-label">库存预警阈值</text>

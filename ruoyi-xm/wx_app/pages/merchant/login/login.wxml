@@ -1,42 +1,44 @@
-<view class="login-page">
-  <view class="hero-block">
-    <text class="hero-title">商家后台登录</text>
-    <text class="hero-desc">扫码进入后，将直接登录当前商家的 B 端工作台。</text>
+<view class="page-shell merchant-login-page">
+  <view class="page-head">
+    <text class="page-title">商家后台登录</text>
+    <text wx:if="{{entryLoading}}" class="page-status">识别中</text>
   </view>
 
-  <view class="entry-card">
-    <view class="entry-card__header">
-      <text class="entry-card__title">当前扫码商家</text>
-      <text class="entry-card__status" wx:if="{{entryLoading}}">识别中...</text>
+  <view class="store-card">
+    <text class="store-card__label">当前门店</text>
+
+    <view wx:if="{{merchantEntry && merchantEntry.merchantId}}" class="store-card__body">
+      <text class="store-card__name">{{merchantEntry.merchantName || '未命名商家'}}</text>
+      <view class="store-card__meta-group">
+        <text class="store-card__meta">商家ID {{merchantEntry.merchantId}}</text>
+        <text wx:if="{{merchantEntry.contact}}" class="store-card__meta">联系人 {{merchantEntry.contact}}</text>
+        <text wx:if="{{merchantEntry.phone}}" class="store-card__meta">联系电话 {{merchantEntry.phone}}</text>
+      </view>
     </view>
-    <view wx:if="{{merchantEntry && merchantEntry.merchantId}}" class="entry-card__body">
-      <text class="entry-card__name">{{merchantEntry.merchantName || '未命名商家'}}</text>
-      <text class="entry-card__meta" wx:if="{{merchantEntry.contact}}">联系人：{{merchantEntry.contact}}</text>
-      <text class="entry-card__meta" wx:if="{{merchantEntry.phone}}">联系电话：{{merchantEntry.phone}}</text>
-      <text class="entry-card__meta">商家ID：{{merchantEntry.merchantId}}</text>
-    </view>
-    <view wx:else class="entry-card__empty">
-      <text>请先扫描平台后台分配的商家后台入口码，再进行登录。</text>
+
+    <view wx:else class="store-card__empty">
+      <text class="store-card__empty-text">暂未识别到门店</text>
     </view>
   </view>
 
-  <view class="login-panel">
-    <view class="input-group">
+  <view class="panel form-panel">
+    <view class="field-group">
       <text class="panel-label">登录账号</text>
       <input class="login-input" placeholder="请输入店长或店员账号" value="{{username}}" bindinput="onUsernameInput" />
     </view>
-    <view class="input-group">
-      <text class="panel-label">密码</text>
+
+    <view class="field-group">
+      <text class="panel-label">登录密码</text>
       <input class="login-input" password placeholder="请输入密码" value="{{password}}" bindinput="onPasswordInput" />
     </view>
-    <agreement-consent></agreement-consent>
+
+    <view class="agreement-wrap">
+      <agreement-consent theme="primary"></agreement-consent>
+    </view>
+
     <button class="primary-btn login-btn" bindtap="submitLogin" loading="{{submitting}}" disabled="{{submitting}}">登录</button>
-    <view class="login-tip">
-      <text>账号和密码由平台后台或店长创建；员工也使用这里登录当前商家后台。</text>
-    </view>
-    <view class="apply-entry" bindtap="goApply">
-      <text>还没有店铺？</text>
-      <text class="apply-link">商家入驻申请</text>
-    </view>
+    <button class="preview-btn" bindtap="enterPreview">直接看演示页</button>
+
+    <text class="login-tip">请使用平台分配的门店账号登录</text>
   </view>
 </view>

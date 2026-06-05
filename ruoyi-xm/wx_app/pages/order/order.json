@@ -2,7 +2,6 @@
   "navigationBarTitleText": "我的订单",
   "usingComponents": {
     "order-card": "/components/order-card/order-card",
-    "empty-state": "/components/empty-state/empty-state",
     "qrcode": "/components/qrcode/qrcode"
   }
 }

@@ -4,12 +4,19 @@ const merchantApi = require('../../api/merchant')
 const productApi = require('../../api/product')
 const privacy = require('../../utils/privacy')
 
+const DEFAULT_STORE_AVATAR = '/assets/images/avatar.svg'
+
+const normalizeText = (value, fallback) => {
+  return value === undefined || value === null || value === '' ? fallback : value
+}
+
 Page({
   data: {
     brandInfo: {},
     homeConfig: {},
     currentLocation: '定位中...',
     userLocation: null,
+    hasMerchantData: false,
     currentMerchant: {},
     merchantList: [],
     displayMerchantList: [],
@@ -25,6 +32,12 @@ Page({
 
   onLoad() {
     this.loadData()
+  },
+
+  onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 0 })
+    }
   },
 
   onPullDownRefresh() {
@@ -53,21 +66,26 @@ Page({
           merchantApi.getMerchantList(merchantParams),
           productApi.getGrouponList()
         ]).then(([merchantRes, grouponRes]) => {
-          const merchantList = (merchantRes.data || merchantRes || []).map((m) => ({
-            ...m,
-            businessStatusText: m.businessStatus ? '营业中' : '休息中',
-            bookingText: m.supportBooking === false ? '到店即用' : '可预约',
-            displayTags: (m.tags || []).filter((tag) => !['营业中', '休息中'].includes(tag))
+          const merchantPayload = merchantRes.data || merchantRes || []
+          const merchantList = (Array.isArray(merchantPayload) ? merchantPayload : []).map((m) => this.normalizeMerchant(m))
+          const grouponList = (grouponRes.data || grouponRes || []).map((item) => ({
+            ...item,
+            title: normalizeText(item.title || item.name || item.productName, '精选服务'),
+            image: item.image || item.coverImage || item.productImage || DEFAULT_STORE_AVATAR,
+            tags: item.tags || []
           }))
-          const grouponList = grouponRes.data || grouponRes || []
+
+          const currentMerchant = merchantList[0] || this.buildEmptyMerchant()
+          const hasMerchantData = !!currentMerchant.id
 
           const filteredData = this.buildFilteredLists({ merchantList, grouponList })
           this.setData({
             brandInfo: templateConfig.brandInfo,
             homeConfig: templateConfig.home,
             userLocation,
-            currentLocation: this.formatCurrentDistance(merchantList[0]),
-            currentMerchant: merchantList[0] || {},
+            currentLocation: hasMerchantData ? this.formatCurrentDistance(currentMerchant) : '暂未获取门店信息',
+            hasMerchantData,
+            currentMerchant,
             merchantList,
             grouponList,
             displayMerchantList: filteredData.displayMerchantList,
@@ -77,7 +95,14 @@ Page({
         })
       })
       .catch(() => {
-        this.setData({ loading: false })
+        this.setData({
+          currentLocation: '暂未获取门店信息',
+          hasMerchantData: false,
+          currentMerchant: this.buildEmptyMerchant(),
+          merchantList: [],
+          displayMerchantList: [],
+          loading: false
+        })
       })
   },
 
@@ -108,6 +133,38 @@ Page({
 
   formatCurrentDistance(merchant = {}) {
     return merchant.distance || '距离计算中'
+  },
+
+  normalizeMerchant(m = {}) {
+    const businessStatus = m.businessStatus !== false
+    const tags = Array.isArray(m.tags) ? m.tags : []
+    return {
+      ...m,
+      name: normalizeText(m.name || m.storeName || m.merchantName, '门店信息待完善'),
+      avatar: m.avatar || m.logo || m.coverImage || DEFAULT_STORE_AVATAR,
+      address: normalizeText(m.address, '门店地址待完善'),
+      sales: normalizeText(m.sales || m.monthSales, 0),
+      distance: normalizeText(m.distance, '距离待计算'),
+      businessStatus,
+      businessStatusText: businessStatus ? '营业中' : '休息中',
+      bookingText: m.supportBooking === false ? '到店即用' : '可预约',
+      displayTags: tags.filter((tag) => !['营业中', '休息中'].includes(tag)).slice(0, 3)
+    }
+  },
+
+  buildEmptyMerchant() {
+    return {
+      id: '',
+      name: '暂无门店信息',
+      avatar: DEFAULT_STORE_AVATAR,
+      address: '暂无门店地址',
+      sales: 0,
+      distance: '距离暂不可用',
+      businessStatus: false,
+      businessStatusText: '未营业',
+      bookingText: '',
+      displayTags: []
+    }
   },
 
   buildFilteredLists({ merchantList = [], grouponList = [] }) {
@@ -175,6 +232,10 @@ Page({
   },
 
   goMerchantDetail() {
+    if (!this.data.currentMerchant.id) {
+      util.showToast('暂无商家详情')
+      return
+    }
     util.navigateTo(`/pages/merchant-detail/merchant-detail?id=${this.data.currentMerchant.id}`)
   },
 

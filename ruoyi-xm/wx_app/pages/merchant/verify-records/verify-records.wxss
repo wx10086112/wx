@@ -1,29 +1,69 @@
+.page-shell {
+  min-height: 100vh;
+  padding: 24rpx 24rpx 56rpx;
+  background: #faf8f3;
+  box-sizing: border-box;
+}
+
+.panel {
+  background: #ffffff;
+  border-radius: 32rpx;
+  border: 1px solid rgba(232, 229, 222, 0.9);
+  box-shadow: 0 16rpx 40rpx rgba(32, 28, 22, 0.06);
+  box-sizing: border-box;
+}
+
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.status-tag.green {
+  background: #eaf7ee;
+  color: #287a3e;
+}
+
+.status-tag.orange {
+  background: #fff4de;
+  color: #8b6a32;
+}
+
+.status-tag.gray {
+  background: #f1f0ec;
+  color: #8a8a8e;
+}
+
 .tabs {
   padding: 10rpx;
   display: flex;
-  gap: 10rpx;
+  gap: 12rpx;
 }
 
 .tab-item {
   flex: 1;
   height: 68rpx;
-  border-radius: 14rpx;
+  border-radius: 999rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6f7d91;
+  color: #8a8a8e;
   font-size: 24rpx;
 }
 
 .tab-item.active {
-  background: #eaf2ff;
-  color: #1f6feb;
+  background: #1d1d1f;
+  color: #ffffff;
   font-weight: 600;
 }
 
 .record-card {
   margin-top: 18rpx;
-  padding: 24rpx;
+  padding: 28rpx;
 }
 
 .record-top {
@@ -39,7 +79,7 @@
 .record-title {
   display: block;
   font-size: 30rpx;
-  color: #1f2a37;
+  color: #1d1d1f;
   font-weight: 600;
 }
 
@@ -48,7 +88,7 @@
 .record-error {
   margin-top: 12rpx;
   font-size: 24rpx;
-  color: #7a8798;
+  color: #8a8a8e;
   line-height: 1.6;
 }
 
@@ -60,5 +100,17 @@
 
 .record-error {
   display: block;
-  color: #d26b00;
+  color: #8b6a32;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+}
+
+.empty-text {
+  font-size: 26rpx;
+  color: #8a8a8e;
 }

@@ -1,11 +1,13 @@
 const app = getApp()
 const util = require('../../utils/util')
+const templateService = require('../../services/template')
+const merchantApi = require('../../api/merchant')
+const merchantEntry = require('../../utils/merchant-entry')
 
 const MENU_LIST = [
-  { label: '我的订单', type: 'order', icon: 'order' },
   { label: '个人资料', type: 'profile', icon: 'profile' },
   { label: '在线客服', type: 'contact', icon: 'service' },
-  { label: '分享小程序', type: 'share', icon: 'share' }
+  { label: '商家入口', type: 'merchant', icon: 'merchant' }
 ]
 
 Page({
@@ -20,6 +22,9 @@ Page({
   },
 
   onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 2 })
+    }
     this.checkLoginStatus()
     if (!this.data.isLoggedIn) {
       this.goLogin()
@@ -54,7 +59,39 @@ Page({
   },
 
   goContact() {
-    util.navigateTo('/pages/contact/contact')
+    util.showLoading('获取电话中...')
+    const brandInfo = templateService.getTemplateSection('brandInfo') || {}
+    const fallbackPhone = brandInfo.servicePhone || ''
+
+    merchantApi.getMerchantList()
+      .then((res) => {
+        const merchant = (res.data || res || [])[0] || {}
+        const phone = merchant.phone || fallbackPhone
+        util.hideLoading()
+        if (!phone) {
+          util.showToast('暂无客服电话')
+          return
+        }
+        wx.makePhoneCall({
+          phoneNumber: String(phone),
+          fail: () => {}
+        })
+      })
+      .catch(() => {
+        util.hideLoading()
+        if (!fallbackPhone) {
+          util.showToast('暂无客服电话')
+          return
+        }
+        wx.makePhoneCall({
+          phoneNumber: String(fallbackPhone),
+          fail: () => {}
+        })
+      })
+  },
+
+  goMerchantEntry() {
+    merchantEntry.openMerchantPortal()
   },
 
   goMenu(e) {
@@ -69,6 +106,10 @@ Page({
     }
     if (type === 'contact') {
       this.goContact()
+      return
+    }
+    if (type === 'merchant') {
+      this.goMerchantEntry()
     }
   },
 

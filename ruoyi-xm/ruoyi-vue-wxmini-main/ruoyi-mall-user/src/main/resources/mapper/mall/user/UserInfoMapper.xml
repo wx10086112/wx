@@ -92,6 +92,7 @@
             <if test="avatarUrl != null">avatar_url = #{avatarUrl},</if>
             <if test="createTime != null">create_time = #{createTime},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="delFlag != null and delFlag != ''">del_flag = #{delFlag},</if>
         </trim>
         where id = #{id}
     </update>
@@ -109,11 +110,11 @@
 
     <select id="selectUserInfoByOpenId" parameterType="String" resultMap="UserInfoResult">
         <include refid="selectUserInfoVo"/>
-        where open_id = #{openId}
+        where open_id = #{openId} and del_flag = '0'
     </select>
 
     <select id="selectUserInfoByUserId" parameterType="String" resultMap="UserInfoResult">
         <include refid="selectUserInfoVo"/>
-        where user_id = #{userId}
+        where user_id = #{userId} and del_flag = '0'
     </select>
 </mapper>

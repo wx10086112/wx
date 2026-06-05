@@ -8,7 +8,8 @@ Page({
     manualCode: '',
     orderHint: {},
     verifyResult: null,
-    recentRecordList: []
+    recentRecordList: [],
+    merchantNavList: util.getMerchantNavList('verify')
   },
 
   onLoad(options) {
@@ -123,5 +124,12 @@ Page({
   goVerifyRecords() {
     if (!app.needPermission(['verify.record', 'verify.scan', 'verify.manual'])) return
     util.navigateTo('/pages/merchant/verify-records/verify-records')
+  },
+
+  goMerchantTab(e) {
+    const { url } = e.currentTarget.dataset
+    if (url) {
+      util.openMerchantMainPage(url)
+    }
   }
 })

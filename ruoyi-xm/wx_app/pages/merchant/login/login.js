@@ -1,6 +1,7 @@
 const api = require('../../../api/merchant-mini/index')
 const util = require('../../../utils/merchant-util')
 const agreement = require('../../../utils/agreement')
+const merchantMock = require('../../../data/merchant-mock')
 
 const app = getApp()
 
@@ -17,7 +18,7 @@ Page({
   onLoad(options = {}) {
     if (app.globalData.isMerchantLoggedIn) {
       wx.redirectTo({
-        url: '/pages/merchant/workbench/workbench'
+        url: '/pages/merchant/index/index'
       })
       return
     }
@@ -79,10 +80,6 @@ Page({
     this.setData({ password: e.detail.value })
   },
 
-  goApply() {
-    util.navigateTo('/pages/merchant/apply/apply')
-  },
-
   submitLogin() {
     const username = (this.data.username || '').trim()
     const password = (this.data.password || '').trim()
@@ -117,7 +114,7 @@ Page({
         app.setMerchantLoginInfo(response.token, response.staffUser)
         util.showToast('登录成功', 'success')
         wx.redirectTo({
-          url: '/pages/merchant/workbench/workbench'
+          url: '/pages/merchant/index/index'
         })
       })
       .catch((err) => {
@@ -127,5 +124,29 @@ Page({
         this.setData({ submitting: false })
         util.hideLoading()
       })
+  },
+
+  enterPreview() {
+    if (!agreement.assertAgreementAccepted()) return
+
+    const currentEntry = this.data.merchantEntry || {}
+
+    const merchantEntry = app.setMerchantEntry({
+      merchantId: Number(this.data.merchantId || merchantMock.merchantInfo.merchantId || 1),
+      merchantName: currentEntry.merchantName || merchantMock.merchantInfo.storeName,
+      contact: currentEntry.contact || merchantMock.staffList[0].name,
+      phone: currentEntry.phone || merchantMock.merchantInfo.phone
+    })
+
+    util.initMerchantMockStorage(merchantMock)
+    app.setMerchantLoginInfo('merchant-preview-token', merchantMock.buildStaffUser('owner'))
+    if (merchantEntry) {
+      app.setMerchantEntry(merchantEntry)
+    }
+
+    util.showToast('已进入商家演示页', 'success')
+    wx.redirectTo({
+      url: '/pages/merchant/index/index'
+    })
   }
 })

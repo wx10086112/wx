@@ -75,9 +75,72 @@ const hideLoading = () => {
   wx.hideLoading()
 }
 
+const MERCHANT_TABBAR_PAGES = ['/pages/home/home', '/pages/order/order', '/pages/mine/mine']
+const MERCHANT_NAV_LIST = [
+  { key: 'workbench', label: '工作台', url: '/pages/merchant/index/index?tab=workbench' },
+  { key: 'order', label: '订单', url: '/pages/merchant/index/index?tab=order' },
+  { key: 'verify', label: '核销', url: '/pages/merchant/index/index?tab=verify' },
+  { key: 'goods', label: '商品', url: '/pages/merchant/index/index?tab=goods' },
+  { key: 'mine', label: '我的', url: '/pages/merchant/index/index?tab=mine' }
+]
+const MERCHANT_MAIN_PAGE_PATHS = [
+  '/pages/merchant/index/index',
+  '/pages/merchant/workbench/workbench',
+  '/pages/merchant/order/order',
+  '/pages/merchant/verify/verify',
+  '/pages/merchant/goods/goods',
+  '/pages/merchant/mine/mine'
+]
+
+const normalizeRouteUrl = (url = '') => String(url || '').split('?')[0]
+const getCurrentRoutePath = () => {
+  const pageStack = getCurrentPages()
+  const currentPage = pageStack[pageStack.length - 1]
+  return currentPage && currentPage.route ? `/${currentPage.route}` : ''
+}
+const isMerchantMainPage = (url = '') => MERCHANT_MAIN_PAGE_PATHS.includes(normalizeRouteUrl(url))
+
 const navigateTo = (url) => wx.navigateTo({ url })
 const redirectTo = (url) => wx.redirectTo({ url })
-const switchTab = (url) => wx.redirectTo({ url })
+const openMerchantMainPage = (url) => {
+  const targetPath = normalizeRouteUrl(url)
+  if (!targetPath) return
+  if (getCurrentRoutePath() === targetPath) return
+  wx.reLaunch({ url })
+}
+
+const switchTab = (url) => {
+  const targetPath = normalizeRouteUrl(url)
+  if (!targetPath) return
+
+  if (getCurrentRoutePath() === targetPath) return
+
+  if (MERCHANT_TABBAR_PAGES.includes(targetPath)) {
+    wx.switchTab({ url: targetPath })
+    return
+  }
+
+  if (isMerchantMainPage(targetPath)) {
+    openMerchantMainPage(url)
+    return
+  }
+
+  const pageStack = getCurrentPages()
+
+  if (pageStack.length >= 9) {
+    wx.redirectTo({ url })
+    return
+  }
+
+  wx.navigateTo({ url })
+}
+
+const getMerchantNavList = (currentKey = '') => {
+  return MERCHANT_NAV_LIST.map((item) => ({
+    ...item,
+    active: item.key === currentKey
+  }))
+}
 
 const getOrderStatusMeta = (status) => orderStatusMap[status] || { text: '未知', className: 'gray' }
 
@@ -509,7 +572,9 @@ module.exports = {
   hideLoading,
   navigateTo,
   redirectTo,
+  openMerchantMainPage,
   switchTab,
+  getMerchantNavList,
   getOrderStatusMeta,
   isGrouponOrder,
   normalizeGrouponOrders,

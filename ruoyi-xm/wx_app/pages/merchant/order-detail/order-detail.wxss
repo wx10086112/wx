@@ -1,24 +1,70 @@
+.page-shell {
+  min-height: 100vh;
+  padding: 24rpx 24rpx 140rpx;
+  background: #faf8f3;
+  box-sizing: border-box;
+}
+
+.panel {
+  background: #ffffff;
+  border-radius: 36rpx;
+  border: 1px solid rgba(232, 229, 222, 0.9);
+  box-shadow: 0 18rpx 48rpx rgba(32, 28, 22, 0.06);
+  box-sizing: border-box;
+}
+
+.primary-btn,
+.ghost-btn {
+  height: 76rpx;
+  margin: 0;
+  padding: 0 26rpx;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.primary-btn {
+  background: #1d1d1f;
+  color: #ffffff;
+}
+
+.ghost-btn {
+  background: #f7f5f0;
+  color: #3a3a3c;
+  border: 1px solid #e8e5de;
+}
+
+.primary-btn::after,
+.ghost-btn::after {
+  border: none;
+}
+
 /* 状态头部 */
 .status-hero {
   padding: 36rpx 30rpx;
-  border-radius: 22rpx;
-  background: linear-gradient(135deg, #1f6feb 0%, #3b82f6 100%);
-  box-shadow: 0 18rpx 44rpx rgba(31, 111, 235, 0.18);
+  border-radius: 36rpx;
+  background: #1d1d1f;
+  box-shadow: 0 24rpx 56rpx rgba(0, 0, 0, 0.12);
 }
 
 .status-hero.orange {
-  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
-  box-shadow: 0 18rpx 44rpx rgba(217, 119, 6, 0.18);
+  background: #c8a46a;
+  box-shadow: 0 24rpx 56rpx rgba(200, 164, 106, 0.22);
 }
 
 .status-hero.green {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  box-shadow: 0 18rpx 44rpx rgba(5, 150, 105, 0.18);
+  background: #2f6f47;
+  box-shadow: 0 24rpx 56rpx rgba(47, 111, 71, 0.2);
 }
 
 .status-hero.gray {
-  background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
-  box-shadow: 0 18rpx 44rpx rgba(107, 114, 128, 0.18);
+  background: #746f66;
+  box-shadow: 0 24rpx 56rpx rgba(116, 111, 102, 0.18);
 }
 
 .status-hero-text {
@@ -45,7 +91,7 @@
 .detail-section-title {
   display: block;
   font-size: 28rpx;
-  color: #1f2a37;
+  color: #1d1d1f;
   font-weight: 700;
   margin-bottom: 18rpx;
 }
@@ -53,7 +99,7 @@
 .detail-title {
   display: block;
   font-size: 34rpx;
-  color: #1f2a37;
+  color: #1d1d1f;
   font-weight: 700;
   margin-bottom: 18rpx;
 }
@@ -74,32 +120,32 @@
 .detail-label {
   flex-shrink: 0;
   font-size: 26rpx;
-  color: #7a8798;
+  color: #8a8a8e;
   min-width: 120rpx;
 }
 
 .detail-value {
   font-size: 26rpx;
-  color: #1f2a37;
+  color: #1d1d1f;
   text-align: right;
   word-break: break-all;
 }
 
 .detail-value.price {
   font-size: 30rpx;
-  color: #1f6feb;
+  color: #1d1d1f;
   font-weight: 700;
 }
 
 .detail-value.code {
   font-size: 30rpx;
-  color: #059669;
+  color: #2f6f47;
   font-weight: 700;
   letter-spacing: 2rpx;
 }
 
 .detail-value.remark {
-  color: #9aa6b6;
+  color: #746f66;
   font-style: italic;
 }
 
@@ -122,7 +168,7 @@
   top: 30rpx;
   bottom: 0;
   width: 2rpx;
-  background: #e5e7eb;
+  background: #e8e5de;
 }
 
 .timeline-item:last-child::before {
@@ -138,18 +184,18 @@
   width: 22rpx;
   height: 22rpx;
   border-radius: 50%;
-  background: #1f6feb;
+  background: #c8a46a;
   margin-top: 6rpx;
   position: relative;
   z-index: 1;
 }
 
 .timeline-item.done .timeline-dot {
-  background: #059669;
+  background: #2f6f47;
 }
 
 .timeline-item.failed .timeline-dot {
-  background: #d93025;
+  background: #a3482f;
 }
 
 .timeline-content {
@@ -159,7 +205,7 @@
 .timeline-label {
   display: block;
   font-size: 26rpx;
-  color: #1f2a37;
+  color: #1d1d1f;
   font-weight: 600;
 }
 
@@ -167,14 +213,14 @@
   display: block;
   margin-top: 6rpx;
   font-size: 24rpx;
-  color: #7a8798;
+  color: #8a8a8e;
 }
 
 .timeline-reason {
   display: block;
   margin-top: 6rpx;
   font-size: 24rpx;
-  color: #9aa6b6;
+  color: #746f66;
 }
 
 /* 底部操作栏 */
@@ -186,9 +232,9 @@
   display: flex;
   gap: 16rpx;
   padding: 20rpx 24rpx;
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(250, 248, 243, 0.96);
   backdrop-filter: blur(20rpx);
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 -4rpx 20rpx rgba(32, 28, 22, 0.06);
   z-index: 100;
 }
 
@@ -197,17 +243,17 @@
 }
 
 .reject-style {
-  background: #fff0f0;
-  color: #d93025;
+  background: #f7f0e4;
+  color: #8b6a32;
 }
 
 .cancel-style {
-  background: #f5f5f5;
-  color: #6b7280;
+  background: #f7f5f0;
+  color: #746f66;
 }
 
 .refund-approve {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  background: #c8a46a;
 }
 
 .cancel-modal-mask {
@@ -221,23 +267,23 @@
   align-items: center;
   justify-content: center;
   padding: 40rpx;
-  background: rgba(15, 23, 42, 0.38);
+  background: rgba(29, 29, 31, 0.32);
   box-sizing: border-box;
 }
 
 .cancel-modal-card {
   width: 100%;
   padding: 34rpx;
-  border-radius: 28rpx;
+  border-radius: 32rpx;
   background: #ffffff;
-  box-shadow: 0 30rpx 80rpx rgba(15, 23, 42, 0.18);
+  box-shadow: 0 30rpx 80rpx rgba(32, 28, 22, 0.16);
   box-sizing: border-box;
 }
 
 .cancel-modal-title {
   display: block;
   font-size: 34rpx;
-  color: #111827;
+  color: #1d1d1f;
   font-weight: 700;
 }
 
@@ -245,7 +291,7 @@
   display: block;
   margin-top: 10rpx;
   font-size: 24rpx;
-  color: #6b7280;
+  color: #8a8a8e;
   line-height: 1.6;
 }
 
@@ -254,9 +300,9 @@
   width: 100%;
   min-height: 160rpx;
   padding: 20rpx;
-  border-radius: 18rpx;
-  background: #f8fafc;
-  color: #111827;
+  border-radius: 24rpx;
+  background: #faf8f3;
+  color: #1d1d1f;
   font-size: 28rpx;
   box-sizing: border-box;
 }
@@ -286,17 +332,17 @@
 }
 
 .cancel-modal-btn.secondary {
-  background: #eef2f7;
-  color: #334155;
+  background: #f7f5f0;
+  color: #3a3a3c;
 }
 
 .cancel-modal-btn.primary {
-  background: #ef4444;
+  background: #1d1d1f;
   color: #ffffff;
 }
 
 .cancel-modal-btn.success {
-  background: #10b981;
+  background: #c8a46a;
   color: #ffffff;
 }
 

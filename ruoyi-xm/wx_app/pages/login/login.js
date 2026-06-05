@@ -3,6 +3,7 @@ const util = require('../../utils/util')
 const agreement = require('../../utils/agreement')
 const userApi = require('../../api/user')
 const templateService = require('../../services/template')
+const merchantEntry = require('../../utils/merchant-entry')
 
 const isLocalTestLogin = () => {
   const baseUrl = String(app.baseUrl || wx.getStorageSync('baseUrl') || '')
@@ -155,6 +156,10 @@ Page({
 
   goHome() {
     wx.switchTab({ url: '/pages/home/home' })
+  },
+
+  goMerchantEntry() {
+    merchantEntry.openMerchantPortal()
   },
 
   preventMove() {}

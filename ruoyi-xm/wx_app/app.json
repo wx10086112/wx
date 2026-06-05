@@ -11,8 +11,10 @@
     "pages/coupon/coupon",
     "pages/contact/contact",
     "pages/profile-edit/profile-edit",
+    "pages/account-cancel/account-cancel",
     "pages/settings/settings",
     "pages/merchant/login/login",
+    "pages/merchant/index/index",
     "pages/merchant/workbench/workbench",
     "pages/merchant/order/order",
     "pages/merchant/verify/verify",
@@ -24,14 +26,13 @@
     "pages/merchant/staff/staff",
     "pages/merchant/verify-records/verify-records",
     "pages/merchant/finance/finance",
-    "pages/merchant/marketing/marketing",
-    "pages/merchant/apply/apply"
+    "pages/merchant/marketing/marketing"
   ],
   "window": {
-    "navigationBarTextStyle": "white",
+    "navigationBarTextStyle": "black",
     "navigationBarTitleText": "本地生活",
-    "navigationBarBackgroundColor": "#1677ff",
-    "backgroundColor": "#eef4ff"
+    "navigationBarBackgroundColor": "#FAF8F3",
+    "backgroundColor": "#FAF8F3"
   },
   "permission": {
     "scope.userLocation": {
@@ -43,22 +44,29 @@
     "getLocation"
   ],
   "tabBar": {
-    "color": "#7a8aa0",
-    "selectedColor": "#1677ff",
+    "custom": true,
+    "color": "#9A9A9E",
+    "selectedColor": "#C8A46A",
     "backgroundColor": "#ffffff",
-    "borderStyle": "black",
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/home/home",
-        "text": "首页"
+        "text": "首页",
+        "iconPath": "assets/tabbar/home.png",
+        "selectedIconPath": "assets/tabbar/home-active.png"
       },
       {
         "pagePath": "pages/order/order",
-        "text": "订单"
+        "text": "订单",
+        "iconPath": "assets/tabbar/order.png",
+        "selectedIconPath": "assets/tabbar/order-active.png"
       },
       {
         "pagePath": "pages/mine/mine",
-        "text": "我的"
+        "text": "我的",
+        "iconPath": "assets/tabbar/mine.png",
+        "selectedIconPath": "assets/tabbar/mine-active.png"
       }
     ]
   },

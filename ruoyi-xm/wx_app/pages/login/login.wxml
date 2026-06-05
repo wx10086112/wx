@@ -27,7 +27,9 @@
   </view>
 
   <view class="login-footer">
-    <text bindtap="goHome">暂不登录</text>
+    <text class="login-footer__link" bindtap="goHome">暂不登录</text>
+    <text class="login-footer__divider">|</text>
+    <text class="login-footer__link" bindtap="goMerchantEntry">商家入口</text>
   </view>
 
   <view wx:if="{{showAgreementModal}}" class="agreement-modal" catchtouchmove="preventMove">

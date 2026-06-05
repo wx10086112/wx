@@ -1,41 +1,22 @@
 <view wx:if="{{isLoggedIn}}" class="mine-page">
   <view class="mine-top">
     <view class="user-row">
-      <view class="user-main" bindtap="goProfileEdit">
+      <view class="user-main">
         <image class="avatar" src="{{userInfo.avatarUrl || '/assets/images/avatar.svg'}}" mode="aspectFill"></image>
         <view class="user-name-row">
           <text class="user-name">{{userInfo.nickName || '微信用户'}}</text>
-          <text class="user-arrow">›</text>
         </view>
       </view>
       <view class="settings-btn" bindtap="goSettings" aria-label="设置">
-        <view class="settings-ring"></view>
+        <view class="settings-icon"></view>
       </view>
     </view>
 
-    <view class="benefit-banner" bindtap="goOrder">
-      <view class="banner-left">
-        <view class="diamond-icon"></view>
-        <text class="banner-title">订单服务</text>
-        <text class="banner-subtitle">到店核销与售后进度</text>
-      </view>
-      <view class="banner-action">立即查看</view>
-    </view>
   </view>
 
   <view class="menu-card">
     <block wx:for="{{menuList}}" wx:key="label">
-      <button
-        wx:if="{{item.type === 'share'}}"
-        class="menu-row"
-        open-type="share"
-      >
-        <view class="menu-icon icon-{{item.icon}}"></view>
-        <text class="menu-title">{{item.label}}</text>
-        <text class="menu-arrow">›</text>
-      </button>
       <view
-        wx:else
         class="menu-row"
         bindtap="goMenu"
         data-type="{{item.type}}"

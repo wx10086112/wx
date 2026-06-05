@@ -87,4 +87,16 @@
       </view>
     </view>
   </view>
+
+  <view class="merchant-tabbar safe-area-bottom">
+    <view
+      wx:for="{{merchantNavList}}"
+      wx:key="key"
+      class="merchant-tabbar__item {{item.active ? 'active' : ''}}"
+      bindtap="goMerchantTab"
+      data-url="{{item.url}}"
+    >
+      <text class="merchant-tabbar__label">{{item.label}}</text>
+    </view>
+  </view>
 </view>

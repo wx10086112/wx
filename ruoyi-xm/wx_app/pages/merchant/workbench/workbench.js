@@ -1,5 +1,6 @@
 const util = require('../../../utils/merchant-util')
 const api = require('../../../api/merchant-mini/index')
+const merchantMock = require('../../../data/merchant-mock')
 
 const app = getApp()
 
@@ -11,7 +12,8 @@ Page({
     quickActionList: [],
     pendingOrderList: [],
     alertList: [],
-    todaySalesText: '0.00'
+    todaySalesText: '0.00',
+    merchantNavList: util.getMerchantNavList('workbench')
   },
 
   onShow() {
@@ -35,8 +37,32 @@ Page({
         })
       })
       .catch((err) => {
-        this.handleLoadFailure(err)
+        this.renderLocalPreview(err)
       })
+  },
+
+  renderLocalPreview(err = {}) {
+    util.initMerchantMockStorage(merchantMock)
+    const orderList = util.getOrderList()
+    const goodsList = util.getGoodsList()
+    const storeInfo = util.getStoreInfo()
+    const stats = util.buildWorkbenchStats(orderList, goodsList)
+    const lowStockCount = util.getLowStockGoods(Number(storeInfo.stockAlertThreshold || 20)).length
+
+    this.setData({
+      staffUser: app.globalData.staffUser || merchantMock.buildStaffUser('owner'),
+      storeInfo,
+      todaySalesText: util.formatPrice(stats.todaySalesAmount),
+      statsCardList: this.buildStatsCardList(stats),
+      alertList: this.buildAlertList(stats, lowStockCount, Number(storeInfo.stockAlertThreshold || 20)),
+      quickActionList: this.buildQuickActions(),
+      pendingOrderList: this.buildPendingOrderList(orderList)
+    })
+
+    const message = err.message || ''
+    if (message && !/未登录|登录已过期|商家身份校验失败|入口与登录账号不匹配/.test(message)) {
+      util.showToast('后端未联通，已进入本地演示数据')
+    }
   },
 
   handleLoadFailure(err = {}) {
@@ -62,10 +88,39 @@ Page({
 
   buildStatsCardList(stats = {}) {
     return [
-      { label: '待核销', value: stats.pendingVerifyCount || 0, highlight: (stats.pendingVerifyCount || 0) > 0 },
-      { label: '已完成', value: stats.completedCount || 0 },
-      { label: '退款中', value: stats.refundingCount || 0, warn: (stats.refundingCount || 0) > 0 },
-      { label: '在售套餐', value: stats.onShelfCount || 0 }
+      {
+        label: '待核销',
+        value: stats.pendingVerifyCount || 0,
+        highlight: (stats.pendingVerifyCount || 0) > 0,
+        tone: 'gold',
+        url: '/pages/merchant/order/order',
+        isTab: true,
+        filter: 'PENDING_VERIFY'
+      },
+      {
+        label: '已完成',
+        value: stats.completedCount || 0,
+        tone: 'green',
+        url: '/pages/merchant/order/order',
+        isTab: true,
+        filter: 'COMPLETED'
+      },
+      {
+        label: '退款中',
+        value: stats.refundingCount || 0,
+        warn: (stats.refundingCount || 0) > 0,
+        tone: 'orange',
+        url: '/pages/merchant/order/order',
+        isTab: true,
+        filter: 'REFUNDING'
+      },
+      {
+        label: '在售套餐',
+        value: stats.onShelfCount || 0,
+        tone: 'dark',
+        url: '/pages/merchant/goods/goods',
+        isTab: true
+      }
     ]
   },
 
@@ -104,13 +159,15 @@ Page({
 
   buildQuickActions() {
     return [
-      { label: '待核销', icon: '📋', url: '/pages/merchant/order/order', permissionCodes: ['order.manage'], isTab: true, filter: 'PENDING_VERIFY' },
-      { label: '扫码核销', icon: '📷', url: '/pages/merchant/verify/verify', permissionCodes: ['verify.scan', 'verify.manual'], isTab: true },
-      { label: '核销记录', icon: '📝', url: '/pages/merchant/verify-records/verify-records', permissionCodes: ['verify.record', 'verify.scan', 'verify.manual'], isTab: false },
-      { label: '商品管理', icon: '🏷️', url: '/pages/merchant/goods/goods', permissionCodes: ['goods.manage'], isTab: true },
-      { label: '结算中心', icon: '💰', url: '/pages/merchant/finance/finance', permissionCodes: ['finance.manage'], isTab: false },
-      { label: '门店设置', icon: '🏪', url: '/pages/merchant/store/store', permissionCodes: ['store.manage'], isTab: false },
-      { label: '员工权限', icon: '👥', url: '/pages/merchant/staff/staff', permissionCodes: ['staff.manage'], isTab: false }
+      { label: '待核销', icon: '▤', url: '/pages/merchant/order/order', permissionCodes: ['order.manage'], isTab: true, filter: 'PENDING_VERIFY', tone: 'gold' },
+      { label: '扫码核销', icon: '⌗', url: '/pages/merchant/verify/verify', permissionCodes: ['verify.scan', 'verify.manual'], isTab: true, tone: 'dark' },
+      { label: '核销记录', icon: '☷', url: '/pages/merchant/verify-records/verify-records', permissionCodes: ['verify.record', 'verify.scan', 'verify.manual'], isTab: false, tone: 'dark' },
+      { label: '商品管理', icon: '□', url: '/pages/merchant/goods/goods', permissionCodes: ['goods.manage'], isTab: true, tone: 'gold' },
+      { label: '结算中心', icon: '¥', url: '/pages/merchant/finance/finance', permissionCodes: ['finance.manage'], isTab: false, tone: 'gold' },
+      { label: '营销活动', icon: '◇', url: '/pages/merchant/marketing/marketing', permissionCodes: ['marketing.manage'], isTab: false, tone: 'orange' },
+      { label: '门店设置', icon: '⌂', url: '/pages/merchant/store/store', permissionCodes: ['store.manage'], isTab: false, tone: 'dark' },
+      { label: '员工权限', icon: '◉', url: '/pages/merchant/staff/staff', permissionCodes: ['staff.manage'], isTab: false, tone: 'dark' },
+      { label: '我的', icon: '○', url: '/pages/merchant/mine/mine', permissionCodes: [], isTab: false, tone: 'dark' }
     ].filter((item) => app.hasAnyPermission(item.permissionCodes))
   },
 
@@ -141,6 +198,18 @@ Page({
     util.navigateTo(`/pages/merchant/order-detail/order-detail?orderNo=${e.currentTarget.dataset.orderno}`)
   },
 
+  goStatsCard(e) {
+    const { url, istab, filter } = e.currentTarget.dataset
+    if (filter) {
+      util.setPendingOrderFilter(filter)
+    }
+    if (istab) {
+      util.switchTab(url)
+      return
+    }
+    util.navigateTo(url)
+  },
+
   goAlertOrders(e) {
     const { filter, action } = e.currentTarget.dataset
     if (action === 'goods') {
@@ -151,6 +220,13 @@ Page({
       util.setPendingOrderFilter(filter)
     }
     util.switchTab('/pages/merchant/order/order')
+  },
+
+  goMerchantTab(e) {
+    const { url } = e.currentTarget.dataset
+    if (url) {
+      util.openMerchantMainPage(url)
+    }
   }
 })
 

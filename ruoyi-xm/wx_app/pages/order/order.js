@@ -25,11 +25,20 @@ Page({
     if (status) {
       this.setData({ currentTab: status })
     }
-    this.loadOrders()
+    if (app.globalData.isLoggedIn) {
+      this.loadOrders()
+    } else {
+      this.setData({ loading: false })
+    }
   },
 
   onShow() {
-    this.loadOrders()
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 1 })
+    }
+    if (app.globalData.isLoggedIn) {
+      this.loadOrders()
+    }
   },
 
   onPullDownRefresh() {

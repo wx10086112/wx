@@ -21,7 +21,8 @@ Page({
     orderList: [],
     cancelModalVisible: false,
     cancelReason: '',
-    cancelOrderNo: ''
+    cancelOrderNo: '',
+    merchantNavList: util.getMerchantNavList('order')
   },
 
   onLoad(options) {
@@ -133,5 +134,12 @@ Page({
           this.loadData()
         }
       })
+  },
+
+  goMerchantTab(e) {
+    const { url } = e.currentTarget.dataset
+    if (url) {
+      util.openMerchantMainPage(url)
+    }
   }
 })

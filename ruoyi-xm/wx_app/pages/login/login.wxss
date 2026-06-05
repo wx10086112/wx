@@ -2,10 +2,7 @@
   min-height: 100vh;
   padding: 120rpx 48rpx 58rpx;
   box-sizing: border-box;
-  background:
-    radial-gradient(circle at 74% 30%, rgba(255, 231, 164, 0.72), transparent 32%),
-    radial-gradient(circle at 22% 24%, rgba(226, 240, 255, 0.9), transparent 36%),
-    linear-gradient(180deg, #edf6ff 0%, #fff1e8 58%, #fff8f3 100%);
+  background: #FAF8F3;
   display: flex;
   flex-direction: column;
 }
@@ -21,20 +18,20 @@
 }
 
 .brand-mark {
-  width: 132rpx;
-  height: 132rpx;
-  border-radius: 34rpx;
-  background: linear-gradient(145deg, #ff6b5b 0%, #ff3f63 100%);
-  box-shadow: 0 20rpx 48rpx rgba(255, 88, 91, 0.25);
+  width: 144rpx;
+  height: 144rpx;
+  border-radius: 40rpx;
+  background: #1D1D1F;
+  box-shadow: 0 24rpx 48rpx rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .brand-mark__text {
-  color: #fff;
-  font-size: 58rpx;
-  font-weight: 900;
+  color: #C8A46A;
+  font-size: 64rpx;
+  font-weight: 800;
   line-height: 1;
 }
 
@@ -42,18 +39,18 @@
   display: block;
   max-width: 620rpx;
   margin-top: 54rpx;
-  color: #202734;
+  color: #1D1D1F;
   font-size: 48rpx;
   line-height: 1.2;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .brand-subtitle {
   display: block;
   max-width: 560rpx;
-  margin-top: 22rpx;
-  color: #6f7785;
-  font-size: 27rpx;
+  margin-top: 24rpx;
+  color: #8A8A8E;
+  font-size: 28rpx;
   line-height: 1.6;
 }
 
@@ -63,20 +60,27 @@
 
 .wechat-login-btn {
   width: 100%;
-  height: 94rpx;
+  height: 104rpx;
   margin: 0;
-  padding: 0 40rpx;
-  border-radius: 47rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.84);
-  background: rgba(255, 255, 255, 0.78);
-  color: #222936;
-  font-size: 31rpx;
-  font-weight: 500;
-  box-sizing: border-box;
+  padding: 0;
+  border-radius: 999rpx;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #1D1D1F;
+  font-size: 32rpx;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 12rpx 40rpx rgba(118, 91, 74, 0.08);
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.wechat-login-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
 }
 
 .wechat-login-btn::after,
@@ -85,50 +89,52 @@
 }
 
 .wechat-icon {
-  position: absolute;
-  left: 54rpx;
-  width: 54rpx;
-  height: 42rpx;
+  width: 56rpx;
+  height: 46rpx;
+  margin-right: 16rpx;
 }
 
 .agreement-line {
   min-height: 56rpx;
-  margin-top: 28rpx;
+  margin-top: 32rpx;
   display: flex;
   align-items: flex-start;
   gap: 12rpx;
+  padding: 0 16rpx;
 }
 
 .agreement-check {
   width: 32rpx;
   height: 32rpx;
-  margin-top: 5rpx;
+  margin-top: 4rpx;
   border-radius: 50%;
-  border: 2rpx solid rgba(128, 138, 151, 0.42);
+  border: 1px solid #B0B0B5;
   color: #fff;
   font-size: 22rpx;
-  line-height: 30rpx;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   box-sizing: border-box;
   flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
 .agreement-check.checked {
-  border-color: #2f7cff;
-  background: #2f7cff;
+  border-color: #1D1D1F;
+  background: #1D1D1F;
 }
 
 .agreement-copy {
   flex: 1;
   min-width: 0;
-  color: #8a92a0;
-  font-size: 25rpx;
+  color: #8A8A8E;
+  font-size: 24rpx;
   line-height: 1.65;
 }
 
 .agreement-link {
-  color: #2477e9;
-  font-weight: 650;
+  color: #1D1D1F;
+  font-weight: 600;
 }
 
 .login-footer {
@@ -136,8 +142,18 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  color: #8a92a0;
-  font-size: 27rpx;
+  gap: 18rpx;
+  color: #8A8A8E;
+  font-size: 26rpx;
+}
+
+.login-footer__link {
+  line-height: 1.5;
+}
+
+.login-footer__divider {
+  color: #D4D0C8;
+  line-height: 1.5;
 }
 
 .agreement-modal {
@@ -154,67 +170,75 @@
 .modal-mask {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.48);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .modal-card {
   position: relative;
   width: 100%;
-  padding: 52rpx 48rpx 46rpx;
-  border-radius: 34rpx;
-  background: #fff;
+  padding: 56rpx 48rpx;
+  border-radius: 40rpx;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 32rpx 64rpx rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
   text-align: center;
 }
 
 .modal-title {
   display: block;
-  color: #202734;
+  color: #1D1D1F;
   font-size: 36rpx;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.35;
 }
 
 .modal-content {
   margin-top: 34rpx;
-  color: #6f7785;
-  font-size: 29rpx;
+  color: #3A3A3C;
+  font-size: 28rpx;
   line-height: 1.65;
 }
 
 .modal-link {
-  color: #2477e9;
-  font-weight: 650;
+  color: #1D1D1F;
+  font-weight: 600;
 }
 
 .modal-actions {
-  margin-top: 44rpx;
+  margin-top: 48rpx;
   display: flex;
-  gap: 22rpx;
+  gap: 24rpx;
 }
 
 .modal-btn {
   flex: 1;
-  height: 88rpx;
-  line-height: 1;
+  height: 96rpx;
   margin: 0;
-  border-radius: 44rpx;
-  font-size: 31rpx;
-  font-weight: 650;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-bottom: 4rpx;
   box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.modal-btn:active {
+  transform: scale(0.96);
+  opacity: 0.9;
 }
 
 .modal-btn--secondary {
-  color: #202734;
-  background: #fff;
-  border: 1rpx solid #d7dbe2;
+  color: #3A3A3C;
+  background: #F7F5F0;
 }
 
 .modal-btn--primary {
-  color: #fff;
-  background: #ff5d45;
+  color: #FFFFFF;
+  background: #1D1D1F;
 }

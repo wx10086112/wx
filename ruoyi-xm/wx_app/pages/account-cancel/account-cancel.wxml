@@ -1,0 +1,37 @@
+<view class="account-cancel-page">
+  <view class="warning-card">
+    <view class="warning-icon">
+      <view class="warning-line"></view>
+      <view class="warning-dot"></view>
+    </view>
+    <text class="warning-title">注销账号</text>
+    <text class="warning-desc">注销后，当前账号资料将删除或匿名化，且无法恢复。注销成功后 7 天内，同一微信身份暂不能重新注册。</text>
+  </view>
+
+  <view class="notice-card">
+    <view class="notice-item">
+      <text class="notice-index">1</text>
+      <text class="notice-text">头像、昵称、手机号等账号资料将删除或匿名化。</text>
+    </view>
+    <view class="notice-item">
+      <text class="notice-index">2</text>
+      <text class="notice-text">历史订单、支付、退款、售后记录将按法律法规和财务要求保留必要信息。</text>
+    </view>
+    <view class="notice-item">
+      <text class="notice-index">3</text>
+      <text class="notice-text">存在未完成订单、退款或售后时，可能需要先处理完成后再注销。</text>
+    </view>
+    <view class="notice-item">
+      <text class="notice-index">4</text>
+      <text class="notice-text">为防止反复注销、注册滥用权益，注销后 7 天内不能使用同一微信身份重新注册本小程序账号。</text>
+    </view>
+  </view>
+
+  <button
+    class="danger-btn"
+    bindtap="submitCancelAccount"
+    disabled="{{submitting}}"
+  >
+    {{submitting ? '处理中...' : '我已知晓，申请注销'}}
+  </button>
+</view>

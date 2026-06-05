@@ -1,6 +1,5 @@
 const api = require('../../api/index')
 const { defaultTemplateConfig } = require('./default-template')
-const { mockTemplateSource } = require('./mock-template-source')
 
 const isPlainObject = (value) => {
   return Object.prototype.toString.call(value) === '[object Object]'
@@ -33,7 +32,7 @@ const mergeConfig = (baseValue, overrideValue) => {
 }
 
 const buildLocalTemplateConfig = () => {
-  return mergeConfig(defaultTemplateConfig, mockTemplateSource)
+  return clone(defaultTemplateConfig)
 }
 
 const normalizeTemplateConfig = (rawConfig = {}) => {

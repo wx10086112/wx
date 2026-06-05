@@ -9,12 +9,17 @@ import com.ruoyi.mall.common.config.WxMaServiceManager;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
+import com.ruoyi.mall.user.domain.UserAccountCancelRecord;
 import com.ruoyi.mall.user.domain.UserInfo;
+import com.ruoyi.mall.user.service.IUserAccountCancelRecordService;
 import com.ruoyi.mall.user.service.IUserInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,6 +36,11 @@ public class WxMaUserController {
     private IMerchantService merchantService;
     @Resource
     private IUserInfoService userInfoService;
+    @Resource
+    private IUserAccountCancelRecordService cancelRecordService;
+
+    @Value("${wxmini.account.cancel-reregister-delay-days:7}")
+    private int cancelReregisterDelayDays;
 
     @GetMapping("/info")
     public AjaxResult info(String appid, String sessionKey,
@@ -81,6 +91,39 @@ public class WxMaUserController {
         result.put("avatarUrl", userInfo.getAvatarUrl());
         result.put("apiToken", "");
         return AjaxResult.success(result);
+    }
+
+    @DeleteMapping("/account")
+    public AjaxResult cancelAccount(@RequestHeader(value = "X-Wx-AppId", required = false) String appId) {
+        String userId = WxMiniUserContext.getCurrentUserId();
+        UserInfo userInfo = userInfoService.selectUserInfoByUserId(userId);
+        if (userInfo == null) {
+            return AjaxResult.error("用户不存在");
+        }
+        String openIdHash = cancelRecordService.hashOpenId(appId, userInfo.getOpenId());
+        if (StringUtils.isNotBlank(openIdHash)) {
+            Date now = new Date();
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(now);
+            calendar.add(Calendar.DAY_OF_YEAR, Math.max(cancelReregisterDelayDays, 0));
+
+            UserAccountCancelRecord record = new UserAccountCancelRecord();
+            record.setAppId(appId);
+            record.setOpenIdHash(openIdHash);
+            record.setUserId(userInfo.getUserId());
+            record.setCancelTime(now);
+            record.setAllowRegisterTime(calendar.getTime());
+            cancelRecordService.saveCancelRecord(record);
+        }
+
+        userInfo.setUserName("已注销用户");
+        userInfo.setPhone("");
+        userInfo.setAvatarUrl("");
+        userInfo.setOpenId("");
+        userInfo.setUnionId("");
+        userInfo.setDelFlag("2");
+        userInfoService.updateUserInfo(userInfo);
+        return AjaxResult.success("账号已注销");
     }
 
     @PostMapping("/phone/bind")

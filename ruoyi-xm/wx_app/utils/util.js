@@ -6,7 +6,7 @@ const legacyImageMap = {
   'https://img.zcool.cn/community/01786555431210000019ae9d4c90b.jpg': '/assets/images/merchant-neck.png',
   'https://img.zcool.cn/community/01d8a155431210000019ae9d9c2d9.jpg': '/assets/images/merchant-fitness.png',
   'https://img.zcool.cn/community/01686555431210000019ae9d8c7f0.jpg': '/assets/images/merchant-meal.png',
-  'https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4nibH0KlMECNjjGxQUq24ZEaGT4poC6icRiccVGKSyXwibcPq4BWmiaIGuG1icwxaQX6grC9V62zibQ/132': '/assets/images/avatar.png'
+  'https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4nibH0KlMECNjjGxQUq24ZEaGT4poC6icRiccVGKSyXwibcPq4BWmiaIGuG1icwxaQX6grC9V62zibQ/132': '/assets/images/avatar.svg'
 }
 
 const orderStatusMap = {

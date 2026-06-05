@@ -229,7 +229,7 @@ const userInfo = {
   userId: 'user_001',
   openId: 'oK1qf5XXXXXXXXXXXXXXXX',
   nickName: '微信用户',
-  avatarUrl: '/assets/images/avatar.png',
+  avatarUrl: '/assets/images/avatar.svg',
   phone: '138****8888',
   gender: 0,
   createTime: 1777348800000

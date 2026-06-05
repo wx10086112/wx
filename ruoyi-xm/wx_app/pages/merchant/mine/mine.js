@@ -7,7 +7,8 @@ Page({
     staffUser: {},
     storeInfo: {},
     operationList: [],
-    managementList: []
+    managementList: [],
+    merchantNavList: util.getMerchantNavList('mine')
   },
 
   onShow() {
@@ -91,5 +92,12 @@ Page({
     wx.redirectTo({
       url: '/pages/merchant/login/login'
     })
+  },
+
+  goMerchantTab(e) {
+    const { url } = e.currentTarget.dataset
+    if (url) {
+      util.openMerchantMainPage(url)
+    }
   }
 })

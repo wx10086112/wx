@@ -1,24 +1,24 @@
 <view class="order-card" bindtap="onTap">
-  <view class="order-header flex flex-between flex-align-center">
-    <text class="order-no text-muted fs-24">订单号：{{viewOrder.orderNo}}</text>
+  <view class="order-header">
+    <text class="order-no">订单号 {{viewOrder.orderNo}}</text>
     <view class="status-badge {{viewOrder.statusClass}}">{{viewOrder.statusText}}</view>
   </view>
-  <view class="order-content flex mt-20">
+  <view class="order-content">
     <image src="{{viewOrder.image}}" class="order-image" mode="aspectFill"></image>
-    <view class="order-info flex-1 ml-20">
-      <view class="order-title text-ellipsis-2 fs-30">{{viewOrder.title}}</view>
-      <view class="order-merchant text-muted fs-24 mt-8">{{viewOrder.merchantName}}</view>
-      <view class="order-meta flex flex-between flex-align-center mt-12">
-        <text class="text-muted fs-22">数量 x{{viewOrder.quantity || 1}}</text>
-        <text wx:if="{{viewOrder.showWriteOffCode}}" class="write-off-code text-muted fs-24">核销码：{{viewOrder.writeOffCode}}</text>
+    <view class="order-info">
+      <view class="order-title">{{viewOrder.title}}</view>
+      <view class="order-merchant">{{viewOrder.merchantName}}</view>
+      <view class="order-meta">
+        <text>数量 x{{viewOrder.quantity || 1}}</text>
+        <text wx:if="{{viewOrder.showWriteOffCode}}" class="write-off-code">核销码 {{viewOrder.writeOffCode}}</text>
       </view>
-      <view class="order-price flex flex-between flex-align-center mt-16">
-        <text class="price fs-36">¥{{viewOrder.payAmountText}}</text>
-        <text class="text-muted fs-22">{{viewOrder.phone || '未绑定手机号'}}</text>
+      <view class="order-price">
+        <text class="price">¥{{viewOrder.payAmountText}}</text>
+        <text class="order-phone">{{viewOrder.phone || '未绑定手机号'}}</text>
       </view>
     </view>
   </view>
-  <view class="order-actions flex flex-end mt-20" wx:if="{{showActions}}">
+  <view class="order-actions" wx:if="{{showActions}}">
     <view wx:if="{{viewOrder.status === 'PENDING_PAY'}}" class="action-btns">
       <button class="action-btn action-btn-light" bindtap="onCancel">取消订单</button>
       <button class="action-btn action-btn-primary" bindtap="onPay">去支付</button>

@@ -1,6 +1,9 @@
 <view class="order-page">
   <view class="order-header-card">
-    <text class="order-title">订单中心</text>
+    <view class="order-heading">
+      <text class="order-title">我的订单</text>
+      <text class="order-subtitle">查看支付、核销与售后进度</text>
+    </view>
     <view class="order-stats">
       <view wx:for="{{orderStats}}" wx:key="label" class="order-stat-card">
         <text class="order-stat-value">{{item.value}}</text>
@@ -36,17 +39,19 @@
     ></order-card>
   </view>
 
-  <empty-state
-    wx:if="{{!loading && orderList.length === 0}}"
-    icon="📋"
-    text="当前状态下暂无订单"
-    showButton="{{true}}"
-    buttonText="去逛逛"
-    bind:buttonTap="goShopping"
-  ></empty-state>
+  <view wx:if="{{!loading && orderList.length === 0}}" class="order-empty">
+    <view class="empty-visual">
+      <view class="empty-line"></view>
+      <view class="empty-line short"></view>
+    </view>
+    <text class="empty-title">暂无相关订单</text>
+    <text class="empty-desc">下单后可以在这里查看支付、核销和售后进度</text>
+    <button class="empty-btn" bindtap="goShopping">去逛逛</button>
+  </view>
 
   <view class="loading-state" wx:if="{{loading}}">
-    <text class="loading-text">加载中...</text>
+    <view class="loading-dot"></view>
+    <text class="loading-text">正在加载订单</text>
   </view>
 
   <view class="write-off-modal" wx:if="{{showWriteOffModal}}" catchtouchmove="preventMove">
@@ -73,7 +78,7 @@
         </view>
         <view class="qr-code-section">
           <qrcode text="{{currentOrder.writeOffCode}}" size="{{280}}" />
-          <text class="qr-hint text-muted fs-22 mt-12">商家扫码后将自动变更为已完成</text>
+          <text class="qr-hint">商家扫码后将自动变更为已完成</text>
         </view>
         <view class="modal-footer">
           <button class="modal-action-btn" bindtap="confirmWriteOffResult">我知道了</button>

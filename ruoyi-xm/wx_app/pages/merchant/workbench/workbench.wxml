@@ -1,16 +1,17 @@
 <view class="page-shell">
   <!-- 顶部卡片 -->
-  <view class="hero-card">
+  <view class="hero-card panel">
     <view class="hero-top">
-      <view>
-        <text class="hero-store">{{storeInfo.storeName}}</text>
+      <view class="hero-identity">
+        <text class="hero-store">商家端</text>
         <text class="hero-role">{{staffUser.name}} · {{staffUser.roleName}}</text>
+        <text wx:if="{{storeInfo.storeName}}" class="hero-shop">{{storeInfo.storeName}}</text>
       </view>
       <view class="status-tag {{storeInfo.businessStatus ? 'green' : 'gray'}}">
         {{storeInfo.businessStatus ? '营业中' : '休息中'}}
       </view>
     </view>
-    <view class="hero-sales-row">
+    <view class="hero-sales-card interactive-card" hover-class="card-pressed" hover-stay-time="80">
       <view class="hero-sales-main">
         <text class="hero-sales-label">今日流水</text>
         <text class="hero-sales-value">¥{{todaySalesText}}</text>
@@ -23,8 +24,8 @@
 
   <!-- 提醒区域 -->
   <view wx:if="{{alertList.length}}" class="alert-section">
-    <view wx:for="{{alertList}}" wx:key="text" class="alert-item {{item.type}}" bindtap="goAlertOrders" data-filter="{{item.filter}}" data-action="{{item.action}}">
-      <text class="alert-icon">{{item.type === 'urgent' ? '🔔' : '⚠️'}}</text>
+    <view wx:for="{{alertList}}" wx:key="text" class="alert-item {{item.type}} interactive-card" hover-class="card-pressed" hover-stay-time="80" bindtap="goAlertOrders" data-filter="{{item.filter}}" data-action="{{item.action}}">
+      <text class="alert-dot"></text>
       <text class="alert-text">{{item.text}}</text>
       <text class="alert-arrow">›</text>
     </view>
@@ -32,26 +33,45 @@
 
   <!-- 数据概览 -->
   <view class="stats-grid">
-    <view wx:for="{{statsCardList}}" wx:key="label" class="stats-card panel {{item.highlight ? 'highlight' : ''}} {{item.warn ? 'warn' : ''}}">
+    <view
+      wx:for="{{statsCardList}}"
+      wx:key="label"
+      class="stats-card panel interactive-card {{item.highlight ? 'highlight' : ''}} {{item.warn ? 'warn' : ''}}"
+      hover-class="card-pressed"
+      hover-stay-time="80"
+      bindtap="goStatsCard"
+      data-url="{{item.url}}"
+      data-istab="{{item.isTab}}"
+      data-filter="{{item.filter}}"
+    >
+      <view class="stats-head">
+        <text class="stats-dot {{item.tone}}"></text>
+        <text class="stats-label">{{item.label}}</text>
+      </view>
       <text class="stats-value">{{item.value}}</text>
-      <text class="stats-label">{{item.label}}</text>
+      <text class="stats-caption">经营数据</text>
     </view>
   </view>
 
   <!-- 快捷入口 -->
   <view class="section panel">
-    <text class="section-title">快捷入口</text>
+    <view class="section-head">
+      <text class="section-title">快捷入口</text>
+      <text class="section-subtitle">常用经营操作</text>
+    </view>
     <view class="quick-grid">
       <view
         wx:for="{{quickActionList}}"
         wx:key="label"
-        class="quick-item"
+        class="quick-item interactive-card"
+        hover-class="card-pressed"
+        hover-stay-time="80"
         bindtap="goQuickAction"
         data-url="{{item.url}}"
         data-istab="{{item.isTab}}"
         data-filter="{{item.filter}}"
       >
-        <text class="quick-icon">{{item.icon}}</text>
+        <text class="quick-icon {{item.tone}}">{{item.icon}}</text>
         <text class="quick-label">{{item.label}}</text>
       </view>
     </view>
@@ -59,9 +79,12 @@
 
   <!-- 待处理订单 -->
   <view class="section panel">
-    <text class="section-title">待处理订单</text>
+    <view class="section-head">
+      <text class="section-title">待处理订单</text>
+      <text class="section-subtitle">近期需要处理</text>
+    </view>
     <view wx:if="{{pendingOrderList.length}}">
-      <view wx:for="{{pendingOrderList}}" wx:key="orderNo" class="pending-row" bindtap="goOrderDetail" data-orderno="{{item.orderNo}}">
+      <view wx:for="{{pendingOrderList}}" wx:key="orderNo" class="pending-row interactive-card" hover-class="card-pressed" hover-stay-time="80" bindtap="goOrderDetail" data-orderno="{{item.orderNo}}">
         <view class="pending-main">
           <text class="pending-title">{{item.title}}</text>
           <text class="pending-meta">{{item.customerName}} · {{item.payTimeText}}</text>
@@ -75,6 +98,19 @@
     </view>
     <view wx:else class="empty-inline">
       <text class="empty-text">当前没有待处理订单 🎉</text>
+    </view>
+  </view>
+
+  <view class="merchant-tabbar safe-area-bottom">
+    <view
+      wx:for="{{merchantNavList}}"
+      wx:key="key"
+      class="merchant-tabbar__item {{item.active ? 'active' : ''}}"
+      bindtap="goMerchantTab"
+      data-url="{{item.url}}"
+    >
+      <text class="merchant-tabbar__icon"></text>
+      <text class="merchant-tabbar__label">{{item.label}}</text>
     </view>
   </view>
 </view>

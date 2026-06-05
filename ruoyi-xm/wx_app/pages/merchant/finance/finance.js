@@ -6,7 +6,6 @@ const app = getApp()
 Page({
   data: {
     overview: {},
-    settlementAccount: {},
     settlementRecordList: [],
     ledgerList: [],
     filterTabs: [
@@ -15,6 +14,7 @@ Page({
       { label: '已到账', value: 'ARRIVED' },
       { label: '失败', value: 'FAILED' }
     ],
+    statsCards: [],
     currentFilter: 'ALL'
   },
 
@@ -35,9 +35,6 @@ Page({
   },
 
   renderSettlement(overview = {}) {
-    const settlementAccount = {
-      ...(overview.settlementAccount || {})
-    }
     const settlementRecordList = this.filterSettlementRecords(
       overview.settlementRecordList || overview.withdrawList || [],
       this.data.currentFilter
@@ -49,7 +46,8 @@ Page({
         applyTimeText: util.formatDate(item.applyTime),
         expectedTransferTimeText: util.formatDate(item.expectedTransferTime),
         arriveTimeText: item.arriveTime ? util.formatDate(item.arriveTime) : '',
-        statusText: this.getSettlementStatusText(item.status)
+        statusText: this.getSettlementStatusText(item.status),
+        statusClass: this.getSettlementStatusClass(item.status)
       }))
 
     const ledgerList = (overview.ledgerList || [])
@@ -60,8 +58,32 @@ Page({
         platformFeeAmountText: util.formatPrice(item.platformFeeAmount),
         finishTimeText: util.formatDate(item.finishTime),
         settleTimeText: util.formatDate(item.settleTime),
-        statusText: item.status === 'SETTLED' ? '已进入到账记录' : '等待 T+1 自动打款'
+        statusText: item.status === 'SETTLED' ? '已进入到账记录' : '等待 T+1 自动打款',
+        statusClass: item.status === 'SETTLED' ? 'arrived' : 'waiting'
       }))
+
+    const statsCards = [
+      {
+        label: '已到账',
+        value: `¥${util.formatPrice(overview.settledAmount)}`,
+        tone: 'arrived'
+      },
+      {
+        label: '打款中',
+        value: `¥${util.formatPrice(overview.processingAmount)}`,
+        tone: 'processing'
+      },
+      {
+        label: '待结算',
+        value: `¥${util.formatPrice(overview.pendingSettleAmount)}`,
+        tone: 'waiting'
+      },
+      {
+        label: '完成订单',
+        value: overview.completedOrderCount || 0,
+        tone: 'neutral'
+      }
+    ]
 
     this.setData({
       overview: {
@@ -75,7 +97,7 @@ Page({
         platformFeeText: util.formatPrice(overview.platformFeeAmount),
         nextAutoTransferTimeText: util.formatDate(overview.nextAutoTransferTime)
       },
-      settlementAccount,
+      statsCards,
       settlementRecordList,
       ledgerList
     })
@@ -101,6 +123,13 @@ Page({
     if (status === 'ARRIVED') return '已到账'
     if (status === 'FAILED') return '到账失败'
     return '处理中'
+  },
+
+  getSettlementStatusClass(status) {
+    if (status === 'ARRIVED') return 'arrived'
+    if (status === 'FAILED') return 'failed'
+    if (status === 'WAITING_T1') return 'waiting'
+    return 'processing'
   },
 
   switchFilter(e) {

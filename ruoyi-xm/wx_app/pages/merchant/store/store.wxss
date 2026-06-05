@@ -1,3 +1,37 @@
+.page-shell {
+  min-height: 100vh;
+  padding: 24rpx 24rpx 56rpx;
+  background: #faf8f3;
+  box-sizing: border-box;
+}
+
+.panel {
+  background: #ffffff;
+  border-radius: 36rpx;
+  border: 1px solid rgba(232, 229, 222, 0.9);
+  box-shadow: 0 18rpx 48rpx rgba(32, 28, 22, 0.06);
+  box-sizing: border-box;
+}
+
+.primary-btn {
+  height: 88rpx;
+  margin: 0;
+  padding: 0 28rpx;
+  border: none;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1d1d1f;
+  color: #ffffff;
+}
+
+.primary-btn::after {
+  border: none;
+}
+
 .form-panel {
   padding: 28rpx;
 }
@@ -5,14 +39,14 @@
 .panel-title {
   display: block;
   font-size: 30rpx;
-  color: #1f2a37;
+  color: #1d1d1f;
   font-weight: 700;
 }
 
 .panel-title.separator {
   margin-top: 32rpx;
   padding-top: 24rpx;
-  border-top: 1rpx solid #edf1f5;
+  border-top: 1rpx solid #efeae0;
 }
 
 .field {
@@ -26,19 +60,19 @@
 .field-label {
   display: block;
   font-size: 24rpx;
-  color: #7a8798;
+  color: #8a8a8e;
 }
 
 .field-input,
 .field-textarea {
   margin-top: 12rpx;
   width: 100%;
-  border-radius: 16rpx;
-  background: #f6f9ff;
+  border-radius: 24rpx;
+  background: #faf8f3;
   padding: 0 20rpx;
   box-sizing: border-box;
   font-size: 28rpx;
-  color: #1f2a37;
+  color: #1d1d1f;
 }
 
 .field-input {
@@ -61,10 +95,22 @@
   display: block;
   margin-top: 4rpx;
   font-size: 22rpx;
-  color: #9aa6b6;
+  color: #b0b0b5;
   line-height: 1.5;
 }
 
 .save-btn {
   margin-top: 30rpx;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+}
+
+.empty-text {
+  font-size: 26rpx;
+  color: #8a8a8e;
 }

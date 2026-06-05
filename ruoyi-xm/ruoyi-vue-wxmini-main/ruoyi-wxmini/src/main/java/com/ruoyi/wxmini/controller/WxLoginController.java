@@ -9,8 +9,10 @@ import com.ruoyi.mall.common.config.WxMaServiceManager;
 import com.ruoyi.mall.common.service.IWxMiniJwtService;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
+import com.ruoyi.mall.user.domain.UserAccountCancelRecord;
 import com.ruoyi.mall.user.bo.WxUserInfo;
 import com.ruoyi.mall.user.domain.UserInfo;
+import com.ruoyi.mall.user.service.IUserAccountCancelRecordService;
 import com.ruoyi.mall.user.service.IUserInfoService;
 import me.chanjar.weixin.common.error.WxErrorException;
 import org.apache.commons.lang3.StringUtils;
@@ -23,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @RestController
 @RequestMapping("/wxmini")
@@ -32,6 +36,9 @@ public class WxLoginController {
     @Value("${wxmini.login.test-enabled:false}")
     private boolean testLoginEnabled;
 
+    @Value("${wxmini.account.cancel-reregister-delay-days:7}")
+    private int cancelReregisterDelayDays;
+
     @Resource
     private WxMaServiceManager wxMaServiceManager;
     @Resource
@@ -40,6 +47,8 @@ public class WxLoginController {
     private IUserInfoService userInfoService;
     @Resource
     private IWxMiniJwtService jwtService;
+    @Resource
+    private IUserAccountCancelRecordService cancelRecordService;
 
     /**
      * 测试登录接口 - 仅开发环境可用
@@ -52,6 +61,11 @@ public class WxLoginController {
             return AjaxResult.error(403, "测试登录接口未启用");
         }
         String testOpenId = "test_openid_001";
+        String testAppId = StringUtils.defaultIfBlank(appid, "test");
+        AjaxResult blockResult = validateRegisterCooling(testAppId, testOpenId);
+        if (blockResult != null) {
+            return blockResult;
+        }
         UserInfo userInfo = userInfoService.selectUserInfoByOpenId(testOpenId);
         if (userInfo == null) {
             userInfo = new UserInfo();
@@ -116,6 +130,10 @@ public class WxLoginController {
         try {
             WxMaJscode2SessionResult session = maService.getUserService().getSessionInfo(code);
             String openId = session.getOpenid();
+            AjaxResult blockResult = validateRegisterCooling(appid, openId);
+            if (blockResult != null) {
+                return blockResult;
+            }
             UserInfo userInfo = userInfoService.selectUserInfoByOpenId(openId);
             if (userInfo == null) {
                 userInfo = new UserInfo();
@@ -135,5 +153,15 @@ public class WxLoginController {
             log.error("微信登录失败: appId={}, error={}", appid, e.getMessage(), e);
             return AjaxResult.error("微信登录失败");
         }
+    }
+
+    private AjaxResult validateRegisterCooling(String appId, String openId) {
+        String openIdHash = cancelRecordService.hashOpenId(appId, openId);
+        UserAccountCancelRecord record = cancelRecordService.selectActiveBlockRecord(appId, openIdHash, new Date());
+        if (record == null) {
+            return null;
+        }
+        String allowTime = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(record.getAllowRegisterTime());
+        return AjaxResult.error(429, "账号已注销，请于 " + allowTime + " 后重新注册");
     }
 }

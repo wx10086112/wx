@@ -18,9 +18,6 @@
   </view>
 
   <view wx:if="{{operationList.length}}" class="panel section-card">
-    <view class="section-head">
-      <text class="section-title">日常操作</text>
-    </view>
     <view
       wx:for="{{operationList}}"
       wx:key="title"
@@ -37,9 +34,6 @@
   </view>
 
   <view wx:if="{{managementList.length}}" class="panel section-card">
-    <view class="section-head">
-      <text class="section-title">门店管理</text>
-    </view>
     <view
       wx:for="{{managementList}}"
       wx:key="title"
@@ -56,4 +50,16 @@
   </view>
 
   <button class="logout-btn" bindtap="logout">退出登录</button>
+
+  <view class="merchant-tabbar safe-area-bottom">
+    <view
+      wx:for="{{merchantNavList}}"
+      wx:key="key"
+      class="merchant-tabbar__item {{item.active ? 'active' : ''}}"
+      bindtap="goMerchantTab"
+      data-url="{{item.url}}"
+    >
+      <text class="merchant-tabbar__label">{{item.label}}</text>
+    </view>
+  </view>
 </view>

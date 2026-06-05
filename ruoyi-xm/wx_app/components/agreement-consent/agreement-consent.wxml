@@ -39,15 +39,18 @@
         <text class="agreement-doc__p">你可以在本小程序中浏览门店及商品信息、购买团购或服务项目、提交订单、完成微信支付、查看订单、申请退款、到店出示核销码、联系门店客服、编辑头像昵称，以及在商户身份下登录商家工作台、管理门店、商品、订单、员工、核销和营销信息。</text>
         <text class="agreement-doc__section">二、账号与资料</text>
         <text class="agreement-doc__p">C端用户通过微信登录并可授权手机号用于订单履约和售后联系；商家端账号由平台或店长创建，商家员工应妥善保管账号密码，不得转借、出租或出售。你应保证提交的手机号、昵称、头像、订单联系人、商家门店资料、员工姓名和联系电话等信息真实、准确、合法、有效。</text>
-        <text class="agreement-doc__section">三、订单、支付与核销</text>
+        <text class="agreement-doc__section">三、账号注销与再次注册</text>
+        <text class="agreement-doc__p">你可以在“个人信息—账号管理—注销账号”中申请注销。注销后，头像、昵称、手机号等账号资料将删除或匿名化，当前登录状态会立即失效；历史订单、支付、退款、售后和财务记录会按法律法规、交易履约、税务审计和争议处理要求保留必要信息。</text>
+        <text class="agreement-doc__p">为防止反复注销、注册滥用新用户权益、优惠、售后或风控规则，注销成功后 7 天内，同一微信身份暂不能在同一小程序重新注册。冷静期结束后，你可以重新通过微信登录注册新账号，新账号默认不继承已注销账号的历史订单和权益。</text>
+        <text class="agreement-doc__section">四、订单、支付与核销</text>
         <text class="agreement-doc__p">商品名称、价格、库存、有效期、预约规则、退款规则、营业时间、门店地址等以小程序页面和订单详情展示为准。支付成功后系统生成订单和到店核销码，你应在有效期内按规则使用。因库存、门店营业、不可抗力或第三方服务异常导致服务调整的，商户将按实际情况与订单规则处理。</text>
-        <text class="agreement-doc__section">四、退款与售后</text>
+        <text class="agreement-doc__section">五、退款与售后</text>
         <text class="agreement-doc__p">你可以在订单页发起取消订单、申请退款或联系商户。退款审核、退款金额、到账时间以订单状态、商户规则、微信支付和银行处理结果为准。已核销、已使用或不符合退款规则的订单，商户可按页面规则拒绝退款。</text>
-        <text class="agreement-doc__section">五、用户行为规范</text>
+        <text class="agreement-doc__section">六、用户行为规范</text>
         <text class="agreement-doc__p">你不得利用本服务进行虚假交易、恶意下单、恶意退款、违规核销、刷单、干扰系统运行、绕过权限管理、上传违法内容、冒用他人信息，或实施侵害平台、商户、其他用户及第三方合法权益的行为。违反规则造成损失的，应依法承担相应责任。</text>
-        <text class="agreement-doc__section">六、服务变更与责任限制</text>
+        <text class="agreement-doc__section">七、服务变更与责任限制</text>
         <text class="agreement-doc__p">平台和商户可基于业务调整、系统维护、法律法规或监管要求对服务内容进行更新。因微信、支付机构、网络运营商、设备系统、不可抗力或用户自身原因导致的服务中断、失败或损失，将在法律允许范围内按实际责任承担。</text>
-        <text class="agreement-doc__section">七、协议更新</text>
+        <text class="agreement-doc__section">八、协议更新</text>
         <text class="agreement-doc__p">本协议更新后会在小程序内展示。若更新涉及你的重要权益，我们会以弹窗、页面提示等方式再次提醒。你继续使用本小程序，即表示你已阅读并接受更新后的协议。</text>
       </view>
 
@@ -68,15 +71,18 @@
         <text class="agreement-doc__p">为完成支付，本小程序会调用微信支付能力处理订单号、支付金额、支付状态、用户标识等必要交易信息。若后续接入地图、客服、消息订阅、云存储或其他第三方服务，将在相关页面或隐私指引中补充说明。</text>
         <text class="agreement-doc__section">四、存储期限</text>
         <text class="agreement-doc__p">账号资料在你使用服务期间保存；订单、支付、退款、核销和财务相关信息会按照交易履约、售后、税务、审计、争议处理及法律法规要求保存。超出必要期限后，我们会删除或匿名化处理，法律法规另有规定的除外。</text>
-        <text class="agreement-doc__section">五、信息使用规则</text>
+        <text class="agreement-doc__section">五、账号注销与个人信息处理</text>
+        <text class="agreement-doc__p">你申请注销账号后，我们会删除或匿名化处理头像、昵称、手机号、微信登录标识等账号资料，并使当前登录状态失效。订单、支付、退款、核销、售后、财务对账和争议处理所需的必要记录，会按照法律法规和交易合规要求继续保存。</text>
+        <text class="agreement-doc__p">为防止注销后立即重新注册导致权益、优惠、售后或风控规则被滥用，我们会保存同一小程序下微信登录标识的哈希值和允许重新注册时间，用于判断 7 天冷静期。该哈希值不直接展示为你的 openid，冷静期届满后仅用于必要的风控留痕。</text>
+        <text class="agreement-doc__section">六、信息使用规则</text>
         <text class="agreement-doc__p">我们会在本指引明示目的内使用收集的信息。若使用目的、处理方式或处理范围发生重大变化，我们会通过弹窗、协议更新或页面提示重新告知，并在依法需要时再次取得你的明示同意。</text>
-        <text class="agreement-doc__section">六、信息对外提供</text>
+        <text class="agreement-doc__section">七、信息对外提供</text>
         <text class="agreement-doc__p">我们不会主动出售、出租或非法共享你的个人信息。为完成订单履约、支付、退款、核销、客服、财务结算和监管合规，必要信息可能在平台、当前小程序所属商户、微信支付及依法有权机关之间处理。涉及新增第三方共享时，将按法律法规要求另行告知或取得同意。</text>
-        <text class="agreement-doc__section">七、你的权利</text>
+        <text class="agreement-doc__section">八、你的权利</text>
         <text class="agreement-doc__p">你可以在小程序个人中心查看或编辑头像昵称等资料；可以在微信“小程序设置”中管理定位、手机号等授权；可以通过订单页申请退款或联系商户。关于位置信息，你可在小程序右上角“...” — “设置”中撤回授权；关于手机号等已获取信息，你可在“小程序已获取的信息”中通知开发者删除。</text>
-        <text class="agreement-doc__section">八、未成年人保护</text>
+        <text class="agreement-doc__section">九、未成年人保护</text>
         <text class="agreement-doc__p">未成年人使用本小程序应取得监护人同意。若监护人认为未成年人个人信息被不当处理，可通过商户客服或平台运营渠道联系我们处理。</text>
-        <text class="agreement-doc__section">九、联系方式</text>
+        <text class="agreement-doc__section">十、联系方式</text>
         <text class="agreement-doc__p">如你对个人信息处理有查阅、复制、更正、删除、撤回授权、注销或投诉建议等需求，可优先通过小程序“联系客服”、订单详情页商家联系方式或平台运营人员处理。正式上线前，请在小程序后台补充运营主体的有效邮箱或客服电话。</text>
       </view>
 
