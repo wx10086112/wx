@@ -17,7 +17,6 @@
         <text class="stats-label">{{item.label}}</text>
       </view>
       <text class="stats-value">{{item.value}}</text>
-      <text class="stats-caption">实时结算统计</text>
     </view>
   </view>
 

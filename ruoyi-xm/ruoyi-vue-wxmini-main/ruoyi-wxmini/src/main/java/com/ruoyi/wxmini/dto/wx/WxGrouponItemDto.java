@@ -17,6 +17,7 @@ public class WxGrouponItemDto {
     private Integer stock;
     private Integer validDays;
     private String validPeriod;
+    private String verifyNotice;
     private Long categoryId;
     private String categoryName;
     private List<String> tags;
@@ -55,6 +56,8 @@ public class WxGrouponItemDto {
     public void setValidDays(Integer validDays) { this.validDays = validDays; }
     public String getValidPeriod() { return validPeriod; }
     public void setValidPeriod(String validPeriod) { this.validPeriod = validPeriod; }
+    public String getVerifyNotice() { return verifyNotice; }
+    public void setVerifyNotice(String verifyNotice) { this.verifyNotice = verifyNotice; }
     public Long getCategoryId() { return categoryId; }
     public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
     public String getCategoryName() { return categoryName; }

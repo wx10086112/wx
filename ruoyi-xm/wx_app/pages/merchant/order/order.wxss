@@ -112,26 +112,46 @@
 .order-top {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 18rpx;
+}
+
+.order-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.order-side {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10rpx;
+  text-align: right;
 }
 
 .order-no {
-  font-size: 24rpx;
+  display: block;
+  margin-top: 10rpx;
+  font-size: 22rpx;
   color: #8a8a8e;
 }
 
 .order-title {
-  display: block;
-  margin-top: 18rpx;
   font-size: 32rpx;
   color: #1d1d1f;
   font-weight: 600;
 }
 
-.order-meta,
-.order-code {
+.order-time {
+  color: #8a8a8e;
+  font-size: 22rpx;
+  line-height: 1.4;
+}
+
+.order-meta {
   display: block;
-  margin-top: 10rpx;
+  margin-top: 14rpx;
   font-size: 24rpx;
   color: #8a8a8e;
 }
@@ -147,8 +167,8 @@
 .order-bottom {
   margin-top: 20rpx;
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  align-items: center;
+  justify-content: space-between;
   gap: 16rpx;
 }
 
@@ -161,12 +181,11 @@
 .order-actions {
   display: flex;
   gap: 12rpx;
-  width: 100%;
+  flex-shrink: 0;
 }
 
 .action-btn {
-  flex: 1;
-  min-width: 0;
+  min-width: 132rpx;
   height: 64rpx;
   display: flex;
   align-items: center;

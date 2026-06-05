@@ -7,6 +7,7 @@ const merchantEntry = require('../../utils/merchant-entry')
 const MENU_LIST = [
   { label: '个人资料', type: 'profile', icon: 'profile' },
   { label: '在线客服', type: 'contact', icon: 'service' },
+  { label: '设置', type: 'settings', icon: 'settings' },
   { label: '商家入口', type: 'merchant', icon: 'merchant' }
 ]
 
@@ -106,6 +107,10 @@ Page({
     }
     if (type === 'contact') {
       this.goContact()
+      return
+    }
+    if (type === 'settings') {
+      this.goSettings()
       return
     }
     if (type === 'merchant') {

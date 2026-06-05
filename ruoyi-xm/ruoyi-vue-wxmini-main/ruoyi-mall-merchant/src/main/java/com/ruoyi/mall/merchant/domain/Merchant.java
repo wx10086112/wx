@@ -27,6 +27,8 @@ public class Merchant extends BaseEntity {
     private String avatar;
     private String description;
     private String businessHours;
+    private Integer supportRefund;
+    private Integer supportBooking;
     private Integer productCount;
     private Integer storeCount;
     private String cMiniAppId;
@@ -102,6 +104,10 @@ public class Merchant extends BaseEntity {
     public void setDescription(String description) { this.description = description; }
     public String getBusinessHours() { return businessHours; }
     public void setBusinessHours(String businessHours) { this.businessHours = businessHours; }
+    public Integer getSupportRefund() { return supportRefund; }
+    public void setSupportRefund(Integer supportRefund) { this.supportRefund = supportRefund; }
+    public Integer getSupportBooking() { return supportBooking; }
+    public void setSupportBooking(Integer supportBooking) { this.supportBooking = supportBooking; }
     public Integer getProductCount() { return productCount; }
     public void setProductCount(Integer productCount) { this.productCount = productCount; }
     public Integer getStoreCount() { return storeCount; }

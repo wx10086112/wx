@@ -47,14 +47,13 @@ Page({
     const goodsList = util.getGoodsList()
     const storeInfo = util.getStoreInfo()
     const stats = util.buildWorkbenchStats(orderList, goodsList)
-    const lowStockCount = util.getLowStockGoods(Number(storeInfo.stockAlertThreshold || 20)).length
 
     this.setData({
       staffUser: app.globalData.staffUser || merchantMock.buildStaffUser('owner'),
       storeInfo,
       todaySalesText: util.formatPrice(stats.todaySalesAmount),
       statsCardList: this.buildStatsCardList(stats),
-      alertList: this.buildAlertList(stats, lowStockCount, Number(storeInfo.stockAlertThreshold || 20)),
+      alertList: this.buildAlertList(stats),
       quickActionList: this.buildQuickActions(),
       pendingOrderList: this.buildPendingOrderList(orderList)
     })
@@ -124,20 +123,13 @@ Page({
     ]
   },
 
-  buildAlertList(stats = {}, lowStockCount = 0, threshold = 20) {
+  buildAlertList(stats = {}) {
     const alertList = []
     if ((stats.refundingCount || 0) > 0) {
       alertList.push({
         type: 'warning',
         text: `有 ${stats.refundingCount} 个退款订单等待处理。`,
         filter: 'REFUNDING'
-      })
-    }
-    if (lowStockCount > 0) {
-      alertList.push({
-        type: 'warning',
-        text: `${lowStockCount} 个商品库存不足（≤${threshold}），请及时补货。`,
-        action: 'goods'
       })
     }
     return alertList
@@ -177,9 +169,16 @@ Page({
       ...this.data.storeInfo,
       businessStatus: !this.data.storeInfo.businessStatus
     }
-    util.setStoreInfo(storeInfo)
-    this.setData({ storeInfo })
-    util.showToast(storeInfo.businessStatus ? '已切换为营业中' : '已切换为休息中', 'success')
+    api.updateMerchantProfile(storeInfo)
+      .then((savedStoreInfo) => {
+        const nextStoreInfo = savedStoreInfo || storeInfo
+        util.setStoreInfo(nextStoreInfo)
+        this.setData({ storeInfo: nextStoreInfo })
+        util.showToast(nextStoreInfo.businessStatus ? '已切换为营业中' : '已切换为休息中', 'success')
+      })
+      .catch(() => {
+        util.showToast('营业状态更新失败，请重试')
+      })
   },
 
   goQuickAction(e) {

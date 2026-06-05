@@ -63,8 +63,7 @@
   color: #8a8a8e;
 }
 
-.field-input,
-.field-textarea {
+.field-input {
   margin-top: 12rpx;
   width: 100%;
   border-radius: 24rpx;
@@ -79,24 +78,11 @@
   height: 84rpx;
 }
 
-.field-textarea {
-  min-height: 160rpx;
-  padding-top: 18rpx;
-}
-
 .switch-row {
   margin-top: 24rpx;
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.field-hint {
-  display: block;
-  margin-top: 4rpx;
-  font-size: 22rpx;
-  color: #b0b0b5;
-  line-height: 1.5;
 }
 
 .save-btn {

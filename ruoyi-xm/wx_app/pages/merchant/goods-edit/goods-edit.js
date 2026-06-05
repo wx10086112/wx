@@ -41,7 +41,6 @@ Page({
     form: {
       title: '',
       subtitle: '',
-      categoryName: '',
       imageUrl: '',
       imageCrop: DEFAULT_IMAGE_CROP,
       price: '',
@@ -177,7 +176,6 @@ Page({
       goodsId: this.data.goodsId || null,
       title: form.title,
       subtitle: form.subtitle,
-      categoryName: form.categoryName,
       imageUrl: form.imageUrl,
       imageCrop: normalizeCropWithOffset(form.imageCrop),
       price: Math.round(Number(form.price || 0) * 100),

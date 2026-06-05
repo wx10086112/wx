@@ -113,13 +113,12 @@ Page({
   renderWorkbench(response = {}) {
     const stats = response.stats || {}
     const storeInfo = response.storeInfo || util.getStoreInfo()
-    const threshold = Number(storeInfo.stockAlertThreshold || 20)
     this.setData({
       staffUser: response.staffUser || app.globalData.staffUser || {},
       storeInfo,
       todaySalesText: util.formatPrice(stats.todaySalesAmount),
       statsCardList: this.buildStatsCardList(stats),
-      alertList: this.buildAlertList(stats, util.getLowStockGoods(threshold).length, threshold),
+      alertList: this.buildAlertList(stats),
       quickActionList: this.buildQuickActions(),
       pendingOrderList: this.buildPendingOrderList(response.pendingOrderList || [])
     })
@@ -134,13 +133,10 @@ Page({
     ]
   },
 
-  buildAlertList(stats = {}, lowStockCount = 0, threshold = 20) {
+  buildAlertList(stats = {}) {
     const alertList = []
     if ((stats.refundingCount || 0) > 0) {
       alertList.push({ text: `有 ${stats.refundingCount} 个退款订单等待处理。`, tab: 'order', filter: 'REFUNDING' })
-    }
-    if (lowStockCount > 0) {
-      alertList.push({ text: `${lowStockCount} 个商品库存不足（≤${threshold}），请及时补货。`, tab: 'goods' })
     }
     return alertList
   },
@@ -185,9 +181,16 @@ Page({
   toggleBusinessStatus() {
     if (!app.needPermission(['store.manage'])) return
     const storeInfo = { ...this.data.storeInfo, businessStatus: !this.data.storeInfo.businessStatus }
-    util.setStoreInfo(storeInfo)
-    this.setData({ storeInfo })
-    util.showToast(storeInfo.businessStatus ? '已切换为营业中' : '已切换为休息中', 'success')
+    api.updateMerchantProfile(storeInfo)
+      .then((savedStoreInfo) => {
+        const nextStoreInfo = savedStoreInfo || storeInfo
+        util.setStoreInfo(nextStoreInfo)
+        this.setData({ storeInfo: nextStoreInfo })
+        util.showToast(nextStoreInfo.businessStatus ? '已切换为营业中' : '已切换为休息中', 'success')
+      })
+      .catch(() => {
+        util.showToast('营业状态更新失败，请重试')
+      })
   },
 
   loadOrders() {
@@ -242,8 +245,7 @@ Page({
         ...item,
         priceText: util.formatPrice(item.price),
         originalPriceText: util.formatPrice(item.originalPrice),
-        imageCropStyle: buildImageCropStyle(item.imageCrop),
-        lowStock: item.status === 'ON_SHELF' && Number(item.stock || 0) <= 20
+        imageCropStyle: buildImageCropStyle(item.imageCrop)
       }))
     this.setData({ goodsList })
   },
@@ -275,7 +277,7 @@ Page({
   },
 
   handleCodeInput(e) {
-    this.setData({ manualCode: e.detail.value.trim() })
+    this.setData({ manualCode: String(e.detail.value || '').trim().toUpperCase() })
   },
 
   scanCode() {
@@ -292,11 +294,12 @@ Page({
       util.showToast('请输入核销码')
       return
     }
-    this.processVerifyCode(this.data.manualCode)
+    this.processVerifyCode(String(this.data.manualCode || '').trim().toUpperCase())
   },
 
   processVerifyCode(code) {
-    api.writeOffByCode(code)
+    const normalizedCode = String(code || '').trim().toUpperCase()
+    api.writeOffByCode(normalizedCode)
       .then((response) => {
         this.setData({
           verifyResult: {
@@ -310,14 +313,14 @@ Page({
         this.loadVerifyRecords()
       })
       .catch(() => {
-        const result = util.verifyOrderByCode(code, app.globalData.staffUser || {})
+        const result = util.verifyOrderByCode(normalizedCode, app.globalData.staffUser || {})
         this.setData({
           verifyResult: result.order ? {
             ...result.order,
             payAmountText: util.formatPrice(result.order.payAmount),
             verifyTimeText: util.formatDate(result.order.verifyTime)
           } : null,
-          manualCode: result.success ? '' : this.data.manualCode
+          manualCode: result.success ? '' : normalizedCode
         })
         util.showToast(result.message, result.success ? 'success' : 'none')
         this.loadVerifyRecords()

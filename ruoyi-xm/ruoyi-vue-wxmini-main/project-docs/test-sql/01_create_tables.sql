@@ -29,6 +29,8 @@ CREATE TABLE `merchant` (
   `avatar` VARCHAR(255) DEFAULT '' COMMENT '商家头像/封面',
   `description` VARCHAR(500) DEFAULT '' COMMENT '商家简介',
   `business_hours` VARCHAR(100) DEFAULT '' COMMENT '营业时间(如 09:00-22:00)',
+  `support_refund` TINYINT DEFAULT 1 COMMENT '是否支持退款(0否 1是)',
+  `support_booking` TINYINT DEFAULT 1 COMMENT '是否支持预约(0否 1是)',
   `product_count` INT DEFAULT 0 COMMENT '商品数量',
   `store_count` INT DEFAULT 0 COMMENT '门店数量',
   `c_mini_app_id` VARCHAR(64) DEFAULT NULL COMMENT 'C端小程序AppID',
@@ -181,6 +183,7 @@ CREATE TABLE `product` (
   `status` TINYINT DEFAULT 0 COMMENT '状态(0下架 1上架)',
   `verify_type` TINYINT DEFAULT 1 COMMENT '核销方式: 1在线核销 2到店自提',
   `valid_days` INT DEFAULT 30 COMMENT '购买后有效天数',
+  `verify_notice` VARCHAR(500) DEFAULT '' COMMENT '核销说明',
   `description` VARCHAR(1000) DEFAULT '' COMMENT '商品描述',
   `store_ids` VARCHAR(500) DEFAULT '' COMMENT '可用门店ID列表(JSON数组)',
   `sort` INT DEFAULT 0 COMMENT '排序(越大越前)',
@@ -323,7 +326,7 @@ CREATE TABLE `mall_order` (
   KEY `idx_user_id` (`user_id`),
   KEY `idx_store_id` (`store_id`),
   KEY `idx_status` (`status`),
-  KEY `idx_write_off_code` (`write_off_code`)
+    UNIQUE KEY `uk_write_off_code` (`write_off_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单表';
 
 -- 13. 订单商品明细表

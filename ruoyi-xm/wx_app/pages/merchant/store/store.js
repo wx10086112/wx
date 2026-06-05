@@ -9,16 +9,12 @@ Page({
     form: {
       storeName: '',
       brandSlogan: '',
-      notice: '',
       businessHours: '',
       phone: '',
       address: '',
-      serviceTagsText: '',
-      bannerTitlesText: '',
       businessStatus: true,
       supportRefund: true,
-      supportBooking: true,
-      stockAlertThreshold: '20'
+      supportBooking: true
     }
   },
 
@@ -46,10 +42,14 @@ Page({
   renderStoreForm(storeInfo = {}) {
     this.setData({
       form: {
-        ...storeInfo,
-        serviceTagsText: (storeInfo.serviceTags || []).join('、'),
-        bannerTitlesText: (storeInfo.bannerTitles || []).join('、'),
-        stockAlertThreshold: String(storeInfo.stockAlertThreshold || 20)
+        storeName: storeInfo.storeName || '',
+        brandSlogan: storeInfo.brandSlogan || '',
+        businessHours: storeInfo.businessHours || '',
+        phone: storeInfo.phone || '',
+        address: storeInfo.address || '',
+        businessStatus: storeInfo.businessStatus !== false,
+        supportRefund: storeInfo.supportRefund !== false,
+        supportBooking: storeInfo.supportBooking !== false
       }
     })
   },
@@ -71,16 +71,14 @@ Page({
   saveStore() {
     const form = this.data.form
     const storeInfo = {
-      ...form,
-      stockAlertThreshold: Number(form.stockAlertThreshold || 20),
-      serviceTags: (form.serviceTagsText || '')
-        .split('、')
-        .map((item) => item.trim())
-        .filter(Boolean),
-      bannerTitles: (form.bannerTitlesText || '')
-        .split('、')
-        .map((item) => item.trim())
-        .filter(Boolean)
+      storeName: form.storeName,
+      brandSlogan: form.brandSlogan,
+      businessHours: form.businessHours,
+      phone: form.phone,
+      address: form.address,
+      businessStatus: form.businessStatus,
+      supportRefund: form.supportRefund,
+      supportBooking: form.supportBooking
     }
 
     api

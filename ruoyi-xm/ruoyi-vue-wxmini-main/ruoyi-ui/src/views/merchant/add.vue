@@ -49,28 +49,16 @@
         <el-form-item label="商家简介" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入商家简介" />
         </el-form-item>
-        <el-divider content-position="left">小程序配置</el-divider>
+        <el-divider content-position="left">统一小程序配置</el-divider>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="C端AppID">
-              <el-input v-model="form.cMiniAppId" placeholder="C端小程序AppID" />
+            <el-form-item label="AppID">
+              <el-input v-model="form.cMiniAppId" placeholder="统一小程序 AppID" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="C端Secret">
-              <el-input v-model="form.cMiniAppSecret" placeholder="C端小程序Secret" show-password />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="商家端AppID">
-              <el-input v-model="form.mMiniAppId" placeholder="商家端小程序AppID" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="商家端Secret">
-              <el-input v-model="form.mMiniAppSecret" placeholder="商家端小程序Secret" show-password />
+            <el-form-item label="Secret">
+              <el-input v-model="form.cMiniAppSecret" placeholder="统一小程序 Secret" show-password />
             </el-form-item>
           </el-col>
         </el-row>
@@ -116,8 +104,6 @@ export default {
         description: '',
         cMiniAppId: '',
         cMiniAppSecret: '',
-        mMiniAppId: '',
-        mMiniAppSecret: '',
         wxPayMchId: '',
         wxPayApiKey: '',
         status: 1
@@ -156,13 +142,13 @@ export default {
       }
     },
     handleSubmit() {
-      this.$refs.form.validate(async (valid) => {
+      this.$refs.form.validate(async(valid) => {
         if (!valid) return
         this.loading = true
         try {
-          await addMerchant(this.form)
+          await addMerchant({ ...this.form })
           this.$message.success('添加成功，商户已启用')
-          this.$router.push({ path: '/merchant/list' })
+          this.$router.push({ path: '/merchant/list', query: { refresh: Date.now() }})
         } catch (e) {
           this.$message.error('添加失败')
         } finally {

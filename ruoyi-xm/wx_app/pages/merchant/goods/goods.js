@@ -60,8 +60,7 @@ Page({
         priceText: util.formatPrice(item.price),
         originalPriceText: util.formatPrice(item.originalPrice),
         imageCropStyle: buildImageCropStyle(item.imageCrop),
-        selected: this.data.selectedIds.includes(item.goodsId),
-        lowStock: item.status === 'ON_SHELF' && Number(item.stock || 0) <= 20
+        selected: this.data.selectedIds.includes(item.goodsId)
       }))
 
     this.setData({

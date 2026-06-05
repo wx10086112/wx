@@ -9,58 +9,51 @@
   </view>
 
   <view wx:else class="detail-content">
-    <view class="store-card">
-      <view class="store-main">
-        <image wx:if="{{merchant.avatar || merchant.coverImage}}" src="{{merchant.avatar || merchant.coverImage}}" class="store-avatar" mode="aspectFill"></image>
-        <view wx:else class="store-avatar placeholder">
-          <text>店</text>
+    <view class="hero-section">
+      <view class="hero-media">
+        <image
+          wx:if="{{merchant.heroImage}}"
+          src="{{merchant.heroImage}}"
+          class="hero-image"
+          mode="aspectFill"
+        ></image>
+        <view wx:else class="hero-image placeholder">
+          <text class="placeholder-text">{{merchant.name || '门店'}}</text>
         </view>
-        <view class="store-info">
-          <view class="store-name-row">
-            <text class="store-name">{{merchant.name || '暂无商家名称'}}</text>
-            <view class="store-status {{merchant.businessStatus ? 'open' : 'closed'}}">
-              {{merchant.businessStatusText}}
+      </view>
+
+      <view class="hero-card">
+        <view class="hero-card-head">
+          <view class="hero-title-block">
+            <text class="hero-title">{{merchant.name || '暂无商家名称'}}</text>
+            <view class="hero-meta-row">
+              <text class="hero-status {{merchant.businessStatus ? 'open' : 'closed'}}">{{merchant.businessStatusText}}</text>
+              <text class="hero-meta-text">月售 {{merchant.sales || 0}}</text>
+              <text wx:if="{{merchant.distance}}" class="hero-meta-text">距您 {{merchant.distance}}</text>
             </view>
           </view>
-          <view class="store-sales-row">
-            <text>月售{{merchant.sales || 0}}</text>
+          <view class="hero-nav-action" catchtap="viewLocation">
+            <text class="hero-nav-icon">➜</text>
+            <text class="hero-nav-text">导航</text>
           </view>
-          <view wx:if="{{merchant.displayTags.length}}" class="store-tag-row">
-            <text wx:for="{{merchant.displayTags}}" wx:key="index" class="store-tag">{{item}}</text>
+        </view>
+
+        <view wx:if="{{merchant.displayTags.length || merchant.bookingText}}" class="hero-tag-row">
+          <text wx:for="{{merchant.displayTags}}" wx:key="index" class="hero-tag">{{item}}</text>
+          <text wx:if="{{merchant.bookingText}}" class="hero-tag highlight">{{merchant.bookingText}}</text>
+        </view>
+
+        <view class="hero-address-row">
+          <view class="hero-address-main">
+            <text class="hero-address">{{merchant.address || '暂无门店地址'}}</text>
+            <text class="hero-hours">{{merchant.businessHoursText || merchant.businessHours || '暂无营业时间'}}</text>
+          </view>
+          <view class="hero-phone-action" catchtap="makePhoneCall">
+            <text class="hero-phone-icon">☎</text>
+            <text class="hero-phone-text">联系门店</text>
           </view>
         </view>
       </view>
-
-      <view class="store-time-row">
-        <text class="time-strong">今日 {{merchant.businessHours || '暂无营业时间'}}</text>
-        <text class="mini-tag">{{merchant.bookingText}}</text>
-      </view>
-
-      <view class="store-address-row">
-        <view class="address-main">
-          <text class="store-address">{{merchant.address || '暂无门店地址'}}</text>
-          <text wx:if="{{merchant.distance}}" class="distance-text">距您 {{merchant.distance}}</text>
-        </view>
-        <view class="store-actions">
-          <view class="store-action" catchtap="viewLocation">
-            <text class="action-icon">⌖</text>
-            <text>导航</text>
-          </view>
-          <view class="store-action" catchtap="makePhoneCall">
-            <text class="action-icon">☎</text>
-            <text>电话</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <view class="detail-card">
-      <view class="card-title-row">
-        <text class="card-title">营业时间</text>
-        <text class="card-tag">{{merchant.businessStatusText}}</text>
-      </view>
-      <text class="primary-text">{{merchant.businessHoursText || merchant.businessHours || '暂无营业时间'}}</text>
-      <text class="muted-text">具体接待情况以门店实时确认为准</text>
     </view>
 
     <view wx:if="{{merchant.description}}" class="detail-card">
@@ -68,14 +61,6 @@
         <text class="card-title">商家简介</text>
       </view>
       <text class="primary-text">{{merchant.description}}</text>
-    </view>
-
-    <view class="detail-card">
-      <view class="card-title-row">
-        <text class="card-title">门店地址</text>
-        <text wx:if="{{merchant.distance}}" class="distance-pill">距您 {{merchant.distance}}</text>
-      </view>
-      <text class="primary-text">{{merchant.address || '暂无门店地址'}}</text>
     </view>
 
     <view class="detail-card">
@@ -95,19 +80,6 @@
         </view>
       </view>
       <text wx:if="{{!merchant.serviceAbilityTags.length && !merchant.facilityTags.length}}" class="muted-text no-margin">暂无服务能力说明</text>
-    </view>
-
-    <view class="detail-card">
-      <view class="card-title-row">
-        <text class="card-title">门店相册</text>
-        <text class="muted-inline">{{albumList.length}} 张</text>
-      </view>
-      <view wx:if="{{albumList.length}}" class="album-grid">
-        <view wx:for="{{albumList}}" wx:key="index" class="album-item" bindtap="previewAlbum" data-index="{{index}}">
-          <image src="{{item}}" class="album-image" mode="aspectFill"></image>
-        </view>
-      </view>
-      <text wx:else class="muted-text no-margin">暂无门店图片</text>
     </view>
 
     <view wx:if="{{storeList.length}}" class="detail-card">

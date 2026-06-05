@@ -7,9 +7,6 @@
           <text class="user-name">{{userInfo.nickName || '微信用户'}}</text>
         </view>
       </view>
-      <view class="settings-btn" bindtap="goSettings" aria-label="设置">
-        <view class="settings-icon"></view>
-      </view>
     </view>
 
   </view>

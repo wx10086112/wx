@@ -37,6 +37,11 @@ public class MallOrderServiceImpl implements IMallOrderService {
     }
 
     @Override
+    public MallOrder selectOrderByWriteOffCode(String code) {
+        return mallOrderMapper.selectOrderByWriteOffCode(code);
+    }
+
+    @Override
     public List<MallOrder> selectMallOrderList(MallOrder mallOrder) {
         return mallOrderMapper.selectMallOrderList(mallOrder);
     }

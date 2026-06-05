@@ -20,6 +20,8 @@
         <result property="avatar" column="avatar"/>
         <result property="description" column="description"/>
         <result property="businessHours" column="business_hours"/>
+        <result property="supportRefund" column="support_refund"/>
+        <result property="supportBooking" column="support_booking"/>
         <result property="productCount" column="product_count"/>
         <result property="storeCount" column="store_count"/>
         <result property="cMiniAppId" column="c_mini_app_id"/>
@@ -59,6 +61,7 @@
     <sql id="selectMerchantVo">
         select m.id, m.distributor_id, m.name, m.logo, m.contact, m.phone, m.commission_rate, m.status, m.balance,
                m.total_income, m.address, m.avatar, m.description, m.business_hours,
+               m.support_refund, m.support_booking,
                m.product_count, m.store_count, m.c_mini_app_id, m.c_mini_app_secret,
                m.m_mini_app_id, m.m_mini_app_secret, m.wx_pay_mch_id, m.wx_pay_api_key,
                m.receiver_openid, m.receiver_type,
@@ -114,6 +117,8 @@
             <if test="avatar != null">avatar,</if>
             <if test="description != null">description,</if>
             <if test="businessHours != null">business_hours,</if>
+            <if test="supportRefund != null">support_refund,</if>
+            <if test="supportBooking != null">support_booking,</if>
             <if test="productCount != null">product_count,</if>
             <if test="storeCount != null">store_count,</if>
             <if test="remark != null">remark,</if>
@@ -160,6 +165,8 @@
             <if test="avatar != null">#{avatar},</if>
             <if test="description != null">#{description},</if>
             <if test="businessHours != null">#{businessHours},</if>
+            <if test="supportRefund != null">#{supportRefund},</if>
+            <if test="supportBooking != null">#{supportBooking},</if>
             <if test="productCount != null">#{productCount},</if>
             <if test="storeCount != null">#{storeCount},</if>
             <if test="remark != null">#{remark},</if>
@@ -210,6 +217,8 @@
             <if test="avatar != null">avatar = #{avatar},</if>
             <if test="description != null">description = #{description},</if>
             <if test="businessHours != null">business_hours = #{businessHours},</if>
+            <if test="supportRefund != null">support_refund = #{supportRefund},</if>
+            <if test="supportBooking != null">support_booking = #{supportBooking},</if>
             <if test="productCount != null">product_count = #{productCount},</if>
             <if test="storeCount != null">store_count = #{storeCount},</if>
             <if test="remark != null">remark = #{remark},</if>

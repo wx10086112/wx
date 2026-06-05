@@ -16,17 +16,19 @@
   <view wx:if="{{orderList.length}}">
     <view wx:for="{{orderList}}" wx:key="orderNo" class="order-card panel" bindtap="goOrderDetail" data-orderno="{{item.orderNo}}">
       <view class="order-top">
-        <text class="order-no">{{item.orderNo}}</text>
-        <view class="status-tag {{item.statusMeta.className}}">{{item.statusMeta.text}}</view>
+        <view class="order-main">
+          <text class="order-title">{{item.title}}</text>
+          <text class="order-no">订单号 {{item.orderNo}}</text>
+        </view>
+        <view class="order-side">
+          <view class="status-tag {{item.statusMeta.className}}">{{item.statusMeta.text}}</view>
+          <text class="order-time">{{item.payTimeText}}</text>
+        </view>
       </view>
-      <text class="order-title">{{item.title}}</text>
-      <text class="order-meta">{{item.customerName}} · {{item.customerPhone}} · {{item.payTimeText}}</text>
+      <text class="order-meta">{{item.customerName}} · {{item.customerPhone}}</text>
       <text wx:if="{{item.remark}}" class="order-remark">{{item.remark}}</text>
       <view class="order-bottom">
-        <view>
-          <text class="order-amount">¥{{item.payAmountText}}</text>
-          <text wx:if="{{item.writeOffCode}}" class="order-code">核销码 {{item.writeOffCode}}</text>
-        </view>
+        <text class="order-amount">¥{{item.payAmountText}}</text>
         <view class="order-actions">
           <button
             wx:if="{{item.status === 'PENDING_VERIFY'}}"
@@ -34,12 +36,6 @@
             catchtap="handleCancelOrder"
             data-orderno="{{item.orderNo}}"
           >取消订单</button>
-          <button
-            wx:if="{{item.status === 'PENDING_VERIFY'}}"
-            class="primary-btn action-btn"
-            catchtap="goVerify"
-            data-orderno="{{item.orderNo}}"
-          >去核销</button>
           <button
             wx:if="{{item.status === 'REFUNDING'}}"
             class="primary-btn action-btn refund-btn"

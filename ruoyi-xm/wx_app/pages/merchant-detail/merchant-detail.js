@@ -5,11 +5,15 @@ const normalizeMerchantDetail = (merchant = {}) => {
   const tags = Array.isArray(merchant.tags) ? merchant.tags : []
   const serviceAbilityTags = Array.isArray(merchant.serviceAbilityTags) ? merchant.serviceAbilityTags : []
   const facilityTags = Array.isArray(merchant.facilityTags) ? merchant.facilityTags : []
+  const albumList = Array.isArray(merchant.albumList) ? merchant.albumList.filter(Boolean) : []
+  const heroImage = merchant.coverImage || albumList[0] || merchant.avatar || ''
+
   return {
     ...merchant,
+    heroImage,
     serviceAbilityTags,
     facilityTags,
-    displayTags: tags.filter((tag) => !['营业中', '休息中'].includes(tag)),
+    displayTags: tags.filter((tag) => !['营业中', '休息中'].includes(tag)).slice(0, 3),
     businessStatusText: merchant.businessStatus ? '营业中' : '休息中',
     bookingText: merchant.supportBooking === false ? '到店即用' : '可预约'
   }
@@ -19,7 +23,6 @@ Page({
   data: {
     merchantId: null,
     merchant: {},
-    albumList: [],
     storeList: [],
     loading: true,
     loadFailed: false
@@ -46,27 +49,12 @@ Page({
       .then((res) => {
         const detailData = res.data || res || {}
         const merchant = normalizeMerchantDetail(detailData.merchant || detailData)
-        const albumList = (merchant.albumList && merchant.albumList.length
-          ? merchant.albumList
-          : [merchant.coverImage, merchant.avatar]
-        ).filter(Boolean).slice(0, 6)
-        const storeList = Array.isArray(detailData.storeList) ? detailData.storeList : (Array.isArray(merchant.storeList) ? merchant.storeList : [])
-        const albumMerchantId = merchant.merchantId || merchant.id
-
-        if (albumList.length <= 1) {
-          merchantApi.getMerchantAlbum(albumMerchantId)
-            .then((albumRes) => {
-              const apiAlbum = (albumRes.data || albumRes || {}).albumList || []
-              if (apiAlbum.length > 0) {
-                this.setData({ albumList: apiAlbum.slice(0, 6) })
-              }
-            })
-            .catch(() => { })
-        }
+        const storeList = Array.isArray(detailData.storeList)
+          ? detailData.storeList
+          : (Array.isArray(merchant.storeList) ? merchant.storeList : [])
 
         this.setData({
           merchant,
-          albumList,
           storeList,
           loading: false,
           loadFailed: false
@@ -99,14 +87,6 @@ Page({
       longitude: Number(merchant.longitude),
       name: merchant.name,
       address: merchant.address
-    })
-  },
-
-  previewAlbum(e) {
-    const index = e.currentTarget.dataset.index
-    wx.previewImage({
-      current: this.data.albumList[index],
-      urls: this.data.albumList
     })
   },
 

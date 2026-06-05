@@ -1,0 +1,34 @@
+######################################################################
+# Build outputs
+
+target/
+dist/
+node_modules/
+*.class
+
+######################################################################
+# Runtime outputs
+
+logs/
+runtime/
+*.log
+*.tmp
+
+######################################################################
+# Local IDE and tool state
+
+.idea/
+.run/
+.vscode/
+.cursor/
+.agents/
+.obsidian/
+opencode.json
+skills-lock.json
+project.private.config.json
+
+######################################################################
+# Generated SQL audit backups
+
+incoming-sql-*/
+backup_*.sql

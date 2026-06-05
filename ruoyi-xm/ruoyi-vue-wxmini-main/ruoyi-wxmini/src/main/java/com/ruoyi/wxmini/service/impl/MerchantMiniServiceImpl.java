@@ -231,13 +231,18 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     @Transactional(rollbackFor = Exception.class)
     public MerchantMiniOrderDto writeOff(String code, String currentUserId) {
         Long merchantId = getMerchantIdFromStaffId(currentUserId);
+        String normalizedCode = StringUtils.upperCase(StringUtils.trimToEmpty(code));
+
+        if (StringUtils.isBlank(normalizedCode)) {
+            throw new IllegalArgumentException("请输入核销码或订单号");
+        }
 
         // 通过核销码或订单号查找订单
-        MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(code);
+        MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(normalizedCode);
         if (order == null) {
             // 尝试通过核销码查找
             MallOrder query = new MallOrder();
-            query.setWriteOffCode(code);
+            query.setWriteOffCode(normalizedCode);
             List<MallOrder> results = mallOrderMapper.selectMallOrderList(query);
             if (!results.isEmpty()) {
                 order = results.get(0);
@@ -491,12 +496,25 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         if (StringUtils.isNotBlank(storeDto.getBrandSlogan())) {
             merchantUpdate.setDescription(storeDto.getBrandSlogan());
         }
+        if (storeDto.getSupportRefund() != null) {
+            merchantUpdate.setSupportRefund(Boolean.TRUE.equals(storeDto.getSupportRefund()) ? 1 : 0);
+        }
+        if (storeDto.getSupportBooking() != null) {
+            merchantUpdate.setSupportBooking(Boolean.TRUE.equals(storeDto.getSupportBooking()) ? 1 : 0);
+        }
         merchantMapper.updateMerchant(merchantUpdate);
 
         // 更新主门店信息
-        if (storeDto.getStoreId() != null) {
+        Long storeId = storeDto.getStoreId();
+        if (storeId == null) {
+            List<MerchantStore> stores = merchantStoreMapper.selectMerchantStoreByMerchantId(merchantId);
+            if (!stores.isEmpty()) {
+                storeId = stores.get(0).getId();
+            }
+        }
+        if (storeId != null) {
             MerchantStore storeUpdate = new MerchantStore();
-            storeUpdate.setId(storeDto.getStoreId());
+            storeUpdate.setId(storeId);
             if (StringUtils.isNotBlank(storeDto.getStoreName())) {
                 storeUpdate.setName(storeDto.getStoreName());
             }
@@ -508,6 +526,9 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
             }
             if (StringUtils.isNotBlank(storeDto.getBusinessHours())) {
                 storeUpdate.setBusinessHours(storeDto.getBusinessHours());
+            }
+            if (storeDto.getBusinessStatus() != null) {
+                storeUpdate.setStatus(Boolean.TRUE.equals(storeDto.getBusinessStatus()) ? 1 : 0);
             }
             merchantStoreMapper.updateMerchantStore(storeUpdate);
         }
@@ -911,11 +932,10 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         dto.setStatus(product.getStatus() != null && product.getStatus() == PRODUCT_STATUS_ON
                 ? GOODS_STATUS_ON_SHELF : GOODS_STATUS_OFF_SHELF);
         dto.setSort(product.getSort());
-        // 有效期天数 -> 有效期文本
         if (product.getValidDays() != null && product.getValidDays() > 0) {
-            dto.setValidPeriod("购买后" + product.getValidDays() + "天内有效");
+            dto.setValidPeriod(String.valueOf(product.getValidDays()));
         }
-        dto.setVerifyNotice("到店出示核销码即可使用");
+        dto.setVerifyNotice(StringUtils.defaultIfBlank(product.getVerifyNotice(), "到店出示核销码即可使用"));
         return dto;
     }
 
@@ -928,13 +948,36 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         product.setPrice(dto.getPrice() != null ? BigDecimal.valueOf(dto.getPrice()).divide(BigDecimal.valueOf(100)) : BigDecimal.ZERO);
         product.setOriginalPrice(dto.getOriginalPrice() != null ? BigDecimal.valueOf(dto.getOriginalPrice()).divide(BigDecimal.valueOf(100)) : BigDecimal.ZERO);
         product.setStock(dto.getStock() != null ? dto.getStock() : 0);
+        product.setValidDays(parseValidDays(dto.getValidPeriod()));
+        product.setVerifyNotice(StringUtils.defaultIfBlank(dto.getVerifyNotice(), "到店出示核销码即可使用"));
         product.setSort(dto.getSort());
         return product;
+    }
+
+    private Integer parseValidDays(String validPeriod) {
+        if (StringUtils.isBlank(validPeriod)) {
+            return 30;
+        }
+        StringBuilder digits = new StringBuilder();
+        for (int i = 0; i < validPeriod.length(); i++) {
+            char ch = validPeriod.charAt(i);
+            if (Character.isDigit(ch)) {
+                digits.append(ch);
+            } else if (digits.length() > 0) {
+                break;
+            }
+        }
+        if (digits.length() == 0) {
+            return 30;
+        }
+        int days = Integer.parseInt(digits.toString());
+        return Math.max(1, Math.min(days, 3650));
     }
 
     private MerchantMiniStoreDto buildStoreProfile(Long merchantId) {
         Merchant merchant = merchantMapper.selectMerchantById(merchantId);
         List<MerchantStore> stores = merchantStoreMapper.selectMerchantStoreByMerchantId(merchantId);
+        MerchantStore mainStore = stores.isEmpty() ? null : stores.get(0);
 
         MerchantMiniStoreDto dto = new MerchantMiniStoreDto();
         dto.setMerchantId(merchantId);
@@ -944,9 +987,9 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         dto.setBusinessHours(merchant != null ? merchant.getBusinessHours() : "");
         dto.setPhone(merchant != null ? merchant.getPhone() : "");
         dto.setAddress(merchant != null ? merchant.getAddress() : "");
-        dto.setBusinessStatus(merchant != null && merchant.getStatus() != null && merchant.getStatus() == 1);
-        dto.setSupportRefund(true);
-        dto.setSupportBooking(true);
+        dto.setBusinessStatus(mainStore == null || mainStore.getStatus() == null || mainStore.getStatus() == 1);
+        dto.setSupportRefund(merchant == null || merchant.getSupportRefund() == null || merchant.getSupportRefund() == 1);
+        dto.setSupportBooking(merchant == null || merchant.getSupportBooking() == null || merchant.getSupportBooking() == 1);
 
         List<String> tags = new ArrayList<>();
         tags.add("到店核销");
@@ -962,8 +1005,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         }
         dto.setBannerTitles(bannerTitles);
 
-        if (!stores.isEmpty()) {
-            MerchantStore mainStore = stores.get(0);
+        if (mainStore != null) {
             dto.setStoreId(mainStore.getId());
         }
         return dto;

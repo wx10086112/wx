@@ -10,6 +10,8 @@ public interface IMallOrderService {
 
     MallOrder selectMallOrderById(Long id);
 
+    MallOrder selectOrderByWriteOffCode(String code);
+
     List<MallOrder> selectMallOrderList(MallOrder mallOrder);
 
     int updateMallOrder(MallOrder mallOrder);

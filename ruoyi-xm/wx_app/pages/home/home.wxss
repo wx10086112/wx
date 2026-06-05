@@ -281,49 +281,6 @@
   line-height: 1.5;
 }
 
-.segmented-control-wrapper {
-  margin-bottom: 24rpx;
-}
-
-.segmented-control {
-  height: 78rpx;
-  padding: 6rpx;
-  border-radius: 24rpx;
-  background: #ECE8DF;
-  display: flex;
-  position: relative;
-  box-sizing: border-box;
-}
-
-.segment-btn {
-  flex: 1;
-  height: 66rpx;
-  color: #7A746A;
-  font-size: 28rpx;
-  font-weight: 600;
-  line-height: 66rpx;
-  text-align: center;
-  position: relative;
-  z-index: 2;
-}
-
-.segment-btn.active {
-  color: #1D1D1F;
-}
-
-.segment-indicator {
-  position: absolute;
-  top: 6rpx;
-  bottom: 6rpx;
-  left: 6rpx;
-  width: calc(50% - 6rpx);
-  border-radius: 20rpx;
-  background: #FFFFFF;
-  box-shadow: 0 6rpx 18rpx rgba(35, 31, 25, 0.08);
-  transition: transform 0.24s ease;
-  z-index: 1;
-}
-
 .service-list {
   display: flex;
   flex-direction: column;

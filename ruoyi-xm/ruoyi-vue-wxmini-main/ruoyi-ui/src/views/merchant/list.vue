@@ -50,7 +50,7 @@
         <el-table-column label="操作" width="280" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button type="text" size="small" icon="el-icon-view" @click="handleDetail(scope.row)">详情</el-button>
-            <el-button v-hasPermi="['mall:merchant:audit']" v-if="scope.row.status === 2" type="text" size="small" icon="el-icon-s-check" class="audit-btn" @click="handleAudit(scope.row)">审核</el-button>
+            <el-button v-if="scope.row.status === 2" v-hasPermi="['mall:merchant:audit']" type="text" size="small" icon="el-icon-s-check" class="audit-btn" @click="handleAudit(scope.row)">审核</el-button>
             <el-button v-if="isPlatform" v-hasPermi="['mall:merchant:edit']" type="text" size="small" icon="el-icon-connection" @click="handleAssign(scope.row)">分配</el-button>
             <el-button v-if="scope.row.status === 1" v-hasPermi="['mall:merchant:edit']" type="text" size="small" icon="el-icon-close" class="text-warning" @click="handleStop(scope.row)">停止合作</el-button>
             <el-button v-if="scope.row.status === 3" v-hasPermi="['mall:merchant:edit']" type="text" size="small" icon="el-icon-check" class="text-success" @click="handleResume(scope.row)">恢复合作</el-button>
@@ -158,6 +158,9 @@ export default {
   created() {
     this.fetchData()
   },
+  activated() {
+    this.fetchData()
+  },
   methods: {
     async fetchData() {
       this.loading = true
@@ -239,7 +242,7 @@ export default {
       return map[status] || 'info'
     },
     handleDelete(row) {
-      this.$modal.confirm('确认删除商家「' + row.name + '」？删除后会同步删除该商家的商家用户账号，商家本身将被逻辑删除。').then(async () => {
+      this.$modal.confirm('确认删除商家「' + row.name + '」？删除后会同步删除该商家的商家用户账号，商家本身将被逻辑删除。').then(async() => {
         await deleteMerchant(row.id)
         this.$modal.msgSuccess('删除成功')
         this.fetchData()
@@ -273,14 +276,14 @@ export default {
       }
     },
     handleStop(row) {
-      this.$modal.confirm('确认停止与商家「' + row.name + '」的合作？商户资料、订单、结算记录将保留，但商家端和C端将不可继续运营。').then(async () => {
+      this.$modal.confirm('确认停止与商家「' + row.name + '」的合作？商户资料、订单、结算记录将保留，但商家端和C端将不可继续运营。').then(async() => {
         await stopMerchant(row.id)
         this.$modal.msgSuccess('已停止合作')
         this.fetchData()
       }).catch(() => {})
     },
     handleResume(row) {
-      this.$modal.confirm('确认恢复与商家「' + row.name + '」的合作？').then(async () => {
+      this.$modal.confirm('确认恢复与商家「' + row.name + '」的合作？').then(async() => {
         await resumeMerchant(row.id)
         this.$modal.msgSuccess('已恢复合作')
         this.fetchData()
