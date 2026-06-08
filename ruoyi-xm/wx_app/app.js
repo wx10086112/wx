@@ -2,11 +2,15 @@ const util = require('./utils/util')
 const merchantUtil = require('./utils/merchant-util')
 const MERCHANT_ENTRY_KEY = 'merchantEntry'
 const BASE_URL_STORAGE_KEY = 'baseUrl'
-const DEFAULT_BASE_URL = 'http://localhost:8080'
+const DEFAULT_BASE_URL = 'https://ld-console.lingdian.site/prod-api'
 
 const normalizeBaseUrl = (value = '') => {
   if (!value || typeof value !== 'string') return DEFAULT_BASE_URL
-  return value.trim().replace(/\/+$/, '') || DEFAULT_BASE_URL
+  const baseUrl = value.trim().replace(/\/+$/, '')
+  if (!baseUrl || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(baseUrl)) {
+    return DEFAULT_BASE_URL
+  }
+  return baseUrl
 }
 
 const normalizeMerchantRoleKey = (roleKey = '') => {

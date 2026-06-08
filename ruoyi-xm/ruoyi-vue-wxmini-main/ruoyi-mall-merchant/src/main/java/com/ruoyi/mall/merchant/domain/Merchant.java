@@ -116,6 +116,14 @@ public class Merchant extends BaseEntity {
     public void setMMiniAppId(String mMiniAppId) { this.mMiniAppId = mMiniAppId; }
     public String getMMiniAppSecret() { return mMiniAppSecret; }
     public void setMMiniAppSecret(String mMiniAppSecret) { this.mMiniAppSecret = mMiniAppSecret; }
+    public String getcMiniAppId() { return cMiniAppId; }
+    public void setcMiniAppId(String cMiniAppId) { this.cMiniAppId = cMiniAppId; }
+    public String getcMiniAppSecret() { return cMiniAppSecret; }
+    public void setcMiniAppSecret(String cMiniAppSecret) { this.cMiniAppSecret = cMiniAppSecret; }
+    public String getmMiniAppId() { return mMiniAppId; }
+    public void setmMiniAppId(String mMiniAppId) { this.mMiniAppId = mMiniAppId; }
+    public String getmMiniAppSecret() { return mMiniAppSecret; }
+    public void setmMiniAppSecret(String mMiniAppSecret) { this.mMiniAppSecret = mMiniAppSecret; }
     public String getWxPayMchId() { return wxPayMchId; }
     public void setWxPayMchId(String wxPayMchId) { this.wxPayMchId = wxPayMchId; }
     public String getWxPayApiKey() { return wxPayApiKey; }

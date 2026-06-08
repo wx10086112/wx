@@ -15,7 +15,6 @@ import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.MallDataScopeHelper;
 import com.ruoyi.common.utils.SecurityUtils;
-import com.ruoyi.mall.common.config.WxMaProperties;
 import com.ruoyi.mall.common.config.WxMaServiceManager;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
@@ -51,8 +50,6 @@ public class MallMerchantController extends BaseController {
     private IMerchantService merchantService;
     @Autowired
     private WxMaService wxMaService;
-    @Autowired
-    private WxMaProperties wxMaProperties;
     @Autowired
     private WxMaServiceManager wxMaServiceManager;
 
@@ -108,13 +105,10 @@ public class MallMerchantController extends BaseController {
 
         String appId = trimToNull(merchant.getCMiniAppId());
         if (StringUtils.isBlank(appId)) {
-            List<WxMaProperties.Config> configs = wxMaProperties.getConfigs();
-            if (configs != null && !configs.isEmpty() && configs.get(0) != null) {
-                appId = trimToNull(configs.get(0).getAppid());
-            }
-        }
-        if (StringUtils.isBlank(appId)) {
             return AjaxResult.error("该商家尚未配置统一小程序 AppID");
+        }
+        if (StringUtils.isBlank(merchant.getCMiniAppSecret())) {
+            return AjaxResult.error("该商家尚未配置统一小程序 Secret");
         }
 
         String scene = "merchantId=" + id;
@@ -167,9 +161,6 @@ public class MallMerchantController extends BaseController {
 
         if ("******".equals(merchant.getCMiniAppSecret())) {
             merchant.setCMiniAppSecret(null);
-        }
-        if ("******".equals(merchant.getMMiniAppSecret())) {
-            merchant.setMMiniAppSecret(null);
         }
         if ("******".equals(merchant.getWxPayApiKey())) {
             merchant.setWxPayApiKey(null);
@@ -253,19 +244,9 @@ public class MallMerchantController extends BaseController {
             return cMiniAppPairCheck;
         }
 
-        AjaxResult mMiniAppPairCheck = validateMiniAppPair("商家端", merchant.getMMiniAppId(), merchant.getMMiniAppSecret());
-        if (mMiniAppPairCheck != null) {
-            return mMiniAppPairCheck;
-        }
-
-        AjaxResult cMiniAppUniqueCheck = validateMiniAppUnique("C端 AppID", merchant.getCMiniAppId(), currentMerchantId);
+        AjaxResult cMiniAppUniqueCheck = validateMiniAppUnique("统一小程序 AppID", merchant.getCMiniAppId(), currentMerchantId);
         if (cMiniAppUniqueCheck != null) {
             return cMiniAppUniqueCheck;
-        }
-
-        AjaxResult mMiniAppUniqueCheck = validateMiniAppUnique("商家端 AppID", merchant.getMMiniAppId(), currentMerchantId);
-        if (mMiniAppUniqueCheck != null) {
-            return mMiniAppUniqueCheck;
         }
 
         return null;
@@ -285,7 +266,7 @@ public class MallMerchantController extends BaseController {
             return null;
         }
 
-        Merchant occupiedMerchant = merchantService.selectMerchantByAnyMiniAppId(appId);
+        Merchant occupiedMerchant = merchantService.selectMerchantByCAppId(appId);
         if (occupiedMerchant == null) {
             return null;
         }
@@ -310,13 +291,6 @@ public class MallMerchantController extends BaseController {
                 existing.getCMiniAppId(),
                 existing.getCMiniAppSecret()
         ));
-        target.setMMiniAppId(merchant.getMMiniAppId());
-        target.setMMiniAppSecret(resolveSecretForValidation(
-                merchant.getMMiniAppId(),
-                merchant.getMMiniAppSecret(),
-                existing.getMMiniAppId(),
-                existing.getMMiniAppSecret()
-        ));
         return target;
     }
 
@@ -335,11 +309,6 @@ public class MallMerchantController extends BaseController {
                 oldMerchant == null ? null : oldMerchant.getCMiniAppId(),
                 newMerchant == null ? null : newMerchant.getCMiniAppId(),
                 newMerchant == null ? null : newMerchant.getCMiniAppSecret()
-        );
-        syncWxMiniService(
-                oldMerchant == null ? null : oldMerchant.getMMiniAppId(),
-                newMerchant == null ? null : newMerchant.getMMiniAppId(),
-                newMerchant == null ? null : newMerchant.getMMiniAppSecret()
         );
     }
 
@@ -360,8 +329,8 @@ public class MallMerchantController extends BaseController {
     private void normalizeMiniAppConfig(Merchant merchant) {
         merchant.setCMiniAppId(trimToNull(merchant.getCMiniAppId()));
         merchant.setCMiniAppSecret(trimToNull(merchant.getCMiniAppSecret()));
-        merchant.setMMiniAppId(trimToNull(merchant.getMMiniAppId()));
-        merchant.setMMiniAppSecret(trimToNull(merchant.getMMiniAppSecret()));
+        merchant.setMMiniAppId(null);
+        merchant.setMMiniAppSecret(null);
     }
 
     private String trimToNull(String value) {
@@ -398,14 +367,11 @@ public class MallMerchantController extends BaseController {
         map.put("createTime", merchant.getCreateTime());
 
         map.put("cMiniAppId", merchant.getCMiniAppId());
-        map.put("cMiniAppSecret", merchant.getCMiniAppSecret());
         map.put("cMiniAppSecretConfigured", StringUtils.isNotBlank(merchant.getCMiniAppSecret()));
-        map.put("mMiniAppId", merchant.getMMiniAppId());
-        map.put("mMiniAppSecret", merchant.getMMiniAppSecret());
-        map.put("mMiniAppSecretConfigured", StringUtils.isNotBlank(merchant.getMMiniAppSecret()));
+        map.put("cMiniAppSecretMasked", "******");
         map.put("wxPayMchId", merchant.getWxPayMchId());
-        map.put("wxPayApiKey", merchant.getWxPayApiKey());
         map.put("wxPayApiKeyConfigured", StringUtils.isNotBlank(merchant.getWxPayApiKey()));
+        map.put("wxPayApiKeyMasked", "******");
 
         map.put("mapClaimStatus", merchant.getMapClaimStatus());
         map.put("mapPoiId", merchant.getMapPoiId());

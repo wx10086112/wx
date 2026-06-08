@@ -1,5 +1,5 @@
 const app = getApp()
-const DEFAULT_BASE_URL = 'http://localhost:8080'
+const DEFAULT_BASE_URL = 'https://ld-console.lingdian.site/prod-api'
 const BASE_URL_STORAGE_KEY = 'baseUrl'
 
 const getBaseUrl = () => {

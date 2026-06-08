@@ -42,15 +42,14 @@
             </div>
             <el-descriptions :column="2" border style="margin-top: 10px;">
               <el-descriptions-item label="统一 C 端 AppID">{{ configText(merchant.cMiniAppId) }}</el-descriptions-item>
-              <el-descriptions-item label="统一 C 端 Secret">{{ configText(merchant.cMiniAppSecret) }}</el-descriptions-item>
-              <el-descriptions-item label="当前入口 AppID">{{ configText(merchantEntry.entryAppId || merchant.cMiniAppId, '待生成入口码') }}</el-descriptions-item>
+              <el-descriptions-item label="统一 C 端 Secret">{{ secretStatusText(merchant.cMiniAppSecretConfigured) }}</el-descriptions-item>
+              <el-descriptions-item label="入口使用 AppID">{{ configText(merchant.cMiniAppId) }}</el-descriptions-item>
               <el-descriptions-item label="配置状态">
-                <el-tag :type="merchant.cMiniAppId ? 'success' : 'warning'" size="small">{{ merchant.cMiniAppId ? '小程序已配置' : '小程序待填写' }}</el-tag>
+                <el-tag :type="miniAppConfigStatus.type" size="small">{{ miniAppConfigStatus.text }}</el-tag>
               </el-descriptions-item>
-              <el-descriptions-item label="B 端登录方式">商家专属入口码扫码后进入后台登录页</el-descriptions-item>
-              <el-descriptions-item label="旧商家端 AppID">{{ merchant.mMiniAppId || '已停用' }}</el-descriptions-item>
-              <el-descriptions-item label="微信商户号">{{ configText(merchant.wxPayMchId) }}</el-descriptions-item>
-              <el-descriptions-item label="支付API密钥">{{ configText(merchant.wxPayApiKey) }}</el-descriptions-item>
+              <el-descriptions-item label="入口码状态">
+                <el-tag :type="entryCodeStatus.type" size="small">{{ entryCodeStatus.text }}</el-tag>
+              </el-descriptions-item>
             </el-descriptions>
 
             <div class="entry-panel">
@@ -64,7 +63,7 @@
                 />
                 <div v-else class="entry-panel__empty">
                   <i class="el-icon-mobile-phone" />
-                  <span>点击生成商家后台入口码</span>
+                  <span>{{ canGenerateEntryCode ? '点击生成商家后台入口码' : '先配置小程序 AppID 和 Secret' }}</span>
                 </div>
               </div>
 
@@ -102,7 +101,7 @@
                 </div>
 
                 <div class="entry-panel__actions">
-                  <el-button type="primary" size="small" :loading="entryQrLoading" @click="loadMerchantEntryQrCode(false)">
+                  <el-button type="primary" size="small" :loading="entryQrLoading" :disabled="!canGenerateEntryCode" @click="loadMerchantEntryQrCode(false)">
                     {{ merchantEntry.qrCodeUrl ? '重新生成入口码' : '生成入口码' }}
                   </el-button>
                   <el-button size="small" @click="copyEntryLoginPage">复制登录页路径</el-button>
@@ -458,12 +457,6 @@
         <el-form-item label="统一 Secret">
           <el-input v-model="miniAppForm.cMiniAppSecret" placeholder="请输入Secret" />
         </el-form-item>
-        <el-alert
-          title="B端已并入统一小程序，商家扫码后台入口码后进入登录页，不再依赖独立商家端 AppID。"
-          type="info"
-          :closable="false"
-          style="margin-bottom: 16px;"
-        />
         <el-divider content-position="left">微信支付</el-divider>
         <el-form-item label="商户号">
           <el-input v-model="miniAppForm.wxPayMchId" placeholder="微信支付商户号" />
@@ -998,6 +991,26 @@ export default {
       }
       return '/pages/merchant/login/login'
     },
+    canGenerateEntryCode() {
+      return Boolean(this.merchant && this.merchant.cMiniAppId && this.merchant.cMiniAppSecretConfigured)
+    },
+    miniAppConfigStatus() {
+      if (this.canGenerateEntryCode) {
+        return { type: 'success', text: '小程序已配置' }
+      }
+      if (this.merchant && this.merchant.cMiniAppId) {
+        return { type: 'warning', text: 'Secret 待填写' }
+      }
+      return { type: 'warning', text: '小程序待填写' }
+    },
+    entryCodeStatus() {
+      if (!this.canGenerateEntryCode) {
+        return { type: 'info', text: '需先配置小程序' }
+      }
+      return this.merchantEntry && this.merchantEntry.qrCodeUrl
+        ? { type: 'success', text: '已生成' }
+        : { type: 'warning', text: '待生成' }
+    },
     computedDiscount() {
       if (this.itemForm.originalPriceYuan > 0 && this.itemForm.grouponPriceYuan > 0) {
         return (this.itemForm.grouponPriceYuan / this.itemForm.originalPriceYuan * 10).toFixed(1)
@@ -1023,7 +1036,6 @@ export default {
       return
     }
     this.fetchDetail()
-    this.loadMerchantEntryQrCode(true)
     this.loadProducts()
   },
   methods: {
@@ -1078,6 +1090,7 @@ export default {
       try {
         const res = await getMerchantDetail(this.merchantId)
         this.merchant = this.normalizeMerchantDetail(res.data)
+        await this.loadMerchantEntryQrCode(true)
       } catch (e) {
         this.$message.error('获取商家详情失败')
       } finally {
@@ -1106,6 +1119,13 @@ export default {
     },
 
     async loadMerchantEntryQrCode(silent = false) {
+      if (!this.canGenerateEntryCode) {
+        this.merchantEntry = { qrCodeUrl: '', loginPage: '', entryAppId: '', scene: '' }
+        if (!silent) {
+          this.$message.warning('请先配置统一小程序 AppID 和 Secret')
+        }
+        return
+      }
       if (!silent) {
         this.entryQrLoading = true
       }
@@ -1290,9 +1310,9 @@ export default {
       this.miniAppForm = {
         id: this.merchant.id,
         cMiniAppId: this.merchant.cMiniAppId || '',
-        cMiniAppSecret: this.merchant.cMiniAppSecret || '',
+        cMiniAppSecret: this.merchant.cMiniAppSecretConfigured ? '******' : '',
         wxPayMchId: this.merchant.wxPayMchId || '',
-        wxPayApiKey: this.merchant.wxPayApiKey || ''
+        wxPayApiKey: this.merchant.wxPayApiKeyConfigured ? '******' : ''
       }
       this.miniAppDialogVisible = true
     },
@@ -1341,6 +1361,9 @@ export default {
     },
     configText(value, emptyText = '待填写') {
       return value === null || value === undefined || String(value).trim() === '' ? emptyText : value
+    },
+    secretStatusText(configured) {
+      return configured ? '已配置' : '待填写'
     },
     handleEditWxApplyment() {
       this.wxApplymentForm = {
