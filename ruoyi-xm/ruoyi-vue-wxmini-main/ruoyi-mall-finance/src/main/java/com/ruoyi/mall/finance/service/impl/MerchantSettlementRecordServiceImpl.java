@@ -14,6 +14,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -221,6 +222,16 @@ public class MerchantSettlementRecordServiceImpl implements IMerchantSettlementR
     @Override
     public Integer countCompletedByMerchantId(Long merchantId) {
         return settlementMapper.countCompletedByMerchantId(merchantId);
+    }
+
+    @Override
+    public List<Map<String, Object>> selectDailyFlowSummary(Long merchantId, String startDate, String endDate) {
+        return settlementMapper.selectDailyFlowSummary(merchantId, startDate, endDate);
+    }
+
+    @Override
+    public List<MerchantSettlementRecord> selectDailyFlowDetails(Long merchantId, String startDate, String endDate, Integer limit) {
+        return settlementMapper.selectDailyFlowDetails(merchantId, startDate, endDate, limit);
     }
 
     private BigDecimal safeAmount(BigDecimal amount) {

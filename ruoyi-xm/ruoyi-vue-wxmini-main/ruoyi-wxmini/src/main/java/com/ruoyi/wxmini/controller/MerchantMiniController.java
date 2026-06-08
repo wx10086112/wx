@@ -25,9 +25,14 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @RestController
@@ -423,6 +428,16 @@ public class MerchantMiniController {
         return AjaxResult.success(buildSettlementOverview());
     }
 
+    @GetMapping("/finance/daily-flow")
+    public AjaxResult getDailyFlow(@RequestParam(required = false, defaultValue = "today") String range,
+                                   @RequestParam(required = false) String date) {
+        AjaxResult accessDenied = checkAccess(PERMISSION_FINANCE_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        return AjaxResult.success(buildDailyFlowOverview(range, date));
+    }
+
     @PostMapping("/finance/withdraw")
     public AjaxResult applyWithdraw(@RequestBody(required = false) MerchantMiniWithdrawRequestDto requestDto) {
         AjaxResult accessDenied = checkStaffAccess(PERMISSION_FINANCE_MANAGE);
@@ -506,11 +521,186 @@ public class MerchantMiniController {
         return dto;
     }
 
+    private MerchantMiniDailyFlowOverviewDto buildDailyFlowOverview(String range, String date) {
+        Long merchantId = WxMiniUserContext.getCurrentMerchantId();
+        DateRange dateRange = resolveDateRange(range, date);
+        List<Map<String, Object>> rawDaily = settlementService.selectDailyFlowSummary(
+                merchantId,
+                dateRange.startDate.toString(),
+                dateRange.endDate.toString()
+        );
+        List<MerchantSettlementRecord> rawRecords = settlementService.selectDailyFlowDetails(
+                merchantId,
+                dateRange.startDate.toString(),
+                dateRange.endDate.toString(),
+                80
+        );
+
+        Map<String, MerchantMiniDailyFlowDayDto> dailyMap = new LinkedHashMap<>();
+        for (Map<String, Object> row : rawDaily) {
+            MerchantMiniDailyFlowDayDto dayDto = new MerchantMiniDailyFlowDayDto();
+            dayDto.setDate(stringValue(row, "flowDate"));
+            dayDto.setTotalAmount(centValue(row, "totalAmount"));
+            dayDto.setMerchantAmount(centValue(row, "merchantAmount"));
+            dayDto.setPlatformFeeAmount(centValue(row, "platformFeeAmount"));
+            dayDto.setRefundAmount(centValue(row, "refundAmount"));
+            dayDto.setOrderCount(intValue(row, "orderCount"));
+            dailyMap.put(dayDto.getDate(), dayDto);
+        }
+
+        List<MerchantMiniDailyFlowDayDto> dailyList = new ArrayList<>();
+        Long totalAmount = 0L;
+        Long merchantAmount = 0L;
+        Long platformFeeAmount = 0L;
+        Long refundAmount = 0L;
+        Integer orderCount = 0;
+        for (LocalDate cursor = dateRange.endDate; !cursor.isBefore(dateRange.startDate); cursor = cursor.minusDays(1)) {
+            MerchantMiniDailyFlowDayDto day = dailyMap.get(cursor.toString());
+            if (day == null) {
+                day = new MerchantMiniDailyFlowDayDto();
+                day.setDate(cursor.toString());
+                day.setTotalAmount(0L);
+                day.setMerchantAmount(0L);
+                day.setPlatformFeeAmount(0L);
+                day.setRefundAmount(0L);
+                day.setOrderCount(0);
+            }
+            totalAmount += safeLong(day.getTotalAmount());
+            merchantAmount += safeLong(day.getMerchantAmount());
+            platformFeeAmount += safeLong(day.getPlatformFeeAmount());
+            refundAmount += safeLong(day.getRefundAmount());
+            orderCount += day.getOrderCount() != null ? day.getOrderCount() : 0;
+            dailyList.add(day);
+        }
+
+        List<MerchantMiniDailyFlowRecordDto> recordList = new ArrayList<>();
+        for (MerchantSettlementRecord record : rawRecords) {
+            MerchantMiniDailyFlowRecordDto recordDto = new MerchantMiniDailyFlowRecordDto();
+            boolean refund = isRefundStatus(record.getStatus());
+            recordDto.setId(record.getId());
+            recordDto.setOrderNo(record.getOrderNo());
+            recordDto.setTitle(record.getTitle());
+            recordDto.setType(refund ? "refund" : "income");
+            recordDto.setOrderAmount(yuanToAbsCent(record.getOrderAmount()));
+            recordDto.setMerchantAmount(yuanToAbsCent(record.getMerchantAmount()));
+            recordDto.setPlatformFeeAmount(yuanToAbsCent(record.getPlatformFeeAmount()));
+            recordDto.setStatus(record.getStatus());
+            recordDto.setFlowTime(record.getApplyTime() != null ? record.getApplyTime().getTime() : null);
+            recordList.add(recordDto);
+        }
+
+        MerchantMiniDailyFlowOverviewDto dto = new MerchantMiniDailyFlowOverviewDto();
+        dto.setRange(dateRange.range);
+        dto.setStartDate(dateRange.startDate.toString());
+        dto.setEndDate(dateRange.endDate.toString());
+        dto.setTotalAmount(totalAmount);
+        dto.setMerchantAmount(merchantAmount);
+        dto.setPlatformFeeAmount(platformFeeAmount);
+        dto.setRefundAmount(refundAmount);
+        dto.setOrderCount(orderCount);
+        dto.setDailyList(dailyList);
+        dto.setRecordList(recordList);
+        return dto;
+    }
+
     private static Long yuanToCent(java.math.BigDecimal yuan) {
         if (yuan == null) return 0L;
         return yuan.movePointRight(2)
                 .setScale(0, java.math.RoundingMode.UNNECESSARY)
                 .longValueExact();
+    }
+
+    private static Long yuanToAbsCent(BigDecimal yuan) {
+        if (yuan == null) return 0L;
+        return yuan.abs()
+                .movePointRight(2)
+                .setScale(0, java.math.RoundingMode.HALF_UP)
+                .longValue();
+    }
+
+    private static DateRange resolveDateRange(String rawRange, String rawDate) {
+        LocalDate today = LocalDate.now();
+        String range = StringUtils.defaultIfBlank(rawRange, "today").toLowerCase(Locale.ROOT);
+        if ("date".equals(range) && StringUtils.isNotBlank(rawDate)) {
+            try {
+                LocalDate selectedDate = LocalDate.parse(rawDate);
+                return new DateRange("date", selectedDate, selectedDate);
+            } catch (DateTimeParseException ignored) {
+                return new DateRange("today", today, today);
+            }
+        }
+        if ("yesterday".equals(range)) {
+            LocalDate yesterday = today.minusDays(1);
+            return new DateRange("yesterday", yesterday, yesterday);
+        }
+        if ("week".equals(range)) {
+            return new DateRange("week", today.minusDays(6), today);
+        }
+        if ("month".equals(range)) {
+            return new DateRange("month", today.withDayOfMonth(1), today);
+        }
+        return new DateRange("today", today, today);
+    }
+
+    private static String stringValue(Map<String, Object> row, String key) {
+        Object value = valueOf(row, key);
+        return value != null ? value.toString() : "";
+    }
+
+    private static Long centValue(Map<String, Object> row, String key) {
+        Object value = valueOf(row, key);
+        if (value instanceof BigDecimal) {
+            return yuanToCent((BigDecimal) value);
+        }
+        if (value instanceof Number) {
+            return BigDecimal.valueOf(((Number) value).doubleValue())
+                    .movePointRight(2)
+                    .setScale(0, java.math.RoundingMode.HALF_UP)
+                    .longValue();
+        }
+        return 0L;
+    }
+
+    private static Integer intValue(Map<String, Object> row, String key) {
+        Object value = valueOf(row, key);
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        return 0;
+    }
+
+    private static Object valueOf(Map<String, Object> row, String key) {
+        if (row == null) return null;
+        Object value = row.get(key);
+        if (value != null) return value;
+        value = row.get(key.toLowerCase(Locale.ROOT));
+        if (value != null) return value;
+        for (Map.Entry<String, Object> entry : row.entrySet()) {
+            if (key.equalsIgnoreCase(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    private static Long safeLong(Long value) {
+        return value != null ? value : 0L;
+    }
+
+    private static boolean isRefundStatus(String status) {
+        return "CANCELLED".equals(status) || "REFUND_PROCESSING".equals(status) || "REVERSED".equals(status);
+    }
+
+    private static class DateRange {
+        private final String range;
+        private final LocalDate startDate;
+        private final LocalDate endDate;
+
+        private DateRange(String range, LocalDate startDate, LocalDate endDate) {
+            this.range = range;
+            this.startDate = startDate;
+            this.endDate = endDate;
+        }
     }
 
     private static Long nextAutoTransferTimeMillis() {

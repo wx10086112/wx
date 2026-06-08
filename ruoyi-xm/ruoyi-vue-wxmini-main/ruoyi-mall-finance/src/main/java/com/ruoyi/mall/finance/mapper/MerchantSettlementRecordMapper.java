@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 public interface MerchantSettlementRecordMapper {
 
@@ -33,4 +34,13 @@ public interface MerchantSettlementRecordMapper {
     BigDecimal sumMerchantAmountThisMonth(@Param("merchantId") Long merchantId);
 
     Integer countCompletedByMerchantId(@Param("merchantId") Long merchantId);
+
+    List<Map<String, Object>> selectDailyFlowSummary(@Param("merchantId") Long merchantId,
+                                                     @Param("startDate") String startDate,
+                                                     @Param("endDate") String endDate);
+
+    List<MerchantSettlementRecord> selectDailyFlowDetails(@Param("merchantId") Long merchantId,
+                                                          @Param("startDate") String startDate,
+                                                          @Param("endDate") String endDate,
+                                                          @Param("limit") Integer limit);
 }

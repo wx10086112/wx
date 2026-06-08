@@ -173,4 +173,39 @@
         and status IN ('ARRIVED', 'WAITING_T1', 'TRANSFERRING')
     </select>
 
+    <select id="selectDailyFlowSummary" resultType="java.util.LinkedHashMap">
+        select
+            DATE(msr.apply_time) as flowDate,
+            COALESCE(SUM(CASE WHEN msr.status IN ('ARRIVED', 'WAITING_T1', 'TRANSFERRING')
+                THEN msr.order_amount ELSE 0 END), 0) as totalAmount,
+            COALESCE(SUM(CASE WHEN msr.status IN ('ARRIVED', 'WAITING_T1', 'TRANSFERRING')
+                THEN msr.merchant_amount ELSE 0 END), 0) as merchantAmount,
+            COALESCE(SUM(CASE WHEN msr.status IN ('ARRIVED', 'WAITING_T1', 'TRANSFERRING')
+                THEN msr.platform_fee_amount ELSE 0 END), 0) as platformFeeAmount,
+            COALESCE(SUM(CASE WHEN msr.status IN ('CANCELLED', 'REFUND_PROCESSING', 'REVERSED')
+                THEN ABS(msr.order_amount) ELSE 0 END), 0) as refundAmount,
+            COALESCE(SUM(CASE WHEN msr.status IN ('ARRIVED', 'WAITING_T1', 'TRANSFERRING')
+                THEN 1 ELSE 0 END), 0) as orderCount
+        from merchant_settlement_record msr
+        where msr.merchant_id = #{merchantId}
+          and msr.del_flag = '0'
+          and msr.apply_time &gt;= #{startDate}
+          and msr.apply_time &lt; DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+        group by DATE(msr.apply_time)
+        order by flowDate desc
+    </select>
+
+    <select id="selectDailyFlowDetails" resultMap="SettlementRecordResult">
+        select <include refid="selectColumns"/> from merchant_settlement_record msr
+        LEFT JOIN merchant m ON msr.merchant_id = m.id
+        LEFT JOIN distributor d ON msr.distributor_id = d.id
+        where msr.merchant_id = #{merchantId}
+          and msr.del_flag = '0'
+          and msr.apply_time &gt;= #{startDate}
+          and msr.apply_time &lt; DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+          and msr.status in ('ARRIVED', 'WAITING_T1', 'TRANSFERRING', 'CANCELLED', 'REFUND_PROCESSING', 'REVERSED')
+        order by msr.apply_time desc
+        limit #{limit}
+    </select>
+
 </mapper>

@@ -4,6 +4,7 @@ import com.ruoyi.mall.finance.domain.MerchantSettlementRecord;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 public interface IMerchantSettlementRecordService {
 
@@ -45,4 +46,8 @@ public interface IMerchantSettlementRecordService {
     BigDecimal sumMerchantAmountThisMonth(Long merchantId);
 
     Integer countCompletedByMerchantId(Long merchantId);
+
+    List<Map<String, Object>> selectDailyFlowSummary(Long merchantId, String startDate, String endDate);
+
+    List<MerchantSettlementRecord> selectDailyFlowDetails(Long merchantId, String startDate, String endDate, Integer limit);
 }
