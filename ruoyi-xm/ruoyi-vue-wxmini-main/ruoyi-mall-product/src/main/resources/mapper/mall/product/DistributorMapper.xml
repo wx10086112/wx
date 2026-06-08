@@ -38,6 +38,19 @@
         from distributor d
     </sql>
 
+    <sql id="dataScopeBizFilter">
+        <if test="params.dataScopeBizDistributorId != null">and d.id = #{params.dataScopeBizDistributorId}</if>
+        <if test="params.dataScopeBizMerchantId != null">
+            and exists (
+                select 1
+                from merchant scope_m
+                where scope_m.id = #{params.dataScopeBizMerchantId}
+                  and scope_m.distributor_id = d.id
+                  and scope_m.del_flag = '0'
+            )
+        </if>
+    </sql>
+
     <select id="selectDistributorById" parameterType="Long" resultMap="DistributorResult">
         <include refid="selectDistributorVo"/>
         where id = #{id} and del_flag = '0'
@@ -52,7 +65,7 @@
             <if test="phone != null and phone != ''">and d.phone like concat('%', #{phone}, '%')</if>
             <if test="regionName != null and regionName != ''">and d.region_name like concat('%', #{regionName}, '%')</if>
             <if test="status != null">and d.status = #{status}</if>
-            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+            <include refid="dataScopeBizFilter"/>
         </where>
         order by d.create_time desc
     </select>

@@ -40,6 +40,11 @@
         msr.del_flag, msr.create_time, msr.update_time
     </sql>
 
+    <sql id="dataScopeBizFilter">
+        <if test="params.dataScopeBizDistributorId != null">and msr.distributor_id = #{params.dataScopeBizDistributorId}</if>
+        <if test="params.dataScopeBizMerchantId != null">and msr.merchant_id = #{params.dataScopeBizMerchantId}</if>
+    </sql>
+
     <sql id="whereClause">
         <where>
             del_flag = '0'
@@ -90,7 +95,7 @@
             <if test="status != null and status != ''">and msr.status = #{status}</if>
             <if test="settlementNo != null and settlementNo != ''">and msr.settlement_no = #{settlementNo}</if>
             <if test="distributorId != null">and msr.distributor_id = #{distributorId}</if>
-            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+            <include refid="dataScopeBizFilter"/>
         </where>
         order by msr.create_time desc
     </select>

@@ -6,6 +6,7 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.utils.MallDataScopeHelper;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,18 @@ public class MallMerchantAuditController extends BaseController {
     @Log(title = "商户审核", businessType = BusinessType.UPDATE)
     @PutMapping("/audit/{id}/{status}")
     public AjaxResult audit(@PathVariable Long id, @PathVariable Integer status) {
+        Merchant existing = merchantService.selectMerchantById(id);
+        if (existing == null) {
+            return AjaxResult.error("商户不存在");
+        }
+        Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        if (effMerchantId != null && !effMerchantId.equals(id)) {
+            return AjaxResult.error("无权审核该商户");
+        }
+        Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effDistributorId != null && !effDistributorId.equals(existing.getDistributorId())) {
+            return AjaxResult.error("无权审核该商户");
+        }
         Merchant merchant = new Merchant();
         merchant.setId(id);
         merchant.setStatus(status);

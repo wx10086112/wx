@@ -26,6 +26,32 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select d.dept_id, d.parent_id, d.ancestors, d.dept_name, d.order_num, d.leader, d.phone, d.email, d.status, d.del_flag, d.create_by, d.create_time 
         from sys_dept d
     </sql>
+
+	<sql id="dataScopeFilter">
+		<if test="params.dataScopeDenyAll != null and params.dataScopeDenyAll">
+			AND 1 = 0
+		</if>
+		<if test="(params.dataScopeCustomRoleIds != null and params.dataScopeCustomRoleIds.size() > 0) or params.dataScopeDeptId != null or params.dataScopeDeptAndChildId != null">
+			<trim prefix="AND (" prefixOverrides="OR" suffix=")">
+				<if test="params.dataScopeCustomRoleIds != null and params.dataScopeCustomRoleIds.size() > 0">
+					OR d.dept_id IN (
+						select rd.dept_id
+						from sys_role_dept rd
+						where rd.role_id in
+						<foreach collection="params.dataScopeCustomRoleIds" item="roleId" open="(" separator="," close=")">
+							#{roleId}
+						</foreach>
+					)
+				</if>
+				<if test="params.dataScopeDeptId != null">
+					OR d.dept_id = #{params.dataScopeDeptId}
+				</if>
+				<if test="params.dataScopeDeptAndChildId != null">
+					OR (d.dept_id = #{params.dataScopeDeptAndChildId} OR find_in_set(#{params.dataScopeDeptAndChildId}, d.ancestors))
+				</if>
+			</trim>
+		</if>
+	</sql>
     
 	<select id="selectDeptList" parameterType="SysDept" resultMap="SysDeptResult">
         <include refid="selectDeptVo"/>
@@ -43,7 +69,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND status = #{status}
 		</if>
 		<!-- 数据范围过滤 -->
-		${params.dataScope}
+		<include refid="dataScopeFilter"/>
 		order by d.parent_id, d.order_num
     </select>
     
@@ -156,4 +182,4 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		update sys_dept set del_flag = '2' where dept_id = #{deptId}
 	</delete>
 
-</mapper> 
+</mapper>

@@ -77,6 +77,11 @@
         left join distributor d on d.id = m.distributor_id and d.del_flag = '0'
     </sql>
 
+    <sql id="dataScopeBizFilter">
+        <if test="params.dataScopeBizDistributorId != null">and m.distributor_id = #{params.dataScopeBizDistributorId}</if>
+        <if test="params.dataScopeBizMerchantId != null">and m.id = #{params.dataScopeBizMerchantId}</if>
+    </sql>
+
     <select id="selectMerchantList" parameterType="com.ruoyi.mall.merchant.domain.Merchant" resultMap="MerchantResult">
         <include refid="selectMerchantVo"/>
         <where>
@@ -86,7 +91,7 @@
             <if test="contact != null and contact != ''">and m.contact like concat('%', #{contact}, '%')</if>
             <if test="phone != null and phone != ''">and m.phone = #{phone}</if>
             <if test="status != null">and m.status = #{status}</if>
-            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+            <include refid="dataScopeBizFilter"/>
         </where>
         order by m.id desc
     </select>

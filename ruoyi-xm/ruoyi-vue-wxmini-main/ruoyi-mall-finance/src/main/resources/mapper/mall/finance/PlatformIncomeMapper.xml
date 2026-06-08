@@ -22,6 +22,11 @@
         LEFT JOIN merchant m ON p.merchant_id = m.id
     </sql>
 
+    <sql id="dataScopeBizFilter">
+        <if test="params.dataScopeBizDistributorId != null">and m.distributor_id = #{params.dataScopeBizDistributorId}</if>
+        <if test="params.dataScopeBizMerchantId != null">and p.merchant_id = #{params.dataScopeBizMerchantId}</if>
+    </sql>
+
     <select id="selectPlatformIncomeList" parameterType="com.ruoyi.mall.finance.domain.PlatformIncome" resultMap="PlatformIncomeResult">
         <include refid="selectPlatformIncomeVo"/>
         <where>
@@ -31,7 +36,7 @@
             <if test="orderNo != null and orderNo != ''">and p.order_no = #{orderNo}</if>
             <if test="params.beginTime != null">and p.create_time &gt;= #{params.beginTime}</if>
             <if test="params.endTime != null">and p.create_time &lt;= #{params.endTime}</if>
-            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+            <include refid="dataScopeBizFilter"/>
         </where>
         order by p.create_time desc
     </select>

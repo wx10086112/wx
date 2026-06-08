@@ -22,4 +22,8 @@ public interface IProductService {
     boolean isMerchantAccessibleByDistributor(Long merchantId, Long distributorId);
 
     boolean isProductAccessibleByDistributor(Long productId, Long distributorId);
+
+    boolean deductStock(Long productId, Integer quantity);
+
+    boolean restoreStock(Long productId, Integer quantity);
 }

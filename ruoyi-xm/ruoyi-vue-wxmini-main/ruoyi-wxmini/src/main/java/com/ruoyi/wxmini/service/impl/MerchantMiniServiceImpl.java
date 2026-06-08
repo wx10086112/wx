@@ -2,6 +2,7 @@ package com.ruoyi.wxmini.service.impl;
 
 import com.ruoyi.common.utils.DesensitizedUtil;
 import com.ruoyi.mall.common.bo.WxMiniAuthContext;
+import com.ruoyi.mall.common.event.RefundApprovedEvent;
 import com.ruoyi.mall.common.service.IWxMiniJwtService;
 import com.ruoyi.mall.finance.domain.TransactionRecord;
 import com.ruoyi.mall.finance.domain.WithdrawRecord;
@@ -15,8 +16,10 @@ import com.ruoyi.mall.merchant.mapper.MerchantStoreMapper;
 import com.ruoyi.mall.merchant.mapper.MerchantUserMapper;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.OrderItem;
+import com.ruoyi.mall.order.domain.RefundRecord;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.order.mapper.OrderItemMapper;
+import com.ruoyi.mall.order.mapper.RefundRecordMapper;
 import com.ruoyi.mall.product.domain.Product;
 import com.ruoyi.mall.product.mapper.ProductMapper;
 import com.ruoyi.mall.user.domain.MallUser;
@@ -24,6 +27,7 @@ import com.ruoyi.mall.user.mapper.MallUserMapper;
 import com.ruoyi.wxmini.dto.merchant.*;
 import com.ruoyi.wxmini.service.IMerchantMiniMockService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -98,6 +102,8 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     @Resource
     private OrderItemMapper orderItemMapper;
     @Resource
+    private RefundRecordMapper refundRecordMapper;
+    @Resource
     private ProductMapper productMapper;
     @Resource
     private TransactionRecordMapper transactionRecordMapper;
@@ -105,6 +111,8 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     private WithdrawRecordMapper withdrawRecordMapper;
     @Resource
     private MallUserMapper mallUserMapper;
+    @Resource
+    private ApplicationContext applicationContext;
 
     @org.springframework.beans.factory.annotation.Value("${ruoyi.profile}")
     private String profilePath;
@@ -726,14 +734,24 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     public MerchantMiniOrderDto approveRefund(String orderNo) {
         Long merchantId = getMerchantIdFromContext();
         MallOrder order = getOrderAndCheckMerchant(orderNo, merchantId);
-        if (order.getStatus() != ORDER_STATUS_REFUNDED && order.getStatus() != ORDER_STATUS_PAID && order.getStatus() != ORDER_STATUS_USED) {
+        if (order.getStatus() != ORDER_STATUS_PAID
+                && order.getStatus() != ORDER_STATUS_USED
+                && order.getStatus() != ORDER_STATUS_COMPLETED) {
             throw new IllegalArgumentException("当前订单状态不可同意退款");
         }
-        MallOrder update = new MallOrder();
-        update.setId(order.getId());
-        update.setStatus(ORDER_STATUS_REFUNDED);
-        mallOrderMapper.updateMallOrder(update);
-        order.setStatus(ORDER_STATUS_REFUNDED);
+        RefundRecord refundRecord = findPendingRefundRecord(orderNo, merchantId);
+        refundRecord.setStatus(RefundRecord.STATUS_APPROVED);
+        refundRecord.setOperator(currentOperator());
+        refundRecord.setAuditTime(new Date());
+        if (refundRecord.getParams() == null) {
+            refundRecord.setParams(new HashMap<>());
+        }
+        refundRecord.getParams().put("oldStatus", RefundRecord.STATUS_PENDING);
+        int rows = refundRecordMapper.updateRefundRecord(refundRecord);
+        if (rows == 0) {
+            throw new IllegalArgumentException("退款记录状态已变更，请刷新后重试");
+        }
+        applicationContext.publishEvent(new RefundApprovedEvent(this, orderNo, refundRecord.getId(), currentOperator()));
         return convertOrderToDto(order);
     }
 
@@ -742,15 +760,52 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     public MerchantMiniOrderDto rejectRefund(String orderNo, String reason) {
         Long merchantId = getMerchantIdFromContext();
         MallOrder order = getOrderAndCheckMerchant(orderNo, merchantId);
-        if (order.getStatus() != ORDER_STATUS_REFUNDED && order.getStatus() != ORDER_STATUS_PAID && order.getStatus() != ORDER_STATUS_USED) {
+        if (order.getStatus() != ORDER_STATUS_PAID
+                && order.getStatus() != ORDER_STATUS_USED
+                && order.getStatus() != ORDER_STATUS_COMPLETED) {
             throw new IllegalArgumentException("当前订单状态不可拒绝退款");
         }
-        MallOrder update = new MallOrder();
-        update.setId(order.getId());
-        update.setStatus(ORDER_STATUS_PAID);
-        mallOrderMapper.updateMallOrder(update);
-        order.setStatus(ORDER_STATUS_PAID);
+        RefundRecord refundRecord = findPendingRefundRecord(orderNo, merchantId);
+        refundRecord.setStatus(RefundRecord.STATUS_REJECTED);
+        refundRecord.setRejectReason(StringUtils.isNotBlank(reason) ? reason : "商家拒绝退款");
+        refundRecord.setOperator(currentOperator());
+        refundRecord.setAuditTime(new Date());
+        if (refundRecord.getParams() == null) {
+            refundRecord.setParams(new HashMap<>());
+        }
+        refundRecord.getParams().put("oldStatus", RefundRecord.STATUS_PENDING);
+        int rows = refundRecordMapper.updateRefundRecord(refundRecord);
+        if (rows == 0) {
+            throw new IllegalArgumentException("退款记录状态已变更，请刷新后重试");
+        }
         return convertOrderToDto(order);
+    }
+
+    private RefundRecord findPendingRefundRecord(String orderNo, Long merchantId) {
+        RefundRecord query = new RefundRecord();
+        query.setOrderNo(orderNo);
+        query.setMerchantId(merchantId);
+        List<RefundRecord> records = refundRecordMapper.selectRefundRecordList(query);
+        if (records != null) {
+            for (RefundRecord record : records) {
+                if (orderNo.equals(record.getOrderNo())
+                        && merchantId.equals(record.getMerchantId())
+                        && record.getStatus() != null
+                        && record.getStatus() == RefundRecord.STATUS_PENDING) {
+                    return record;
+                }
+            }
+        }
+        throw new IllegalArgumentException("未找到待审核退款申请");
+    }
+
+    private String currentOperator() {
+        Long staffId = com.ruoyi.mall.common.util.WxMiniUserContext.getCurrentStaffId();
+        if (staffId != null) {
+            return String.valueOf(staffId);
+        }
+        String userId = com.ruoyi.mall.common.util.WxMiniUserContext.getCurrentUserId();
+        return StringUtils.defaultIfBlank(userId, "merchant-mini");
     }
 
     private MallOrder getOrderAndCheckMerchant(String orderNo, Long merchantId) {

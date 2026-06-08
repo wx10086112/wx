@@ -16,7 +16,10 @@ const normalizeLoginUser = (info = {}) => {
     openId: info.openId || '',
     nickName: info.userName || '微信用户',
     avatarUrl: info.avatarUrl || '/assets/images/avatar.svg',
-    phone: info.phone || ''
+    phone: info.phone || '',
+    merchantId: info.merchantId || null,
+    merchantName: info.merchantName || '',
+    appId: info.appId || app.globalData.appId || ''
   }
 }
 

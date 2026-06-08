@@ -37,12 +37,12 @@
             </el-descriptions>
 
             <div class="section-header">
-              <h3 class="section-title">统一小程序与商家后台入口</h3>
+              <h3 class="section-title">商户小程序与商家后台入口</h3>
               <el-button type="primary" icon="el-icon-edit" size="small" @click="handleEditMiniApp">编辑配置</el-button>
             </div>
             <el-descriptions :column="2" border style="margin-top: 10px;">
-              <el-descriptions-item label="统一 C 端 AppID">{{ configText(merchant.cMiniAppId) }}</el-descriptions-item>
-              <el-descriptions-item label="统一 C 端 Secret">{{ secretStatusText(merchant.cMiniAppSecretConfigured) }}</el-descriptions-item>
+              <el-descriptions-item label="商户 C 端 AppID">{{ configText(merchant.cMiniAppId) }}</el-descriptions-item>
+              <el-descriptions-item label="商户 C 端 Secret">{{ secretStatusText(merchant.cMiniAppSecretConfigured) }}</el-descriptions-item>
               <el-descriptions-item label="入口使用 AppID">{{ configText(merchant.cMiniAppId) }}</el-descriptions-item>
               <el-descriptions-item label="配置状态">
                 <el-tag :type="miniAppConfigStatus.type" size="small">{{ miniAppConfigStatus.text }}</el-tag>
@@ -71,9 +71,9 @@
                 <div class="entry-panel__title-row">
                   <div>
                     <div class="entry-panel__title">商家后台入口码</div>
-                    <div class="entry-panel__desc">给店长或员工扫码使用，进入统一小程序内的 B 端登录页，不落到 C 端首页。</div>
+                    <div class="entry-panel__desc">给店长或员工扫码使用，进入该商户小程序内的 B 端登录页，不落到 C 端首页。</div>
                   </div>
-                  <el-tag type="success" size="small">单 AppID / BC 合并</el-tag>
+                  <el-tag type="success" size="small">商户 AppID / BC 合并</el-tag>
                 </div>
 
                 <div class="entry-panel__path">
@@ -448,21 +448,16 @@
     </el-dialog>
 
     <!-- 编辑小程序配置弹窗 -->
-    <el-dialog title="编辑统一小程序配置" :visible.sync="miniAppDialogVisible" width="600px" append-to-body>
+    <el-dialog title="编辑商户小程序配置" :visible.sync="miniAppDialogVisible" width="600px" append-to-body>
       <el-form ref="miniAppForm" :model="miniAppForm" label-width="120px">
-        <el-divider content-position="left">统一小程序（C/B 共用）</el-divider>
-        <el-form-item label="统一 AppID">
-          <el-input v-model="miniAppForm.cMiniAppId" placeholder="wx开头的AppID" />
+        <el-divider content-position="left">商户小程序（C/B 共用）</el-divider>
+        <el-form-item label="商户 AppID">
+          <el-input v-model="miniAppForm.cMiniAppId" placeholder="该商户小程序的 wx 开头 AppID" />
+          <div class="form-tip">小程序请求会自动带 X-Wx-AppId，登录接口会带 appid；后端用这里的 AppID 匹配商户。</div>
         </el-form-item>
-        <el-form-item label="统一 Secret">
-          <el-input v-model="miniAppForm.cMiniAppSecret" placeholder="请输入Secret" />
-        </el-form-item>
-        <el-divider content-position="left">微信支付</el-divider>
-        <el-form-item label="商户号">
-          <el-input v-model="miniAppForm.wxPayMchId" placeholder="微信支付商户号" />
-        </el-form-item>
-        <el-form-item label="API密钥">
-          <el-input v-model="miniAppForm.wxPayApiKey" placeholder="微信支付API密钥" />
+        <el-form-item label="商户 Secret">
+          <el-input v-model="miniAppForm.cMiniAppSecret" placeholder="该商户小程序 Secret" />
+          <div class="form-tip">修改 AppID 时必须重新填写对应 Secret，避免新 AppID 误用旧 Secret。</div>
         </el-form-item>
       </el-form>
       <div slot="footer">
@@ -914,7 +909,7 @@ export default {
 
       // 小程序配置
       miniAppDialogVisible: false,
-      miniAppForm: { cMiniAppId: '', cMiniAppSecret: '', wxPayMchId: '', wxPayApiKey: '' },
+      miniAppForm: { cMiniAppId: '', cMiniAppSecret: '' },
 
       // 腾讯地图认领
       mapClaimDialogVisible: false,
@@ -1122,7 +1117,7 @@ export default {
       if (!this.canGenerateEntryCode) {
         this.merchantEntry = { qrCodeUrl: '', loginPage: '', entryAppId: '', scene: '' }
         if (!silent) {
-          this.$message.warning('请先配置统一小程序 AppID 和 Secret')
+          this.$message.warning('请先配置商户小程序 AppID 和 Secret')
         }
         return
       }
@@ -1310,9 +1305,7 @@ export default {
       this.miniAppForm = {
         id: this.merchant.id,
         cMiniAppId: this.merchant.cMiniAppId || '',
-        cMiniAppSecret: this.merchant.cMiniAppSecretConfigured ? '******' : '',
-        wxPayMchId: this.merchant.wxPayMchId || '',
-        wxPayApiKey: this.merchant.wxPayApiKeyConfigured ? '******' : ''
+        cMiniAppSecret: this.merchant.cMiniAppSecretConfigured ? '******' : ''
       }
       this.miniAppDialogVisible = true
     },
@@ -1905,6 +1898,12 @@ export default {
   font-size: 12px;
   color: #999;
   margin-top: 5px;
+}
+.form-tip {
+  margin-top: 4px;
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.5;
 }
 .panel-title {
   font-weight: bold;

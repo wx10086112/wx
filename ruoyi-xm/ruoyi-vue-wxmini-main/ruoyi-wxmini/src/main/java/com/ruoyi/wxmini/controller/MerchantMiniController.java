@@ -508,7 +508,9 @@ public class MerchantMiniController {
 
     private static Long yuanToCent(java.math.BigDecimal yuan) {
         if (yuan == null) return 0L;
-        return yuan.multiply(java.math.BigDecimal.valueOf(100)).longValue();
+        return yuan.movePointRight(2)
+                .setScale(0, java.math.RoundingMode.UNNECESSARY)
+                .longValueExact();
     }
 
     private static Long nextAutoTransferTimeMillis() {

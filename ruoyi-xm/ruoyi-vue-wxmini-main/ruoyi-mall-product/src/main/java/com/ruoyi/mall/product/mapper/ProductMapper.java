@@ -41,6 +41,8 @@ public interface ProductMapper {
      */
     int deductStock(@Param("id") Long id, @Param("quantity") Integer quantity);
 
+    int restoreStock(@Param("id") Long id, @Param("quantity") Integer quantity);
+
     @Select("SELECT p.*, m.name AS merchant_name FROM product p LEFT JOIN merchant m ON p.merchant_id = m.id WHERE p.status = 1 AND p.del_flag = '0' AND (m.del_flag = '0' OR m.id IS NULL) ORDER BY p.sales DESC LIMIT #{limit}")
     List<Map> selectHotProducts(@Param("limit") int limit);
 

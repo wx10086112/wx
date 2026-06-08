@@ -3,8 +3,6 @@ package com.ruoyi.mall.finance.service.impl;
 import com.ruoyi.mall.finance.domain.MerchantSettlementRecord;
 import com.ruoyi.mall.finance.mapper.MerchantSettlementRecordMapper;
 import com.ruoyi.mall.finance.service.IMerchantSettlementRecordService;
-import com.ruoyi.mall.order.domain.MallOrder;
-import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -12,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -32,13 +29,8 @@ public class MerchantSettlementRecordServiceImpl implements IMerchantSettlementR
     private static final String STATUS_REFUND_PROCESSING = "REFUND_PROCESSING";
     private static final String STATUS_REVERSED = "REVERSED";
 
-    private static final BigDecimal MERCHANT_RATE = new BigDecimal("0.9");
-    private static final BigDecimal PLATFORM_RATE = new BigDecimal("0.1");
-
     @Resource
     private MerchantSettlementRecordMapper settlementMapper;
-    @Resource
-    private MallOrderMapper mallOrderMapper;
 
     @Override
     public MerchantSettlementRecord selectById(Long id) {
@@ -98,7 +90,8 @@ public class MerchantSettlementRecordServiceImpl implements IMerchantSettlementR
     public void batchMarkArrived(List<Long> ids) {
         for (Long id : ids) {
             MerchantSettlementRecord record = settlementMapper.selectById(id);
-            if (record != null && !STATUS_ARRIVED.equals(record.getStatus()) && !STATUS_CANCELLED.equals(record.getStatus())) {
+            if (record != null && !STATUS_ARRIVED.equals(record.getStatus())
+                    && !STATUS_CANCELLED.equals(record.getStatus())) {
                 record.setStatus(STATUS_ARRIVED);
                 record.setArriveTime(new Date());
                 settlementMapper.updateById(record);
@@ -119,19 +112,14 @@ public class MerchantSettlementRecordServiceImpl implements IMerchantSettlementR
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void createSettlementForOrder(String orderNo, Long merchantId, Long storeId, BigDecimal payAmount, String title) {
-        // 幂等：同一 order_no 不重复生成
+    public void createSettlementForOrder(String orderNo, Long merchantId, Long storeId, BigDecimal orderAmount,
+                                         BigDecimal merchantAmount, BigDecimal platformFeeAmount, String title) {
         MerchantSettlementRecord existing = settlementMapper.selectByOrderNo(orderNo);
         if (existing != null) {
             log.info("订单 {} 已存在结算记录 {}, 跳过", orderNo, existing.getSettlementNo());
             return;
         }
 
-        // 计算商家金额（元）= payAmount * 0.9，向下取整
-        BigDecimal merchantAmount = payAmount.multiply(MERCHANT_RATE).setScale(2, RoundingMode.DOWN);
-        BigDecimal platformFeeAmount = payAmount.subtract(merchantAmount);
-
-        // 预计打款时间 = 明天 10:00 (T+1)
         Date expectedTransferTime = calcExpectedTransferTime();
 
         MerchantSettlementRecord record = new MerchantSettlementRecord();
@@ -140,16 +128,17 @@ public class MerchantSettlementRecordServiceImpl implements IMerchantSettlementR
         record.setStoreId(storeId);
         record.setOrderNo(orderNo);
         record.setTitle(title);
-        record.setOrderAmount(payAmount);
-        record.setMerchantAmount(merchantAmount);
-        record.setPlatformFeeAmount(platformFeeAmount);
+        record.setOrderAmount(safeAmount(orderAmount));
+        record.setMerchantAmount(safeAmount(merchantAmount));
+        record.setPlatformFeeAmount(safeAmount(platformFeeAmount));
         record.setStatus(STATUS_WAITING_T1);
         record.setApplyTime(new Date());
         record.setExpectedTransferTime(expectedTransferTime);
 
         settlementMapper.insert(record);
-        log.info("生成结算记录: settlementNo={}, orderNo={}, merchantAmount={}, platformFee={}",
-                record.getSettlementNo(), orderNo, merchantAmount, platformFeeAmount);
+        log.info("生成结算记录: settlementNo={}, orderNo={}, orderAmount={}, merchantAmount={}, platformFee={}",
+                record.getSettlementNo(), orderNo, record.getOrderAmount(),
+                record.getMerchantAmount(), record.getPlatformFeeAmount());
     }
 
     @Override
@@ -163,11 +152,10 @@ public class MerchantSettlementRecordServiceImpl implements IMerchantSettlementR
         List<MerchantSettlementRecord> waitingList = settlementMapper.selectWaitingTransfer(batchSize);
         for (MerchantSettlementRecord record : waitingList) {
             try {
-                // 微信打款能力暂未接入，先标记为 TRANSFERRING
                 record.setStatus(STATUS_TRANSFERRING);
                 record.setTransferTime(new Date());
                 settlementMapper.updateById(record);
-                log.info("结算记录 {} 进入打款流程 (TRANSFERRING)", record.getSettlementNo());
+                log.info("结算记录 {} 进入打款流程", record.getSettlementNo());
             } catch (Exception e) {
                 log.error("处理结算记录 {} 失败: {}", record.getSettlementNo(), e.getMessage(), e);
                 record.setStatus(STATUS_FAILED);
@@ -187,23 +175,17 @@ public class MerchantSettlementRecordServiceImpl implements IMerchantSettlementR
         }
 
         String currentStatus = record.getStatus();
-
-        // 场景1: WAITING_T1 → 取消
         if (STATUS_WAITING_T1.equals(currentStatus)) {
             record.setStatus(STATUS_CANCELLED);
             record.setFailReason(failReason);
             settlementMapper.updateById(record);
-            log.info("退款逆向: 订单 {} 结算记录 {} 已取消 (WAITING_T1)", orderNo, record.getSettlementNo());
-        }
-        // 场景2: TRANSFERRING → REFUND_PROCESSING
-        else if (STATUS_TRANSFERRING.equals(currentStatus)) {
+            log.info("退款逆向：订单 {} 结算记录 {} 已取消", orderNo, record.getSettlementNo());
+        } else if (STATUS_TRANSFERRING.equals(currentStatus)) {
             record.setStatus(STATUS_REFUND_PROCESSING);
             record.setFailReason(failReason);
             settlementMapper.updateById(record);
-            log.info("退款逆向: 订单 {} 结算记录 {} 进入退款处理中 (TRANSFERRING)", orderNo, record.getSettlementNo());
-        }
-        // 场景3: ARRIVED → 生成负向记录
-        else if (STATUS_ARRIVED.equals(currentStatus)) {
+            log.info("退款逆向：订单 {} 结算记录 {} 进入退款处理中", orderNo, record.getSettlementNo());
+        } else if (STATUS_ARRIVED.equals(currentStatus)) {
             MerchantSettlementRecord reverse = new MerchantSettlementRecord();
             reverse.setSettlementNo(generateSettlementNo());
             reverse.setMerchantId(record.getMerchantId());
@@ -217,8 +199,7 @@ public class MerchantSettlementRecordServiceImpl implements IMerchantSettlementR
             reverse.setApplyTime(new Date());
             reverse.setReverseRecordId(record.getId());
             settlementMapper.insert(reverse);
-            log.info("退款逆向: 订单 {} 生成负向结算记录 {} (原记录 {} 已到账)",
-                    orderNo, reverse.getSettlementNo(), record.getSettlementNo());
+            log.info("退款逆向：订单 {} 生成负向结算记录 {}", orderNo, reverse.getSettlementNo());
         }
     }
 
@@ -240,6 +221,10 @@ public class MerchantSettlementRecordServiceImpl implements IMerchantSettlementR
     @Override
     public Integer countCompletedByMerchantId(Long merchantId) {
         return settlementMapper.countCompletedByMerchantId(merchantId);
+    }
+
+    private BigDecimal safeAmount(BigDecimal amount) {
+        return amount != null ? amount : BigDecimal.ZERO;
     }
 
     private Date calcExpectedTransferTime() {

@@ -1,6 +1,7 @@
 package com.ruoyi.mall.finance.service;
 
 import com.ruoyi.mall.finance.domain.PlatformTransferRecord;
+import com.github.binarywang.wxpay.bean.notify.WxPayTransferBatchesNotifyV3Result;
 
 import java.util.List;
 
@@ -35,7 +36,7 @@ public interface IPlatformTransferService {
     /**
      * 处理微信转账回调
      */
-    void handleTransferNotify(String notifyBody);
+    void handleTransferNotify(WxPayTransferBatchesNotifyV3Result.DecryptNotifyResult notifyResult, String notifyBody);
 
     /**
      * 查询微信转账状态并更新

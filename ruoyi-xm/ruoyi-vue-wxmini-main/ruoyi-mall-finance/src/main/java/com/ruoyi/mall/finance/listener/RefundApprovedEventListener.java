@@ -1,6 +1,6 @@
 package com.ruoyi.mall.finance.listener;
 
-import com.ruoyi.mall.common.event.RefundApprovedEvent;
+import com.ruoyi.mall.common.event.RefundSucceededEvent;
 import com.ruoyi.mall.finance.service.IDistributorSettlementRecordService;
 import com.ruoyi.mall.finance.service.IMerchantSettlementRecordService;
 import com.ruoyi.mall.finance.service.IOrderProfitLedgerService;
@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 
 /**
- * 退款审批通过事件监听器
- * 处理商家结算和分销商结算的逆向操作
+ * 微信确认退款成功事件监听器。
+ * 处理商家结算和分销商结算的逆向操作。
  */
 @Component
 public class RefundApprovedEventListener {
@@ -30,13 +30,14 @@ public class RefundApprovedEventListener {
 
     @EventListener
     @Async
-    public void onRefundApproved(RefundApprovedEvent event) {
+    public void onRefundSucceeded(RefundSucceededEvent event) {
         String orderNo = event.getOrderNo();
-        log.info("收到退款通过事件: orderNo={}, refundId={}", orderNo, event.getRefundRecordId());
+        log.info("收到微信退款成功事件: orderNo={}, refundId={}, refundNo={}",
+                orderNo, event.getRefundRecordId(), event.getRefundNo());
 
         try {
             // 1. 商家结算逆向
-            merchantSettlementService.handleRefundReverse(orderNo, "订单退款-审批通过");
+            merchantSettlementService.handleRefundReverse(orderNo, "订单退款-微信确认成功");
             log.info("商家结算逆向完成: orderNo={}", orderNo);
         } catch (Exception e) {
             log.error("商家结算逆向失败: orderNo={}, error={}", orderNo, e.getMessage(), e);

@@ -1,7 +1,6 @@
 package com.ruoyi.mall.finance.service.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.binarywang.wxpay.bean.notify.WxPayTransferBatchesNotifyV3Result;
 import com.ruoyi.mall.finance.domain.DistributorSettlementRecord;
 import com.ruoyi.mall.finance.domain.MerchantSettlementRecord;
 import com.ruoyi.mall.finance.domain.PlatformTransferRecord;
@@ -22,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -34,8 +34,6 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
     private static final String STATUS_TRANSFERRING = "TRANSFERRING";
     private static final String STATUS_ARRIVED = "ARRIVED";
     private static final String STATUS_FAILED = "FAILED";
-
-    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${wx.pay.stub-enabled:false}")
     private boolean stubEnabled;
@@ -216,36 +214,24 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void handleTransferNotify(String notifyBody) {
-        log.info("处理微信转账回调: {}", notifyBody);
-
-        // 使用 Jackson 解析 JSON
-        String detailNo;
-        String transferStatus;
-        try {
-            JsonNode root = objectMapper.readTree(notifyBody);
-            detailNo = root.path("out_detail_no").asText(null);
-            transferStatus = root.path("transfer_status").asText(null);
-        } catch (Exception e) {
-            log.error("转账回调 JSON 解析失败: {}", e.getMessage());
-            throw new RuntimeException("回调 JSON 解析失败");
+    public void handleTransferNotify(WxPayTransferBatchesNotifyV3Result.DecryptNotifyResult notifyResult,
+                                     String notifyBody) {
+        if (notifyResult == null) {
+            throw new RuntimeException("转账回调解密结果为空");
         }
 
-        if (StringUtils.isBlank(detailNo)) {
-            log.error("回调缺少 out_detail_no");
-            throw new RuntimeException("回调缺少 out_detail_no");
+        String outBatchNo = notifyResult.getOutBatchNo();
+        String transferStatus = notifyResult.getBatchStatus();
+        if (StringUtils.isBlank(outBatchNo)) {
+            throw new RuntimeException("转账回调缺少 out_batch_no");
         }
 
-        // 按 wechatDetailNo 查找转账记录（需要查全表）
-        PlatformTransferRecord query = new PlatformTransferRecord();
-        query.setWechatDetailNo(detailNo);
-        List<PlatformTransferRecord> records = transferMapper.selectList(query);
-        if (records == null || records.isEmpty()) {
-            log.error("找不到转账记录: wechatDetailNo={}", detailNo);
+        PlatformTransferRecord record = transferMapper.selectByTransferNo(outBatchNo);
+        if (record == null) {
+            log.error("找不到转账记录: outBatchNo={}", outBatchNo);
             throw new RuntimeException("找不到转账记录");
         }
-
-        PlatformTransferRecord record = records.get(0);
+        validateTransferNotify(record, notifyResult);
 
         // 幂等：已到账或已失败的不重复处理
         if (STATUS_ARRIVED.equals(record.getStatus()) || STATUS_FAILED.equals(record.getStatus())) {
@@ -257,7 +243,7 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
         record.setNotifyTime(now);
         record.setNotifyResult(notifyBody);
 
-        if ("SUCCESS".equals(transferStatus)) {
+        if (isTransferSuccess(notifyResult)) {
             record.setStatus(STATUS_ARRIVED);
             record.setArriveTime(now);
             transferMapper.updateById(record);
@@ -265,11 +251,14 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
             // 同步更新结算记录
             updateSettlementToArrived(record);
             log.info("转账回调成功: transferNo={}, 状态→ARRIVED", record.getTransferNo());
-        } else {
+        } else if (isTransferFailed(transferStatus)) {
             record.setStatus(STATUS_FAILED);
             record.setFailReason("微信回调: " + transferStatus);
             transferMapper.updateById(record);
+            updateSettlementToFailed(record, record.getFailReason());
             log.warn("转账回调失败: transferNo={}, 原因={}", record.getTransferNo(), transferStatus);
+        } else {
+            log.info("转账回调状态仍处理中: transferNo={}, status={}", record.getTransferNo(), transferStatus);
         }
     }
 
@@ -407,13 +396,13 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
             request.setOutBatchNo(record.getTransferNo());
             request.setBatchName("结算转账-" + record.getSettlementNo());
             request.setBatchRemark("商家/分销商结算打款");
-            request.setTotalAmount(record.getAmount().multiply(BigDecimal.valueOf(100)).setScale(0, java.math.RoundingMode.HALF_UP).intValueExact());
+            request.setTotalAmount(toFenExact(record.getAmount()));
             request.setTotalNum(1);
 
             com.github.binarywang.wxpay.bean.merchanttransfer.TransferCreateRequest.TransferDetailList detail =
                     new com.github.binarywang.wxpay.bean.merchanttransfer.TransferCreateRequest.TransferDetailList();
             detail.setOutDetailNo(record.getTransferNo());
-            detail.setTransferAmount(record.getAmount().multiply(BigDecimal.valueOf(100)).setScale(0, java.math.RoundingMode.HALF_UP).intValueExact());
+            detail.setTransferAmount(toFenExact(record.getAmount()));
             detail.setOpenid(record.getReceiverOpenid());
 
             // RSA加密收款人真实姓名
@@ -459,6 +448,66 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
                 distributorSettlementService.updateById(s);
             }
         }
+    }
+
+    private void updateSettlementToFailed(PlatformTransferRecord record, String reason) {
+        if ("MERCHANT".equals(record.getTargetType())) {
+            MerchantSettlementRecord s = merchantSettlementService.selectBySettlementNo(record.getSettlementNo());
+            if (s != null) {
+                s.setStatus(STATUS_FAILED);
+                s.setFailReason(reason);
+                merchantSettlementService.updateById(s);
+            }
+        } else if ("DISTRIBUTOR".equals(record.getTargetType())) {
+            DistributorSettlementRecord s = distributorSettlementService.selectBySettlementNo(record.getSettlementNo());
+            if (s != null) {
+                s.setStatus(STATUS_FAILED);
+                s.setFailReason(reason);
+                distributorSettlementService.updateById(s);
+            }
+        }
+    }
+
+    private void validateTransferNotify(PlatformTransferRecord record,
+                                        WxPayTransferBatchesNotifyV3Result.DecryptNotifyResult notifyResult) {
+        if (wxPayService != null && wxPayService.getConfig() != null
+                && StringUtils.isNotBlank(wxPayService.getConfig().getMchId())
+                && !StringUtils.equals(wxPayService.getConfig().getMchId(), notifyResult.getMchid())) {
+            throw new RuntimeException("转账回调商户号不匹配");
+        }
+        if (StringUtils.isNotBlank(record.getWechatBatchNo())
+                && StringUtils.isNotBlank(notifyResult.getBatchId())
+                && !StringUtils.equals(record.getWechatBatchNo(), notifyResult.getBatchId())) {
+            throw new RuntimeException("转账回调微信批次号不匹配");
+        }
+        Integer totalNum = notifyResult.getTotalNum();
+        if (totalNum != null && totalNum != 1) {
+            throw new RuntimeException("转账回调批次笔数异常");
+        }
+        Integer totalAmount = notifyResult.getTotalAmount();
+        if (totalAmount != null && totalAmount != toFenExact(record.getAmount())) {
+            throw new RuntimeException("转账回调金额不匹配");
+        }
+    }
+
+    private boolean isTransferSuccess(WxPayTransferBatchesNotifyV3Result.DecryptNotifyResult notifyResult) {
+        String status = notifyResult.getBatchStatus();
+        Integer successNum = notifyResult.getSuccessNum();
+        Integer failNum = notifyResult.getFailNum();
+        return ("FINISHED".equals(status) || "SUCCESS".equals(status))
+                && (successNum == null || successNum == 1)
+                && (failNum == null || failNum == 0);
+    }
+
+    private boolean isTransferFailed(String status) {
+        return "CLOSED".equals(status) || "FAILED".equals(status);
+    }
+
+    private int toFenExact(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("转账金额必须大于0元");
+        }
+        return amount.movePointRight(2).setScale(0, RoundingMode.UNNECESSARY).intValueExact();
     }
 
     /**

@@ -33,6 +33,11 @@
         dsr.reverse_record_id, dsr.del_flag, dsr.create_time, dsr.update_time
     </sql>
 
+    <sql id="dataScopeBizFilter">
+        <if test="params.dataScopeBizDistributorId != null">and dsr.distributor_id = #{params.dataScopeBizDistributorId}</if>
+        <if test="params.dataScopeBizMerchantId != null">and dsr.merchant_id = #{params.dataScopeBizMerchantId}</if>
+    </sql>
+
     <select id="selectById" parameterType="Long" resultMap="DistSettlementResult">
         select <include refid="selectColumns"/> from distributor_settlement_record dsr
         LEFT JOIN merchant m ON dsr.merchant_id = m.id
@@ -64,7 +69,7 @@
             <if test="merchantId != null">and dsr.merchant_id = #{merchantId}</if>
             <if test="orderNo != null and orderNo != ''">and dsr.order_no = #{orderNo}</if>
             <if test="status != null and status != ''">and dsr.status = #{status}</if>
-            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+            <include refid="dataScopeBizFilter"/>
         </where>
         order by dsr.create_time desc
     </select>

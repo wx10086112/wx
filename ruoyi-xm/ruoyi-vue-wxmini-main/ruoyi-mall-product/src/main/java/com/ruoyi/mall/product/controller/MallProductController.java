@@ -12,13 +12,27 @@ import com.ruoyi.mall.product.domain.Product;
 import com.ruoyi.mall.product.service.IProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/mall/product")
@@ -26,6 +40,10 @@ public class MallProductController extends BaseController {
 
     @Autowired
     private IProductService productService;
+
+    private static final Set<String> ALLOWED_IMAGE_TYPES = new HashSet<>(Arrays.asList(
+            "main", "detail", "cover", "sku"
+    ));
 
     @DataScopeBiz(merchantAlias = "product")
     @PreAuthorize("@ss.hasPermi('mall:product:list')")
@@ -40,16 +58,9 @@ public class MallProductController extends BaseController {
     @GetMapping("/{id}")
     public AjaxResult getInfo(@PathVariable Long id) {
         Product product = productService.selectProductById(id);
-        if (product == null) {
-            return AjaxResult.error("商品不存在");
-        }
-        Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
-        if (effMerchantId != null && !effMerchantId.equals(product.getMerchantId())) {
-            return AjaxResult.error("无权查看该商品");
-        }
-        Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
-        if (effDistributorId != null && product.getMerchantId() != null) {
-            // 分销商视角下需要校验商品所属商家是否归属于自己（通过dataScopeBiz在列表层已过滤，详情层需补充）
+        AjaxResult denied = checkProductAccess(product, "商品");
+        if (denied != null) {
+            return denied;
         }
         return AjaxResult.success(product);
     }
@@ -62,6 +73,10 @@ public class MallProductController extends BaseController {
         if (effMerchantId != null) {
             product.setMerchantId(effMerchantId);
         }
+        AjaxResult denied = checkMerchantAccess(product.getMerchantId(), "商品");
+        if (denied != null) {
+            return denied;
+        }
         return toAjax(productService.insertProduct(product));
     }
 
@@ -70,12 +85,13 @@ public class MallProductController extends BaseController {
     @PutMapping
     public AjaxResult edit(@RequestBody Product product) {
         Product existing = productService.selectProductById(product.getId());
-        if (existing == null) {
-            return AjaxResult.error("商品不存在");
+        AjaxResult denied = checkProductAccess(existing, "商品");
+        if (denied != null) {
+            return denied;
         }
-        Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
-        if (effMerchantId != null && !effMerchantId.equals(existing.getMerchantId())) {
-            return AjaxResult.error("无权修改该商品");
+        if (MallDataScopeHelper.currentEffectiveMerchantId() != null
+                || MallDataScopeHelper.currentEffectiveDistributorId() != null) {
+            product.setMerchantId(existing.getMerchantId());
         }
         return toAjax(productService.updateProduct(product));
     }
@@ -84,21 +100,15 @@ public class MallProductController extends BaseController {
     @Log(title = "商品管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{ids}")
     public AjaxResult remove(@PathVariable Long[] ids) {
-        Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
-        if (effMerchantId != null) {
-            for (Long id : ids) {
-                Product product = productService.selectProductById(id);
-                if (product != null && !effMerchantId.equals(product.getMerchantId())) {
-                    return AjaxResult.error("无权删除该商品");
-                }
+        for (Long id : ids) {
+            Product product = productService.selectProductById(id);
+            AjaxResult denied = checkProductAccess(product, "商品");
+            if (denied != null) {
+                return denied;
             }
         }
         return toAjax(productService.deleteProductByIds(ids));
     }
-
-    private static final Set<String> ALLOWED_IMAGE_TYPES = new HashSet<>(Arrays.asList(
-            "main", "detail", "cover", "sku"
-    ));
 
     /**
      * 普通商品图片上传
@@ -119,6 +129,20 @@ public class MallProductController extends BaseController {
         }
         if (file.getSize() > 5 * 1024 * 1024) {
             return AjaxResult.error("文件大小不能超过5MB");
+        }
+        AjaxResult denied = checkMerchantAccess(merchantId, "商品图片");
+        if (denied != null) {
+            return denied;
+        }
+        if (productId != null) {
+            Product product = productService.selectProductById(productId);
+            denied = checkProductAccess(product, "商品图片");
+            if (denied != null) {
+                return denied;
+            }
+            if (!merchantId.equals(product.getMerchantId())) {
+                return AjaxResult.error("商品与商户不匹配");
+            }
         }
 
         String ext;
@@ -173,6 +197,25 @@ public class MallProductController extends BaseController {
         } catch (IOException e) {
             return AjaxResult.error("文件上传失败: " + e.getMessage());
         }
+    }
+
+    private AjaxResult checkProductAccess(Product product, String label) {
+        if (product == null) {
+            return AjaxResult.error(label + "不存在");
+        }
+        return checkMerchantAccess(product.getMerchantId(), label);
+    }
+
+    private AjaxResult checkMerchantAccess(Long merchantId, String label) {
+        Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        if (effMerchantId != null && !effMerchantId.equals(merchantId)) {
+            return AjaxResult.error("无权操作该" + label);
+        }
+        Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effDistributorId != null && !productService.isMerchantAccessibleByDistributor(merchantId, effDistributorId)) {
+            return AjaxResult.error("无权操作该" + label);
+        }
+        return null;
     }
 
     private String detectImageExtension(InputStream is) throws IOException {

@@ -38,6 +38,11 @@
         left join merchant m on m.id = p.merchant_id and m.del_flag = '0'
     </sql>
 
+    <sql id="dataScopeBizFilter">
+        <if test="params.dataScopeBizDistributorId != null">and m.distributor_id = #{params.dataScopeBizDistributorId}</if>
+        <if test="params.dataScopeBizMerchantId != null">and p.merchant_id = #{params.dataScopeBizMerchantId}</if>
+    </sql>
+
     <select id="selectProductList" parameterType="com.ruoyi.mall.product.domain.Product" resultMap="ProductResult">
         <include refid="selectProductVo"/>
         <where>
@@ -46,9 +51,7 @@
             <if test="merchantId != null">and p.merchant_id = #{merchantId}</if>
             <if test="categoryId != null">and p.category_id = #{categoryId}</if>
             <if test="status != null">and p.status = #{status}</if>
-            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">
-                ${params.dataScopeBiz}
-            </if>
+            <include refid="dataScopeBizFilter"/>
         </where>
         order by p.sort asc, p.create_time desc
     </select>
@@ -161,6 +164,11 @@
     <update id="deductStock">
         UPDATE product SET stock = stock - #{quantity}
         WHERE id = #{id} AND stock >= #{quantity} AND del_flag = '0' AND status = 1
+    </update>
+
+    <update id="restoreStock">
+        UPDATE product SET stock = stock + #{quantity}
+        WHERE id = #{id} AND del_flag = '0'
     </update>
 
 </mapper>

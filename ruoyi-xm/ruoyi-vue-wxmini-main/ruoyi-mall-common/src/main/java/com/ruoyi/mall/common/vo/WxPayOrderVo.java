@@ -1,13 +1,23 @@
 package com.ruoyi.mall.common.vo;
 
-/**
- * 订单支付请求参数
- */
 public class WxPayOrderVo {
 
-    /** 订单号 */
     private String orderNo;
+    private String openId;
 
-    public String getOrderNo() { return orderNo; }
-    public void setOrderNo(String orderNo) { this.orderNo = orderNo; }
+    public String getOrderNo() {
+        return orderNo;
+    }
+
+    public void setOrderNo(String orderNo) {
+        this.orderNo = orderNo;
+    }
+
+    public String getOpenId() {
+        return openId;
+    }
+
+    public void setOpenId(String openId) {
+        this.openId = openId;
+    }
 }

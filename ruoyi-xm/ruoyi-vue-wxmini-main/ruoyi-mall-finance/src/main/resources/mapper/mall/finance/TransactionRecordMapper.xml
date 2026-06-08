@@ -23,6 +23,11 @@
         LEFT JOIN merchant m ON t.merchant_id = m.id
     </sql>
 
+    <sql id="dataScopeBizFilter">
+        <if test="params.dataScopeBizDistributorId != null">and m.distributor_id = #{params.dataScopeBizDistributorId}</if>
+        <if test="params.dataScopeBizMerchantId != null">and t.merchant_id = #{params.dataScopeBizMerchantId}</if>
+    </sql>
+
     <select id="selectTransactionRecordList" parameterType="com.ruoyi.mall.finance.domain.TransactionRecord" resultMap="TransactionRecordResult">
         <include refid="selectTransactionRecordVo"/>
         <where>
@@ -33,7 +38,7 @@
             <if test="orderNo != null and orderNo != ''">and t.order_no = #{orderNo}</if>
             <if test="params.beginTime != null">and t.create_time &gt;= #{params.beginTime}</if>
             <if test="params.endTime != null">and t.create_time &lt;= #{params.endTime}</if>
-            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+            <include refid="dataScopeBizFilter"/>
         </where>
         order by t.create_time desc
     </select>

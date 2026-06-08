@@ -7,23 +7,40 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.utils.MallDataScopeHelper;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
+import com.ruoyi.mall.product.domain.GrouponActivity;
 import com.ruoyi.mall.product.domain.GrouponActivityItem;
-import java.math.BigDecimal;
 import com.ruoyi.mall.product.service.IGrouponActivityItemService;
+import com.ruoyi.mall.product.service.IGrouponActivityService;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 /**
- * 团购商品明细管理Controller
+ * 团购商品明细管理
  */
 @RestController
 @RequestMapping("/mall/groupon/item")
@@ -31,6 +48,9 @@ public class MallGrouponItemController extends BaseController {
 
     @Resource
     private IGrouponActivityItemService grouponActivityItemService;
+
+    @Resource
+    private IGrouponActivityService grouponActivityService;
 
     @Resource
     private IMerchantService merchantService;
@@ -54,8 +74,14 @@ public class MallGrouponItemController extends BaseController {
     /**
      * 根据团购活动ID查询商品列表
      */
+    @PreAuthorize("@ss.hasPermi('mall:groupon:list')")
     @GetMapping("/listByGroupon")
     public AjaxResult listByGroupon(@RequestParam Long grouponId) {
+        GrouponActivity activity = grouponActivityService.selectGrouponActivityById(grouponId);
+        AjaxResult denied = checkActivityAccess(activity, "团购活动");
+        if (denied != null) {
+            return denied;
+        }
         List<GrouponActivityItem> list = grouponActivityItemService.selectByGrouponId(grouponId);
         return AjaxResult.success(list);
     }
@@ -66,7 +92,12 @@ public class MallGrouponItemController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:groupon:query')")
     @GetMapping("/{id}")
     public AjaxResult getInfo(@PathVariable Long id) {
-        return AjaxResult.success(grouponActivityItemService.selectGrouponActivityItemById(id));
+        GrouponActivityItem item = grouponActivityItemService.selectGrouponActivityItemById(id);
+        AjaxResult denied = checkItemAccess(item, "团购商品");
+        if (denied != null) {
+            return denied;
+        }
+        return AjaxResult.success(item);
     }
 
     /**
@@ -76,33 +107,25 @@ public class MallGrouponItemController extends BaseController {
     @Log(title = "团购商品管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody GrouponActivityItem item) {
-        // 新建商品如果直接上架，需校验商家运营准入
-        if (item.getStatus() != null && item.getStatus() == 1 && item.getMerchantId() != null) {
-            Merchant merchant = merchantService.selectMerchantById(item.getMerchantId());
-            if (merchant != null && !merchant.canOperate()) {
-                return AjaxResult.error("商家运营条件不满足：" + merchant.getOperateBlockReason());
-            }
+        Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        if (effMerchantId != null) {
+            item.setMerchantId(effMerchantId);
         }
-        if (item.getMerchantId() == null || item.getGrouponId() == null) {
-            return AjaxResult.error("商家ID和活动ID不能为空");
+        AjaxResult denied = checkMerchantAccess(item.getMerchantId(), "团购商品");
+        if (denied != null) {
+            return denied;
         }
-        if (item.getName() == null || item.getName().trim().isEmpty()) {
-            return AjaxResult.error("商品名称不能为空");
+        denied = checkItemActivityRelation(item);
+        if (denied != null) {
+            return denied;
         }
-        if (item.getOriginalPrice() == null || item.getOriginalPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            return AjaxResult.error("原价必须大于0");
+        AjaxResult validateResult = validateItemForSave(item);
+        if (validateResult != null) {
+            return validateResult;
         }
-        if (item.getGrouponPrice() == null || item.getGrouponPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            return AjaxResult.error("团购价必须大于0");
-        }
-        if (item.getGrouponPrice().compareTo(item.getOriginalPrice()) > 0) {
-            return AjaxResult.error("团购价不能大于原价");
-        }
-        if (item.getStock() == null || item.getStock() < 0) {
-            return AjaxResult.error("库存不能为负数");
-        }
-        if (item.getValidDays() == null || item.getValidDays() <= 0) {
-            return AjaxResult.error("有效期必须大于0");
+        AjaxResult operateCheck = checkMerchantCanOperate(item.getMerchantId(), item.getStatus());
+        if (operateCheck != null) {
+            return operateCheck;
         }
         return toAjax(grouponActivityItemService.insertGrouponActivityItem(item));
     }
@@ -114,14 +137,29 @@ public class MallGrouponItemController extends BaseController {
     @Log(title = "团购商品管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody GrouponActivityItem item) {
-        // 编辑时如果上架(status=1)，需校验商家运营准入
-        if (item.getStatus() != null && item.getStatus() == 1 && item.getId() != null) {
-            GrouponActivityItem existing = grouponActivityItemService.selectGrouponActivityItemById(item.getId());
-            if (existing != null && existing.getMerchantId() != null) {
-                Merchant merchant = merchantService.selectMerchantById(existing.getMerchantId());
-                if (merchant != null && !merchant.canOperate()) {
-                    return AjaxResult.error("商家运营条件不满足：" + merchant.getOperateBlockReason());
-                }
+        GrouponActivityItem existing = grouponActivityItemService.selectGrouponActivityItemById(item.getId());
+        AjaxResult denied = checkItemAccess(existing, "团购商品");
+        if (denied != null) {
+            return denied;
+        }
+        AjaxResult operateCheck = checkMerchantCanOperate(existing.getMerchantId(), item.getStatus());
+        if (operateCheck != null) {
+            return operateCheck;
+        }
+        if (MallDataScopeHelper.currentEffectiveMerchantId() != null
+                || MallDataScopeHelper.currentEffectiveDistributorId() != null) {
+            item.setMerchantId(existing.getMerchantId());
+            item.setGrouponId(existing.getGrouponId());
+        } else {
+            if (item.getMerchantId() == null) {
+                item.setMerchantId(existing.getMerchantId());
+            }
+            if (item.getGrouponId() == null) {
+                item.setGrouponId(existing.getGrouponId());
+            }
+            denied = checkItemActivityRelation(item);
+            if (denied != null) {
+                return denied;
             }
         }
         return toAjax(grouponActivityItemService.updateGrouponActivityItem(item));
@@ -134,32 +172,42 @@ public class MallGrouponItemController extends BaseController {
     @Log(title = "团购商品管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{ids}")
     public AjaxResult remove(@PathVariable Long[] ids) {
+        for (Long id : ids) {
+            GrouponActivityItem item = grouponActivityItemService.selectGrouponActivityItemById(id);
+            AjaxResult denied = checkItemAccess(item, "团购商品");
+            if (denied != null) {
+                return denied;
+            }
+        }
         return toAjax(grouponActivityItemService.deleteGrouponActivityItemByIds(ids));
     }
 
     /**
-     * 修改团购商品状态（上架/下架）
+     * 修改团购商品状态
      */
     @PreAuthorize("@ss.hasPermi('mall:groupon:edit')")
     @Log(title = "团购商品状态修改", businessType = BusinessType.UPDATE)
     @PutMapping("/status")
     public AjaxResult changeStatus(@RequestBody GrouponActivityItem item) {
-        // 上架前校验商家运营准入（从DB查existing获取merchantId，防止前端不传绕过）
-        if (item.getStatus() != null && item.getStatus() == 1 && item.getId() != null) {
-            GrouponActivityItem existing = grouponActivityItemService.selectGrouponActivityItemById(item.getId());
-            if (existing != null && existing.getMerchantId() != null) {
-                Merchant merchant = merchantService.selectMerchantById(existing.getMerchantId());
-                if (merchant != null && !merchant.canOperate()) {
-                    return AjaxResult.error("商家运营条件不满足：" + merchant.getOperateBlockReason());
-                }
-            }
+        GrouponActivityItem existing = grouponActivityItemService.selectGrouponActivityItemById(item.getId());
+        AjaxResult denied = checkItemAccess(existing, "团购商品");
+        if (denied != null) {
+            return denied;
         }
-        return toAjax(grouponActivityItemService.updateGrouponActivityItem(item));
+        AjaxResult operateCheck = checkMerchantCanOperate(existing.getMerchantId(), item.getStatus());
+        if (operateCheck != null) {
+            return operateCheck;
+        }
+        GrouponActivityItem update = new GrouponActivityItem();
+        update.setId(item.getId());
+        update.setStatus(item.getStatus());
+        return toAjax(grouponActivityItemService.updateGrouponActivityItem(update));
     }
 
     /**
      * 团购商品图片上传
      */
+    @PreAuthorize("@ss.hasPermi('mall:groupon:edit')")
     @PostMapping("/image/upload")
     public AjaxResult uploadImage(
             @RequestParam("file") MultipartFile file,
@@ -179,6 +227,31 @@ public class MallGrouponItemController extends BaseController {
 
         if (file.getSize() > 5 * 1024 * 1024) {
             return AjaxResult.error("文件大小不能超过5MB");
+        }
+
+        AjaxResult denied = checkMerchantAccess(merchantId, "团购商品图片");
+        if (denied != null) {
+            return denied;
+        }
+        if (grouponId != null) {
+            GrouponActivity activity = grouponActivityService.selectGrouponActivityById(grouponId);
+            denied = checkActivityAccess(activity, "团购商品图片");
+            if (denied != null) {
+                return denied;
+            }
+            if (!merchantId.equals(activity.getMerchantId())) {
+                return AjaxResult.error("团购活动与商户不匹配");
+            }
+        }
+        if (itemId != null) {
+            GrouponActivityItem item = grouponActivityItemService.selectGrouponActivityItemById(itemId);
+            denied = checkItemAccess(item, "团购商品图片");
+            if (denied != null) {
+                return denied;
+            }
+            if (!merchantId.equals(item.getMerchantId())) {
+                return AjaxResult.error("团购商品与商户不匹配");
+            }
         }
 
         String ext;
@@ -241,6 +314,86 @@ public class MallGrouponItemController extends BaseController {
         } catch (IOException e) {
             return AjaxResult.error("文件上传失败: " + e.getMessage());
         }
+    }
+
+    private AjaxResult validateItemForSave(GrouponActivityItem item) {
+        if (item.getMerchantId() == null || item.getGrouponId() == null) {
+            return AjaxResult.error("商户ID和活动ID不能为空");
+        }
+        if (item.getName() == null || item.getName().trim().isEmpty()) {
+            return AjaxResult.error("商品名称不能为空");
+        }
+        if (item.getOriginalPrice() == null || item.getOriginalPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            return AjaxResult.error("原价必须大于0");
+        }
+        if (item.getGrouponPrice() == null || item.getGrouponPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            return AjaxResult.error("团购价必须大于0");
+        }
+        if (item.getGrouponPrice().compareTo(item.getOriginalPrice()) > 0) {
+            return AjaxResult.error("团购价不能大于原价");
+        }
+        if (item.getStock() == null || item.getStock() < 0) {
+            return AjaxResult.error("库存不能为负数");
+        }
+        if (item.getValidDays() == null || item.getValidDays() <= 0) {
+            return AjaxResult.error("有效期必须大于0");
+        }
+        return null;
+    }
+
+    private AjaxResult checkItemActivityRelation(GrouponActivityItem item) {
+        GrouponActivity activity = grouponActivityService.selectGrouponActivityById(item.getGrouponId());
+        AjaxResult denied = checkActivityAccess(activity, "团购活动");
+        if (denied != null) {
+            return denied;
+        }
+        if (!item.getMerchantId().equals(activity.getMerchantId())) {
+            return AjaxResult.error("团购商品与活动商户不匹配");
+        }
+        return null;
+    }
+
+    private AjaxResult checkActivityAccess(GrouponActivity activity, String label) {
+        if (activity == null) {
+            return AjaxResult.error(label + "不存在");
+        }
+        return checkMerchantAccess(activity.getMerchantId(), label);
+    }
+
+    private AjaxResult checkItemAccess(GrouponActivityItem item, String label) {
+        if (item == null) {
+            return AjaxResult.error(label + "不存在");
+        }
+        return checkMerchantAccess(item.getMerchantId(), label);
+    }
+
+    private AjaxResult checkMerchantAccess(Long merchantId, String label) {
+        if (merchantId == null) {
+            return AjaxResult.error(label + "商户不能为空");
+        }
+        Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        if (effMerchantId != null && !effMerchantId.equals(merchantId)) {
+            return AjaxResult.error("无权操作该" + label);
+        }
+        Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effDistributorId != null) {
+            Merchant merchant = merchantService.selectMerchantById(merchantId);
+            if (merchant == null || !effDistributorId.equals(merchant.getDistributorId())) {
+                return AjaxResult.error("无权操作该" + label);
+            }
+        }
+        return null;
+    }
+
+    private AjaxResult checkMerchantCanOperate(Long merchantId, Integer status) {
+        if (status == null || status != 1 || merchantId == null) {
+            return null;
+        }
+        Merchant merchant = merchantService.selectMerchantById(merchantId);
+        if (merchant != null && !merchant.canOperate()) {
+            return AjaxResult.error("商家运营条件不满足：" + merchant.getOperateBlockReason());
+        }
+        return null;
     }
 
     private String detectImageExtension(InputStream is) throws IOException {

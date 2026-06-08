@@ -30,6 +30,11 @@
         opl.distributor_rate, opl.status, opl.finish_time, opl.del_flag, opl.create_time, opl.update_time
     </sql>
 
+    <sql id="dataScopeBizFilter">
+        <if test="params.dataScopeBizDistributorId != null">and opl.distributor_id = #{params.dataScopeBizDistributorId}</if>
+        <if test="params.dataScopeBizMerchantId != null">and opl.merchant_id = #{params.dataScopeBizMerchantId}</if>
+    </sql>
+
     <select id="selectById" parameterType="Long" resultMap="LedgerResult">
         select <include refid="selectColumns"/> from order_profit_ledger opl
         LEFT JOIN merchant m ON opl.merchant_id = m.id
@@ -54,7 +59,7 @@
             <if test="distributorId != null">and opl.distributor_id = #{distributorId}</if>
             <if test="orderNo != null and orderNo != ''">and opl.order_no = #{orderNo}</if>
             <if test="status != null and status != ''">and opl.status = #{status}</if>
-            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+            <include refid="dataScopeBizFilter"/>
         </where>
         order by opl.create_time desc
     </select>

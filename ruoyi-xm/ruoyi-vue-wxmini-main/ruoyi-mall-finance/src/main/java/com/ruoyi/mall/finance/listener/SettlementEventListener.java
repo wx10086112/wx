@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 @Component
 public class SettlementEventListener {
@@ -46,7 +45,6 @@ public class SettlementEventListener {
         String title = event.getTitle();
 
         try {
-            // 查商家获取分销商ID
             Long distributorId = event.getDistributorId();
             if (distributorId == null) {
                 try {
@@ -55,29 +53,31 @@ public class SettlementEventListener {
                         distributorId = merchant.getDistributorId();
                     }
                 } catch (Exception e) {
-                    log.warn("查询商家 {} 分销商ID失败: {}", merchantId, e.getMessage());
+                    log.warn("查询商家 {} 分销商失败: {}", merchantId, e.getMessage());
                 }
             }
 
-            // 1. 生成三方分账流水
             profitLedgerService.createLedger(orderNo, merchantId, distributorId, payAmount);
 
-            // 2. 记录平台收入
             OrderProfitLedger ledger = profitLedgerService.selectByOrderNo(orderNo);
-            if (ledger != null && ledger.getPlatformAmount() != null && ledger.getPlatformAmount().compareTo(BigDecimal.ZERO) > 0) {
+            if (ledger != null && ledger.getPlatformAmount() != null
+                    && ledger.getPlatformAmount().compareTo(BigDecimal.ZERO) > 0) {
                 platformIncomeService.createIncome(orderNo, merchantId, payAmount, ledger.getPlatformAmount());
             }
 
-            // 3. 生成商家结算记录（从分账流水取商家金额）
             if (ledger != null) {
-                settlementService.createSettlementForOrder(orderNo, merchantId, storeId, ledger.getMerchantAmount(), title);
+                settlementService.createSettlementForOrder(orderNo, merchantId, storeId, ledger.getPayAmount(),
+                        ledger.getMerchantAmount(), ledger.getPlatformAmount(), title);
             } else {
-                settlementService.createSettlementForOrder(orderNo, merchantId, storeId, payAmount, title);
+                BigDecimal merchantAmount = payAmount != null ? payAmount : BigDecimal.ZERO;
+                settlementService.createSettlementForOrder(orderNo, merchantId, storeId, payAmount,
+                        merchantAmount, BigDecimal.ZERO, title);
             }
 
-            // 4. 生成分销商结算记录（如果有分销商且佣金>0）
-            if (distributorId != null && ledger != null && ledger.getDistributorAmount().compareTo(BigDecimal.ZERO) > 0) {
-                distributorSettlementService.createSettlementForOrder(orderNo, merchantId, distributorId, ledger.getDistributorAmount(), DISTRIBUTOR_RATE);
+            if (distributorId != null && ledger != null
+                    && ledger.getDistributorAmount().compareTo(BigDecimal.ZERO) > 0) {
+                distributorSettlementService.createSettlementForOrder(orderNo, merchantId, distributorId,
+                        ledger.getDistributorAmount(), DISTRIBUTOR_RATE);
             }
 
             log.info("订单 {} 三方结算记录生成完成: merchant={}, distributor={}", orderNo, merchantId, distributorId);

@@ -69,4 +69,22 @@ public class ProductServiceImpl implements IProductService {
         }
         return productMapper.countProductByDistributor(productId, distributorId) > 0;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deductStock(Long productId, Integer quantity) {
+        if (productId == null || quantity == null || quantity <= 0) {
+            return false;
+        }
+        return productMapper.deductStock(productId, quantity) > 0;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean restoreStock(Long productId, Integer quantity) {
+        if (productId == null || quantity == null || quantity <= 0) {
+            return false;
+        }
+        return productMapper.restoreStock(productId, quantity) > 0;
+    }
 }

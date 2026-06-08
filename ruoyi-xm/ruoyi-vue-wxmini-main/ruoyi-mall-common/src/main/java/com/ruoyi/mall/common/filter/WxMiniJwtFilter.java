@@ -79,6 +79,17 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
                     response.getWriter().write("{\"code\":401,\"msg\":\"登录已过期\"}");
                     return;
                 }
+                Long appIdMerchantId = WxMiniUserContext.getAppIdMerchantId();
+                if (appIdMerchantId != null) {
+                    if (authContext.getMerchantId() == null) {
+                        authContext.setMerchantId(appIdMerchantId);
+                    } else if (!appIdMerchantId.equals(authContext.getMerchantId())) {
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        response.setContentType("application/json;charset=UTF-8");
+                        response.getWriter().write("{\"code\":403,\"msg\":\"小程序AppID与登录态不匹配\"}");
+                        return;
+                    }
+                }
                 if (WxMiniAuthContext.USER_TYPE_WX_USER.equals(authContext.getUserType())
                         && !isWxUserAvailable(authContext.getUserId())) {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -256,6 +267,8 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
                 || path.startsWith("/wxmini/portal")
                 || path.startsWith("/wxmini/public")
                 || path.startsWith("/wxmini/pay/notify")
+                || path.equals("/wxmini/pay/refund-notify")
+                || path.equals("/wxmini/transfer/notify")
                 || path.startsWith("/wxmini/template/config")
                 || isMerchantMiniPublicUri(path);
     }

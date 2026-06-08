@@ -159,7 +159,12 @@ public class MallMerchantController extends BaseController {
             return AjaxResult.error("无权限修改该商家");
         }
 
-        if ("******".equals(merchant.getCMiniAppSecret())) {
+        boolean miniAppSecretMasked = "******".equals(merchant.getCMiniAppSecret());
+        boolean miniAppIdChanged = !StringUtils.equals(trimToNull(merchant.getCMiniAppId()), trimToNull(existing.getCMiniAppId()));
+        if (miniAppSecretMasked && miniAppIdChanged) {
+            return AjaxResult.error("修改商户小程序 AppID 时，请重新填写该小程序对应的 Secret");
+        }
+        if (miniAppSecretMasked) {
             merchant.setCMiniAppSecret(null);
         }
         if ("******".equals(merchant.getWxPayApiKey())) {
@@ -244,7 +249,7 @@ public class MallMerchantController extends BaseController {
             return cMiniAppPairCheck;
         }
 
-        AjaxResult cMiniAppUniqueCheck = validateMiniAppUnique("统一小程序 AppID", merchant.getCMiniAppId(), currentMerchantId);
+        AjaxResult cMiniAppUniqueCheck = validateMiniAppUnique("商户小程序 AppID", merchant.getCMiniAppId(), currentMerchantId);
         if (cMiniAppUniqueCheck != null) {
             return cMiniAppUniqueCheck;
         }
@@ -255,7 +260,7 @@ public class MallMerchantController extends BaseController {
     private AjaxResult validateMiniAppPair(String label, String appId, String secret) {
         boolean hasAppId = StringUtils.isNotBlank(appId);
         boolean hasSecret = StringUtils.isNotBlank(secret);
-        if (!hasAppId && hasSecret) {
+        if (hasAppId != hasSecret) {
             return AjaxResult.error(label + " AppID 和 Secret 需同时填写");
         }
         return null;

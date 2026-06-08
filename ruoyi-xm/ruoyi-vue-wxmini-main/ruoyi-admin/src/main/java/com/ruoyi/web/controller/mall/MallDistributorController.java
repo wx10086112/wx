@@ -1,6 +1,7 @@
 package com.ruoyi.web.controller.mall;
 
 import com.ruoyi.common.annotation.Log;
+import com.ruoyi.common.annotation.DataScopeBiz;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.entity.SysMenu;
 import com.ruoyi.common.core.domain.AjaxResult;
@@ -62,6 +63,7 @@ public class MallDistributorController extends BaseController {
      * 查询分销商列表
      */
     @PreAuthorize("@ss.hasPermi('mall:distributor:list')")
+    @DataScopeBiz(distributorAlias = "d", merchantAlias = "d")
     @GetMapping("/list")
     public TableDataInfo list(Distributor distributor) {
         startPage();

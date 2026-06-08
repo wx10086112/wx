@@ -139,13 +139,25 @@ function buildRules(conf, ruleList) {
     }
     if (conf.regList && Array.isArray(conf.regList)) {
       conf.regList.forEach(item => {
-        if (item.pattern) {
-          rules.push(`{ pattern: ${eval(item.pattern)}, message: '${item.message}', trigger: '${trigger[conf.tag]}' }`)
+        const pattern = stringifyRegExp(item.pattern)
+        if (pattern) {
+          rules.push(`{ pattern: ${pattern}, message: '${item.message}', trigger: '${trigger[conf.tag]}' }`)
         }
       })
     }
     ruleList.push(`${conf.vModel}: [${rules.join(',')}],`)
   }
+}
+
+function stringifyRegExp(pattern) {
+  if (typeof pattern !== 'string') return ''
+  const trimmed = pattern.trim()
+  if (!trimmed) return ''
+  const literalMatch = trimmed.match(/^\/((?:\\.|[^\\/])*)\/([gimsuy]*)$/)
+  if (literalMatch) {
+    return `/${literalMatch[1]}/${literalMatch[2]}`
+  }
+  return `new RegExp(${JSON.stringify(trimmed)})`
 }
 
 function buildOptions(conf, optionsList) {

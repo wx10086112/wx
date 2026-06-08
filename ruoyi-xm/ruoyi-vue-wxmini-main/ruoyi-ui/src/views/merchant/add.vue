@@ -49,29 +49,30 @@
         <el-form-item label="商家简介" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入商家简介" />
         </el-form-item>
-        <el-divider content-position="left">统一小程序配置</el-divider>
+        <el-divider content-position="left">商户小程序配置</el-divider>
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="AppID">
-              <el-input v-model="form.cMiniAppId" placeholder="统一小程序 AppID" />
+              <el-input v-model="form.cMiniAppId" placeholder="该商户小程序 AppID" />
+              <div class="form-tip">后端按小程序请求头 X-Wx-AppId / 登录参数 appid 匹配此 AppID。</div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="Secret">
-              <el-input v-model="form.cMiniAppSecret" placeholder="统一小程序 Secret" show-password />
+              <el-input v-model="form.cMiniAppSecret" placeholder="该商户小程序 Secret" show-password />
             </el-form-item>
           </el-col>
         </el-row>
-        <el-divider content-position="left">支付配置（预留）</el-divider>
+        <el-divider content-position="left">微信服务商支付配置</el-divider>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="微信商户号">
-              <el-input v-model="form.wxPayMchId" placeholder="微信支付商户号" />
+            <el-form-item label="子商户号">
+              <el-input v-model="form.merchantWxMchId" placeholder="该商户在微信支付服务商下的子商户号" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="支付API密钥">
-              <el-input v-model="form.wxPayApiKey" placeholder="微信支付API密钥" show-password />
+            <el-form-item label="商户名称">
+              <el-input v-model="form.merchantWxMchName" placeholder="微信支付商户名称" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -104,8 +105,8 @@ export default {
         description: '',
         cMiniAppId: '',
         cMiniAppSecret: '',
-        wxPayMchId: '',
-        wxPayApiKey: '',
+        merchantWxMchId: '',
+        merchantWxMchName: '',
         status: 1
       },
       rules: {
@@ -162,3 +163,12 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.form-tip {
+  margin-top: 4px;
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.5;
+}
+</style>

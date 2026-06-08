@@ -49,6 +49,11 @@
         LEFT JOIN mall_user u ON o.user_id = u.id
     </sql>
 
+    <sql id="dataScopeBizFilter">
+        <if test="params.dataScopeBizDistributorId != null">and m.distributor_id = #{params.dataScopeBizDistributorId}</if>
+        <if test="params.dataScopeBizMerchantId != null">and o.merchant_id = #{params.dataScopeBizMerchantId}</if>
+    </sql>
+
     <select id="selectMallOrderById" parameterType="Long" resultMap="MallOrderResult">
         <include refid="selectMallOrderVo"/>
         where o.id = #{id} AND o.del_flag = '0'
@@ -70,7 +75,7 @@
             <if test="userName != null and userName != ''">and u.nickname like concat('%', #{userName}, '%')</if>
             <if test="storeId != null">and o.store_id = #{storeId}</if>
             <if test="status != null">and o.status = #{status}</if>
-            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+            <include refid="dataScopeBizFilter"/>
         </where>
         order by o.create_time desc
     </select>

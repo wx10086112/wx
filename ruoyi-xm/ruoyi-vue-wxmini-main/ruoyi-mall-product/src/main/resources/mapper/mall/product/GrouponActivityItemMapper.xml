@@ -44,6 +44,11 @@
         left join merchant m on m.id = gai.merchant_id and m.del_flag = '0'
     </sql>
 
+    <sql id="dataScopeBizFilter">
+        <if test="params.dataScopeBizDistributorId != null">and m.distributor_id = #{params.dataScopeBizDistributorId}</if>
+        <if test="params.dataScopeBizMerchantId != null">and gai.merchant_id = #{params.dataScopeBizMerchantId}</if>
+    </sql>
+
     <select id="selectGrouponActivityItemById" parameterType="Long" resultMap="GrouponActivityItemResult">
         <include refid="selectGrouponActivityItemVo"/>
         where gai.id = #{id} AND gai.del_flag = '0'
@@ -57,7 +62,7 @@
             <if test="merchantId != null">and gai.merchant_id = #{merchantId}</if>
             <if test="grouponId != null">and gai.groupon_id = #{grouponId}</if>
             <if test="status != null">and gai.status = #{status}</if>
-            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+            <include refid="dataScopeBizFilter"/>
         </where>
         order by gai.sort desc, gai.create_time desc
     </select>

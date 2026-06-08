@@ -22,6 +22,9 @@ public class WxUserInfo {
     private String avatarUrl;
 
     private String apiToken;
+    private Long merchantId;
+    private String merchantName;
+    private String appId;
 
     public String getSessionKey() {
         return sessionKey;
@@ -77,6 +80,30 @@ public class WxUserInfo {
 
     public void setApiToken(String apiToken) {
         this.apiToken = apiToken;
+    }
+
+    public Long getMerchantId() {
+        return merchantId;
+    }
+
+    public void setMerchantId(Long merchantId) {
+        this.merchantId = merchantId;
+    }
+
+    public String getMerchantName() {
+        return merchantName;
+    }
+
+    public void setMerchantName(String merchantName) {
+        this.merchantName = merchantName;
+    }
+
+    public String getAppId() {
+        return appId;
+    }
+
+    public void setAppId(String appId) {
+        this.appId = appId;
     }
 
     public void wapper(WxMaJscode2SessionResult wxSession, UserInfo userInfo) {

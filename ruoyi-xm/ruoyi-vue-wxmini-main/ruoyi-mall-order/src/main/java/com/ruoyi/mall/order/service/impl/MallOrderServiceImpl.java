@@ -2,6 +2,7 @@ package com.ruoyi.mall.order.service.impl;
 
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.mall.common.event.RefundApprovedEvent;
+import com.ruoyi.mall.order.constant.MallOrderStatus;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.OrderItem;
 import com.ruoyi.mall.order.domain.RefundRecord;
@@ -9,6 +10,7 @@ import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.order.mapper.OrderItemMapper;
 import com.ruoyi.mall.order.mapper.RefundRecordMapper;
 import com.ruoyi.mall.order.service.IMallOrderService;
+import com.ruoyi.mall.product.service.IProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
@@ -20,8 +22,6 @@ import java.util.List;
 @Service
 public class MallOrderServiceImpl implements IMallOrderService {
 
-    private static final int ORDER_STATUS_REFUNDED = 3;
-
     @Autowired
     private MallOrderMapper mallOrderMapper;
     @Autowired
@@ -30,6 +30,8 @@ public class MallOrderServiceImpl implements IMallOrderService {
     private RefundRecordMapper refundRecordMapper;
     @Autowired
     private ApplicationContext applicationContext;
+    @Autowired
+    private IProductService productService;
 
     @Override
     public MallOrder selectMallOrderById(Long id) {
@@ -92,8 +94,6 @@ public class MallOrderServiceImpl implements IMallOrderService {
             if (rejectReason != null && !rejectReason.isEmpty()) {
                 refundRecord.setRejectReason(rejectReason);
             }
-        } else if (status != null && status == 2) {
-            refundRecord.setRefundTime(new Date());
         }
 
         if (refundRecord.getParams() == null) {
@@ -106,17 +106,8 @@ public class MallOrderServiceImpl implements IMallOrderService {
             throw new RuntimeException("退款记录状态已变更，请刷新后重试");
         }
 
-        // 退款审批通过（status=2）→ 发布事件触发结算逆向
+        // 退款审批通过（status=2）只触发微信退款，订单/结算等最终状态等待微信退款成功回调。
         if (status != null && status == 2 && refundRecord.getOrderNo() != null) {
-            // 更新订单状态为已退款
-            MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(refundRecord.getOrderNo());
-            if (order != null && order.getStatus() != null && order.getStatus() < ORDER_STATUS_REFUNDED) {
-                order.setStatus(ORDER_STATUS_REFUNDED);
-                order.setRefundTime(new Date());
-                mallOrderMapper.updateMallOrder(order);
-            }
-
-            // 发布退款通过事件（由财务模块监听处理结算逆向）
             applicationContext.publishEvent(new RefundApprovedEvent(this, refundRecord.getOrderNo(), id, operator));
         }
 
@@ -144,5 +135,46 @@ public class MallOrderServiceImpl implements IMallOrderService {
     @Override
     public int insertOrderItem(OrderItem orderItem) {
         return orderItemMapper.insertOrderItem(orderItem);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void createOrderWithItems(MallOrder mallOrder, List<OrderItem> orderItems) {
+        if (mallOrder == null || orderItems == null || orderItems.isEmpty()) {
+            throw new RuntimeException("订单信息不能为空");
+        }
+
+        for (OrderItem orderItem : orderItems) {
+            if (!productService.deductStock(orderItem.getProductId(), orderItem.getQuantity())) {
+                throw new RuntimeException("商品库存不足: " + orderItem.getProductName());
+            }
+        }
+
+        mallOrderMapper.insertMallOrder(mallOrder);
+        for (OrderItem orderItem : orderItems) {
+            orderItem.setOrderId(mallOrder.getId());
+            orderItemMapper.insertOrderItem(orderItem);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean cancelPendingOrder(String orderNo) {
+        MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(orderNo);
+        if (order == null || order.getStatus() == null || order.getStatus() != MallOrderStatus.PENDING) {
+            return false;
+        }
+
+        order.setStatus(MallOrderStatus.CANCELLED);
+        order.setCancelTime(new Date());
+        mallOrderMapper.updateMallOrder(order);
+
+        List<OrderItem> orderItems = orderItemMapper.selectOrderItemByOrderNo(orderNo);
+        if (orderItems != null) {
+            for (OrderItem orderItem : orderItems) {
+                productService.restoreStock(orderItem.getProductId(), orderItem.getQuantity());
+            }
+        }
+        return true;
     }
 }

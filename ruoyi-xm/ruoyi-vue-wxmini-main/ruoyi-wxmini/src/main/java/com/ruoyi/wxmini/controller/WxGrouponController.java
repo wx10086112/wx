@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -106,8 +108,8 @@ public class WxGrouponController {
         dto.setSubtitle(product.getDescription());
         dto.setMerchantId(product.getMerchantId());
         dto.setImage(product.getCoverImage());
-        dto.setPrice(product.getPrice() != null ? product.getPrice().longValue() : 0L);
-        dto.setOriginalPrice(product.getOriginalPrice() != null ? product.getOriginalPrice().longValue() : 0L);
+        dto.setPrice(toFen(product.getPrice()));
+        dto.setOriginalPrice(toFen(product.getOriginalPrice()));
         dto.setSales(product.getSales());
         dto.setStock(product.getStock());
         dto.setValidDays(product.getValidDays());
@@ -142,5 +144,9 @@ public class WxGrouponController {
         dto.setLimitRule("");
 
         return dto;
+    }
+
+    private long toFen(BigDecimal amount) {
+        return amount != null ? amount.movePointRight(2).setScale(0, RoundingMode.UNNECESSARY).longValueExact() : 0L;
     }
 }

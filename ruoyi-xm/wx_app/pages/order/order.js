@@ -173,10 +173,7 @@ Page({
     util.showModal('确认支付', `支付 ¥${((order.payAmount || order.price) / 100).toFixed(2)}`).then((confirm) => {
       if (!confirm) return
       util.showLoading('拉起支付...')
-      orderApi.createPayOrder({
-        orderNo: order.orderNo,
-        openId: app.globalData && app.globalData.userInfo ? app.globalData.userInfo.openId : ''
-      })
+      orderApi.createPayOrder({ orderNo: order.orderNo })
         .then((res) => util.requestPayment(res.data || res))
         .then(() => orderApi.queryOrder(order.orderNo))
         .then(() => {

@@ -1,39 +1,51 @@
 package com.ruoyi.wxmini.controller;
 
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.mall.common.service.IWxPayOrderService;
 import com.ruoyi.mall.common.util.WriteOffCodeGenerator;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
+import com.ruoyi.mall.order.constant.MallOrderStatus;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.OrderItem;
 import com.ruoyi.mall.order.domain.RefundRecord;
 import com.ruoyi.mall.order.mapper.RefundRecordMapper;
 import com.ruoyi.mall.order.service.IMallOrderService;
+import com.ruoyi.mall.pay.domain.PaymentRecord;
+import com.ruoyi.mall.pay.service.IPaymentRecordService;
 import com.ruoyi.mall.product.domain.Product;
 import com.ruoyi.mall.product.service.IProductService;
+import com.ruoyi.mall.user.domain.UserInfo;
+import com.ruoyi.mall.user.service.IUserInfoService;
 import com.ruoyi.wxmini.dto.wx.WxOrderCreateRequestDto;
 import com.ruoyi.wxmini.dto.wx.WxOrderDto;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 @RestController
 @RequestMapping("/wxmini/order")
 public class WxOrderController {
-    private static final int MAX_WRITE_OFF_CODE_RETRIES = 10;
 
-    private static final int ORDER_STATUS_PENDING = 0;
-    private static final int ORDER_STATUS_PAID = 1;
-    private static final int ORDER_STATUS_USED = 2;
-    private static final int ORDER_STATUS_COMPLETED = 3;
-    private static final int ORDER_STATUS_REFUNDED = 4;
-    private static final int ORDER_STATUS_CANCELLED = 5;
+    private static final int MAX_WRITE_OFF_CODE_RETRIES = 10;
 
     @Resource
     private IMallOrderService mallOrderService;
@@ -45,6 +57,12 @@ public class WxOrderController {
     private IMerchantService merchantService;
     @Resource
     private WriteOffCodeGenerator writeOffCodeGenerator;
+    @Resource
+    private IWxPayOrderService wxPayOrderService;
+    @Resource
+    private IPaymentRecordService paymentRecordService;
+    @Resource
+    private IUserInfoService userInfoService;
 
     @PostMapping("/create")
     public AjaxResult create(@Valid @RequestBody WxOrderCreateRequestDto requestDto) {
@@ -52,17 +70,16 @@ public class WxOrderController {
             return AjaxResult.error("请求参数不能为空");
         }
 
-        Long userId = Long.valueOf(WxMiniUserContext.getCurrentUserId());
-
-        List<WxOrderCreateRequestDto.OrderItemInput> itemInputs = new ArrayList<>();
-        if (requestDto.getItems() != null && !requestDto.getItems().isEmpty()) {
-            itemInputs = requestDto.getItems();
-        } else if (requestDto.getProductId() != null) {
-            WxOrderCreateRequestDto.OrderItemInput single = new WxOrderCreateRequestDto.OrderItemInput();
-            single.setProductId(requestDto.getProductId());
-            single.setQuantity(requestDto.getQuantity() != null ? requestDto.getQuantity() : 1);
-            itemInputs.add(single);
+        String currentUserId = WxMiniUserContext.getCurrentUserId();
+        if (StringUtils.isBlank(currentUserId)) {
+            return AjaxResult.error("请先登录");
         }
+        Long userId = resolveCurrentUserPk(currentUserId);
+        if (userId == null) {
+            return AjaxResult.error("invalid user");
+        }
+
+        List<WxOrderCreateRequestDto.OrderItemInput> itemInputs = buildItemInputs(requestDto);
         if (itemInputs.isEmpty()) {
             return AjaxResult.error("至少选择一个商品");
         }
@@ -75,18 +92,23 @@ public class WxOrderController {
             if (product == null || product.getStatus() == null || product.getStatus() != 1) {
                 return AjaxResult.error("商品不存在或已下架: " + input.getProductId());
             }
+
             if (merchantId == null) {
                 merchantId = product.getMerchantId();
             } else if (!merchantId.equals(product.getMerchantId())) {
                 return AjaxResult.error("不同商家的商品不能合并下单");
             }
-            int qty = input.getQuantity() != null && input.getQuantity() > 0 ? input.getQuantity() : 1;
+
+            int quantity = normalizeQuantity(input.getQuantity());
+            if (product.getStock() == null || product.getStock() < quantity) {
+                return AjaxResult.error("商品库存不足: " + product.getName());
+            }
+
             BigDecimal price = product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO;
-            totalAmount = totalAmount.add(price.multiply(new BigDecimal(qty)));
+            totalAmount = totalAmount.add(price.multiply(BigDecimal.valueOf(quantity)));
             products.add(product);
         }
 
-        // 校验商品商家属于当前C端上下文
         Long currentMerchantId = WxMiniUserContext.getCurrentMerchantId();
         if (currentMerchantId == null) {
             currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
@@ -113,47 +135,58 @@ public class WxOrderController {
         order.setPayAmount(payAmount);
         order.setCouponAmount(couponAmount);
         order.setCouponId(requestDto.getCouponId());
-        order.setStatus(ORDER_STATUS_PENDING);
+        order.setStatus(MallOrderStatus.PENDING);
         order.setWriteOffCode(writeOffCode);
-        mallOrderService.insertMallOrder(order);
 
+        List<OrderItem> orderItems = new ArrayList<>();
         for (int i = 0; i < itemInputs.size(); i++) {
             WxOrderCreateRequestDto.OrderItemInput input = itemInputs.get(i);
             Product product = products.get(i);
-            int qty = input.getQuantity() != null && input.getQuantity() > 0 ? input.getQuantity() : 1;
+            int quantity = normalizeQuantity(input.getQuantity());
             BigDecimal price = product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO;
 
             OrderItem item = new OrderItem();
-            item.setOrderId(order.getId());
             item.setOrderNo(orderNo);
             item.setMerchantId(merchantId);
             item.setProductId(product.getId());
             item.setProductName(product.getName());
             item.setProductImage(product.getCoverImage());
             item.setPrice(price);
-            item.setQuantity(qty);
-            item.setSubtotal(price.multiply(new BigDecimal(qty)));
-            mallOrderService.insertOrderItem(item);
+            item.setQuantity(quantity);
+            item.setSubtotal(price.multiply(BigDecimal.valueOf(quantity)));
+            orderItems.add(item);
+        }
+
+        try {
+            mallOrderService.createOrderWithItems(order, orderItems);
+        } catch (RuntimeException e) {
+            return AjaxResult.error(e.getMessage());
         }
 
         Map<String, Object> result = new HashMap<>();
         result.put("orderNo", orderNo);
-        result.put("orderAmount", totalAmount.longValue());
-        result.put("couponAmount", couponAmount.longValue());
-        result.put("payAmount", payAmount.longValue());
+        result.put("orderAmount", toFen(totalAmount));
+        result.put("couponAmount", toFen(couponAmount));
+        result.put("payAmount", toFen(payAmount));
         return AjaxResult.success(result);
     }
 
     @GetMapping("/list")
     public AjaxResult list(@RequestParam(required = false) String status) {
-        Long userId = Long.valueOf(WxMiniUserContext.getCurrentUserId());
+        String currentUserId = WxMiniUserContext.getCurrentUserId();
+        if (StringUtils.isBlank(currentUserId)) {
+            return AjaxResult.success(new ArrayList<>());
+        }
 
         MallOrder query = new MallOrder();
-        query.setUserId(userId);
+        Long currentUserPk = resolveCurrentUserPk(currentUserId);
+        if (currentUserPk == null) {
+            return AjaxResult.success(new ArrayList<>());
+        }
+        query.setUserId(currentUserPk);
         List<MallOrder> orders = mallOrderService.selectMallOrderList(query);
 
         Map<Long, String> merchantNameCache = new HashMap<>();
-
         List<WxOrderDto> result = new ArrayList<>();
         for (MallOrder order : orders) {
             String wxStatus = mapDbStatus(order.getStatus());
@@ -168,9 +201,13 @@ public class WxOrderController {
 
     @GetMapping("/detail/{orderNo}")
     public AjaxResult detail(@PathVariable String orderNo) {
-        Long userId = Long.valueOf(WxMiniUserContext.getCurrentUserId());
+        String currentUserId = WxMiniUserContext.getCurrentUserId();
+        if (StringUtils.isBlank(currentUserId)) {
+            return AjaxResult.error("请先登录");
+        }
+
         MallOrder order = mallOrderService.selectMallOrderByOrderNo(orderNo);
-        if (order == null || !order.getUserId().equals(userId)) {
+        if (order == null || !isCurrentUserOrder(order, currentUserId)) {
             return AjaxResult.error("订单不存在");
         }
         return AjaxResult.success(convertToDto(order, new HashMap<>()));
@@ -178,24 +215,67 @@ public class WxOrderController {
 
     @PostMapping("/cancel/{orderNo}")
     public AjaxResult cancel(@PathVariable String orderNo) {
-        Long userId = Long.valueOf(WxMiniUserContext.getCurrentUserId());
+        String currentUserId = WxMiniUserContext.getCurrentUserId();
+        if (StringUtils.isBlank(currentUserId)) {
+            return AjaxResult.error("请先登录");
+        }
+
         MallOrder order = mallOrderService.selectMallOrderByOrderNo(orderNo);
-        if (order == null || !order.getUserId().equals(userId)) {
+        if (order == null || !isCurrentUserOrder(order, currentUserId)) {
             return AjaxResult.error("订单不存在");
         }
-        if (order.getStatus() != ORDER_STATUS_PENDING) {
+        if (order.getStatus() == null || order.getStatus() != MallOrderStatus.PENDING) {
             return AjaxResult.error("当前订单状态不可取消");
         }
 
-        MallOrder update = new MallOrder();
-        update.setId(order.getId());
-        update.setStatus(ORDER_STATUS_CANCELLED);
-        update.setCancelTime(new Date());
-        mallOrderService.updateMallOrder(update);
+        boolean cancelled;
+        PaymentRecord paymentRecord = paymentRecordService.selectByOrderNo(orderNo);
+        try {
+            if (paymentRecord != null) {
+                cancelled = Boolean.TRUE.equals(wxPayOrderService.cancelOrder(currentUserId, orderNo));
+            } else {
+                cancelled = mallOrderService.cancelPendingOrder(orderNo);
+            }
+        } catch (Exception e) {
+            return AjaxResult.error("取消订单失败: " + e.getMessage());
+        }
 
-        order.setStatus(ORDER_STATUS_CANCELLED);
-        order.setCancelTime(new Date());
-        return AjaxResult.success(convertToDto(order, new HashMap<>()));
+        MallOrder latestOrder = mallOrderService.selectMallOrderByOrderNo(orderNo);
+        if (!cancelled || latestOrder == null || latestOrder.getStatus() == null
+                || latestOrder.getStatus() != MallOrderStatus.CANCELLED) {
+            return AjaxResult.error("当前订单不可取消");
+        }
+        return AjaxResult.success(convertToDto(latestOrder, new HashMap<>()));
+    }
+
+    private boolean isCurrentUserOrder(MallOrder order, String currentUserId) {
+        Long currentUserPk = resolveCurrentUserPk(currentUserId);
+        return currentUserPk != null && order.getUserId() != null && order.getUserId().equals(currentUserPk);
+    }
+
+    private Long resolveCurrentUserPk(String currentUserId) {
+        if (StringUtils.isBlank(currentUserId)) {
+            return null;
+        }
+        UserInfo userInfo = userInfoService.selectUserInfoByUserId(currentUserId);
+        return userInfo != null ? userInfo.getId() : null;
+    }
+
+    private List<WxOrderCreateRequestDto.OrderItemInput> buildItemInputs(WxOrderCreateRequestDto requestDto) {
+        List<WxOrderCreateRequestDto.OrderItemInput> itemInputs = new ArrayList<>();
+        if (requestDto.getItems() != null && !requestDto.getItems().isEmpty()) {
+            itemInputs.addAll(requestDto.getItems());
+        } else if (requestDto.getProductId() != null) {
+            WxOrderCreateRequestDto.OrderItemInput single = new WxOrderCreateRequestDto.OrderItemInput();
+            single.setProductId(requestDto.getProductId());
+            single.setQuantity(requestDto.getQuantity() != null ? requestDto.getQuantity() : 1);
+            itemInputs.add(single);
+        }
+        return itemInputs;
+    }
+
+    private int normalizeQuantity(Integer quantity) {
+        return quantity != null && quantity > 0 ? quantity : 1;
     }
 
     private WxOrderDto convertToDto(MallOrder order, Map<Long, String> merchantNameCache) {
@@ -204,16 +284,15 @@ public class WxOrderController {
         dto.setOrderNo(order.getOrderNo());
         dto.setMerchantId(order.getMerchantId());
         dto.setWriteOffCode(order.getWriteOffCode());
-        dto.setOrderAmount(order.getTotalAmount() != null ? order.getTotalAmount().longValue() : 0L);
-        dto.setCouponAmount(order.getCouponAmount() != null ? order.getCouponAmount().longValue() : 0L);
-        dto.setPayAmount(order.getPayAmount() != null ? order.getPayAmount().longValue() : 0L);
+        dto.setOrderAmount(toFen(order.getTotalAmount()));
+        dto.setCouponAmount(toFen(order.getCouponAmount()));
+        dto.setPayAmount(toFen(order.getPayAmount()));
         dto.setCreateTime(order.getCreateTime() != null ? order.getCreateTime().getTime() : 0L);
         dto.setPayTime(order.getPayTime() != null ? order.getPayTime().getTime() : null);
         dto.setWriteOffTime(order.getUseTime() != null ? order.getUseTime().getTime() : null);
         dto.setRefundTime(order.getRefundTime() != null ? order.getRefundTime().getTime() : null);
         dto.setQuantity(1);
 
-        // 查询退款记录：覆盖状态 + 填充退款原因
         String wxStatus = mapDbStatus(order.getStatus());
         RefundRecord latestRefund = null;
         try {
@@ -228,7 +307,9 @@ public class WxOrderController {
                 });
                 latestRefund = refunds.get(0);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
+
         if (latestRefund != null && latestRefund.getStatus() != null
                 && (latestRefund.getStatus() == 1 || latestRefund.getStatus() == 2)) {
             wxStatus = "REFUNDING";
@@ -244,7 +325,7 @@ public class WxOrderController {
             dto.setProductId(first.getProductId());
             dto.setTitle(first.getProductName());
             dto.setImage(first.getProductImage());
-            dto.setPrice(first.getPrice() != null ? first.getPrice().longValue() : 0L);
+            dto.setPrice(toFen(first.getPrice()));
             dto.setQuantity(first.getQuantity());
         }
 
@@ -260,7 +341,7 @@ public class WxOrderController {
             dto.setMerchantName(merchantName);
         }
 
-        if (order.getStatus() == ORDER_STATUS_PENDING && order.getCreateTime() != null) {
+        if (order.getStatus() != null && order.getStatus() == MallOrderStatus.PENDING && order.getCreateTime() != null) {
             dto.setExpireTime(order.getCreateTime().getTime() + 15 * 60 * 1000L);
         }
 
@@ -272,16 +353,28 @@ public class WxOrderController {
     }
 
     private String mapDbStatus(Integer dbStatus) {
-        if (dbStatus == null) return "PENDING_PAY";
-        switch (dbStatus) {
-            case ORDER_STATUS_PENDING: return "PENDING_PAY";
-            case ORDER_STATUS_PAID: return "PAID_UNUSED";
-            case ORDER_STATUS_USED: return "USED_COMPLETED";
-            case ORDER_STATUS_COMPLETED: return "USED_COMPLETED";
-            case ORDER_STATUS_REFUNDED: return "REFUNDED";
-            case ORDER_STATUS_CANCELLED: return "CANCELLED";
-            default: return "PENDING_PAY";
+        if (dbStatus == null) {
+            return "PENDING_PAY";
         }
+        switch (dbStatus) {
+            case MallOrderStatus.PENDING:
+                return "PENDING_PAY";
+            case MallOrderStatus.PAID:
+                return "PAID_UNUSED";
+            case MallOrderStatus.USED:
+            case MallOrderStatus.COMPLETED:
+                return "USED_COMPLETED";
+            case MallOrderStatus.REFUNDED:
+                return "REFUNDED";
+            case MallOrderStatus.CANCELLED:
+                return "CANCELLED";
+            default:
+                return "PENDING_PAY";
+        }
+    }
+
+    private long toFen(BigDecimal amount) {
+        return amount != null ? amount.movePointRight(2).setScale(0, RoundingMode.UNNECESSARY).longValueExact() : 0L;
     }
 
     private String generateOrderNo() {

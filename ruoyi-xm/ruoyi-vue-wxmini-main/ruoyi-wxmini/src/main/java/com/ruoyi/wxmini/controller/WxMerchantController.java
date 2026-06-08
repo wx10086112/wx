@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -335,8 +336,8 @@ public class WxMerchantController {
         dto.setMerchantId(product.getMerchantId());
         dto.setMerchantName(merchantName);
         dto.setImage(product.getCoverImage());
-        dto.setPrice(product.getPrice() != null ? product.getPrice().longValue() : 0L);
-        dto.setOriginalPrice(product.getOriginalPrice() != null ? product.getOriginalPrice().longValue() : 0L);
+        dto.setPrice(toFen(product.getPrice()));
+        dto.setOriginalPrice(toFen(product.getOriginalPrice()));
         dto.setSales(product.getSales());
         dto.setStock(product.getStock());
         dto.setValidDays(product.getValidDays());
@@ -367,6 +368,10 @@ public class WxMerchantController {
         if (url != null && !url.isEmpty() && seen.add(url)) {
             list.add(url);
         }
+    }
+
+    private long toFen(BigDecimal amount) {
+        return amount != null ? amount.movePointRight(2).setScale(0, RoundingMode.UNNECESSARY).longValueExact() : 0L;
     }
 
     private double calculateDistance(double lat1, double lng1, double lat2, double lng2) {

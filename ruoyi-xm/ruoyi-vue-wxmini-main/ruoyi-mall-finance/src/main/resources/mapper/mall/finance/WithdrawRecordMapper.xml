@@ -30,6 +30,11 @@
         LEFT JOIN merchant m ON w.merchant_id = m.id
     </sql>
 
+    <sql id="dataScopeBizFilter">
+        <if test="params.dataScopeBizDistributorId != null">and m.distributor_id = #{params.dataScopeBizDistributorId}</if>
+        <if test="params.dataScopeBizMerchantId != null">and w.merchant_id = #{params.dataScopeBizMerchantId}</if>
+    </sql>
+
     <select id="selectWithdrawRecordList" parameterType="com.ruoyi.mall.finance.domain.WithdrawRecord" resultMap="WithdrawRecordResult">
         <include refid="selectWithdrawRecordVo"/>
         <where>
@@ -41,7 +46,7 @@
             <if test="accountName != null and accountName != ''">and w.account_name like concat('%', #{accountName}, '%')</if>
             <if test="params.beginTime != null">and w.create_time &gt;= #{params.beginTime}</if>
             <if test="params.endTime != null">and w.create_time &lt;= #{params.endTime}</if>
-            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+            <include refid="dataScopeBizFilter"/>
         </where>
         order by w.create_time desc
     </select>

@@ -1,5 +1,8 @@
 package com.ruoyi.wxmini.controller;
 
+import com.github.binarywang.wxpay.bean.request.WxPayPartnerOrderQueryV3Request;
+import com.github.binarywang.wxpay.bean.result.WxPayPartnerOrderQueryV3Result;
+import com.github.binarywang.wxpay.service.WxPayService;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.mall.common.service.IWxPayOrderService;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
@@ -7,16 +10,24 @@ import com.ruoyi.mall.common.vo.WxPayOrderVo;
 import com.ruoyi.mall.common.vo.WxPayParamVo;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
+import com.ruoyi.mall.order.constant.MallOrderStatus;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.service.IMallOrderService;
 import com.ruoyi.mall.pay.service.IPaymentRecordService;
-import com.github.binarywang.wxpay.service.WxPayService;
-import org.springframework.web.bind.annotation.*;
-
+import com.ruoyi.mall.user.domain.UserInfo;
+import com.ruoyi.mall.user.service.IUserInfoService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,9 +35,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/wxmini/pay")
 public class WxPayController {
-
-    private static final int ORDER_STATUS_PENDING = 0;
-    private static final int ORDER_STATUS_PAID = 1;
 
     @Value("${wx.pay.stub-enabled:false}")
     private boolean stubEnabled;
@@ -39,32 +47,42 @@ public class WxPayController {
     private IWxPayOrderService wxPayOrderService;
     @Resource
     private IPaymentRecordService paymentRecordService;
+    @Resource
+    private IUserInfoService userInfoService;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private WxPayService wxPayService;
 
     @PostMapping("/order/create")
     public AjaxResult createPay(@RequestBody Map<String, String> body) {
         String orderNo = body != null ? body.get("orderNo") : null;
-        if (orderNo == null || orderNo.isEmpty()) {
+        if (StringUtils.isBlank(orderNo)) {
             return AjaxResult.error("订单号不能为空");
         }
 
         String userId = WxMiniUserContext.getCurrentUserId();
-        if (userId == null) {
+        if (StringUtils.isBlank(userId)) {
             return AjaxResult.error("请先登录");
         }
 
         MallOrder order = mallOrderService.selectMallOrderByOrderNo(orderNo);
-        if (order == null || !order.getUserId().toString().equals(userId)) {
+        UserInfo currentUser = resolveUserInfo(userId);
+        if (order == null || !isCurrentUserOrder(order, currentUser)) {
             return AjaxResult.error("订单不存在");
         }
-        if (order.getStatus() != ORDER_STATUS_PENDING) {
+        AjaxResult tenantCheck = checkOrderTenant(order);
+        if (tenantCheck != null) {
+            return tenantCheck;
+        }
+        if (order.getStatus() == null || order.getStatus() != MallOrderStatus.PENDING) {
             return AjaxResult.error("当前订单状态不可支付");
+        }
+        AjaxResult payConfigCheck = checkMerchantPayReady(order.getMerchantId());
+        if (payConfigCheck != null) {
+            return payConfigCheck;
         }
 
         if (stubEnabled) {
-            // Stub 模式：创建支付记录 + 返回模拟支付参数
-            paymentRecordService.createPayment(orderNo, order.getMerchantId(), Long.valueOf(userId), order.getPayAmount(), orderNo);
+            paymentRecordService.createPayment(orderNo, order.getMerchantId(), currentUser.getId(), order.getPayAmount(), orderNo);
 
             Map<String, Object> result = new HashMap<>();
             result.put("timeStamp", String.valueOf(System.currentTimeMillis() / 1000));
@@ -75,19 +93,14 @@ public class WxPayController {
             return AjaxResult.success(result);
         }
 
-        // 真实微信支付模式
         try {
             WxPayOrderVo payVo = new WxPayOrderVo();
             payVo.setOrderNo(orderNo);
+            payVo.setOpenId(resolveOpenId(userId));
 
-            // 将当前用户openid传入上下文（用于支付下单）
-            java.util.HashMap<String, Object> contextMap = new java.util.HashMap<>();
-            String openId = body.get("openId");
-            if (openId == null || openId.isEmpty()) {
-                // 尝试从用户信息获取
-                openId = WxMiniUserContext.getCurrentUserId();
+            if (StringUtils.isBlank(payVo.getOpenId())) {
+                return AjaxResult.error("用户openId不存在，请重新登录后再试");
             }
-            contextMap.put("openId", openId);
 
             WxPayParamVo payParam = wxPayOrderService.createOrder(userId, payVo);
             if (payParam == null) {
@@ -101,9 +114,6 @@ public class WxPayController {
             result.put("signType", payParam.getPayParam().getSignType());
             result.put("paySign", payParam.getPayParam().getPaySign());
             result.put("orderNo", payParam.getOrderNo());
-
-            // 注意：createPay 只返回支付参数，不能修改订单状态
-            // 订单状态只能由微信支付回调验签成功后更新
             return AjaxResult.success(result);
         } catch (Exception e) {
             return AjaxResult.error("支付创建失败: " + e.getMessage());
@@ -112,31 +122,41 @@ public class WxPayController {
 
     @GetMapping("/order/query")
     public AjaxResult queryPay(@RequestParam String outTradeNo) {
-        Long userId = Long.valueOf(WxMiniUserContext.getCurrentUserId());
-        MallOrder order = mallOrderService.selectMallOrderByOrderNo(outTradeNo);
-        if (order == null || !order.getUserId().equals(userId)) {
-            return AjaxResult.error("订单不存在");
+        String currentUserId = WxMiniUserContext.getCurrentUserId();
+        if (StringUtils.isBlank(currentUserId)) {
+            return AjaxResult.error("请先登录");
         }
 
-        // 本地状态为待支付 且 非stub模式 → 主动查询微信，防止回调丢失
-        boolean isLocalPaid = order.getStatus() != null && order.getStatus() >= ORDER_STATUS_PAID;
+        MallOrder order = mallOrderService.selectMallOrderByOrderNo(outTradeNo);
+        if (order == null || !isCurrentUserOrder(order, resolveUserInfo(currentUserId))) {
+            return AjaxResult.error("订单不存在");
+        }
+        AjaxResult tenantCheck = checkOrderTenant(order);
+        if (tenantCheck != null) {
+            return tenantCheck;
+        }
+
+        boolean isLocalPaid = MallOrderStatus.isPaidState(order.getStatus());
         if (!isLocalPaid && !stubEnabled && wxPayService != null) {
             try {
-                com.github.binarywang.wxpay.bean.request.WxPayOrderQueryV3Request queryReq =
-                        new com.github.binarywang.wxpay.bean.request.WxPayOrderQueryV3Request();
-                queryReq.setOutTradeNo(outTradeNo);
-                com.github.binarywang.wxpay.bean.result.WxPayOrderQueryV3Result wxResult =
-                        wxPayService.queryOrderV3(queryReq);
+                Merchant merchant = merchantService.selectMerchantById(order.getMerchantId());
+                if (merchant == null || StringUtils.isBlank(merchant.getEffectiveMerchantWxMchId())) {
+                    return AjaxResult.error("商户支付配置不完整");
+                }
+
+                WxPayPartnerOrderQueryV3Request queryReq = new WxPayPartnerOrderQueryV3Request()
+                        .setOutTradeNo(outTradeNo)
+                        .setSpMchId(wxPayService.getConfig().getMchId())
+                        .setSubMchId(merchant.getEffectiveMerchantWxMchId());
+                WxPayPartnerOrderQueryV3Result wxResult = wxPayService.queryPartnerOrderV3(queryReq);
                 if ("SUCCESS".equals(wxResult.getTradeState())) {
-                    // 回调可能丢失，主动更新本地状态
-                    order.setStatus(ORDER_STATUS_PAID);
+                    order.setStatus(MallOrderStatus.PAID);
                     order.setPayTime(new java.util.Date());
                     mallOrderService.updateMallOrder(order);
                     paymentRecordService.markPaySuccess(outTradeNo, wxResult.getTransactionId(), "query-sync");
                     isLocalPaid = true;
                 }
-            } catch (Exception e) {
-                // 查询失败不影响本地结果返回
+            } catch (Exception ignored) {
             }
         }
 
@@ -144,10 +164,55 @@ public class WxPayController {
         result.put("outTradeNo", outTradeNo);
         result.put("tradeState", isLocalPaid ? "SUCCESS" : "NOTPAY");
         result.put("tradeType", "JSAPI");
-        result.put("amount", order.getPayAmount() != null ? order.getPayAmount().multiply(BigDecimal.valueOf(100)).longValue() : 0);
+        result.put("amount", toFen(order.getPayAmount()));
         result.put("successTime", order.getPayTime() != null
                 ? new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").format(order.getPayTime()) : null);
         return AjaxResult.success(result);
+    }
+
+    private AjaxResult checkMerchantPayReady(Long merchantId) {
+        Merchant merchant = merchantService.selectMerchantById(merchantId);
+        if (merchant == null) {
+            return AjaxResult.error("商户不存在");
+        }
+        String blockReason = merchant.getOperateBlockReason();
+        if (StringUtils.isNotBlank(blockReason)) {
+            return AjaxResult.error("商户支付配置不完整: " + blockReason);
+        }
+        return null;
+    }
+
+    private AjaxResult checkOrderTenant(MallOrder order) {
+        Long tokenMerchantId = WxMiniUserContext.getCurrentMerchantId();
+        if (tokenMerchantId == null || !tokenMerchantId.equals(order.getMerchantId())) {
+            return AjaxResult.error("订单商户与当前小程序登录态不匹配");
+        }
+        Long appIdMerchantId = WxMiniUserContext.getAppIdMerchantId();
+        if (appIdMerchantId != null && !appIdMerchantId.equals(order.getMerchantId())) {
+            return AjaxResult.error("订单商户与当前小程序AppID不匹配");
+        }
+        return null;
+    }
+
+    private String resolveOpenId(String userId) {
+        UserInfo userInfo = resolveUserInfo(userId);
+        return userInfo != null ? userInfo.getOpenId() : null;
+    }
+
+    private boolean isCurrentUserOrder(MallOrder order, UserInfo userInfo) {
+        return userInfo != null && userInfo.getId() != null
+                && order.getUserId() != null && order.getUserId().equals(userInfo.getId());
+    }
+
+    private UserInfo resolveUserInfo(String userId) {
+        if (StringUtils.isBlank(userId)) {
+            return null;
+        }
+        return userInfoService.selectUserInfoByUserId(userId);
+    }
+
+    private long toFen(BigDecimal amount) {
+        return amount != null ? amount.movePointRight(2).setScale(0, RoundingMode.UNNECESSARY).longValueExact() : 0L;
     }
 
     private String generateNonceStr() {

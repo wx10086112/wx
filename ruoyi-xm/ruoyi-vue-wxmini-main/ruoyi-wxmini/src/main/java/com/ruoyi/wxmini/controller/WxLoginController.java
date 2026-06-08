@@ -60,8 +60,8 @@ public class WxLoginController {
         if (!testLoginEnabled) {
             return AjaxResult.error(403, "测试登录接口未启用");
         }
-        String testOpenId = "test_openid_001";
         String testAppId = StringUtils.defaultIfBlank(appid, "test");
+        String testOpenId = buildTestOpenId(testAppId);
         AjaxResult blockResult = validateRegisterCooling(testAppId, testOpenId);
         if (blockResult != null) {
             return blockResult;
@@ -80,10 +80,12 @@ public class WxLoginController {
 
         // 查找商家ID写入token
         Long merchantId = null;
+        String merchantName = null;
         if (StringUtils.isNotBlank(appid)) {
             Merchant merchant = merchantService.selectMerchantByCAppId(appid);
             if (merchant != null) {
                 merchantId = merchant.getId();
+                merchantName = merchant.getName();
             }
         }
 
@@ -98,6 +100,9 @@ public class WxLoginController {
         wxUserInfo.setUserType("0");
         wxUserInfo.setPhone(userInfo.getPhone() != null ? userInfo.getPhone() : "");
         wxUserInfo.setAvatarUrl(userInfo.getAvatarUrl() != null ? userInfo.getAvatarUrl() : "");
+        wxUserInfo.setMerchantId(merchantId);
+        wxUserInfo.setMerchantName(merchantName);
+        wxUserInfo.setAppId(testAppId);
         wxUserInfo.setApiToken(jwtService.createToken(authContext));
         return AjaxResult.success(wxUserInfo);
     }
@@ -147,6 +152,9 @@ public class WxLoginController {
             authContext.setUserId(userInfo.getUserId());
             authContext.setUserType(WxMiniAuthContext.USER_TYPE_WX_USER);
             authContext.setMerchantId(merchant.getId());
+            wxUserInfo.setMerchantId(merchant.getId());
+            wxUserInfo.setMerchantName(merchant.getName());
+            wxUserInfo.setAppId(appid);
             wxUserInfo.setApiToken(jwtService.createToken(authContext));
             return AjaxResult.success(wxUserInfo);
         } catch (WxErrorException e) {
@@ -163,5 +171,13 @@ public class WxLoginController {
         }
         String allowTime = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(record.getAllowRegisterTime());
         return AjaxResult.error(429, "账号已注销，请于 " + allowTime + " 后重新注册");
+    }
+    private String buildTestOpenId(String appid) {
+        String safeAppId = StringUtils.defaultIfBlank(appid, "test")
+                .replaceAll("[^A-Za-z0-9_]", "_");
+        if (safeAppId.length() > 40) {
+            safeAppId = safeAppId.substring(0, 40);
+        }
+        return "test_openid_" + safeAppId;
     }
 }

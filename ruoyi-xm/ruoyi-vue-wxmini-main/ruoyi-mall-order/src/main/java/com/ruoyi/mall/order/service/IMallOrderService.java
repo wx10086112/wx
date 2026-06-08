@@ -33,4 +33,8 @@ public interface IMallOrderService {
     int insertMallOrder(MallOrder mallOrder);
 
     int insertOrderItem(OrderItem orderItem);
+
+    void createOrderWithItems(MallOrder mallOrder, List<OrderItem> orderItems);
+
+    boolean cancelPendingOrder(String orderNo);
 }

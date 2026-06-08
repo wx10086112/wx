@@ -7,6 +7,7 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.utils.MallDataScopeHelper;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.product.domain.GrouponActivity;
@@ -14,17 +15,32 @@ import com.ruoyi.mall.product.domain.Product;
 import com.ruoyi.mall.product.service.IGrouponActivityService;
 import com.ruoyi.mall.product.service.IProductService;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 /**
- * 总后台团购活动管理Controller
+ * 总后台团购活动管理
  */
 @RestController
 @RequestMapping("/mall/groupon")
@@ -61,7 +77,12 @@ public class MallGrouponController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:groupon:query')")
     @GetMapping("/{id}")
     public AjaxResult getInfo(@PathVariable Long id) {
-        return AjaxResult.success(grouponActivityService.selectGrouponActivityById(id));
+        GrouponActivity activity = grouponActivityService.selectGrouponActivityById(id);
+        AjaxResult denied = checkActivityAccess(activity, "团购活动");
+        if (denied != null) {
+            return denied;
+        }
+        return AjaxResult.success(activity);
     }
 
     /**
@@ -71,12 +92,17 @@ public class MallGrouponController extends BaseController {
     @Log(title = "团购活动管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody GrouponActivity grouponActivity) {
-        // 新建活动如果直接上架，需校验商家运营准入
-        if (grouponActivity.getStatus() != null && grouponActivity.getStatus() == 1 && grouponActivity.getMerchantId() != null) {
-            Merchant merchant = merchantService.selectMerchantById(grouponActivity.getMerchantId());
-            if (merchant != null && !merchant.canOperate()) {
-                return AjaxResult.error("商家运营条件不满足：" + merchant.getOperateBlockReason());
-            }
+        Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        if (effMerchantId != null) {
+            grouponActivity.setMerchantId(effMerchantId);
+        }
+        AjaxResult denied = checkMerchantAccess(grouponActivity.getMerchantId(), "团购活动");
+        if (denied != null) {
+            return denied;
+        }
+        AjaxResult operateCheck = checkMerchantCanOperate(grouponActivity.getMerchantId(), grouponActivity.getStatus());
+        if (operateCheck != null) {
+            return operateCheck;
         }
         grouponActivity.setSourceType("ADMIN");
         return toAjax(grouponActivityService.insertGrouponActivity(grouponActivity));
@@ -89,15 +115,18 @@ public class MallGrouponController extends BaseController {
     @Log(title = "团购活动管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody GrouponActivity grouponActivity) {
-        // 编辑时如果上架(status=1)，需校验商家运营准入
-        if (grouponActivity.getStatus() != null && grouponActivity.getStatus() == 1 && grouponActivity.getId() != null) {
-            GrouponActivity existing = grouponActivityService.selectGrouponActivityById(grouponActivity.getId());
-            if (existing != null && existing.getMerchantId() != null) {
-                Merchant merchant = merchantService.selectMerchantById(existing.getMerchantId());
-                if (merchant != null && !merchant.canOperate()) {
-                    return AjaxResult.error("商家运营条件不满足：" + merchant.getOperateBlockReason());
-                }
-            }
+        GrouponActivity existing = grouponActivityService.selectGrouponActivityById(grouponActivity.getId());
+        AjaxResult denied = checkActivityAccess(existing, "团购活动");
+        if (denied != null) {
+            return denied;
+        }
+        AjaxResult operateCheck = checkMerchantCanOperate(existing.getMerchantId(), grouponActivity.getStatus());
+        if (operateCheck != null) {
+            return operateCheck;
+        }
+        if (MallDataScopeHelper.currentEffectiveMerchantId() != null
+                || MallDataScopeHelper.currentEffectiveDistributorId() != null) {
+            grouponActivity.setMerchantId(existing.getMerchantId());
         }
         return toAjax(grouponActivityService.updateGrouponActivity(grouponActivity));
     }
@@ -109,27 +138,36 @@ public class MallGrouponController extends BaseController {
     @Log(title = "团购活动管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{ids}")
     public AjaxResult remove(@PathVariable Long[] ids) {
+        for (Long id : ids) {
+            GrouponActivity activity = grouponActivityService.selectGrouponActivityById(id);
+            AjaxResult denied = checkActivityAccess(activity, "团购活动");
+            if (denied != null) {
+                return denied;
+            }
+        }
         return toAjax(grouponActivityService.deleteGrouponActivityByIds(ids));
     }
 
     /**
-     * 修改活动状态（上架/下架）
+     * 修改活动状态
      */
     @PreAuthorize("@ss.hasPermi('mall:groupon:edit')")
     @Log(title = "团购活动状态修改", businessType = BusinessType.UPDATE)
     @PutMapping("/status")
     public AjaxResult changeStatus(@RequestBody GrouponActivity grouponActivity) {
-        // 上架前校验商家运营准入
-        if (grouponActivity.getStatus() != null && grouponActivity.getStatus() == 1 && grouponActivity.getId() != null) {
-            GrouponActivity existing = grouponActivityService.selectGrouponActivityById(grouponActivity.getId());
-            if (existing != null && existing.getMerchantId() != null) {
-                Merchant merchant = merchantService.selectMerchantById(existing.getMerchantId());
-                if (merchant != null && !merchant.canOperate()) {
-                    return AjaxResult.error("商家运营条件不满足：" + merchant.getOperateBlockReason());
-                }
-            }
+        GrouponActivity existing = grouponActivityService.selectGrouponActivityById(grouponActivity.getId());
+        AjaxResult denied = checkActivityAccess(existing, "团购活动");
+        if (denied != null) {
+            return denied;
         }
-        return toAjax(grouponActivityService.updateGrouponActivity(grouponActivity));
+        AjaxResult operateCheck = checkMerchantCanOperate(existing.getMerchantId(), grouponActivity.getStatus());
+        if (operateCheck != null) {
+            return operateCheck;
+        }
+        GrouponActivity update = new GrouponActivity();
+        update.setId(grouponActivity.getId());
+        update.setStatus(grouponActivity.getStatus());
+        return toAjax(grouponActivityService.updateGrouponActivity(update));
     }
 
     /**
@@ -138,12 +176,23 @@ public class MallGrouponController extends BaseController {
     @GetMapping("/options")
     @PreAuthorize("@ss.hasPermi('mall:groupon:list')")
     public AjaxResult options(@RequestParam(required = false) Long merchantId) {
+        Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        if (effMerchantId != null) {
+            merchantId = effMerchantId;
+        }
+
         List<GrouponActivity> list;
         if (merchantId != null) {
+            AjaxResult denied = checkMerchantAccess(merchantId, "团购活动");
+            if (denied != null) {
+                return denied;
+            }
             list = grouponActivityService.selectByMerchantId(merchantId);
         } else {
             list = grouponActivityService.selectActiveActivities();
+            list.removeIf(activity -> !isMerchantAccessible(activity.getMerchantId()));
         }
+
         List<Map<String, Object>> options = new ArrayList<>();
         for (GrouponActivity activity : list) {
             Map<String, Object> option = new HashMap<>();
@@ -175,6 +224,21 @@ public class MallGrouponController extends BaseController {
 
         if (file.getSize() > 5 * 1024 * 1024) {
             return AjaxResult.error("文件大小不能超过5MB");
+        }
+
+        AjaxResult denied = checkMerchantAccess(merchantId, "团购活动图片");
+        if (denied != null) {
+            return denied;
+        }
+        if (grouponId != null) {
+            GrouponActivity activity = grouponActivityService.selectGrouponActivityById(grouponId);
+            denied = checkActivityAccess(activity, "团购活动图片");
+            if (denied != null) {
+                return denied;
+            }
+            if (!merchantId.equals(activity.getMerchantId())) {
+                return AjaxResult.error("团购活动与商户不匹配");
+            }
         }
 
         String ext;
@@ -234,8 +298,15 @@ public class MallGrouponController extends BaseController {
     /**
      * 获取团购活动下的商品列表
      */
+    @PreAuthorize("@ss.hasPermi('mall:groupon:list')")
     @GetMapping("/product/list")
     public AjaxResult getProductList(@RequestParam Long grouponId) {
+        GrouponActivity activity = grouponActivityService.selectGrouponActivityById(grouponId);
+        AjaxResult denied = checkActivityAccess(activity, "团购活动");
+        if (denied != null) {
+            return denied;
+        }
+
         Product query = new Product();
         query.setGrouponId(grouponId);
         List<Product> list = productService.selectProductList(query);
@@ -245,18 +316,27 @@ public class MallGrouponController extends BaseController {
     /**
      * 绑定商品到团购活动
      */
+    @PreAuthorize("@ss.hasPermi('mall:groupon:edit')")
     @PostMapping("/product/bind")
     public AjaxResult bindProduct(@RequestBody Map<String, Object> params) {
         Long grouponId = Long.valueOf(params.get("grouponId").toString());
         List<Number> productIds = (List<Number>) params.get("productIds");
 
         GrouponActivity activity = grouponActivityService.selectGrouponActivityById(grouponId);
-        if (activity == null) {
-            return AjaxResult.error("团购活动不存在");
+        AjaxResult denied = checkActivityAccess(activity, "团购活动");
+        if (denied != null) {
+            return denied;
         }
 
+        if (productIds == null) {
+            return AjaxResult.success();
+        }
         for (Number productId : productIds) {
             Product product = productService.selectProductById(productId.longValue());
+            denied = checkProductAccess(product, "商品");
+            if (denied != null) {
+                return denied;
+            }
             if (product != null && product.getMerchantId().equals(activity.getMerchantId())) {
                 product.setGrouponId(grouponId);
                 productService.updateProduct(product);
@@ -268,18 +348,73 @@ public class MallGrouponController extends BaseController {
     /**
      * 解绑商品
      */
+    @PreAuthorize("@ss.hasPermi('mall:groupon:edit')")
     @PostMapping("/product/unbind")
     public AjaxResult unbindProduct(@RequestBody Map<String, Object> params) {
         List<Number> productIds = (List<Number>) params.get("productIds");
+        if (productIds == null) {
+            return AjaxResult.success();
+        }
 
         for (Number productId : productIds) {
             Product product = productService.selectProductById(productId.longValue());
+            AjaxResult denied = checkProductAccess(product, "商品");
+            if (denied != null) {
+                return denied;
+            }
             if (product != null) {
                 product.setGrouponId(null);
                 productService.updateProduct(product);
             }
         }
         return AjaxResult.success();
+    }
+
+    private AjaxResult checkActivityAccess(GrouponActivity activity, String label) {
+        if (activity == null) {
+            return AjaxResult.error(label + "不存在");
+        }
+        return checkMerchantAccess(activity.getMerchantId(), label);
+    }
+
+    private AjaxResult checkProductAccess(Product product, String label) {
+        if (product == null) {
+            return AjaxResult.error(label + "不存在");
+        }
+        return checkMerchantAccess(product.getMerchantId(), label);
+    }
+
+    private AjaxResult checkMerchantAccess(Long merchantId, String label) {
+        if (merchantId == null) {
+            return AjaxResult.error(label + "商户不能为空");
+        }
+        Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        if (effMerchantId != null && !effMerchantId.equals(merchantId)) {
+            return AjaxResult.error("无权操作该" + label);
+        }
+        Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effDistributorId != null) {
+            Merchant merchant = merchantService.selectMerchantById(merchantId);
+            if (merchant == null || !effDistributorId.equals(merchant.getDistributorId())) {
+                return AjaxResult.error("无权操作该" + label);
+            }
+        }
+        return null;
+    }
+
+    private boolean isMerchantAccessible(Long merchantId) {
+        return checkMerchantAccess(merchantId, "团购活动") == null;
+    }
+
+    private AjaxResult checkMerchantCanOperate(Long merchantId, Integer status) {
+        if (status == null || status != 1 || merchantId == null) {
+            return null;
+        }
+        Merchant merchant = merchantService.selectMerchantById(merchantId);
+        if (merchant != null && !merchant.canOperate()) {
+            return AjaxResult.error("商家运营条件不满足：" + merchant.getOperateBlockReason());
+        }
+        return null;
     }
 
     private String detectImageExtension(InputStream is) throws IOException {

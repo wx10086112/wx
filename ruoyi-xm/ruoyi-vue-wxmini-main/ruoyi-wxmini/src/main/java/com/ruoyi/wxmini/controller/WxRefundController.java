@@ -2,106 +2,144 @@ package com.ruoyi.wxmini.controller;
 
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
+import com.ruoyi.mall.order.constant.MallOrderStatus;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.RefundRecord;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.order.mapper.RefundRecordMapper;
-import org.springframework.web.bind.annotation.*;
+import com.ruoyi.mall.user.domain.UserInfo;
+import com.ruoyi.mall.user.service.IUserInfoService;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-/**
- * C端小程序退款申请接口
- */
 @RestController
 @RequestMapping("/wxmini/refund")
 public class WxRefundController {
-
-    private static final int ORDER_STATUS_PAID = 1;
-    private static final int ORDER_STATUS_COMPLETED = 2;
-    private static final int ORDER_STATUS_REFUNDED = 3;
 
     @Resource
     private MallOrderMapper mallOrderMapper;
     @Resource
     private RefundRecordMapper refundRecordMapper;
+    @Resource
+    private IUserInfoService userInfoService;
 
-    /**
-     * 提交退款申请
-     * POST /wxmini/refund/apply
-     */
     @PostMapping("/apply")
     public AjaxResult applyRefund(@RequestBody Map<String, String> body) {
         String orderNo = body != null ? body.get("orderNo") : null;
         String refundReason = body != null ? body.get("refundReason") : null;
 
-        if (orderNo == null || orderNo.isEmpty()) {
+        if (StringUtils.isBlank(orderNo)) {
             return AjaxResult.error("订单号不能为空");
         }
 
         String userId = WxMiniUserContext.getCurrentUserId();
-        if (userId == null) {
+        if (StringUtils.isBlank(userId)) {
             return AjaxResult.error("请先登录");
         }
 
-        // 校验订单
         MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(orderNo);
-        if (order == null || !order.getUserId().toString().equals(userId)) {
+        UserInfo currentUser = resolveUserInfo(userId);
+        if (order == null || !isCurrentUserOrder(order, currentUser)) {
             return AjaxResult.error("订单不存在");
         }
-        if (order.getStatus() == null || (order.getStatus() != ORDER_STATUS_PAID && order.getStatus() != ORDER_STATUS_COMPLETED)) {
-            return AjaxResult.error("当前订单状态不可退款");
+        AjaxResult tenantCheck = checkOrderTenant(order);
+        if (tenantCheck != null) {
+            return tenantCheck;
         }
-        if (order.getStatus() != null && order.getStatus() >= ORDER_STATUS_REFUNDED) {
+        if (order.getStatus() != null && order.getStatus() == MallOrderStatus.REFUNDED) {
             return AjaxResult.error("订单已退款");
         }
+        if (!MallOrderStatus.isRefundable(order.getStatus())) {
+            return AjaxResult.error("当前订单状态不可退款");
+        }
 
-        // 幂等：检查是否已有待审核的退款记录
         RefundRecord existQuery = new RefundRecord();
         existQuery.setOrderNo(orderNo);
         List<RefundRecord> existing = refundRecordMapper.selectRefundRecordList(existQuery);
         if (existing != null) {
-            for (RefundRecord r : existing) {
-                if (r.getStatus() != null && (r.getStatus() == 1 || r.getStatus() == 2)) {
+            for (RefundRecord refundRecord : existing) {
+                if (refundRecord.getStatus() != null
+                        && (refundRecord.getStatus() == RefundRecord.STATUS_PENDING
+                        || refundRecord.getStatus() == RefundRecord.STATUS_APPROVED)) {
                     return AjaxResult.error("该订单已有退款申请在处理中");
                 }
             }
         }
 
-        // 创建退款记录
         RefundRecord refundRecord = new RefundRecord();
         refundRecord.setOrderNo(orderNo);
         refundRecord.setRefundNo(generateRefundNo());
         refundRecord.setMerchantId(order.getMerchantId());
         refundRecord.setUserId(order.getUserId());
         refundRecord.setRefundAmount(order.getPayAmount());
-        refundRecord.setRefundReason(refundReason != null ? refundReason : "用户申请退款");
-        refundRecord.setRefundType(1); // 1=全额退款
-        refundRecord.setStatus(1); // 1=待审核
-
+        refundRecord.setRefundReason(normalizeRefundReason(refundReason));
+        refundRecord.setRefundType(1);
+        refundRecord.setStatus(RefundRecord.STATUS_PENDING);
         refundRecordMapper.insertRefundRecord(refundRecord);
 
         return AjaxResult.success("退款申请已提交，请等待审核");
     }
 
-    /**
-     * 查询退款记录列表
-     * GET /wxmini/refund/list
-     */
     @GetMapping("/list")
     public AjaxResult listRefund() {
         String userId = WxMiniUserContext.getCurrentUserId();
-        if (userId == null) {
+        if (StringUtils.isBlank(userId)) {
             return AjaxResult.error("请先登录");
+        }
+        Long merchantId = WxMiniUserContext.getCurrentMerchantId();
+        if (merchantId == null) {
+            return AjaxResult.error("当前小程序登录态缺少商户信息");
         }
 
         RefundRecord query = new RefundRecord();
-        query.setUserId(Long.valueOf(userId));
+        UserInfo currentUser = resolveUserInfo(userId);
+        if (currentUser == null || currentUser.getId() == null) {
+            return AjaxResult.error("invalid user");
+        }
+        query.setUserId(currentUser.getId());
+        query.setMerchantId(merchantId);
         List<RefundRecord> list = refundRecordMapper.selectRefundRecordList(query);
-
         return AjaxResult.success(list);
+    }
+
+    private boolean isCurrentUserOrder(MallOrder order, UserInfo userInfo) {
+        return userInfo != null && userInfo.getId() != null
+                && order.getUserId() != null && order.getUserId().equals(userInfo.getId());
+    }
+
+    private UserInfo resolveUserInfo(String userId) {
+        if (StringUtils.isBlank(userId)) {
+            return null;
+        }
+        return userInfoService.selectUserInfoByUserId(userId);
+    }
+
+    private AjaxResult checkOrderTenant(MallOrder order) {
+        Long tokenMerchantId = WxMiniUserContext.getCurrentMerchantId();
+        if (tokenMerchantId == null || !tokenMerchantId.equals(order.getMerchantId())) {
+            return AjaxResult.error("订单商户与当前小程序登录态不匹配");
+        }
+        Long appIdMerchantId = WxMiniUserContext.getAppIdMerchantId();
+        if (appIdMerchantId != null && !appIdMerchantId.equals(order.getMerchantId())) {
+            return AjaxResult.error("订单商户与当前小程序AppID不匹配");
+        }
+        return null;
+    }
+
+    private String normalizeRefundReason(String refundReason) {
+        String normalized = StringUtils.isNotBlank(refundReason) ? refundReason.trim() : "用户申请退款";
+        return normalized.length() > 200 ? normalized.substring(0, 200) : normalized;
     }
 
     private String generateRefundNo() {

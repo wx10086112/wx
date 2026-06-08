@@ -11,11 +11,21 @@ import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.domain.MerchantUser;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.merchant.service.IMerchantUserService;
+import com.ruoyi.system.service.ISysConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/mall/merchant-user")
@@ -23,24 +33,12 @@ public class MallMerchantUserController extends BaseController {
 
     @Autowired
     private IMerchantUserService merchantUserService;
+
     @Autowired
     private IMerchantService merchantService;
 
-    private AjaxResult checkMerchantUserOwnership(Long merchantUserId) {
-        MerchantUser mu = merchantUserService.selectMerchantUserById(merchantUserId);
-        if (mu == null) {
-            return error("商家用户不存在");
-        }
-        Merchant merchant = merchantService.selectMerchantById(mu.getMerchantId());
-        if (merchant == null) {
-            return error("关联商家不存在");
-        }
-        Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
-        if (effDistributorId != null && !effDistributorId.equals(merchant.getDistributorId())) {
-            return error("无权限操作该商家用户");
-        }
-        return null; // null = 通过校验
-    }
+    @Autowired
+    private ISysConfigService configService;
 
     /**
      * 商家用户列表
@@ -61,7 +59,9 @@ public class MallMerchantUserController extends BaseController {
     @GetMapping("/{id}")
     public AjaxResult getInfo(@PathVariable Long id) {
         AjaxResult check = checkMerchantUserOwnership(id);
-        if (check != null) return check;
+        if (check != null) {
+            return check;
+        }
         return success(merchantUserService.selectMerchantUserById(id));
     }
 
@@ -72,6 +72,10 @@ public class MallMerchantUserController extends BaseController {
     @Log(title = "商家用户管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody MerchantUser merchantUser) {
+        AjaxResult check = checkMerchantOwnership(merchantUser.getMerchantId());
+        if (check != null) {
+            return check;
+        }
         if (!merchantUserService.checkUsernameUnique(merchantUser.getUsername(), null)) {
             return error("新增用户'" + merchantUser.getUsername() + "'失败，登录账号已存在");
         }
@@ -86,7 +90,11 @@ public class MallMerchantUserController extends BaseController {
     @PutMapping
     public AjaxResult edit(@RequestBody MerchantUser merchantUser) {
         AjaxResult check = checkMerchantUserOwnership(merchantUser.getId());
-        if (check != null) return check;
+        if (check != null) {
+            return check;
+        }
+        MerchantUser existing = merchantUserService.selectMerchantUserById(merchantUser.getId());
+        merchantUser.setMerchantId(existing.getMerchantId());
         if (!merchantUserService.checkUsernameUnique(merchantUser.getUsername(), merchantUser.getId())) {
             return error("修改用户'" + merchantUser.getUsername() + "'失败，登录账号已存在");
         }
@@ -102,13 +110,12 @@ public class MallMerchantUserController extends BaseController {
     public AjaxResult remove(@PathVariable Long[] ids) {
         for (Long id : ids) {
             AjaxResult check = checkMerchantUserOwnership(id);
-            if (check != null) return check;
+            if (check != null) {
+                return check;
+            }
         }
         return toAjax(merchantUserService.deleteMerchantUserByIds(ids));
     }
-
-    @Autowired
-    private com.ruoyi.system.service.ISysConfigService configService;
 
     /**
      * 重置密码
@@ -116,27 +123,33 @@ public class MallMerchantUserController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:merchant:edit')")
     @Log(title = "商家用户管理", businessType = BusinessType.UPDATE)
     @PutMapping("/resetPwd/{id}")
-    public AjaxResult resetPwd(@PathVariable Long id, @RequestBody(required = false) java.util.Map<String, String> body) {
+    public AjaxResult resetPwd(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
         AjaxResult check = checkMerchantUserOwnership(id);
-        if (check != null) return check;
+        if (check != null) {
+            return check;
+        }
         String newPassword = body != null ? body.get("password") : null;
         if (newPassword == null || newPassword.trim().isEmpty()) {
             newPassword = configService.selectConfigByKey("sys.user.initPassword");
-            if (newPassword == null) newPassword = "123456";
+            if (newPassword == null) {
+                newPassword = "123456";
+            }
         }
         merchantUserService.resetPassword(id, newPassword);
         return success();
     }
 
     /**
-     * 状态切换（启用/禁用）
+     * 状态切换
      */
     @PreAuthorize("@ss.hasPermi('mall:merchant:edit')")
     @Log(title = "商家用户管理", businessType = BusinessType.UPDATE)
     @PutMapping("/changeStatus")
     public AjaxResult changeStatus(@RequestBody MerchantUser merchantUser) {
         AjaxResult check = checkMerchantUserOwnership(merchantUser.getId());
-        if (check != null) return check;
+        if (check != null) {
+            return check;
+        }
         merchantUserService.changeStatus(merchantUser.getId(), merchantUser.getStatus());
         return success();
     }
@@ -150,5 +163,29 @@ public class MallMerchantUserController extends BaseController {
                                           @RequestParam(required = false) Long id) {
         boolean unique = merchantUserService.checkUsernameUnique(username, id);
         return success(unique);
+    }
+
+    private AjaxResult checkMerchantUserOwnership(Long merchantUserId) {
+        MerchantUser merchantUser = merchantUserService.selectMerchantUserById(merchantUserId);
+        if (merchantUser == null) {
+            return error("商家用户不存在");
+        }
+        return checkMerchantOwnership(merchantUser.getMerchantId());
+    }
+
+    private AjaxResult checkMerchantOwnership(Long merchantId) {
+        Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        if (effMerchantId != null && !effMerchantId.equals(merchantId)) {
+            return error("无权操作该商家用户");
+        }
+        Merchant merchant = merchantService.selectMerchantById(merchantId);
+        if (merchant == null) {
+            return error("关联商家不存在");
+        }
+        Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effDistributorId != null && !effDistributorId.equals(merchant.getDistributorId())) {
+            return error("无权操作该商家用户");
+        }
+        return null;
     }
 }

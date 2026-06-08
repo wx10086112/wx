@@ -27,6 +27,11 @@
         left join merchant m on m.id = mu.merchant_id and m.del_flag = '0'
     </sql>
 
+    <sql id="dataScopeBizFilter">
+        <if test="params.dataScopeBizDistributorId != null">and m.distributor_id = #{params.dataScopeBizDistributorId}</if>
+        <if test="params.dataScopeBizMerchantId != null">and mu.merchant_id = #{params.dataScopeBizMerchantId}</if>
+    </sql>
+
     <select id="selectMerchantUserList" parameterType="com.ruoyi.mall.merchant.domain.MerchantUser" resultMap="MerchantUserResult">
         <include refid="selectMerchantUserVo"/>
         <where>
@@ -37,7 +42,7 @@
             <if test="phone != null and phone != ''">and mu.phone = #{phone}</if>
             <if test="role != null and role != ''">and mu.role = #{role}</if>
             <if test="status != null">and mu.status = #{status}</if>
-            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+            <include refid="dataScopeBizFilter"/>
         </where>
         order by mu.id desc
     </select>

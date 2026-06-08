@@ -60,6 +60,10 @@ public class MallSettlementController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")
     @PostMapping("/merchant/batch-transfer")
     public AjaxResult merchantBatchTransfer(@RequestBody List<Long> ids) {
+        AjaxResult denied = checkMerchantSettlementAccess(ids);
+        if (denied != null) {
+            return denied;
+        }
         merchantSettlementService.batchTransfer(ids);
         return AjaxResult.success();
     }
@@ -67,6 +71,10 @@ public class MallSettlementController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")
     @PostMapping("/merchant/mark-arrived")
     public AjaxResult merchantMarkArrived(@RequestBody List<Long> ids) {
+        AjaxResult denied = checkMerchantSettlementAccess(ids);
+        if (denied != null) {
+            return denied;
+        }
         merchantSettlementService.batchMarkArrived(ids);
         return AjaxResult.success();
     }
@@ -74,6 +82,13 @@ public class MallSettlementController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")
     @PostMapping("/merchant/mark-failed")
     public AjaxResult merchantMarkFailed(@RequestBody MerchantSettlementRecord params) {
+        MerchantSettlementRecord record = merchantSettlementService.selectById(params.getId());
+        AjaxResult denied = checkAccess(record != null ? record.getMerchantId() : null,
+                record != null ? record.getDistributorId() : null,
+                "商家结算记录");
+        if (denied != null) {
+            return denied;
+        }
         merchantSettlementService.markFailed(params.getId(), params.getFailReason());
         return AjaxResult.success();
     }
@@ -105,6 +120,10 @@ public class MallSettlementController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")
     @PostMapping("/distributor/batch-arrived")
     public AjaxResult distributorBatchArrived(@RequestBody List<Long> ids) {
+        AjaxResult denied = checkDistributorSettlementAccess(ids);
+        if (denied != null) {
+            return denied;
+        }
         distributorSettlementService.batchMarkArrived(ids);
         return AjaxResult.success();
     }
@@ -112,6 +131,13 @@ public class MallSettlementController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")
     @PostMapping("/distributor/mark-failed")
     public AjaxResult distributorMarkFailed(@RequestBody DistributorSettlementRecord params) {
+        DistributorSettlementRecord record = distributorSettlementService.selectById(params.getId());
+        AjaxResult denied = checkAccess(record != null ? record.getMerchantId() : null,
+                record != null ? record.getDistributorId() : null,
+                "分销商结算记录");
+        if (denied != null) {
+            return denied;
+        }
         distributorSettlementService.markFailed(params.getId(), params.getFailReason());
         return AjaxResult.success();
     }
@@ -145,6 +171,13 @@ public class MallSettlementController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")
     @PostMapping("/merchant/transfer/{settlementId}")
     public AjaxResult merchantTransfer(@PathVariable Long settlementId) {
+        MerchantSettlementRecord settlement = merchantSettlementService.selectById(settlementId);
+        AjaxResult denied = checkAccess(settlement != null ? settlement.getMerchantId() : null,
+                settlement != null ? settlement.getDistributorId() : null,
+                "商家结算记录");
+        if (denied != null) {
+            return denied;
+        }
         String operatorId = getUsername();
         PlatformTransferRecord record = platformTransferService.createMerchantTransfer(settlementId, operatorId);
         return AjaxResult.success(record);
@@ -153,6 +186,10 @@ public class MallSettlementController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")
     @PostMapping("/merchant/batch-transfer-real")
     public AjaxResult merchantBatchTransferReal(@RequestBody List<Long> ids) {
+        AjaxResult denied = checkMerchantSettlementAccess(ids);
+        if (denied != null) {
+            return denied;
+        }
         String operatorId = getUsername();
         List<PlatformTransferRecord> records = platformTransferService.batchCreateMerchantTransfer(ids, operatorId);
         return AjaxResult.success(records);
@@ -176,6 +213,13 @@ public class MallSettlementController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")
     @PostMapping("/distributor/transfer/{settlementId}")
     public AjaxResult distributorTransfer(@PathVariable Long settlementId) {
+        DistributorSettlementRecord settlement = distributorSettlementService.selectById(settlementId);
+        AjaxResult denied = checkAccess(settlement != null ? settlement.getMerchantId() : null,
+                settlement != null ? settlement.getDistributorId() : null,
+                "分销商结算记录");
+        if (denied != null) {
+            return denied;
+        }
         String operatorId = getUsername();
         PlatformTransferRecord record = platformTransferService.createDistributorTransfer(settlementId, operatorId);
         return AjaxResult.success(record);
@@ -184,6 +228,10 @@ public class MallSettlementController extends BaseController {
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")
     @PostMapping("/distributor/batch-transfer-real")
     public AjaxResult distributorBatchTransferReal(@RequestBody List<Long> ids) {
+        AjaxResult denied = checkDistributorSettlementAccess(ids);
+        if (denied != null) {
+            return denied;
+        }
         String operatorId = getUsername();
         List<PlatformTransferRecord> records = platformTransferService.batchCreateDistributorTransfer(ids, operatorId);
         return AjaxResult.success(records);
@@ -211,6 +259,38 @@ public class MallSettlementController extends BaseController {
         startPage();
         List<PlatformTransferRecord> list = platformTransferService.selectList(query);
         return getDataTable(list);
+    }
+
+    private AjaxResult checkMerchantSettlementAccess(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return AjaxResult.error("请选择商家结算记录");
+        }
+        for (Long id : ids) {
+            MerchantSettlementRecord record = merchantSettlementService.selectById(id);
+            AjaxResult denied = checkAccess(record != null ? record.getMerchantId() : null,
+                    record != null ? record.getDistributorId() : null,
+                    "商家结算记录");
+            if (denied != null) {
+                return denied;
+            }
+        }
+        return null;
+    }
+
+    private AjaxResult checkDistributorSettlementAccess(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return AjaxResult.error("请选择分销商结算记录");
+        }
+        for (Long id : ids) {
+            DistributorSettlementRecord record = distributorSettlementService.selectById(id);
+            AjaxResult denied = checkAccess(record != null ? record.getMerchantId() : null,
+                    record != null ? record.getDistributorId() : null,
+                    "分销商结算记录");
+            if (denied != null) {
+                return denied;
+            }
+        }
+        return null;
     }
 
     private AjaxResult checkAccess(Long merchantId, Long distributorId, String label) {

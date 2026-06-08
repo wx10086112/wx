@@ -1,13 +1,17 @@
 package com.ruoyi.wxmini.listener;
 
+import com.github.binarywang.wxpay.bean.request.WxPayPartnerRefundV3Request;
 import com.github.binarywang.wxpay.bean.request.WxPayRefundV3Request;
 import com.github.binarywang.wxpay.bean.result.WxPayRefundV3Result;
 import com.github.binarywang.wxpay.service.WxPayService;
 import com.ruoyi.mall.common.event.RefundApprovedEvent;
+import com.ruoyi.mall.merchant.domain.Merchant;
+import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.RefundRecord;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.order.mapper.RefundRecordMapper;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,11 +21,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
-/**
- * 微信退款事件监听器
- * 监听 RefundApprovedEvent，调用微信退款V3 API
- */
 @Component
 public class WxRefundEventListener {
 
@@ -36,62 +37,93 @@ public class WxRefundEventListener {
     private RefundRecordMapper refundRecordMapper;
     @Resource
     private MallOrderMapper mallOrderMapper;
+    @Resource
+    private IMerchantService merchantService;
 
     @EventListener
     @Async
     public void onRefundApproved(RefundApprovedEvent event) {
         if (wxPayService == null) {
-            log.info("WxPayService未配置，跳过微信退款（stub模式）: orderNo={}", event.getOrderNo());
+            log.info("WxPayService未配置，跳过微信退款，orderNo={}", event.getOrderNo());
             return;
         }
 
         String orderNo = event.getOrderNo();
         Long refundRecordId = event.getRefundRecordId();
-        log.info("收到退款审批事件，准备调用微信退款API: orderNo={}, refundId={}", orderNo, refundRecordId);
+        log.info("收到退款审核通过事件，准备调用微信退款API: orderNo={}, refundId={}", orderNo, refundRecordId);
 
         try {
-            // 查询退款记录
             RefundRecord refundRecord = refundRecordMapper.selectRefundRecordById(refundRecordId);
             if (refundRecord == null) {
                 log.error("退款记录不存在: refundId={}", refundRecordId);
                 return;
             }
+            if (refundRecord.getStatus() == null || refundRecord.getStatus() != RefundRecord.STATUS_APPROVED) {
+                log.warn("退款记录状态不是待微信退款，跳过: refundId={}, status={}",
+                        refundRecordId, refundRecord.getStatus());
+                return;
+            }
 
-            // 查询原订单
             MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(orderNo);
             if (order == null) {
                 log.error("原订单不存在: orderNo={}", orderNo);
                 return;
             }
 
-            // 构建退款请求
-            WxPayRefundV3Request request = new WxPayRefundV3Request();
+            Merchant merchant = merchantService.selectMerchantById(order.getMerchantId());
+            if (merchant == null || StringUtils.isBlank(merchant.getEffectiveMerchantWxMchId())) {
+                log.error("商户支付配置不完整: merchantId={}", order.getMerchantId());
+                return;
+            }
+
+            WxPayPartnerRefundV3Request request = new WxPayPartnerRefundV3Request();
             request.setOutTradeNo(orderNo);
             request.setOutRefundNo(refundRecord.getRefundNo() != null ? refundRecord.getRefundNo() : "RF_" + orderNo);
             request.setReason(refundRecord.getRefundReason() != null ? refundRecord.getRefundReason() : "用户申请退款");
+            request.setSubMchid(merchant.getEffectiveMerchantWxMchId());
+
+            int totalAmountFen = toFen(order.getPayAmount());
+            int refundAmountFen = toFen(refundRecord.getRefundAmount() != null
+                    ? refundRecord.getRefundAmount() : order.getPayAmount());
+            if (refundAmountFen <= 0 || refundAmountFen > totalAmountFen) {
+                log.error("退款金额非法: orderNo={}, totalFen={}, refundFen={}",
+                        orderNo, totalAmountFen, refundAmountFen);
+                markRefundAbnormal(refundRecord);
+                return;
+            }
 
             WxPayRefundV3Request.Amount amount = new WxPayRefundV3Request.Amount();
-            // 退款金额（分）= 原订单金额全额退款
-            int refundAmountFen = order.getPayAmount().multiply(BigDecimal.valueOf(100)).intValue();
             amount.setRefund(refundAmountFen);
-            amount.setTotal(refundAmountFen);
+            amount.setTotal(totalAmountFen);
             amount.setCurrency("CNY");
             request.setAmount(amount);
-
             request.setNotifyUrl(refundNotifyUrl);
 
-            // 调用微信退款API
             WxPayRefundV3Result result = wxPayService.refundV3(request);
             log.info("微信退款API调用成功: orderNo={}, refundNo={}, status={}",
                     orderNo, result.getOutRefundNo(), result.getStatus());
 
-            // 更新退款记录：记录微信退款单号
             if (result.getRefundId() != null) {
                 refundRecord.setRefundNo(result.getOutRefundNo());
                 refundRecordMapper.updateRefundRecord(refundRecord);
             }
+            if ("ABNORMAL".equals(result.getStatus()) || "CLOSED".equals(result.getStatus())) {
+                markRefundAbnormal(refundRecord);
+            }
         } catch (Exception e) {
             log.error("微信退款API调用失败: orderNo={}, error={}", orderNo, e.getMessage(), e);
         }
+    }
+
+    private int toFen(BigDecimal amount) {
+        if (amount == null) {
+            return 0;
+        }
+        return amount.movePointRight(2).setScale(0, RoundingMode.UNNECESSARY).intValueExact();
+    }
+
+    private void markRefundAbnormal(RefundRecord refundRecord) {
+        refundRecord.setStatus(RefundRecord.STATUS_ABNORMAL);
+        refundRecordMapper.updateRefundRecord(refundRecord);
     }
 }

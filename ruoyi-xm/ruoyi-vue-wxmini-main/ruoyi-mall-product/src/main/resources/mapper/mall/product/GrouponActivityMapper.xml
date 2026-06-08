@@ -32,6 +32,11 @@
         left join merchant m on m.id = ga.merchant_id and m.del_flag = '0'
     </sql>
 
+    <sql id="dataScopeBizFilter">
+        <if test="params.dataScopeBizDistributorId != null">and m.distributor_id = #{params.dataScopeBizDistributorId}</if>
+        <if test="params.dataScopeBizMerchantId != null">and ga.merchant_id = #{params.dataScopeBizMerchantId}</if>
+    </sql>
+
     <select id="selectGrouponActivityById" parameterType="Long" resultMap="GrouponActivityResult">
         <include refid="selectGrouponActivityVo"/>
         where ga.id = #{id} AND ga.del_flag = '0'
@@ -44,7 +49,7 @@
             <if test="name != null and name != ''">and ga.name like concat('%', #{name}, '%')</if>
             <if test="merchantId != null">and ga.merchant_id = #{merchantId}</if>
             <if test="status != null">and ga.status = #{status}</if>
-            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+            <include refid="dataScopeBizFilter"/>
         </where>
         order by ga.sort asc, ga.create_time desc
     </select>

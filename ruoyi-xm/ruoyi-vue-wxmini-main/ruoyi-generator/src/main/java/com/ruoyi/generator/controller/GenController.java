@@ -133,18 +133,27 @@ public class GenController extends BaseController
         {
             SqlUtil.filterKeyword(sql);
             List<SQLStatement> sqlStatements = SQLUtils.parseStatements(sql, DbType.mysql);
+            if (sqlStatements == null || sqlStatements.isEmpty())
+            {
+                return AjaxResult.error("未解析到有效的建表语句");
+            }
             List<String> tableNames = new ArrayList<>();
             for (SQLStatement sqlStatement : sqlStatements)
             {
-                if (sqlStatement instanceof MySqlCreateTableStatement)
+                if (!(sqlStatement instanceof MySqlCreateTableStatement))
                 {
-                    MySqlCreateTableStatement createTableStatement = (MySqlCreateTableStatement) sqlStatement;
-                    if (genTableService.createTable(createTableStatement.toString()))
-                    {
-                        String tableName = createTableStatement.getTableName().replaceAll("`", "");
-                        tableNames.add(tableName);
-                    }
+                    return AjaxResult.error("仅允许执行 CREATE TABLE 语句");
                 }
+                MySqlCreateTableStatement createTableStatement = (MySqlCreateTableStatement) sqlStatement;
+                if (genTableService.createTable(createTableStatement.toString()))
+                {
+                    String tableName = createTableStatement.getTableName().replaceAll("`", "");
+                    tableNames.add(tableName);
+                }
+            }
+            if (tableNames.isEmpty())
+            {
+                return AjaxResult.error("建表失败，请检查 SQL 后重试");
             }
             List<GenTable> tableList = genTableService.selectDbTableListByNames(tableNames.toArray(new String[tableNames.size()]));
             String operName = SecurityUtils.getUsername();

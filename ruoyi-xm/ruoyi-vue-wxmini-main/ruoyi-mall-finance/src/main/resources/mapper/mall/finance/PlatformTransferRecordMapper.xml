@@ -49,6 +49,11 @@
         LEFT JOIN distributor d ON t.distributor_id = d.id
     </sql>
 
+    <sql id="dataScopeBizFilter">
+        <if test="params.dataScopeBizDistributorId != null">and t.distributor_id = #{params.dataScopeBizDistributorId}</if>
+        <if test="params.dataScopeBizMerchantId != null">and t.merchant_id = #{params.dataScopeBizMerchantId}</if>
+    </sql>
+
     <select id="selectById" parameterType="Long" resultMap="TransferRecordResult">
         <include refid="selectTransferRecordVo"/>
         where t.id = #{id} AND t.del_flag = '0'
@@ -83,7 +88,7 @@
             <if test="distributorId != null">and t.distributor_id = #{distributorId}</if>
             <if test="orderNo != null and orderNo != ''">and t.order_no like concat('%', #{orderNo}, '%')</if>
             <if test="status != null and status != ''">and t.status = #{status}</if>
-            <if test="params.dataScopeBiz != null and params.dataScopeBiz != ''">${params.dataScopeBiz}</if>
+            <include refid="dataScopeBizFilter"/>
         </where>
         order by t.create_time desc
     </select>

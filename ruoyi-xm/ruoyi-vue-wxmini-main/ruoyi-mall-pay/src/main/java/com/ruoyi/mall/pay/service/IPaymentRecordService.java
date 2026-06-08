@@ -24,4 +24,9 @@ public interface IPaymentRecordService {
      * 支付成功回调：更新 transactionId、payStatus、payTime
      */
     void markPaySuccess(String orderNo, String transactionId, String notifyResult);
+
+    /**
+     * 微信退款成功回调：将支付记录标记为已退款
+     */
+    void markRefunded(String orderNo, String notifyResult);
 }

@@ -58,6 +58,35 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		    left join sys_user_role ur on u.user_id = ur.user_id
 		    left join sys_role r on r.role_id = ur.role_id
     </sql>
+
+    <sql id="dataScopeFilter">
+		<if test="params.dataScopeDenyAll != null and params.dataScopeDenyAll">
+			AND 1 = 0
+		</if>
+		<if test="(params.dataScopeCustomRoleIds != null and params.dataScopeCustomRoleIds.size() > 0) or params.dataScopeDeptId != null or params.dataScopeDeptAndChildId != null or params.dataScopeUserId != null">
+			<trim prefix="AND (" prefixOverrides="OR" suffix=")">
+				<if test="params.dataScopeCustomRoleIds != null and params.dataScopeCustomRoleIds.size() > 0">
+					OR d.dept_id IN (
+						select rd.dept_id
+						from sys_role_dept rd
+						where rd.role_id in
+						<foreach collection="params.dataScopeCustomRoleIds" item="roleId" open="(" separator="," close=")">
+							#{roleId}
+						</foreach>
+					)
+				</if>
+				<if test="params.dataScopeDeptId != null">
+					OR d.dept_id = #{params.dataScopeDeptId}
+				</if>
+				<if test="params.dataScopeDeptAndChildId != null">
+					OR (d.dept_id = #{params.dataScopeDeptAndChildId} OR find_in_set(#{params.dataScopeDeptAndChildId}, d.ancestors))
+				</if>
+				<if test="params.dataScopeUserId != null">
+					OR u.user_id = #{params.dataScopeUserId}
+				</if>
+			</trim>
+		</if>
+    </sql>
     
     <select id="selectUserList" parameterType="SysUser" resultMap="SysUserResult">
 		select u.user_id, u.dept_id, u.nick_name, u.user_name, u.email, u.avatar, u.phonenumber, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, u.account_type, u.distributor_id, u.merchant_id, d.dept_name, d.leader from sys_user u
@@ -88,7 +117,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND u.account_type = #{accountType}
 		</if>
 		<!-- 数据范围过滤 -->
-		${params.dataScope}
+		<include refid="dataScopeFilter"/>
 	</select>
 	
 	<select id="selectAllocatedList" parameterType="SysUser" resultMap="SysUserResult">
@@ -108,7 +137,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND u.account_type = #{accountType}
 		</if>
 		<!-- 数据范围过滤 -->
-		${params.dataScope}
+		<include refid="dataScopeFilter"/>
 	</select>
 	
 	<select id="selectUnallocatedList" parameterType="SysUser" resultMap="SysUserResult">
@@ -129,7 +158,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND u.account_type = #{accountType}
 		</if>
 		<!-- 数据范围过滤 -->
-		${params.dataScope}
+		<include refid="dataScopeFilter"/>
 	</select>
 	
 	<select id="selectUserByUserName" parameterType="String" resultMap="SysUserResult">
@@ -238,4 +267,4 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach> 
  	</delete>
 	
-</mapper> 
+</mapper>
