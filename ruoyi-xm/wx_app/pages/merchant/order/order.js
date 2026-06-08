@@ -46,8 +46,9 @@ Page({
       .then((response) => {
         this.renderOrderList(response || [])
       })
-      .catch(() => {
-        this.renderOrderList(util.getOrderList())
+      .catch((err = {}) => {
+        this.renderOrderList([])
+        util.showToast(err.message || '订单列表加载失败')
       })
   },
 
@@ -126,13 +127,8 @@ Page({
         this.closeCancelModal()
         this.loadData()
       })
-      .catch(() => {
-        const result = util.cancelOrder(orderNo, reason)
-        util.showToast(result.message, result.success ? 'success' : 'none')
-        if (result.success) {
-          this.closeCancelModal()
-          this.loadData()
-        }
+      .catch((err = {}) => {
+        util.showToast(err.message || '订单取消失败，请重试')
       })
   },
 

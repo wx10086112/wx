@@ -34,8 +34,9 @@ Page({
         util.setVerifyRecordList(recordList)
         this.renderRecords(recordList)
       })
-      .catch(() => {
-        this.renderRecords(util.getVerifyRecordList())
+      .catch((err = {}) => {
+        this.renderRecords([])
+        util.showToast(err.message || '核销记录加载失败')
       })
   },
 

@@ -68,6 +68,14 @@
         order by r.create_time desc
     </select>
 
+    <select id="countActiveRefundByOrderNo" resultType="int">
+        select count(*)
+        from refund_record
+        where order_no = #{orderNo}
+          and status in (1, 2)
+          and del_flag = '0'
+    </select>
+
     <insert id="insertRefundRecord" parameterType="com.ruoyi.mall.order.domain.RefundRecord" useGeneratedKeys="true" keyProperty="id">
         insert into refund_record
         <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -123,6 +131,23 @@
         <if test="params != null and params.oldStatus != null">
             and status = #{params.oldStatus}
         </if>
+    </update>
+
+    <update id="markRefundSucceeded">
+        update refund_record
+        set status = 4,
+            refund_time = #{refundTime}
+        where id = #{id}
+          and status &lt; 4
+          and del_flag = '0'
+    </update>
+
+    <update id="markRefundAbnormal">
+        update refund_record
+        set status = 5
+        where id = #{id}
+          and status &lt;&gt; 5
+          and del_flag = '0'
     </update>
 
     <update id="deleteRefundRecordById" parameterType="Long">

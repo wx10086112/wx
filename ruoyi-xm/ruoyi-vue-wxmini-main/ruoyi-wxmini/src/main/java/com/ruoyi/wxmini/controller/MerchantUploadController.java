@@ -1,16 +1,21 @@
 package com.ruoyi.wxmini.controller;
 
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.mall.common.util.WxMiniUserContext;
+import com.ruoyi.mall.product.domain.Product;
 import com.ruoyi.mall.product.domain.ProductImage;
+import com.ruoyi.mall.product.mapper.ProductMapper;
 import com.ruoyi.mall.product.service.IProductImageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 @RestController
@@ -28,6 +33,8 @@ public class MerchantUploadController {
 
     @Resource
     private IProductImageService productImageService;
+    @Resource
+    private ProductMapper productMapper;
 
     @PostMapping("/upload")
     public AjaxResult upload(
@@ -36,12 +43,29 @@ public class MerchantUploadController {
             @RequestParam(value = "productId", required = false) Long productId,
             @RequestParam(value = "imageType", required = false, defaultValue = "main") String imageType) {
 
-        if (file == null || file.isEmpty()) {
-            return AjaxResult.error("请选择要上传的文件");
+        Long currentMerchantId = WxMiniUserContext.getCurrentMerchantId();
+        if (!WxMiniUserContext.isMerchantStaff() || currentMerchantId == null) {
+            return AjaxResult.error("无商家上传权限");
         }
 
-        if (!ALLOWED_IMAGE_TYPES.contains(imageType)) {
+        if (merchantId == null || !currentMerchantId.equals(merchantId)) {
+            return AjaxResult.error("上传商户与当前登录态不匹配");
+        }
+
+        String normalizedImageType = normalizeImageType(imageType);
+        if (!ALLOWED_IMAGE_TYPES.contains(normalizedImageType)) {
             return AjaxResult.error("不支持的图片类型");
+        }
+
+        if (productId != null) {
+            Product product = productMapper.selectProductById(productId);
+            if (product == null || product.getMerchantId() == null || !currentMerchantId.equals(product.getMerchantId())) {
+                return AjaxResult.error("商品不存在或不属于当前商户");
+            }
+        }
+
+        if (file == null || file.isEmpty()) {
+            return AjaxResult.error("请选择要上传的文件");
         }
 
         if (file.getSize() > MAX_FILE_SIZE) {
@@ -67,33 +91,38 @@ public class MerchantUploadController {
 
         try {
             StringBuilder dirBuilder = new StringBuilder("merchant/");
-            dirBuilder.append(merchantId).append("/");
+            dirBuilder.append(currentMerchantId).append("/");
             if (productId != null) {
                 dirBuilder.append("product/").append(productId).append("/");
             }
-            dirBuilder.append(imageType).append("/");
+            dirBuilder.append(normalizedImageType).append("/");
 
             String subDir = dirBuilder.toString();
-            File dir = new File(profilePath, subDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
+            Path basePath = Paths.get(profilePath).toAbsolutePath().normalize();
+            Path dirPath = basePath.resolve(subDir).normalize();
+            if (!dirPath.startsWith(basePath)) {
+                return AjaxResult.error("非法上传路径");
             }
+            Files.createDirectories(dirPath);
 
             // 后端生成文件名，不使用用户原始文件名
             String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-            String fileName = imageType + "_" + uuid + "." + ext;
+            String fileName = normalizedImageType + "_" + uuid + "." + ext;
             String relativePath = subDir + fileName;
 
-            File dest = new File(profilePath, relativePath);
-            file.transferTo(dest);
+            Path destPath = basePath.resolve(relativePath).normalize();
+            if (!destPath.startsWith(basePath)) {
+                return AjaxResult.error("非法上传路径");
+            }
+            file.transferTo(destPath.toFile());
 
             String url = "/profile/" + relativePath;
 
             if (productId != null) {
                 ProductImage image = new ProductImage();
                 image.setProductId(productId);
-                image.setMerchantId(merchantId);
-                image.setImageType(imageType);
+                image.setMerchantId(currentMerchantId);
+                image.setImageType(normalizedImageType);
                 image.setImageUrl(url);
                 image.setStatus(1);
                 productImageService.insertProductImage(image);
@@ -102,7 +131,7 @@ public class MerchantUploadController {
             Map<String, Object> result = new HashMap<>();
             result.put("url", url);
             result.put("fileName", fileName);
-            result.put("imageType", imageType);
+            result.put("imageType", normalizedImageType);
             return AjaxResult.success(result);
 
         } catch (IOException e) {
@@ -133,6 +162,10 @@ public class MerchantUploadController {
             return "webp";
         }
         return null;
+    }
+
+    private String normalizeImageType(String imageType) {
+        return imageType == null ? "main" : imageType.trim().toLowerCase(Locale.ROOT);
     }
 
     private boolean isAllowedMimeType(String contentType) {

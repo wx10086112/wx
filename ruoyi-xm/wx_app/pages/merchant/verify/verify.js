@@ -14,10 +14,8 @@ Page({
 
   onLoad(options) {
     if (options.orderNo) {
-      const hintOrder = util.getOrderList().find((item) => item.orderNo === options.orderNo) || {}
       this.setData({
-        orderHint: hintOrder,
-        manualCode: hintOrder.writeOffCode || ''
+        manualCode: options.orderNo || ''
       })
     }
   },
@@ -36,13 +34,7 @@ Page({
         })
       })
       .catch(() => {
-        const recentRecordList = util
-          .getVerifyRecordList()
-          .sort((a, b) => (b.verifyTime || 0) - (a.verifyTime || 0))
-          .slice(0, 5)
-          .map(this.buildRecentRecordDisplay)
-
-        this.setData({ recentRecordList })
+        this.setData({ recentRecordList: [] })
       })
   },
 
@@ -101,27 +93,11 @@ Page({
         util.showToast('核销成功', 'success')
         this.loadRecentRecords()
       })
-      .catch(() => {
-        const result = util.verifyOrderByCode(normalizedCode, app.globalData.staffUser || {})
-        this.setData({
-          verifyResult: result.order
-            ? {
-                ...result.order,
-                payAmountText: util.formatPrice(result.order.payAmount),
-                verifyTimeText: util.formatDate(result.order.verifyTime)
-              }
-            : null
-        })
-        util.showToast(result.message, result.success ? 'success' : 'none')
-        if (result.success) {
-          this.loadRecentRecords()
-            this.setData({
-              manualCode: ''
-            })
-          } else {
-            this.loadRecentRecords()
-          }
-        })
+      .catch((err = {}) => {
+        this.setData({ verifyResult: null })
+        util.showToast(err.message || '核销失败，请重试')
+        this.loadRecentRecords()
+      })
     },
 
   goVerifyRecords() {

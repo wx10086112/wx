@@ -8,6 +8,14 @@ const getBaseUrl = () => {
 }
 const getAppId = () => (app.globalData && app.globalData.appId) || ''
 
+const parseUploadResponse = (rawData = '') => {
+  try {
+    return JSON.parse(rawData || '{}')
+  } catch (e) {
+    return null
+  }
+}
+
 const request = (options) => {
   return new Promise((resolve, reject) => {
     const token = wx.getStorageSync('token')
@@ -112,7 +120,21 @@ const uploadFile = (filePath, url = '/wxmini/common/upload') => {
       name: 'file',
       header,
       success: (res) => {
-        const data = JSON.parse(res.data)
+        if (res.statusCode === 401) {
+          app.clearLoginInfo()
+          reject(new Error('登录已过期'))
+          return
+        }
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          reject(new Error('上传失败'))
+          return
+        }
+
+        const data = parseUploadResponse(res.data)
+        if (!data) {
+          reject(new Error('上传返回异常'))
+          return
+        }
         if (data.code === 200 || data.code === 0) {
           resolve(data)
         } else {

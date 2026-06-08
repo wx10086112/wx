@@ -1,9 +1,11 @@
 package com.ruoyi.mall.order.mapper;
 
 import com.ruoyi.mall.order.domain.RefundRecord;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 
 public interface RefundRecordMapper {
@@ -21,6 +23,12 @@ public interface RefundRecordMapper {
     int deleteRefundRecordById(Long id);
 
     int deleteRefundRecordByIds(Long[] ids);
+
+    int countActiveRefundByOrderNo(@Param("orderNo") String orderNo);
+
+    int markRefundSucceeded(@Param("id") Long id, @Param("refundTime") Date refundTime);
+
+    int markRefundAbnormal(@Param("id") Long id);
 
     @Select("SELECT IFNULL(SUM(refund_amount), 0) FROM refund_record WHERE status = 2")
     BigDecimal sumRefundTotal();

@@ -4,6 +4,7 @@ import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.OrderItem;
 import com.ruoyi.mall.order.domain.RefundRecord;
 
+import java.util.Date;
 import java.util.List;
 
 public interface IMallOrderService {
@@ -29,6 +30,10 @@ public interface IMallOrderService {
     boolean isMerchantAccessibleByDistributor(Long merchantId, Long distributorId);
 
     MallOrder selectMallOrderByOrderNo(String orderNo);
+
+    boolean markOrderPaid(String orderNo, Date payTime);
+
+    boolean markOrderRefunded(String orderNo, Date refundTime);
 
     int insertMallOrder(MallOrder mallOrder);
 

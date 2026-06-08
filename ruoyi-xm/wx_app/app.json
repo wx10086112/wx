@@ -25,8 +25,7 @@
     "pages/merchant/store/store",
     "pages/merchant/staff/staff",
     "pages/merchant/verify-records/verify-records",
-    "pages/merchant/finance/finance",
-    "pages/merchant/marketing/marketing"
+    "pages/merchant/finance/finance"
   ],
   "window": {
     "navigationBarTextStyle": "black",

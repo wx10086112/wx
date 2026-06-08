@@ -1,5 +1,6 @@
 package com.ruoyi.mall.product.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ruoyi.common.core.domain.BaseEntity;
 import java.util.Date;
 
@@ -11,6 +12,7 @@ public class Distributor extends BaseEntity {
     private String contact;
     private String phone;
     private String username;
+    @JsonIgnore
     private String password;
     private String regionCode;
     private String regionName;

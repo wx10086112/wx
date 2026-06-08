@@ -32,7 +32,6 @@
     </view>
 
     <button class="primary-btn login-btn" bindtap="submitLogin" loading="{{submitting}}" disabled="{{submitting}}">登录</button>
-    <button class="preview-btn" bindtap="enterPreview">进入演示后台</button>
 
   </view>
 </view>

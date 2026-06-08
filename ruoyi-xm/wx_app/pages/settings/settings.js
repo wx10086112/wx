@@ -3,8 +3,6 @@ const util = require('../../utils/util')
 const templateService = require('../../services/template')
 const merchantApi = require('../../api/merchant')
 
-const APPLY_STATUS_KEY = 'merchant_apply_status'
-
 const PANEL_CONTENT = {
   collection: {
     title: '个人信息收集清单',
@@ -39,10 +37,17 @@ const PANEL_CONTENT = {
         ]
       },
       {
+        title: '当前订单对应商户',
+        items: [
+          '共享目的：完成到店履约、核销、售后、退款审核和订单争议处理。',
+          '共享信息：订单号、商品信息、订单状态、联系人或脱敏手机号、核销和售后所需信息。'
+        ]
+      },
+      {
         title: '微信小程序基础能力',
         items: [
-          '使用目的：完成手机号授权、定位授权、头像昵称选择、隐私授权弹窗和隐私指引展示。',
-          '涉及信息：手机号、位置信息、头像昵称等你主动授权或填写的信息。',
+          '使用目的：完成手机号授权、定位授权、头像昵称选择、订阅消息授权、隐私授权弹窗和隐私指引展示。',
+          '涉及信息：手机号、位置信息、头像昵称、订阅消息授权状态等你主动授权或填写的信息。',
           '处理规则：以微信小程序平台和本小程序隐私保护指引共同约定为准。'
         ]
       }
@@ -70,8 +75,8 @@ const PANEL_CONTENT = {
   }
 }
 
-const normalizeLicenseList = (merchant = {}, applyData = {}) => {
-  const licenseImage = merchant.licenseImage || merchant.businessLicenseUrl || applyData.licenseImage || ''
+const normalizeLicenseList = (merchant = {}) => {
+  const licenseImage = merchant.licenseImage || merchant.businessLicenseUrl || ''
   const foodLicenseImage = merchant.foodLicenseImage || merchant.foodPermitUrl || merchant.foodLicenseUrl || ''
   const permitImage = merchant.serviceLicenseImage || merchant.industryLicenseUrl || ''
   const licenseNo = merchant.businessLicenseNo || merchant.licenseNo || ''
@@ -127,19 +132,18 @@ Page({
   },
 
   loadMerchantQualification() {
-    const applyData = wx.getStorageSync(APPLY_STATUS_KEY) || {}
     merchantApi
       .getMerchantList()
       .then((res) => {
         const merchant = (res.data || res || [])[0] || {}
         this.setData({
           merchantName: merchant.name || merchant.storeName || this.data.merchantName,
-          licenseList: normalizeLicenseList(merchant, applyData)
+          licenseList: normalizeLicenseList(merchant)
         })
       })
       .catch(() => {
         this.setData({
-          licenseList: normalizeLicenseList({}, applyData)
+          licenseList: normalizeLicenseList({})
         })
       })
   },

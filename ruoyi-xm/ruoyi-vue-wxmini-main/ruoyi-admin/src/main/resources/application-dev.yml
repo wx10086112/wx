@@ -3,8 +3,8 @@
 
 wx:
   pay:
-    stub-enabled: true
+    stub-enabled: false
 
 wxmini:
   login:
-    test-enabled: true
+    test-enabled: false

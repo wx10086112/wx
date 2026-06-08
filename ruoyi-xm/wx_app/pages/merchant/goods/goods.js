@@ -47,8 +47,9 @@ Page({
         util.setGoodsList(goodsList)
         this.renderGoods(goodsList)
       })
-      .catch(() => {
-        this.renderGoods(util.getGoodsList())
+      .catch((err = {}) => {
+        this.renderGoods([])
+        util.showToast(err.message || '商品列表加载失败')
       })
   },
 
@@ -96,18 +97,8 @@ Page({
         util.showToast('状态已更新', 'success')
         this.loadData()
       })
-      .catch(() => {
-        const nextGoodsList = currentGoodsList.map((item) =>
-          item.goodsId === goodsId
-            ? {
-                ...item,
-                status: nextStatus
-              }
-            : item
-        )
-        util.setGoodsList(nextGoodsList)
-        util.showToast('后端未联通，已更新本地演示数据')
-        this.loadData()
+      .catch((err = {}) => {
+        util.showToast(err.message || '状态更新失败，请重试')
       })
   },
 
@@ -195,14 +186,23 @@ Page({
   confirmBatchAction() {
     const status = this.data.confirmModal.action
     if (!status) return
-    const result = util.batchUpdateGoodsStatus(this.data.selectedIds, status)
-    util.showToast(result.message, 'success')
-    this.setData({
-      selectedIds: [],
-      batchMode: false
-    })
-    this.closeConfirmModal()
-    this.loadData()
+    Promise.all(
+      this.data.selectedIds.map((goodsId) =>
+        api.updateMerchantGoodsStatus({ goodsId, status })
+      )
+    )
+      .then(() => {
+        util.showToast('批量操作成功', 'success')
+        this.setData({
+          selectedIds: [],
+          batchMode: false
+        })
+        this.closeConfirmModal()
+        this.loadData()
+      })
+      .catch((err = {}) => {
+        util.showToast(err.message || '批量操作失败，请重试')
+      })
   },
 
   goMerchantTab(e) {

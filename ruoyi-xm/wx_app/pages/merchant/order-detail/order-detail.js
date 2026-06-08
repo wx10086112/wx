@@ -34,11 +34,11 @@ Page({
           order: this.buildOrderDisplay(order)
         })
       })
-      .catch(() => {
-        const targetOrder = util.getOrderList().find((item) => item.orderNo === this.data.orderNo) || {}
+      .catch((err = {}) => {
         this.setData({
-          order: this.buildOrderDisplay(targetOrder)
+          order: this.buildOrderDisplay({})
         })
+        util.showToast(err.message || '订单详情加载失败')
       })
   },
 
@@ -92,13 +92,8 @@ Page({
         this.closeApproveRefundModal()
         this.loadData()
       })
-      .catch(() => {
-        const result = util.approveRefundOrder(this.data.orderNo)
-        util.showToast(result.message, result.success ? 'success' : 'none')
-        if (result.success) {
-          this.closeApproveRefundModal()
-          this.loadData()
-        }
+      .catch((err = {}) => {
+        util.showToast(err.message || '退款处理失败，请重试')
       })
   },
 
@@ -131,13 +126,8 @@ Page({
         this.closeRejectRefundModal()
         this.loadData()
       })
-      .catch(() => {
-        const result = util.rejectRefundOrder(this.data.orderNo, reason)
-        util.showToast(result.message, result.success ? 'success' : 'none')
-        if (result.success) {
-          this.closeRejectRefundModal()
-          this.loadData()
-        }
+      .catch((err = {}) => {
+        util.showToast(err.message || '退款处理失败，请重试')
       })
   },
 
@@ -170,13 +160,8 @@ Page({
         this.closeCancelModal()
         this.loadData()
       })
-      .catch(() => {
-        const result = util.cancelOrder(this.data.orderNo, reason)
-        util.showToast(result.message, result.success ? 'success' : 'none')
-        if (result.success) {
-          this.closeCancelModal()
-          this.loadData()
-        }
+      .catch((err = {}) => {
+        util.showToast(err.message || '订单取消失败，请重试')
       })
   }
 })

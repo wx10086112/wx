@@ -2,7 +2,20 @@
   "compileType": "miniprogram",
   "libVersion": "3.15.2",
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "file",
+        "value": "README.md"
+      },
+      {
+        "type": "file",
+        "value": "data/merchant-mock.js"
+      },
+      {
+        "type": "folder",
+        "value": "docs"
+      }
+    ],
     "include": []
   },
   "setting": {

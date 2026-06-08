@@ -7,8 +7,7 @@ const permissionOptions = [
   { label: '商品管理', value: 'goods.manage' },
   { label: '门店设置', value: 'store.manage' },
   { label: '员工权限', value: 'staff.manage' },
-  { label: '结算中心', value: 'finance.manage' },
-  { label: '营销活动', value: 'marketing.manage' }
+  { label: '结算中心', value: 'finance.manage' }
 ]
 
 const roleTemplates = {

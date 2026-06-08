@@ -128,6 +128,16 @@ public class MallOrderServiceImpl implements IMallOrderService {
     }
 
     @Override
+    public boolean markOrderPaid(String orderNo, Date payTime) {
+        return mallOrderMapper.markOrderPaid(orderNo, payTime) > 0;
+    }
+
+    @Override
+    public boolean markOrderRefunded(String orderNo, Date refundTime) {
+        return mallOrderMapper.markOrderRefunded(orderNo, refundTime) > 0;
+    }
+
+    @Override
     public int insertMallOrder(MallOrder mallOrder) {
         return mallOrderMapper.insertMallOrder(mallOrder);
     }
@@ -165,9 +175,10 @@ public class MallOrderServiceImpl implements IMallOrderService {
             return false;
         }
 
-        order.setStatus(MallOrderStatus.CANCELLED);
-        order.setCancelTime(new Date());
-        mallOrderMapper.updateMallOrder(order);
+        int affectedRows = mallOrderMapper.cancelPendingOrder(orderNo, new Date());
+        if (affectedRows == 0) {
+            return false;
+        }
 
         List<OrderItem> orderItems = orderItemMapper.selectOrderItemByOrderNo(orderNo);
         if (orderItems != null) {

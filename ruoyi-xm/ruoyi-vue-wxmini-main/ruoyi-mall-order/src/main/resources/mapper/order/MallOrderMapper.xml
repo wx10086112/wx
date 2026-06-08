@@ -64,6 +64,12 @@
         where o.order_no = #{orderNo} AND o.del_flag = '0'
     </select>
 
+    <select id="selectMallOrderByOrderNoForUpdate" parameterType="String" resultMap="MallOrderResult">
+        <include refid="selectMallOrderVo"/>
+        where o.order_no = #{orderNo} AND o.del_flag = '0'
+        for update
+    </select>
+
     <select id="selectMallOrderList" parameterType="com.ruoyi.mall.order.domain.MallOrder" resultMap="MallOrderResult">
         <include refid="selectMallOrderVo"/>
         <where>
@@ -165,6 +171,48 @@
             <if test="refundTime != null">refund_time = #{refundTime},</if>
         </trim>
         where id = #{id}
+    </update>
+
+    <update id="markOrderPaid">
+        update mall_order
+        set status = 1,
+            pay_time = #{payTime}
+        where order_no = #{orderNo}
+          and status = 0
+          and del_flag = '0'
+    </update>
+
+    <update id="cancelPendingOrder">
+        update mall_order
+        set status = 5,
+            cancel_time = #{cancelTime}
+        where order_no = #{orderNo}
+          and status = 0
+          and del_flag = '0'
+    </update>
+
+    <update id="markOrderWriteOffCompleted">
+        update mall_order
+        set status = 3,
+            write_off_status = 1,
+            write_off_time = #{writeOffTime},
+            write_off_user_id = #{operatorId},
+            use_time = #{writeOffTime},
+            complete_time = #{writeOffTime}
+        where id = #{id}
+          and merchant_id = #{merchantId}
+          and status = 1
+          and (write_off_status is null or write_off_status != 1)
+          and del_flag = '0'
+    </update>
+
+    <update id="markOrderRefunded">
+        update mall_order
+        set status = 4,
+            refund_time = #{refundTime}
+        where order_no = #{orderNo}
+          and status in (1, 2, 3)
+          and del_flag = '0'
     </update>
 
     <update id="deleteMallOrderById" parameterType="Long">

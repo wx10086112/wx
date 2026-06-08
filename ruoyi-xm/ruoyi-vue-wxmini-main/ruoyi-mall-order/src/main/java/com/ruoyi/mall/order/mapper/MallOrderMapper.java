@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -14,6 +15,8 @@ public interface MallOrderMapper {
 
     MallOrder selectMallOrderByOrderNo(String orderNo);
 
+    MallOrder selectMallOrderByOrderNoForUpdate(String orderNo);
+
     List<MallOrder> selectMallOrderList(MallOrder mallOrder);
 
     List<MallOrder> selectMallOrderByMerchantId(Long merchantId);
@@ -21,6 +24,17 @@ public interface MallOrderMapper {
     int insertMallOrder(MallOrder mallOrder);
 
     int updateMallOrder(MallOrder mallOrder);
+
+    int markOrderPaid(@Param("orderNo") String orderNo, @Param("payTime") Date payTime);
+
+    int cancelPendingOrder(@Param("orderNo") String orderNo, @Param("cancelTime") Date cancelTime);
+
+    int markOrderWriteOffCompleted(@Param("id") Long id,
+                                   @Param("merchantId") Long merchantId,
+                                   @Param("operatorId") Long operatorId,
+                                   @Param("writeOffTime") Date writeOffTime);
+
+    int markOrderRefunded(@Param("orderNo") String orderNo, @Param("refundTime") Date refundTime);
 
     int deleteMallOrderById(Long id);
 

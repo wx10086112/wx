@@ -34,8 +34,8 @@ Page({
         util.setStoreInfo(storeInfo)
         this.renderStoreForm(storeInfo)
       })
-      .catch(() => {
-        this.renderStoreForm(util.getStoreInfo())
+      .catch((err = {}) => {
+        util.showToast(err.message || '门店信息加载失败')
       })
   },
 
@@ -88,10 +88,8 @@ Page({
         util.showToast('门店信息已保存', 'success')
         this.renderStoreForm(savedStoreInfo || storeInfo)
       })
-      .catch(() => {
-        util.setStoreInfo(storeInfo)
-        util.showToast('后端未联通，已保存本地演示数据')
-        this.renderStoreForm(storeInfo)
+      .catch((err = {}) => {
+        util.showToast(err.message || '门店信息保存失败')
       })
   }
 })

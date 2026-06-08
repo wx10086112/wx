@@ -135,11 +135,20 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
             log.info("订单{}已处于支付完成链路，跳过重复更新", orderNo);
             return true;
         }
-        order.setStatus(MallOrderStatus.PAID);
-        order.setPayTime(new Date());
-        mallOrderService.updateMallOrder(order);
-        log.info("订单{}支付成功，状态更新为已支付", orderNo);
-        return true;
+        boolean markedPaid = mallOrderService.markOrderPaid(orderNo, new Date());
+        if (markedPaid) {
+            log.info("订单{}支付成功，状态更新为已支付", orderNo);
+            return true;
+        }
+
+        MallOrder latestOrder = mallOrderService.selectMallOrderByOrderNo(orderNo);
+        if (latestOrder != null && MallOrderStatus.isPaidState(latestOrder.getStatus())) {
+            log.info("订单{}已由其他支付链路更新为已支付状态", orderNo);
+            return true;
+        } else {
+            log.info("订单{}支付成功处理时状态已变更，跳过重复更新", orderNo);
+        }
+        return false;
     }
 
     @Override

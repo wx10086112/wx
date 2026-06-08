@@ -79,16 +79,24 @@ public class WxPayNotifyController {
             }
 
             if (MallOrderStatus.isPaidState(order.getStatus())) {
+                if ("SUCCESS".equals(tradeState)) {
+                    paymentRecordService.markPaySuccess(outTradeNo, order.getMerchantId(), order.getUserId(),
+                            order.getPayAmount(), transactionId, body);
+                }
                 log.info("订单{}已处于支付完成链路，跳过重复处理", outTradeNo);
                 return buildSuccessResponse();
             }
 
             if ("SUCCESS".equals(tradeState)) {
-                order.setStatus(MallOrderStatus.PAID);
-                order.setPayTime(new Date());
-                mallOrderService.updateMallOrder(order);
-                paymentRecordService.markPaySuccess(outTradeNo, transactionId, body);
-                log.info("订单{}支付成功，transactionId={}", outTradeNo, transactionId);
+                Date payTime = new Date();
+                boolean markedPaid = mallOrderService.markOrderPaid(outTradeNo, payTime);
+                paymentRecordService.markPaySuccess(outTradeNo, order.getMerchantId(), order.getUserId(),
+                        order.getPayAmount(), transactionId, body);
+                if (markedPaid) {
+                    log.info("订单{}支付成功，transactionId={}", outTradeNo, transactionId);
+                } else {
+                    log.info("订单{}支付回调重复或状态已变更，跳过订单状态迁移", outTradeNo);
+                }
             } else {
                 log.warn("订单{}支付状态非SUCCESS: {}", outTradeNo, tradeState);
             }
@@ -137,23 +145,17 @@ public class WxPayNotifyController {
             }
 
             if ("SUCCESS".equals(refundStatus)) {
-                if (refundRecord != null && refundRecord.getStatus() != null
-                        && refundRecord.getStatus() < RefundRecord.STATUS_REFUNDED) {
-                    refundRecord.setStatus(RefundRecord.STATUS_REFUNDED);
-                    refundRecord.setRefundTime(new Date());
-                    refundRecordMapper.updateRefundRecord(refundRecord);
-                    if (order.getStatus() == null || order.getStatus() != MallOrderStatus.REFUNDED) {
-                        order.setStatus(MallOrderStatus.REFUNDED);
-                        order.setRefundTime(refundRecord.getRefundTime());
-                        mallOrderService.updateMallOrder(order);
-                    }
+                Date refundTime = new Date();
+                int affectedRows = refundRecordMapper.markRefundSucceeded(refundRecord.getId(), refundTime);
+                if (affectedRows > 0) {
+                    refundRecord.setRefundTime(refundTime);
+                    mallOrderService.markOrderRefunded(order.getOrderNo(), refundRecord.getRefundTime());
                     paymentRecordService.markRefunded(order.getOrderNo(), body);
                     applicationContext.publishEvent(new RefundSucceededEvent(
                             this, order.getOrderNo(), refundRecord.getId(), outRefundNo));
                 }
             } else if ("ABNORMAL".equals(refundStatus) || "CLOSED".equals(refundStatus)) {
-                refundRecord.setStatus(RefundRecord.STATUS_ABNORMAL);
-                refundRecordMapper.updateRefundRecord(refundRecord);
+                refundRecordMapper.markRefundAbnormal(refundRecord.getId());
             }
 
             return buildSuccessResponse();

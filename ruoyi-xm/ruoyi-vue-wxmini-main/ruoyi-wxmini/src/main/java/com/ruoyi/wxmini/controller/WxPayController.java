@@ -150,10 +150,11 @@ public class WxPayController {
                         .setSubMchId(merchant.getEffectiveMerchantWxMchId());
                 WxPayPartnerOrderQueryV3Result wxResult = wxPayService.queryPartnerOrderV3(queryReq);
                 if ("SUCCESS".equals(wxResult.getTradeState())) {
-                    order.setStatus(MallOrderStatus.PAID);
-                    order.setPayTime(new java.util.Date());
-                    mallOrderService.updateMallOrder(order);
-                    paymentRecordService.markPaySuccess(outTradeNo, wxResult.getTransactionId(), "query-sync");
+                    java.util.Date payTime = new java.util.Date();
+                    mallOrderService.markOrderPaid(outTradeNo, payTime);
+                    paymentRecordService.markPaySuccess(outTradeNo, order.getMerchantId(), order.getUserId(),
+                            order.getPayAmount(), wxResult.getTransactionId(), "query-sync");
+                    order.setPayTime(payTime);
                     isLocalPaid = true;
                 }
             } catch (Exception ignored) {

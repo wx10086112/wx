@@ -17,7 +17,16 @@ public interface PaymentRecordMapper {
 
     int insert(PaymentRecord record);
 
+    int insertIfAbsent(PaymentRecord record);
+
     int updateById(PaymentRecord record);
+
+    int markPaySuccess(@Param("orderNo") String orderNo,
+                       @Param("transactionId") String transactionId,
+                       @Param("notifyResult") String notifyResult,
+                       @Param("payTime") java.util.Date payTime);
+
+    int markRefunded(@Param("orderNo") String orderNo, @Param("notifyResult") String notifyResult);
 
     int deleteById(Long id);
 

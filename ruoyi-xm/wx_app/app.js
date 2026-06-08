@@ -29,8 +29,7 @@ const buildMerchantPermissions = (roleKey = 'member') => {
     'goods.manage',
     'store.manage',
     'staff.manage',
-    'finance.manage',
-    'marketing.manage'
+    'finance.manage'
   ]
 }
 

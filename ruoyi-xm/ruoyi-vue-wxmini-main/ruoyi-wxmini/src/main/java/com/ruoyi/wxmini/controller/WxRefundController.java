@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.text.SimpleDateFormat;
@@ -35,6 +36,7 @@ public class WxRefundController {
     private IUserInfoService userInfoService;
 
     @PostMapping("/apply")
+    @Transactional(rollbackFor = Exception.class)
     public AjaxResult applyRefund(@RequestBody Map<String, String> body) {
         String orderNo = body != null ? body.get("orderNo") : null;
         String refundReason = body != null ? body.get("refundReason") : null;
@@ -48,7 +50,7 @@ public class WxRefundController {
             return AjaxResult.error("请先登录");
         }
 
-        MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(orderNo);
+        MallOrder order = mallOrderMapper.selectMallOrderByOrderNoForUpdate(orderNo);
         UserInfo currentUser = resolveUserInfo(userId);
         if (order == null || !isCurrentUserOrder(order, currentUser)) {
             return AjaxResult.error("订单不存在");
@@ -64,17 +66,8 @@ public class WxRefundController {
             return AjaxResult.error("当前订单状态不可退款");
         }
 
-        RefundRecord existQuery = new RefundRecord();
-        existQuery.setOrderNo(orderNo);
-        List<RefundRecord> existing = refundRecordMapper.selectRefundRecordList(existQuery);
-        if (existing != null) {
-            for (RefundRecord refundRecord : existing) {
-                if (refundRecord.getStatus() != null
-                        && (refundRecord.getStatus() == RefundRecord.STATUS_PENDING
-                        || refundRecord.getStatus() == RefundRecord.STATUS_APPROVED)) {
-                    return AjaxResult.error("该订单已有退款申请在处理中");
-                }
-            }
+        if (refundRecordMapper.countActiveRefundByOrderNo(orderNo) > 0) {
+            return AjaxResult.error("该订单已有退款申请在处理中");
         }
 
         RefundRecord refundRecord = new RefundRecord();

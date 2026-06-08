@@ -1,6 +1,5 @@
 const util = require('../../../utils/merchant-util')
 const api = require('../../../api/merchant-mini/index')
-const merchantMock = require('../../../data/merchant-mock')
 
 const app = getApp()
 
@@ -39,32 +38,8 @@ Page({
         })
       })
       .catch((err) => {
-        this.renderLocalPreview(err)
+        this.handleLoadFailure(err)
       })
-  },
-
-  renderLocalPreview(err = {}) {
-    util.initMerchantMockStorage(merchantMock)
-    const orderList = util.getOrderList()
-    const goodsList = util.getGoodsList()
-    const storeInfo = util.getStoreInfo()
-    const stats = util.buildWorkbenchStats(orderList, goodsList)
-
-    this.setData({
-      staffUser: app.globalData.staffUser || merchantMock.buildStaffUser('owner'),
-      storeInfo,
-      todaySalesText: util.formatPrice(stats.todaySalesAmount),
-      todayOrderCountText: String(this.getTodayOrderCount(stats)),
-      statsCardList: this.buildStatsCardList(stats),
-      alertList: this.buildAlertList(stats),
-      quickActionList: this.buildQuickActions(),
-      pendingOrderList: this.buildPendingOrderList(orderList)
-    })
-
-    const message = err.message || ''
-    if (message && !/未登录|登录已过期|商家身份校验失败|入口与登录账号不匹配/.test(message)) {
-      util.showToast('后端未联通，已进入本地演示数据')
-    }
   },
 
   handleLoadFailure(err = {}) {
@@ -172,7 +147,6 @@ Page({
       { label: '核销记录', icon: '☷', url: '/pages/merchant/verify-records/verify-records', permissionCodes: ['verify.record', 'verify.scan', 'verify.manual'], isTab: false, tone: 'dark' },
       { label: '商品管理', icon: '□', url: '/pages/merchant/goods/goods', permissionCodes: ['goods.manage'], isTab: true, tone: 'gold' },
       { label: '结算中心', icon: '¥', url: '/pages/merchant/finance/finance', permissionCodes: ['finance.manage'], isTab: false, tone: 'gold' },
-      { label: '营销活动', icon: '◇', url: '/pages/merchant/marketing/marketing', permissionCodes: ['marketing.manage'], isTab: false, tone: 'orange' },
       { label: '门店设置', icon: '⌂', url: '/pages/merchant/store/store', permissionCodes: ['store.manage'], isTab: false, tone: 'dark' },
       { label: '员工权限', icon: '◉', url: '/pages/merchant/staff/staff', permissionCodes: ['staff.manage'], isTab: false, tone: 'dark' },
       { label: '我的', icon: '○', url: '/pages/merchant/mine/mine', permissionCodes: [], isTab: false, tone: 'dark' }

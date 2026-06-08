@@ -33,7 +33,7 @@
     <scroll-view scroll-y class="agreement-content">
       <view wx:if="{{audienceType === 'merchant' && activeTab === 'service'}}" class="agreement-doc">
         <text class="agreement-doc__title">商家服务协议</text>
-        <text class="agreement-doc__meta">更新日期：2026年6月8日　生效日期：2026年6月8日</text>
+        <text class="agreement-doc__meta">更新日期：2026年6月9日　生效日期：2026年6月9日</text>
         <text class="agreement-doc__p">本协议适用于商家、店长及被授权员工使用商家工作台、订单履约、核销、售后、商品与门店管理等功能。商家应确保经营主体、门店资质、商品内容、价格、库存、有效期、退款规则和履约说明真实、准确、合法。</text>
         <text class="agreement-doc__section">一、账号与权限</text>
         <text class="agreement-doc__p">商家账号由平台或店长创建并分配权限。店长和员工应妥善保管账号密码，不得转借、出租、出售或允许无关人员使用。平台会根据角色权限控制订单管理、核销、退款、员工管理、财务查看等操作范围。</text>
@@ -54,12 +54,15 @@
 
       <view wx:elif="{{audienceType === 'merchant' && activeTab === 'privacy'}}" class="agreement-doc">
         <text class="agreement-doc__title">商家隐私与数据保护指引</text>
-        <text class="agreement-doc__meta">更新日期：2026年6月8日　生效日期：2026年6月8日</text>
+        <text class="agreement-doc__meta">更新日期：2026年6月9日　生效日期：2026年6月9日</text>
         <text class="agreement-doc__p">本指引说明商家端在经营管理和订单履约过程中涉及的数据处理规则。商家及员工应以最小必要原则使用平台提供的数据，不得超出订单履约和经营管理目的处理用户个人信息。</text>
+        <text class="agreement-doc__p">商家端个人信息处理者为当前小程序认证主体及对应入驻商户，具体主体名称、门店联系方式和经营资质以小程序主体信息、商家资质公示、门店页面及“联系客服”页面展示为准。</text>
         <text class="agreement-doc__section">一、商家端处理的信息</text>
         <text class="agreement-doc__p">1. 商家资料：包括门店名称、联系人、联系电话、地址、简介、营业状态、退款支持、预约支持、小程序接入参数、结算配置和资质相关信息，用于门店展示、后台管理和系统接入。</text>
         <text class="agreement-doc__p">2. 员工资料：包括员工账号、姓名、手机号、角色权限、登录状态和操作记录，用于身份识别、权限控制、履约管理和安全审计。</text>
         <text class="agreement-doc__p">3. 订单资料：包括订单号、商品名称、金额、状态、退款信息、核销状态、用户昵称或联系人、脱敏手机号、备注和必要的售后记录，用于订单履约、核销、退款和争议处理。</text>
+        <text class="agreement-doc__p">4. 商品与门店图片：当商家上传商品图、门店图或资质图时，小程序会调用相册或相机能力处理你主动选择或拍摄的图片，用于商品展示、门店配置和资质公示。</text>
+        <text class="agreement-doc__p">5. 扫码核销信息：当商家使用扫码核销时，小程序会处理扫码结果、核销码、订单号、核销员工、核销时间和核销结果，用于订单履约、安全审计和争议处理。</text>
         <text class="agreement-doc__section">二、用户手机号保护</text>
         <text class="agreement-doc__p">默认页面仅展示脱敏手机号。确需电话联系用户时，商家员工可通过拨号入口调用微信系统拨号能力。相关操作会记录账号、门店、订单、时间和动作，不记录或展示无关信息。</text>
         <text class="agreement-doc__p">商家员工在查看或拨打完整手机号前，应明确知悉：“你将看到用户完整手机号，请勿记录或泄露，此操作将被记录”。商家不得将用户手机号用于营销、私域拉新、外部联系人沉淀或其他与订单无关的用途。</text>
@@ -75,7 +78,7 @@
 
       <view wx:elif="{{activeTab === 'service'}}" class="agreement-doc">
         <text class="agreement-doc__title">用户服务协议</text>
-        <text class="agreement-doc__meta">更新日期：2026年6月5日　生效日期：2026年6月5日</text>
+        <text class="agreement-doc__meta">更新日期：2026年6月9日　生效日期：2026年6月9日</text>
         <text class="agreement-doc__p">欢迎使用本小程序。平台提供系统、订单、支付、核销和数据等技术能力，具体商品、门店服务、售后履约由该小程序对应商户提供。</text>
         <text class="agreement-doc__section">一、服务内容</text>
         <text class="agreement-doc__p">你可以在本小程序中浏览门店及商品信息、购买团购或服务项目、提交订单、完成微信支付、查看订单、申请退款、到店出示核销码、联系门店客服，以及编辑头像昵称等个人资料。</text>
@@ -98,18 +101,20 @@
 
       <view wx:elif="{{activeTab === 'privacy'}}" class="agreement-doc">
         <text class="agreement-doc__title">隐私保护指引</text>
-        <text class="agreement-doc__meta">更新日期：2026年6月5日　生效日期：2026年6月5日</text>
+        <text class="agreement-doc__meta">更新日期：2026年6月9日　生效日期：2026年6月9日</text>
         <text class="agreement-doc__p">本指引依据《中华人民共和国个人信息保护法》等相关法律法规，并结合本项目实际功能制定。我们仅处理实现小程序功能所必要的信息，并在本指引明示的目的内使用。</text>
+        <text class="agreement-doc__p">本小程序个人信息处理者为当前小程序认证主体及对应商户。具体主体名称、经营资质、门店电话、客服入口和联系地址以微信小程序主体信息、商家资质公示、门店页面及“联系客服”页面展示为准。</text>
         <text class="agreement-doc__section">一、我们处理的信息及用途</text>
         <text class="agreement-doc__p">1. 微信登录标识：包括 openid、用户ID、登录凭证和登录状态，用于识别账号、保持登录、查询你的订单和保障账号安全。</text>
         <text class="agreement-doc__p">2. 昵称和头像：当你使用头像选择、昵称输入或编辑资料功能时，我们会处理你的微信头像、昵称或你主动填写的展示名称，用于个人中心和订单中的必要展示。</text>
         <text class="agreement-doc__p">3. 手机号：当你点击手机号授权或在订单中填写手机号时，我们会处理你的手机号，用于账号绑定、订单创建、到店服务通知、售后沟通、退款处理和门店客服联系。</text>
-        <text class="agreement-doc__p">4. 位置信息：当你同意位置授权后，我们会通过 wx.getLocation 获取当前位置，用于计算你与门店的距离、展示附近门店信息和辅助导航。你拒绝授权不影响浏览基础内容，但距离展示可能不可用。</text>
+        <text class="agreement-doc__p">4. 位置信息：当你同意位置授权后，我们会通过 wx.getLocation 获取当前位置，用于计算你与门店的距离、展示附近门店信息和辅助导航。位置信息可能属于敏感个人信息，我们仅在你主动授权后处理；你拒绝授权不影响浏览基础内容，但距离展示可能不可用。</text>
         <text class="agreement-doc__p">5. 订单与交易信息：包括商品、数量、订单号、支付金额、支付状态、优惠、退款原因、退款状态、核销码、核销时间、售后记录，用于订单履约、微信支付、退款、到店核销、客服处理、财务对账和争议处理。</text>
+        <text class="agreement-doc__p">6. 订阅消息状态：当你主动订阅订单服务通知时，我们会根据微信返回的订阅结果发送支付成功、核销或售后相关服务通知；你可在微信通知设置中管理订阅消息。</text>
         <text class="agreement-doc__section">二、微信官方隐私能力对应关系</text>
-        <text class="agreement-doc__p">根据微信官方《小程序用户隐私保护指引内容介绍》，本小程序涉及的微信隐私能力主要包括：通过 chooseAvatar 和 nickname 处理昵称头像；通过 wx.getLocation 处理位置信息；通过 getPhoneNumber 处理手机号。实际授权页面以微信小程序后台配置和微信展示为准。</text>
+        <text class="agreement-doc__p">根据微信官方《小程序用户隐私保护指引内容介绍》，本小程序用户端涉及的微信隐私能力主要包括：通过 chooseAvatar 和 nickname 处理昵称头像；通过 wx.getLocation 处理位置信息；通过 getPhoneNumber 处理手机号；通过 requestSubscribeMessage 处理订阅消息授权状态。商家端还会在商品图片上传和扫码核销时调用相册、相机或扫码能力。实际授权页面以微信小程序后台配置和微信展示为准。</text>
         <text class="agreement-doc__section">三、第三方服务</text>
-        <text class="agreement-doc__p">为完成支付，本小程序会调用微信支付能力处理订单号、支付金额、支付状态、用户标识等必要交易信息。若后续接入地图、客服、消息订阅、云存储或其他第三方服务，将在相关页面或隐私指引中补充说明。</text>
+        <text class="agreement-doc__p">为完成支付，本小程序会调用微信支付能力处理订单号、支付金额、支付状态、用户标识等必要交易信息；为完成订单履约和售后，必要订单信息会提供给当前订单对应商户。若后续接入地图、客服、云存储或其他第三方服务，将在相关页面或隐私指引中补充说明。</text>
         <text class="agreement-doc__section">四、存储期限</text>
         <text class="agreement-doc__p">账号资料在你使用服务期间保存；订单、支付、退款、核销和财务相关信息会按照交易履约、售后、税务、审计、争议处理及法律法规要求保存。超出必要期限后，我们会删除或匿名化处理，法律法规另有规定的除外。</text>
         <text class="agreement-doc__section">五、账号注销与个人信息处理</text>
@@ -124,13 +129,12 @@
         <text class="agreement-doc__section">九、未成年人保护</text>
         <text class="agreement-doc__p">未成年人使用本小程序应取得监护人同意。若监护人认为未成年人个人信息被不当处理，可通过商户客服或平台运营渠道联系我们处理。</text>
         <text class="agreement-doc__section">十、联系方式</text>
-        <text class="agreement-doc__p">如你对个人信息处理有查阅、复制、更正、删除、撤回授权、注销或投诉建议等需求，可优先通过小程序“联系客服”、订单详情页商家联系方式或平台运营人员处理。</text>
+        <text class="agreement-doc__p">如你对个人信息处理有查阅、复制、更正、删除、撤回授权、注销或投诉建议等需求，可优先通过小程序“联系客服”、订单详情页商家联系方式或微信小程序主体公示联系方式处理。我们将在合理期限内核验身份并处理你的请求。</text>
       </view>
 
       <view wx:else class="agreement-doc">
         <text class="agreement-doc__title">微信小程序用户隐私保护指引</text>
-        <text class="agreement-doc__p">微信提供的小程序用户隐私保护指引用于展示开发者在微信小程序后台声明的个人信息处理类型。根据本项目当前功能，后台建议声明：收集你的昵称、头像；收集你的手机号；收集你的位置信息。</text>
-        <text class="agreement-doc__p">其中，昵称头像用于个人资料展示，手机号用于登录绑定、订单联系和售后服务，位置信息用于计算你与门店的距离和辅助门店导航。</text>
+        <text class="agreement-doc__p">微信小程序用户隐私保护指引由微信根据小程序后台配置生成，用于展示开发者声明的个人信息处理类型、处理目的和用户权利。具体内容以微信官方页面展示为准。</text>
         <button class="wechat-privacy-btn" bindtap="openWechatPrivacy">打开微信隐私保护指引</button>
       </view>
     </scroll-view>

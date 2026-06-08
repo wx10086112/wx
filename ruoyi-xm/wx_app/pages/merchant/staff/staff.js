@@ -2,7 +2,7 @@ const util = require('../../../utils/merchant-util')
 const api = require('../../../api/merchant-mini/index')
 
 const ROLE_PERMISSION_TEXT = {
-  owner: '店长可管理商品、门店、员工、财务和营销，并处理订单与核销。',
+  owner: '店长可管理商品、门店、员工和财务，并处理订单与核销。',
   member: '店员可处理订单、扫码核销、手动核销和查看核销记录。'
 }
 

@@ -20,6 +20,7 @@ import com.ruoyi.mall.order.domain.RefundRecord;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.order.mapper.OrderItemMapper;
 import com.ruoyi.mall.order.mapper.RefundRecordMapper;
+import com.ruoyi.mall.order.service.IWriteOffService;
 import com.ruoyi.mall.product.domain.Product;
 import com.ruoyi.mall.product.mapper.ProductMapper;
 import com.ruoyi.mall.user.domain.MallUser;
@@ -111,6 +112,8 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     private WithdrawRecordMapper withdrawRecordMapper;
     @Resource
     private MallUserMapper mallUserMapper;
+    @Resource
+    private IWriteOffService writeOffService;
     @Resource
     private ApplicationContext applicationContext;
 
@@ -245,39 +248,24 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
             throw new IllegalArgumentException("请输入核销码或订单号");
         }
 
-        // 通过核销码或订单号查找订单
         MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(normalizedCode);
         if (order == null) {
-            // 尝试通过核销码查找
-            MallOrder query = new MallOrder();
-            query.setWriteOffCode(normalizedCode);
-            List<MallOrder> results = mallOrderMapper.selectMallOrderList(query);
-            if (!results.isEmpty()) {
-                order = results.get(0);
-            }
+            order = mallOrderMapper.selectOrderByWriteOffCode(normalizedCode);
         }
 
         if (order == null || !order.getMerchantId().equals(merchantId)) {
             throw new IllegalArgumentException("未找到对应订单");
         }
-        if (order.getStatus() == ORDER_STATUS_COMPLETED) {
-            throw new IllegalArgumentException("该订单已核销完成");
-        }
-        if (order.getStatus() != ORDER_STATUS_PAID && order.getStatus() != ORDER_STATUS_USED) {
-            throw new IllegalArgumentException("当前订单状态不可核销");
-        }
 
-        // 更新订单状态
-        MallOrder updateOrder = new MallOrder();
-        updateOrder.setId(order.getId());
-        updateOrder.setStatus(ORDER_STATUS_COMPLETED);
-        updateOrder.setUseTime(new Date());
-        updateOrder.setCompleteTime(new Date());
-        mallOrderMapper.updateMallOrder(updateOrder);
+        MerchantUser operator = merchantUserMapper.selectMerchantUserById(Long.valueOf(currentUserId));
+        String operatorName = operator != null ? operator.getRealName() : "";
+        writeOffService.writeOff(order.getWriteOffCode(), merchantId, Long.valueOf(currentUserId), operatorName);
 
-        order.setStatus(ORDER_STATUS_COMPLETED);
-        order.setUseTime(new Date());
-        return convertOrderToDto(order);
+        MallOrder latestOrder = mallOrderMapper.selectMallOrderByOrderNo(order.getOrderNo());
+        if (latestOrder == null) {
+            throw new IllegalArgumentException("核销成功，但订单读取失败");
+        }
+        return convertOrderToDto(latestOrder);
     }
 
     // ==================== 核销记录 ====================
@@ -1238,7 +1226,6 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
             permissions.add("store.manage");
             permissions.add("staff.manage");
             permissions.add("finance.manage");
-            permissions.add("marketing.manage");
         }
         return permissions;
     }

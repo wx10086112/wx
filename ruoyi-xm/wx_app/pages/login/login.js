@@ -9,11 +9,6 @@ const DEFAULT_BRAND_NAME = '鼎立老碗葫芦头'
 const DEFAULT_BRAND_LOGO = '/assets/images/merchant-logo-dingli.jpg'
 const DEFAULT_BRAND_SUBTITLE = '生活有点苦，今天团点甜'
 
-const isLocalTestLogin = () => {
-  const baseUrl = String(app.baseUrl || wx.getStorageSync('baseUrl') || '')
-  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(baseUrl)
-}
-
 const normalizeLoginUser = (info = {}) => {
   return {
     userId: info.userId || '',
@@ -117,11 +112,6 @@ Page({
     this.setData({ submitting: true })
     util.showLoading('登录中...')
 
-    if (isLocalTestLogin()) {
-      this.loginWithTestAccount()
-      return
-    }
-
     wx.login({
       success: (loginRes) => {
         if (!loginRes.code) {
@@ -136,13 +126,6 @@ Page({
       },
       fail: () => this.handleLoginFail('登录失败，请重试')
     })
-  },
-
-  loginWithTestAccount() {
-    userApi
-      .testLogin(app.globalData.appId)
-      .then((res) => this.applyLoginResult(res))
-      .catch(() => this.handleLoginFail('测试登录失败，请检查后端配置'))
   },
 
   applyLoginResult(res) {

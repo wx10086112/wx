@@ -36,13 +36,19 @@ Page({
   },
 
   loadData() {
-    const settlementRequest = api.getSettlementOverview().catch(() => util.buildFinanceOverview())
-    const dailyRequest = api.getDailyFlow(this.data.currentDailyRange).catch(() => null)
-
-    Promise.all([settlementRequest, dailyRequest]).then(([overview = {}, dailyFlow]) => {
-      this.renderSettlement(overview)
-      this.renderDailyFlow(dailyFlow || this.buildDailyFlowFromOverview(overview))
-    })
+    Promise.all([
+      api.getSettlementOverview(),
+      api.getDailyFlow(this.data.currentDailyRange)
+    ])
+      .then(([overview = {}, dailyFlow = {}]) => {
+        this.renderSettlement(overview)
+        this.renderDailyFlow(dailyFlow || this.buildDailyFlowFromOverview(overview))
+      })
+      .catch((err = {}) => {
+        this.renderSettlement({})
+        this.renderDailyFlow({})
+        util.showToast(err.message || '财务数据加载失败')
+      })
   },
 
   renderSettlement(overview = {}) {

@@ -106,8 +106,8 @@ Page({
         util.setGoodsList(goodsList)
         this.renderGoodsForm(goodsList)
       })
-      .catch(() => {
-        this.renderGoodsForm(util.getGoodsList())
+      .catch((err = {}) => {
+        util.showToast(err.message || '商品信息加载失败')
       })
   },
 
@@ -230,14 +230,8 @@ Page({
         util.showToast('保存成功', 'success')
         this.backToList()
       })
-      .catch(() => {
-        const localGoods = {
-          ...nextItem,
-          goodsId: this.data.goodsId || Date.now()
-        }
-        this.syncLocalGoods(localGoods)
-        util.showToast('后端未联通，已保存本地演示数据')
-        this.backToList()
+      .catch((err = {}) => {
+        util.showToast(err.message || '保存失败，请重试')
       })
   },
 

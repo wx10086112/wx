@@ -296,9 +296,9 @@ const requestPayment = (payParams) => {
       return
     }
     wx.requestPayment({
-      timeStamp: payParams.timeStamp,
+      timeStamp: String(payParams.timeStamp),
       nonceStr: payParams.nonceStr,
-      package: payParams.package,
+      package: payParams.package || payParams.packageValue,
       signType: payParams.signType || 'HMAC-SHA256',
       paySign: payParams.paySign,
       success: () => resolve(true),

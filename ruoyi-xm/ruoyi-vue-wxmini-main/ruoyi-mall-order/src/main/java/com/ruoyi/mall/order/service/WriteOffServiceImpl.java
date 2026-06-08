@@ -65,12 +65,10 @@ public class WriteOffServiceImpl implements IWriteOffService {
         }
 
         Date now = new Date();
-        order.setWriteOffStatus(1);
-        order.setWriteOffTime(now);
-        order.setWriteOffUserId(operatorId);
-        order.setStatus(MallOrderStatus.COMPLETED);
-        order.setUseTime(now);
-        mallOrderMapper.updateMallOrder(order);
+        int affectedRows = mallOrderMapper.markOrderWriteOffCompleted(order.getId(), merchantId, operatorId, now);
+        if (affectedRows == 0) {
+            throw new ServiceException("订单状态已变更，请刷新后重试");
+        }
 
         WriteOffRecord record = new WriteOffRecord();
         record.setOrderId(order.getId());
