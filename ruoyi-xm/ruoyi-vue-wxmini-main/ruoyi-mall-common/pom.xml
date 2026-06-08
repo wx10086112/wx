@@ -17,7 +17,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <weixin-java-miniapp.version>4.7.0</weixin-java-miniapp.version>
         <wx-java-pay.version>4.7.0</wx-java-pay.version>
-        <hutool-all.version>5.8.20</hutool-all.version>
+        <hutool-all.version>5.8.21</hutool-all.version>
     </properties>
 
     <dependencies>
