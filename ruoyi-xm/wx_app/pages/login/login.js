@@ -5,6 +5,10 @@ const userApi = require('../../api/user')
 const templateService = require('../../services/template')
 const merchantEntry = require('../../utils/merchant-entry')
 
+const DEFAULT_BRAND_NAME = '鼎立老碗葫芦头'
+const DEFAULT_BRAND_LOGO = '/assets/images/merchant-logo-dingli.jpg'
+const DEFAULT_BRAND_SUBTITLE = '生活有点苦，今天团点甜'
+
 const isLocalTestLogin = () => {
   const baseUrl = String(app.baseUrl || wx.getStorageSync('baseUrl') || '')
   return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(baseUrl)
@@ -27,6 +31,8 @@ Page({
   data: {
     brandTitle: '欢迎登录',
     brandInitial: 'W',
+    brandLogo: DEFAULT_BRAND_LOGO,
+    brandSubtitle: DEFAULT_BRAND_SUBTITLE,
     agreementAccepted: false,
     showAgreementModal: false,
     submitting: false
@@ -46,10 +52,12 @@ Page({
 
   initBrand() {
     const brandInfo = templateService.getTemplateSection('brandInfo') || {}
-    const title = brandInfo.name && brandInfo.name !== '商家名称' ? brandInfo.name : '本地生活服务'
+    const title = brandInfo.name && brandInfo.name !== '商家名称' ? brandInfo.name : DEFAULT_BRAND_NAME
     this.setData({
       brandTitle: title,
-      brandInitial: title.slice(0, 1).toUpperCase()
+      brandInitial: title.slice(0, 1).toUpperCase(),
+      brandLogo: brandInfo.logo || brandInfo.avatar || DEFAULT_BRAND_LOGO,
+      brandSubtitle: brandInfo.slogan || DEFAULT_BRAND_SUBTITLE
     })
   },
 
@@ -77,8 +85,14 @@ Page({
     this.setData({ showAgreementModal: false })
   },
 
-  openAgreementDetail() {
-    util.navigateTo('/pages/settings/settings')
+  openAgreementDetail(e) {
+    const type = (e && e.currentTarget && e.currentTarget.dataset.type) || 'service'
+    this.setData({ showAgreementModal: false }, () => {
+      const agreementDetail = this.selectComponent('#agreementDetail')
+      if (agreementDetail && agreementDetail.openAgreementPanel) {
+        agreementDetail.openAgreementPanel(type)
+      }
+    })
   },
 
   handleWechatLogin() {

@@ -1,28 +1,40 @@
 <view class="page-shell">
-  <!-- 顶部卡片 -->
-  <view class="hero-card panel">
+  <view class="dashboard-aura aura-blue"></view>
+  <view class="dashboard-aura aura-cyan"></view>
+
+  <view class="hero-card glass-card">
     <view class="hero-top">
       <view class="hero-identity">
         <text class="hero-store">商家端</text>
         <text class="hero-role">{{staffUser.name}} · {{staffUser.roleName}}</text>
         <text wx:if="{{storeInfo.storeName}}" class="hero-shop">{{storeInfo.storeName}}</text>
       </view>
-      <view class="status-tag {{storeInfo.businessStatus ? 'green' : 'gray'}}">
-        {{storeInfo.businessStatus ? '营业中' : '休息中'}}
+      <view class="status-switch {{storeInfo.businessStatus ? 'active' : ''}}" bindtap="toggleBusinessStatus" hover-class="switch-pressed" hover-stay-time="80">
+        <text class="status-text">{{storeInfo.businessStatus ? '营业中' : '休息中'}}</text>
+        <view class="status-track">
+          <text class="status-light"></text>
+          <text class="status-knob"></text>
+        </view>
       </view>
     </view>
-    <view class="hero-sales-card interactive-card" hover-class="card-pressed" hover-stay-time="80">
-      <view class="hero-sales-main">
-        <text class="hero-sales-label">今日流水</text>
-        <text class="hero-sales-value">¥{{todaySalesText}}</text>
+
+    <view class="sales-layout">
+      <view class="sales-main">
+        <text class="sales-label">今日流水</text>
+        <view class="sales-amount">
+          <text class="sales-currency">¥</text>
+          <text class="sales-value">{{todaySalesText}}</text>
+        </view>
       </view>
-      <button class="hero-switch" bindtap="toggleBusinessStatus">
-        {{storeInfo.businessStatus ? '切换休息' : '恢复营业'}}
-      </button>
+      <view class="sales-metrics">
+        <view class="sales-mini-card">
+          <text class="sales-mini-label">今日订单</text>
+          <text class="sales-mini-value">{{todayOrderCountText}}</text>
+        </view>
+      </view>
     </view>
   </view>
 
-  <!-- 提醒区域 -->
   <view wx:if="{{alertList.length}}" class="alert-section">
     <view wx:for="{{alertList}}" wx:key="text" class="alert-item {{item.type}} interactive-card" hover-class="card-pressed" hover-stay-time="80" bindtap="goAlertOrders" data-filter="{{item.filter}}" data-action="{{item.action}}">
       <text class="alert-dot"></text>
@@ -31,12 +43,11 @@
     </view>
   </view>
 
-  <!-- 数据概览 -->
   <view class="stats-grid">
     <view
       wx:for="{{statsCardList}}"
       wx:key="label"
-      class="stats-card panel interactive-card {{item.highlight ? 'highlight' : ''}} {{item.warn ? 'warn' : ''}}"
+      class="stats-card glass-card interactive-card {{item.highlight ? 'highlight' : ''}} {{item.warn ? 'warn' : ''}}"
       hover-class="card-pressed"
       hover-stay-time="80"
       bindtap="goStatsCard"
@@ -44,20 +55,17 @@
       data-istab="{{item.isTab}}"
       data-filter="{{item.filter}}"
     >
-      <view class="stats-head">
-        <text class="stats-dot {{item.tone}}"></text>
-        <text class="stats-label">{{item.label}}</text>
+      <view class="stats-icon-wrap {{item.tone}}">
+        <text class="stats-icon">{{item.icon}}</text>
       </view>
+      <text class="stats-label">{{item.label}}</text>
       <text class="stats-value">{{item.value}}</text>
-      <text class="stats-caption">经营数据</text>
     </view>
   </view>
 
-  <!-- 快捷入口 -->
-  <view class="section panel">
+  <view class="section glass-card">
     <view class="section-head">
       <text class="section-title">快捷入口</text>
-      <text class="section-subtitle">常用经营操作</text>
     </view>
     <view class="quick-grid">
       <view
@@ -77,11 +85,9 @@
     </view>
   </view>
 
-  <!-- 待处理订单 -->
-  <view class="section panel">
+  <view class="section glass-card">
     <view class="section-head">
       <text class="section-title">待处理订单</text>
-      <text class="section-subtitle">近期需要处理</text>
     </view>
     <view wx:if="{{pendingOrderList.length}}">
       <view wx:for="{{pendingOrderList}}" wx:key="orderNo" class="pending-row interactive-card" hover-class="card-pressed" hover-stay-time="80" bindtap="goOrderDetail" data-orderno="{{item.orderNo}}">
@@ -92,12 +98,12 @@
         <view class="pending-side">
           <text class="pending-price">¥{{item.payAmountText}}</text>
           <view wx:if="{{item.statusMeta}}" class="status-tag {{item.statusMeta.className}} mini-tag">{{item.statusMeta.text}}</view>
-          <text wx:elif="{{item.writeOffCode}}" class="pending-code">{{item.writeOffCode}}</text>
+          <text wx:elif="{{item.writeOffCodeMasked}}" class="pending-code">{{item.writeOffCodeMasked}}</text>
         </view>
       </view>
     </view>
     <view wx:else class="empty-inline">
-      <text class="empty-text">当前没有待处理订单 🎉</text>
+      <text class="empty-text">当前没有待处理订单</text>
     </view>
   </view>
 

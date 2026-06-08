@@ -18,7 +18,7 @@ Page({
   onLoad(options = {}) {
     if (app.globalData.isMerchantLoggedIn) {
       wx.redirectTo({
-        url: '/pages/merchant/index/index'
+        url: '/pages/merchant/workbench/workbench'
       })
       return
     }
@@ -92,7 +92,7 @@ Page({
       return
     }
 
-    if (!agreement.assertAgreementAccepted()) return
+    if (!agreement.assertAgreementAccepted('merchant')) return
 
     if (!username) {
       util.showToast('请输入登录账号')
@@ -116,7 +116,7 @@ Page({
         app.setMerchantLoginInfo(response.token, response.staffUser)
         util.showToast('登录成功', 'success')
         wx.redirectTo({
-          url: '/pages/merchant/index/index'
+          url: '/pages/merchant/workbench/workbench'
         })
       })
       .catch((err) => {
@@ -129,10 +129,9 @@ Page({
   },
 
   enterPreview() {
-    if (!agreement.assertAgreementAccepted()) return
+    if (!agreement.assertAgreementAccepted('merchant')) return
 
     const currentEntry = this.data.merchantEntry || {}
-
     const merchantEntry = app.setMerchantEntry({
       merchantId: Number(this.data.merchantId || merchantMock.merchantInfo.merchantId || 1),
       merchantName: currentEntry.merchantName || merchantMock.merchantInfo.storeName,
@@ -146,9 +145,9 @@ Page({
       app.setMerchantEntry(merchantEntry)
     }
 
-    util.showToast('已进入商家演示页', 'success')
+    util.showToast('已进入演示后台', 'success')
     wx.redirectTo({
-      url: '/pages/merchant/index/index'
+      url: '/pages/merchant/workbench/workbench'
     })
   }
 })

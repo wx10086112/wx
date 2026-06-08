@@ -48,7 +48,7 @@ const openMerchantPortal = () => {
 
   if (app.globalData.isMerchantLoggedIn) {
     wx.navigateTo({
-      url: '/pages/merchant/index/index'
+      url: '/pages/merchant/workbench/workbench'
     })
     return Promise.resolve()
   }

@@ -9,11 +9,6 @@
 
     <view wx:if="{{merchantEntry && merchantEntry.merchantId}}" class="store-card__body">
       <text class="store-card__name">{{merchantEntry.merchantName || '未命名商家'}}</text>
-      <view class="store-card__meta-group">
-        <text class="store-card__meta">商家ID {{merchantEntry.merchantId}}</text>
-        <text wx:if="{{merchantEntry.contact}}" class="store-card__meta">联系人 {{merchantEntry.contact}}</text>
-        <text wx:if="{{merchantEntry.phone}}" class="store-card__meta">联系电话 {{merchantEntry.phone}}</text>
-      </view>
     </view>
 
     <view wx:else class="store-card__empty">
@@ -33,12 +28,11 @@
     </view>
 
     <view class="agreement-wrap">
-      <agreement-consent theme="primary"></agreement-consent>
+      <agreement-consent theme="primary" audience="merchant"></agreement-consent>
     </view>
 
     <button class="primary-btn login-btn" bindtap="submitLogin" loading="{{submitting}}" disabled="{{submitting}}">登录</button>
-    <button class="preview-btn" bindtap="enterPreview">直接看演示页</button>
+    <button class="preview-btn" bindtap="enterPreview">进入演示后台</button>
 
-    <text class="login-tip">请使用平台分配的门店账号登录</text>
   </view>
 </view>

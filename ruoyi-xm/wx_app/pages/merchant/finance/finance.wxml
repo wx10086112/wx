@@ -10,8 +10,8 @@
     </view>
   </view>
 
-  <view class="stats-grid">
-    <view wx:for="{{statsCards}}" wx:key="label" class="stats-card panel interactive-card" hover-class="card-pressed" hover-stay-time="80">
+  <view class="stats-summary panel">
+    <view wx:for="{{statsCards}}" wx:key="label" class="stats-card interactive-card" hover-class="card-pressed" hover-stay-time="80">
       <view class="stats-head">
         <text class="stats-dot {{item.tone}}"></text>
         <text class="stats-label">{{item.label}}</text>

@@ -5,7 +5,9 @@
         <view>
           <text class="image-editor-title">套餐封面</text>
         </view>
-        <button class="image-change-btn" bindtap="chooseGoodsImage">换图</button>
+        <button class="image-change-btn {{uploadingImage ? 'is-disabled' : ''}}" bindtap="chooseGoodsImage">
+          {{uploadingImage ? '上传中' : '换图'}}
+        </button>
       </view>
 
       <view
@@ -33,8 +35,8 @@
             max="220"
             step="1"
             value="{{cropScaleValue}}"
-            activeColor="#C8A46A"
-            backgroundColor="#E8E5DE"
+            activeColor="#2D8FE8"
+            backgroundColor="#D3E5F4"
             block-size="20"
             bindchanging="handleCropScaleChanging"
             bindchange="handleCropScaleChanging"
@@ -48,10 +50,10 @@
       </view>
     </view>
 
-    <view wx:else class="image-uploader" bindtap="chooseGoodsImage">
+    <view wx:else class="image-uploader {{uploadingImage ? 'is-disabled' : ''}}" bindtap="chooseGoodsImage">
       <view class="image-placeholder">
         <text class="image-plus">+</text>
-        <text class="image-tip">上传套餐图片</text>
+        <text class="image-tip">{{uploadingImage ? '上传中...' : '上传套餐图片'}}</text>
         <text class="image-subtip">建议上传横图，保存后用户端按 16:9 展示</text>
       </view>
     </view>
@@ -88,7 +90,7 @@
     </view>
     <view class="switch-row">
       <text class="field-label">上架状态</text>
-      <switch checked="{{form.status === 'ON_SHELF'}}" color="#C8A46A" bindchange="handleStatusChange" />
+      <switch checked="{{form.status === 'ON_SHELF'}}" color="#2D8FE8" bindchange="handleStatusChange" />
     </view>
     <button class="primary-btn save-btn" bindtap="saveGoods">保存套餐</button>
   </view>

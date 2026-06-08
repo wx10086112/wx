@@ -30,12 +30,12 @@
       <view class="order-bottom">
         <text class="order-amount">¥{{item.payAmountText}}</text>
         <view class="order-actions">
-          <button
+          <view
             wx:if="{{item.status === 'PENDING_VERIFY'}}"
             class="ghost-btn action-btn cancel-btn"
             catchtap="handleCancelOrder"
             data-orderno="{{item.orderNo}}"
-          >取消订单</button>
+          >取消订单</view>
           <button
             wx:if="{{item.status === 'REFUNDING'}}"
             class="primary-btn action-btn refund-btn"

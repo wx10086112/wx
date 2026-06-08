@@ -24,28 +24,31 @@
         <text class="detail-label">金额</text>
         <text class="detail-value price">¥{{order.payAmountText}}</text>
       </view>
-      <view wx:if="{{order.writeOffCode}}" class="detail-row">
+      <view wx:if="{{order.writeOffCodeMasked}}" class="detail-row">
         <text class="detail-label">核销码</text>
-        <text class="detail-value code">{{order.writeOffCode}}</text>
+        <text class="detail-value code">{{order.writeOffCodeMasked}}</text>
       </view>
     </view>
   </view>
 
-  <view class="detail-card panel">
+  <view class="detail-card panel customer-card">
     <text class="detail-section-title">客户信息</text>
-    <view class="detail-grid">
-      <view class="detail-row">
-        <text class="detail-label">客户</text>
-        <text class="detail-value">{{order.customerName}}</text>
+    <view class="customer-grid">
+      <view class="customer-row">
+        <text class="customer-label">客户</text>
+        <text class="customer-value customer-name">{{order.customerNameText}}</text>
       </view>
-      <view class="detail-row">
-        <text class="detail-label">电话</text>
-        <text class="detail-value">{{order.customerPhone}}</text>
+      <view class="customer-row customer-phone-row">
+        <text class="customer-label">电话</text>
+        <view class="customer-phone-wrap">
+          <text class="customer-value customer-phone">{{order.customerPhoneText}}</text>
+          <view class="call-btn {{order.callPhone ? '' : 'disabled'}}" bindtap="callCustomer">拨号</view>
+        </view>
       </view>
-      <view wx:if="{{order.remark}}" class="detail-row">
-        <text class="detail-label">备注</text>
-        <text class="detail-value remark">{{order.remark}}</text>
-      </view>
+    </view>
+    <view wx:if="{{order.remark}}" class="customer-note">
+      <text class="customer-note-label">备注</text>
+      <text class="customer-note-text">{{order.remark}}</text>
     </view>
   </view>
 

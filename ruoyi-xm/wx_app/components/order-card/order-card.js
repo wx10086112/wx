@@ -27,8 +27,7 @@ Component({
           ...order,
           statusText: meta.text,
           statusClass: meta.class,
-          payAmountText: ((order.payAmount || order.price || 0) / 100).toFixed(2),
-          showWriteOffCode: !!order.writeOffCode && order.status === 'PAID_UNUSED'
+          payAmountText: ((order.payAmount || order.price || 0) / 100).toFixed(2)
         }
       })
     },
@@ -45,11 +44,6 @@ Component({
     onPay(e) {
       e.stopPropagation()
       this.triggerEvent('pay', { order: this.properties.order })
-    },
-
-    onViewCode(e) {
-      e.stopPropagation()
-      this.triggerEvent('viewCode', { order: this.properties.order })
     },
 
     onRefund(e) {

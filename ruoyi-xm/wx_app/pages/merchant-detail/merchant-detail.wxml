@@ -33,7 +33,7 @@
             </view>
           </view>
           <view class="hero-nav-action" catchtap="viewLocation">
-            <text class="hero-nav-icon">➜</text>
+            <view class="hero-nav-icon"></view>
             <text class="hero-nav-text">导航</text>
           </view>
         </view>
@@ -49,7 +49,7 @@
             <text class="hero-hours">{{merchant.businessHoursText || merchant.businessHours || '暂无营业时间'}}</text>
           </view>
           <view class="hero-phone-action" catchtap="makePhoneCall">
-            <text class="hero-phone-icon">☎</text>
+            <view class="hero-phone-icon"></view>
             <text class="hero-phone-text">联系门店</text>
           </view>
         </view>

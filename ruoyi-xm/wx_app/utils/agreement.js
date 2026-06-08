@@ -1,9 +1,28 @@
-const AGREEMENT_CONSENT_KEY = 'o2o_agreement_consent_v1'
-const AGREEMENT_VERSION = '2026-06-05'
+const AGREEMENT_SCOPES = {
+  user: {
+    key: 'o2o_agreement_consent_v1',
+    version: '2026-06-05'
+  },
+  merchant: {
+    key: 'o2o_merchant_agreement_consent_v1',
+    version: '2026-06-08'
+  }
+}
 
-const getAgreementConsent = () => {
+const AGREEMENT_VERSION = AGREEMENT_SCOPES.user.version
+const MERCHANT_AGREEMENT_VERSION = AGREEMENT_SCOPES.merchant.version
+
+const normalizeAudience = (audience = 'user') => {
+  return AGREEMENT_SCOPES[audience] ? audience : 'user'
+}
+
+const getScopeConfig = (audience = 'user') => {
+  return AGREEMENT_SCOPES[normalizeAudience(audience)]
+}
+
+const getAgreementConsent = (audience = 'user') => {
   try {
-    const consent = wx.getStorageSync(AGREEMENT_CONSENT_KEY)
+    const consent = wx.getStorageSync(getScopeConfig(audience).key)
     if (!consent || typeof consent !== 'object') return null
     return consent
   } catch (e) {
@@ -11,23 +30,26 @@ const getAgreementConsent = () => {
   }
 }
 
-const isAgreementAccepted = () => {
-  const consent = getAgreementConsent()
-  return !!(consent && consent.accepted && consent.version === AGREEMENT_VERSION)
+const isAgreementAccepted = (audience = 'user') => {
+  const config = getScopeConfig(audience)
+  const consent = getAgreementConsent(audience)
+  return !!(consent && consent.accepted && consent.version === config.version)
 }
 
-const acceptAgreement = () => {
+const acceptAgreement = (audience = 'user') => {
+  const config = getScopeConfig(audience)
   const consent = {
     accepted: true,
-    version: AGREEMENT_VERSION,
+    audience: normalizeAudience(audience),
+    version: config.version,
     acceptedAt: Date.now()
   }
-  wx.setStorageSync(AGREEMENT_CONSENT_KEY, consent)
+  wx.setStorageSync(config.key, consent)
   return consent
 }
 
-const rejectAgreement = () => {
-  wx.removeStorageSync(AGREEMENT_CONSENT_KEY)
+const rejectAgreement = (audience = 'user') => {
+  wx.removeStorageSync(getScopeConfig(audience).key)
 }
 
 const showAgreementRequiredToast = () => {
@@ -38,14 +60,16 @@ const showAgreementRequiredToast = () => {
   })
 }
 
-const assertAgreementAccepted = () => {
-  if (isAgreementAccepted()) return true
+const assertAgreementAccepted = (audience = 'user') => {
+  if (isAgreementAccepted(audience)) return true
   showAgreementRequiredToast()
   return false
 }
 
 module.exports = {
+  AGREEMENT_SCOPES,
   AGREEMENT_VERSION,
+  MERCHANT_AGREEMENT_VERSION,
   getAgreementConsent,
   isAgreementAccepted,
   acceptAgreement,

@@ -13,6 +13,7 @@ Page({
     pendingOrderList: [],
     alertList: [],
     todaySalesText: '0.00',
+    todayOrderCountText: '0',
     merchantNavList: util.getMerchantNavList('workbench')
   },
 
@@ -30,6 +31,7 @@ Page({
           staffUser: response.staffUser || app.globalData.staffUser || {},
           storeInfo: response.storeInfo || util.getStoreInfo(),
           todaySalesText: util.formatPrice(stats.todaySalesAmount),
+          todayOrderCountText: String(this.getTodayOrderCount(stats)),
           statsCardList: this.buildStatsCardList(stats),
           alertList: this.buildAlertList(stats),
           quickActionList: this.buildQuickActions(),
@@ -52,6 +54,7 @@ Page({
       staffUser: app.globalData.staffUser || merchantMock.buildStaffUser('owner'),
       storeInfo,
       todaySalesText: util.formatPrice(stats.todaySalesAmount),
+      todayOrderCountText: String(this.getTodayOrderCount(stats)),
       statsCardList: this.buildStatsCardList(stats),
       alertList: this.buildAlertList(stats),
       quickActionList: this.buildQuickActions(),
@@ -70,6 +73,7 @@ Page({
       staffUser: app.globalData.staffUser || {},
       storeInfo: {},
       todaySalesText: '0.00',
+      todayOrderCountText: '0',
       statsCardList: this.buildStatsCardList({}),
       alertList: [],
       quickActionList: this.buildQuickActions(),
@@ -91,7 +95,8 @@ Page({
         label: '待核销',
         value: stats.pendingVerifyCount || 0,
         highlight: (stats.pendingVerifyCount || 0) > 0,
-        tone: 'gold',
+        tone: 'blue',
+        icon: '⌗',
         url: '/pages/merchant/order/order',
         isTab: true,
         filter: 'PENDING_VERIFY'
@@ -99,6 +104,7 @@ Page({
       {
         label: '已完成',
         value: stats.completedCount || 0,
+        icon: '✓',
         tone: 'green',
         url: '/pages/merchant/order/order',
         isTab: true,
@@ -108,6 +114,7 @@ Page({
         label: '退款中',
         value: stats.refundingCount || 0,
         warn: (stats.refundingCount || 0) > 0,
+        icon: '↺',
         tone: 'orange',
         url: '/pages/merchant/order/order',
         isTab: true,
@@ -116,11 +123,19 @@ Page({
       {
         label: '在售套餐',
         value: stats.onShelfCount || 0,
-        tone: 'dark',
+        icon: '□',
+        tone: 'navy',
         url: '/pages/merchant/goods/goods',
         isTab: true
       }
     ]
+  },
+
+  getTodayOrderCount(stats = {}) {
+    const count = [stats.todayOrderCount, stats.todayOrders, stats.todayOrderNum]
+      .find((item) => item !== undefined && item !== null && item !== '')
+    if (count !== undefined && count !== null) return Number(count) || 0
+    return Number(stats.pendingVerifyCount || 0) + Number(stats.completedCount || 0)
   },
 
   buildAlertList(stats = {}) {
@@ -145,6 +160,7 @@ Page({
         ...item,
         payAmountText: util.formatPrice(item.payAmount),
         payTimeText: util.formatDate(item.payTime),
+        writeOffCodeMasked: util.maskWriteOffCode(item.writeOffCode),
         statusMeta: util.getOrderStatusMeta(item.status)
       }))
   },

@@ -32,12 +32,7 @@ Page({
       .getVerifyRecordList()
       .then((response) => {
         this.setData({
-          recentRecordList: (response || []).slice(0, 5).map((item) => ({
-            ...item,
-            verifyTimeText: util.formatDate(item.verifyTime),
-            payAmountText: util.formatPrice(item.payAmount),
-            amountLabel: item.status === 'FAILED' ? '失败' : `¥${util.formatPrice(item.payAmount)}`
-          }))
+          recentRecordList: (response || []).slice(0, 5).map(this.buildRecentRecordDisplay)
         })
       })
       .catch(() => {
@@ -45,15 +40,22 @@ Page({
           .getVerifyRecordList()
           .sort((a, b) => (b.verifyTime || 0) - (a.verifyTime || 0))
           .slice(0, 5)
-          .map((item) => ({
-            ...item,
-            verifyTimeText: util.formatDate(item.verifyTime),
-            payAmountText: util.formatPrice(item.payAmount),
-            amountLabel: item.status === 'FAILED' ? '失败' : `¥${util.formatPrice(item.payAmount)}`
-          }))
+          .map(this.buildRecentRecordDisplay)
 
         this.setData({ recentRecordList })
       })
+  },
+
+  buildRecentRecordDisplay(item) {
+    const rawCode = item.writeOffCode || item.inputCode
+    const displayCode = item.status === 'FAILED' && !item.orderNo ? '' : util.maskWriteOffCode(rawCode)
+    return {
+      ...item,
+      displayCode,
+      verifyTimeText: util.formatDate(item.verifyTime),
+      payAmountText: util.formatPrice(item.payAmount),
+      amountLabel: item.status === 'FAILED' ? '失败' : `¥${util.formatPrice(item.payAmount)}`
+    }
   },
 
   handleCodeInput(e) {

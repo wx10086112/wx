@@ -1,15 +1,14 @@
 const util = require('../../../utils/merchant-util')
 const api = require('../../../api/merchant-mini/index')
 
-const ROLE_OPTIONS = [
-  { label: '店长', value: 'owner' },
-  { label: '店员', value: 'member' }
-]
-
 const ROLE_PERMISSION_TEXT = {
   owner: '店长可管理商品、门店、员工、财务和营销，并处理订单与核销。',
   member: '店员可处理订单、扫码核销、手动核销和查看核销记录。'
 }
+
+const USERNAME_PATTERN = /^[A-Za-z0-9_]{4,20}$/
+const PHONE_PATTERN = /^1[3-9]\d{9}$/
+const PASSWORD_MIN_LENGTH = 6
 
 const app = getApp()
 
@@ -37,10 +36,50 @@ const normalizeRoleKey = (roleKey = '') => {
   return roleKey === 'owner' ? 'owner' : 'member'
 }
 
+const buildStaffPayload = (form = {}, options = {}) => {
+  const payload = {
+    staffId: form.staffId,
+    username: (form.username || '').trim(),
+    password: (form.password || '').trim(),
+    realName: (form.realName || '').trim(),
+    phone: (form.phone || '').trim(),
+    role: normalizeRoleKey(form.role)
+  }
+
+  if (options.includeUsername && !payload.username) {
+    return { error: '请输入登录账号' }
+  }
+  if (options.includeUsername && !USERNAME_PATTERN.test(payload.username)) {
+    return { error: '账号需为 4-20 位字母、数字或下划线' }
+  }
+  if (options.requirePassword && !payload.password) {
+    return { error: '请输入初始密码' }
+  }
+  if (payload.password && payload.password.length < PASSWORD_MIN_LENGTH) {
+    return { error: '密码至少 6 位' }
+  }
+  if (!payload.realName) {
+    return { error: '请输入员工姓名' }
+  }
+  if (payload.phone && !PHONE_PATTERN.test(payload.phone)) {
+    return { error: '请输入正确的手机号' }
+  }
+  if (!options.includeUsername) {
+    delete payload.username
+  }
+  if (!payload.password) {
+    delete payload.password
+  }
+  if (!payload.staffId) {
+    delete payload.staffId
+  }
+
+  return { payload }
+}
+
 Page({
   data: {
     canManageStaff: false,
-    roleOptions: ROLE_OPTIONS,
     staffList: [],
     showAddPanel: false,
     showEditPanel: false,
@@ -103,10 +142,6 @@ Page({
     wx.setStorageSync('merchantStaffUser', matchedStaff)
   },
 
-  getRolePickerValue(role) {
-    return normalizeRoleKey(role) === 'owner' ? 0 : 1
-  },
-
   showAddStaff() {
     this.setData({
       showAddPanel: true,
@@ -141,6 +176,8 @@ Page({
     this.setData({ showEditPanel: false })
   },
 
+  preventTap() {},
+
   handleNewStaffInput(e) {
     const key = e.currentTarget.dataset.key
     this.setData({
@@ -155,45 +192,18 @@ Page({
     })
   },
 
-  handleNewStaffRole(e) {
-    const role = this.data.roleOptions[Number(e.detail.value)].value
-    this.setData({
-      'newStaff.role': role
-    })
-  },
-
-  handleEditStaffRole(e) {
-    const role = this.data.roleOptions[Number(e.detail.value)].value
-    this.setData({
-      'editStaff.role': role
-    })
-  },
-
   submitAddStaff() {
-    const form = this.data.newStaff
-    const payload = {
-      username: (form.username || '').trim(),
-      password: (form.password || '').trim(),
-      realName: (form.realName || '').trim(),
-      phone: (form.phone || '').trim(),
-      role: normalizeRoleKey(form.role)
-    }
-
-    if (!payload.username) {
-      util.showToast('请输入登录账号')
-      return
-    }
-    if (!payload.password) {
-      util.showToast('请输入初始密码')
-      return
-    }
-    if (!payload.realName) {
-      util.showToast('请输入员工姓名')
+    const result = buildStaffPayload(this.data.newStaff, {
+      includeUsername: true,
+      requirePassword: true
+    })
+    if (result.error) {
+      util.showToast(result.error)
       return
     }
 
     api
-      .addMerchantStaff(payload)
+      .addMerchantStaff(result.payload)
       .then(() => {
         util.showToast('员工已创建', 'success')
         this.setData({
@@ -208,21 +218,15 @@ Page({
   },
 
   submitEditStaff() {
-    const form = this.data.editStaff
-    const payload = {
-      staffId: form.staffId,
-      realName: (form.realName || '').trim(),
-      phone: (form.phone || '').trim(),
-      role: normalizeRoleKey(form.role),
-      password: (form.password || '').trim()
-    }
+    const result = buildStaffPayload(this.data.editStaff)
+    const payload = result.payload
 
-    if (!payload.staffId) {
-      util.showToast('员工信息有误')
+    if (result.error) {
+      util.showToast(result.error)
       return
     }
-    if (!payload.realName) {
-      util.showToast('请输入员工姓名')
+    if (!payload || !payload.staffId) {
+      util.showToast('员工信息有误')
       return
     }
 

@@ -32,9 +32,44 @@ const buildCropStyle = (crop = DEFAULT_IMAGE_CROP) => {
   return `transform: translate(${normalized.x}%, ${normalized.y}%) scale(${normalized.scale});`
 }
 
+const chooseSingleImage = () => {
+  if (wx.chooseMedia) {
+    return new Promise((resolve, reject) => {
+      wx.chooseMedia({
+        count: 1,
+        mediaType: ['image'],
+        sourceType: ['album', 'camera'],
+        success: (res) => {
+          const filePath = res.tempFiles && res.tempFiles[0] && res.tempFiles[0].tempFilePath
+          filePath ? resolve(filePath) : reject(new Error('未选择图片'))
+        },
+        fail: reject
+      })
+    })
+  }
+
+  return new Promise((resolve, reject) => {
+    wx.chooseImage({
+      count: 1,
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        const filePath = res.tempFilePaths && res.tempFilePaths[0]
+        filePath ? resolve(filePath) : reject(new Error('未选择图片'))
+      },
+      fail: reject
+    })
+  })
+}
+
+const isChooseImageCancel = (err = {}) => {
+  const message = String(err.errMsg || err.message || '')
+  return message.includes('cancel')
+}
+
 Page({
   data: {
     goodsId: null,
+    uploadingImage: false,
     cropScaleValue: 100,
     imageCropStyle: buildCropStyle(DEFAULT_IMAGE_CROP),
     cropTouch: null,
@@ -230,52 +265,34 @@ Page({
 
   chooseGoodsImage() {
     if (!app.needPermission(['goods.manage'])) return
-    const chooseImage = wx.chooseMedia
-      ? new Promise((resolve, reject) => {
-          wx.chooseMedia({
-            count: 1,
-            mediaType: ['image'],
-            sourceType: ['album', 'camera'],
-            success: (res) => resolve(res.tempFiles[0].tempFilePath),
-            fail: reject
-          })
-        })
-      : new Promise((resolve, reject) => {
-          wx.chooseImage({
-            count: 1,
-            sourceType: ['album', 'camera'],
-            success: (res) => resolve(res.tempFilePaths[0]),
-            fail: reject
-          })
-        })
+    if (this.data.uploadingImage) return
 
-    chooseImage
+    chooseSingleImage()
       .then((filePath) => {
-        api
-          .uploadMerchantGoodsImage(filePath)
-          .then((response = {}) => {
-            const imageCrop = DEFAULT_IMAGE_CROP
-            this.setData({
-              'form.imageUrl': response.url || filePath,
-              'form.imageCrop': imageCrop,
-              cropScaleValue: Math.round(imageCrop.scale * 100),
-              imageCropStyle: buildCropStyle(imageCrop)
-            })
-            util.showToast('图片已上传', 'success')
-          })
-          .catch(() => {
-            const imageCrop = DEFAULT_IMAGE_CROP
-            this.setData({
-              'form.imageUrl': filePath,
-              'form.imageCrop': imageCrop,
-              cropScaleValue: Math.round(imageCrop.scale * 100),
-              imageCropStyle: buildCropStyle(imageCrop)
-            })
-            util.showToast('后端未联通，已使用本地图片')
-          })
+        this.setData({ uploadingImage: true })
+        util.showLoading('上传中...')
+        return api.uploadMerchantGoodsImage(filePath).then((response = {}) => ({ filePath, response }))
       })
-      .catch(() => {
-        util.showToast('未选择图片')
+      .then(({ filePath, response }) => {
+        const imageCrop = DEFAULT_IMAGE_CROP
+        this.setData({
+          'form.imageUrl': response.url || filePath,
+          'form.imageCrop': imageCrop,
+          cropScaleValue: Math.round(imageCrop.scale * 100),
+          imageCropStyle: buildCropStyle(imageCrop)
+        })
+        util.showToast('图片已上传', 'success')
+      })
+      .catch((err) => {
+        if (!isChooseImageCancel(err)) {
+          util.showToast(err.message || '图片上传失败')
+        }
+      })
+      .finally(() => {
+        if (this.data.uploadingImage) {
+          this.setData({ uploadingImage: false })
+          util.hideLoading()
+        }
       })
   }
 })

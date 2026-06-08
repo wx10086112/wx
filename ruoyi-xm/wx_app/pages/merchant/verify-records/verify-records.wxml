@@ -15,8 +15,8 @@
     <view wx:for="{{recordList}}" wx:key="recordId" class="record-card panel">
       <view class="record-top">
         <view class="record-main">
-          <text class="record-title">{{item.title}}</text>
-          <text class="record-meta">核销码 {{item.writeOffCode || item.inputCode}} · 订单 {{item.orderNo || '-'}}</text>
+          <text class="record-title">{{item.displayTitle}}</text>
+          <text wx:if="{{item.codeMetaText}}" class="record-meta">{{item.codeMetaText}}</text>
         </view>
         <view class="status-tag {{item.statusClass}}">{{item.statusText}}</view>
       </view>

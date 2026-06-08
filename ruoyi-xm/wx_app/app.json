@@ -31,8 +31,8 @@
   "window": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "本地生活",
-    "navigationBarBackgroundColor": "#FAF8F3",
-    "backgroundColor": "#FAF8F3"
+    "navigationBarBackgroundColor": "#EEF5FB",
+    "backgroundColor": "#EEF5FB"
   },
   "permission": {
     "scope.userLocation": {
@@ -46,7 +46,7 @@
   "tabBar": {
     "custom": true,
     "color": "#9A9A9E",
-    "selectedColor": "#C8A46A",
+    "selectedColor": "#2D8FE8",
     "backgroundColor": "#ffffff",
     "borderStyle": "white",
     "list": [

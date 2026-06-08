@@ -1,4 +1,6 @@
 {
   "navigationStyle": "custom",
-  "usingComponents": {}
+  "usingComponents": {
+    "agreement-consent": "/components/agreement-consent/agreement-consent"
+  }
 }

@@ -16,9 +16,7 @@ Page({
     allOrderList: [],
     orderList: [],
     orderStats: [],
-    loading: true,
-    showWriteOffModal: false,
-    currentOrder: {}
+    loading: true
   },
 
   onLoad(options) {
@@ -188,14 +186,6 @@ Page({
     })
   },
 
-  onViewCode(e) {
-    const order = this.normalizeOrder(e.detail.order)
-    this.setData({
-      currentOrder: order,
-      showWriteOffModal: true
-    })
-  },
-
   onRefundOrder(e) {
     const order = e.detail.order
     util.showModal('申请退款', '确认发起退款申请？').then((confirm) => {
@@ -214,23 +204,10 @@ Page({
     })
   },
 
-  confirmWriteOffResult() {
-    this.closeWriteOffModal()
-  },
-
   onRebuyOrder(e) {
     const order = e.detail.order
     util.navigateTo(`/pages/product-detail/product-detail?id=${order.productId}`)
   },
-
-  closeWriteOffModal() {
-    this.setData({
-      showWriteOffModal: false,
-      currentOrder: {}
-    })
-  },
-
-  preventMove() {},
 
   goShopping() {
     util.switchTab('/pages/home/home')

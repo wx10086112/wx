@@ -57,14 +57,23 @@ const formatDate = (date, fmt = 'YYYY-MM-DD HH:mm') => {
 
 const formatPrice = (price) => (Number(price || 0) / 100).toFixed(2)
 
-const showToast = (title, icon = 'none') => {
-  wx.showToast({
-    title,
-    icon
-  })
+const maskWriteOffCode = (code) => {
+  const value = String(code || '').trim()
+  if (!value) return ''
+  if (value.length <= 4) return `${value.slice(0, 1)}**${value.slice(-1)}`
+  if (value.length <= 8) return `${value.slice(0, 2)}****${value.slice(-2)}`
+  return `${value.slice(0, 4)}****${value.slice(-4)}`
 }
 
+const getCallablePhone = (phone) => {
+  const value = String(phone || '').trim()
+  return /^1\d{10}$/.test(value) ? value : ''
+}
+
+let loadingVisible = false
+
 const showLoading = (title = '加载中...') => {
+  loadingVisible = true
   wx.showLoading({
     title,
     mask: true
@@ -72,16 +81,26 @@ const showLoading = (title = '加载中...') => {
 }
 
 const hideLoading = () => {
+  if (!loadingVisible) return
+  loadingVisible = false
   wx.hideLoading()
+}
+
+const showToast = (title, icon = 'none') => {
+  hideLoading()
+  wx.showToast({
+    title,
+    icon
+  })
 }
 
 const MERCHANT_TABBAR_PAGES = ['/pages/home/home', '/pages/order/order', '/pages/mine/mine']
 const MERCHANT_NAV_LIST = [
-  { key: 'workbench', label: '工作台', url: '/pages/merchant/index/index?tab=workbench' },
-  { key: 'order', label: '订单', url: '/pages/merchant/index/index?tab=order' },
-  { key: 'verify', label: '核销', url: '/pages/merchant/index/index?tab=verify' },
-  { key: 'goods', label: '商品', url: '/pages/merchant/index/index?tab=goods' },
-  { key: 'mine', label: '我的', url: '/pages/merchant/index/index?tab=mine' }
+  { key: 'workbench', label: '工作台', url: '/pages/merchant/workbench/workbench' },
+  { key: 'order', label: '订单', url: '/pages/merchant/order/order' },
+  { key: 'verify', label: '核销', url: '/pages/merchant/verify/verify' },
+  { key: 'goods', label: '商品', url: '/pages/merchant/goods/goods' },
+  { key: 'mine', label: '我的', url: '/pages/merchant/mine/mine' }
 ]
 const MERCHANT_MAIN_PAGE_PATHS = [
   '/pages/merchant/index/index',
@@ -564,6 +583,8 @@ module.exports = {
   clone,
   formatDate,
   formatPrice,
+  maskWriteOffCode,
+  getCallablePhone,
   showToast,
   showLoading,
   hideLoading,

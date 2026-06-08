@@ -43,13 +43,25 @@ Page({
     const recordList = sourceList
       .filter((item) => this.data.currentTab === 'ALL' || item.status === this.data.currentTab)
       .sort((a, b) => (b.verifyTime || 0) - (a.verifyTime || 0))
-      .map((item) => ({
-        ...item,
-        verifyTimeText: util.formatDate(item.verifyTime),
-        payAmountText: util.formatPrice(item.payAmount),
-        statusText: item.status === 'FAILED' ? '异常' : '成功',
-        statusClass: item.status === 'FAILED' ? 'orange' : 'green'
-      }))
+      .map((item) => {
+        const isFailed = item.status === 'FAILED'
+        const hasOrder = !!item.orderNo
+        const writeOffCode = item.writeOffCode || ''
+        const displayTitle = hasOrder ? item.title : (isFailed ? '核销失败' : item.title)
+        const codeMetaText = hasOrder
+          ? `核销码 ${writeOffCode || '-'} · 订单 ${item.orderNo}`
+          : ''
+
+        return {
+          ...item,
+          displayTitle,
+          codeMetaText,
+          verifyTimeText: util.formatDate(item.verifyTime),
+          payAmountText: util.formatPrice(item.payAmount),
+          statusText: isFailed ? '异常' : '成功',
+          statusClass: isFailed ? 'orange' : 'green'
+        }
+      })
 
     this.setData({ recordList })
   }

@@ -43,9 +43,15 @@ Page({
   },
 
   buildOrderDisplay(order) {
+    const customerName = String(order.customerName || '').trim()
+    const customerPhone = String(order.customerPhone || '').trim()
     return {
       ...order,
       statusMeta: util.getOrderStatusMeta(order.status),
+      writeOffCodeMasked: util.maskWriteOffCode(order.writeOffCode),
+      customerNameText: customerName || '-',
+      customerPhoneText: customerPhone || '-',
+      callPhone: util.getCallablePhone(customerPhone),
       payAmountText: util.formatPrice(order.payAmount),
       payTimeText: util.formatDate(order.payTime || order.createTime),
       createTimeText: util.formatDate(order.createTime),
@@ -59,6 +65,15 @@ Page({
   goVerify() {
     if (!app.needPermission(['verify.scan', 'verify.manual'])) return
     util.navigateTo(`/pages/merchant/verify/verify?orderNo=${this.data.orderNo}`)
+  },
+
+  callCustomer() {
+    const phoneNumber = this.data.order.callPhone
+    if (!phoneNumber) {
+      util.showToast('暂无可拨打电话')
+      return
+    }
+    wx.makePhoneCall({ phoneNumber })
   },
 
   handleApproveRefund() {

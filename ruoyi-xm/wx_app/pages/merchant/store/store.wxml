@@ -27,15 +27,15 @@
     <text class="panel-title separator">开关配置</text>
     <view class="switch-row">
       <text class="field-label">营业状态</text>
-      <switch checked="{{form.businessStatus}}" color="#C8A46A" bindchange="handleSwitchChange" data-key="businessStatus" />
+      <switch checked="{{form.businessStatus}}" color="#2D8FE8" bindchange="handleSwitchChange" data-key="businessStatus" />
     </view>
     <view class="switch-row">
       <text class="field-label">支持退款</text>
-      <switch checked="{{form.supportRefund}}" color="#C8A46A" bindchange="handleSwitchChange" data-key="supportRefund" />
+      <switch checked="{{form.supportRefund}}" color="#2D8FE8" bindchange="handleSwitchChange" data-key="supportRefund" />
     </view>
     <view class="switch-row">
       <text class="field-label">支持预约</text>
-      <switch checked="{{form.supportBooking}}" color="#C8A46A" bindchange="handleSwitchChange" data-key="supportBooking" />
+      <switch checked="{{form.supportBooking}}" color="#2D8FE8" bindchange="handleSwitchChange" data-key="supportBooking" />
     </view>
     <button class="primary-btn save-btn" bindtap="saveStore">保存门店信息</button>
   </view>

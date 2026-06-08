@@ -10,7 +10,6 @@
       <view class="order-merchant">{{viewOrder.merchantName}}</view>
       <view class="order-meta">
         <text>数量 x{{viewOrder.quantity || 1}}</text>
-        <text wx:if="{{viewOrder.showWriteOffCode}}" class="write-off-code">核销码 {{viewOrder.writeOffCode}}</text>
       </view>
       <view class="order-price">
         <text class="price">¥{{viewOrder.payAmountText}}</text>
@@ -25,7 +24,6 @@
     </view>
     <view wx:if="{{viewOrder.status === 'PAID_UNUSED'}}" class="action-btns">
       <button class="action-btn action-btn-light" bindtap="onRefund">申请退款</button>
-      <button class="action-btn action-btn-primary" bindtap="onViewCode">查看核销码</button>
     </view>
     <view wx:if="{{viewOrder.status === 'USED_COMPLETED'}}" class="action-btns">
       <button class="action-btn action-btn-light" bindtap="onRebuy">再来一单</button>

@@ -129,7 +129,10 @@ const throttle = (func, limit) => {
   }
 }
 
+let loadingVisible = false
+
 const showLoading = (title = '加载中...') => {
+  loadingVisible = true
   wx.showLoading({
     title,
     mask: true
@@ -137,10 +140,13 @@ const showLoading = (title = '加载中...') => {
 }
 
 const hideLoading = () => {
+  if (!loadingVisible) return
+  loadingVisible = false
   wx.hideLoading()
 }
 
 const showToast = (title, icon = 'none', duration = 2000) => {
+  hideLoading()
   wx.showToast({
     title,
     icon,
