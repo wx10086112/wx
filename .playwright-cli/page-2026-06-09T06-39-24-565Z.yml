@@ -1,0 +1,23 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - heading "零点科技后台管理系统" [level=3] [ref=e5]
+      - generic [ref=e8]:
+        - textbox "账号" [ref=e9]: admin
+        - img [ref=e11]
+      - generic [ref=e15]:
+        - textbox "密码" [ref=e16]: admin123
+        - img [ref=e18]
+      - generic [ref=e21]:
+        - generic [ref=e22]:
+          - textbox "验证码" [ref=e23]
+          - img [ref=e25]
+        - img [ref=e28] [cursor=pointer]
+      - generic [ref=e29] [cursor=pointer]:
+        - generic [ref=e30]:
+          - checkbox "记住密码"
+        - generic [ref=e32]: 记住密码
+      - button "登 录" [ref=e35] [cursor=pointer]:
+        - generic [ref=e36]: 登 录
+    - generic [ref=e37]: Copyright © 零点科技 All Rights Reserved.
+  - text: 
