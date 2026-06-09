@@ -98,6 +98,8 @@ powershell -ExecutionPolicy Bypass -File project-docs/test-scripts/service-provi
 - 支付回调地址、退款回调地址、转账回调地址是公网 HTTPS。
 - 每个商户后台配置真实 `cMiniAppId`、真实 `cMiniAppSecret`、真实 `merchantWxMchId`。
 - 小程序请求头 `X-Wx-AppId` 与后台商户 `cMiniAppId` 一致。
+- 系统参数已填真实隐私联系兜底信息：`mall.privacy.operatorName`、`mall.privacy.servicePhone`、`mall.privacy.contactEmail`、`mall.privacy.contactAddress`，并刷新 `sys_config` 缓存或重启后端。
+- 使用每个商户真实小程序 `AppID` 请求 `/wxmini/template/config`，请求头带 `X-Wx-AppId`；返回的 `contactInfo/privacyInfo` 应优先使用该 AppID 对应商户的名称、电话、地址、营业时间，邮箱和用户权利请求说明使用系统参数兜底，并与微信公众平台隐私保护指引后台填写内容一致。
 
 ## 4. P0 用例
 

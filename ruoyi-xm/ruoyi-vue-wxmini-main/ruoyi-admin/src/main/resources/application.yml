@@ -142,6 +142,8 @@ wx:
   # 支付配置
   pay:
     stub-enabled: false
+    notify-url: ${WX_PAY_NOTIFY_URL:}
+    refund-notify-url: ${WX_PAY_REFUND_NOTIFY_URL:}
     appId: test
     mchId: 110 #商户id
     apiV3Key: test #V3密钥

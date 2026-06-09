@@ -12,6 +12,10 @@
         "value": "data/merchant-mock.js"
       },
       {
+        "type": "file",
+        "value": "data/mock.js"
+      },
+      {
         "type": "folder",
         "value": "docs"
       }

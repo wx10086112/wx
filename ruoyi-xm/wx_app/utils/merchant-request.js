@@ -1,13 +1,36 @@
-const app = getApp()
 const DEFAULT_BASE_URL = 'https://ld-console.lingdian.site/prod-api'
 const BASE_URL_STORAGE_KEY = 'baseUrl'
+const { normalizeImageFields } = require('./image-url')
+
+const normalizeBaseUrl = (baseUrl = DEFAULT_BASE_URL) => {
+  const normalized = String(baseUrl || DEFAULT_BASE_URL).trim().replace(/\/+$/, '')
+  const unsafe = !/^https:\/\//i.test(normalized) ||
+    /^https?:\/\/(localhost|127\.|0\.0\.0\.0|10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/i.test(normalized) ||
+    /(example|invalid|placeholder|xxx)/i.test(normalized)
+  return unsafe ? DEFAULT_BASE_URL : normalized
+}
+
+const getAppInstance = () => {
+  try {
+    return getApp()
+  } catch (e) {
+    return null
+  }
+}
 
 const getBaseUrl = () => {
-  const runtimeBaseUrl = app.baseUrl || wx.getStorageSync(BASE_URL_STORAGE_KEY) || DEFAULT_BASE_URL
-  return String(runtimeBaseUrl).trim().replace(/\/+$/, '') || DEFAULT_BASE_URL
+  const app = getAppInstance()
+  const runtimeBaseUrl = (app && app.baseUrl) || wx.getStorageSync(BASE_URL_STORAGE_KEY) || DEFAULT_BASE_URL
+  return normalizeBaseUrl(runtimeBaseUrl)
 }
-const getAppId = () => (app.globalData && app.globalData.appId) || ''
-const getMerchantEntry = () => (app.getMerchantEntry ? app.getMerchantEntry() : null)
+const getAppId = () => {
+  const app = getAppInstance()
+  return (app && app.globalData && app.globalData.appId) || ''
+}
+const getMerchantEntry = () => {
+  const app = getAppInstance()
+  return app && app.getMerchantEntry ? app.getMerchantEntry() : null
+}
 
 const request = (options) => {
   return new Promise((resolve, reject) => {
@@ -38,7 +61,7 @@ const request = (options) => {
           return
         }
 
-        const responseData = res.data || {}
+        const responseData = normalizeImageFields(res.data || {})
         if (responseData.code === 200 || responseData.code === 0) {
           resolve(responseData.data !== undefined ? responseData.data : responseData)
           return

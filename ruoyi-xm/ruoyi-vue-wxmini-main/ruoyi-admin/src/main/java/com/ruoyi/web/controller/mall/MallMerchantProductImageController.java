@@ -6,16 +6,20 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.utils.MallDataScopeHelper;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
+import com.ruoyi.mall.product.domain.Product;
 import com.ruoyi.mall.product.domain.ProductImage;
 import com.ruoyi.mall.product.service.IProductImageService;
+import com.ruoyi.mall.product.service.IProductService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -29,6 +33,8 @@ public class MallMerchantProductImageController extends BaseController {
     private IProductImageService productImageService;
     @Resource
     private IMerchantService merchantService;
+    @Resource
+    private IProductService productService;
 
     private static final Set<String> ALLOWED_IMAGE_TYPES = new HashSet<>(Arrays.asList(
             "main", "detail", "avatar", "banner", "cover", "poster", "sku"
@@ -54,13 +60,25 @@ public class MallMerchantProductImageController extends BaseController {
         if (merchant == null) {
             return AjaxResult.error("商家不存在");
         }
+        Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
+        if (effMerchantId != null && !effMerchantId.equals(merchantId)) {
+            return AjaxResult.error("无权限操作该商家");
+        }
         Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
         if (effDistributorId != null && !effDistributorId.equals(merchant.getDistributorId())) {
             return AjaxResult.error("无权限操作该商家");
         }
 
-        if (!ALLOWED_IMAGE_TYPES.contains(imageType)) {
+        String normalizedImageType = imageType == null ? "main" : imageType.trim().toLowerCase(Locale.ROOT);
+        if (!ALLOWED_IMAGE_TYPES.contains(normalizedImageType)) {
             return AjaxResult.error("不支持的图片类型");
+        }
+
+        if (productId != null) {
+            Product product = productService.selectProductById(productId);
+            if (product == null || product.getMerchantId() == null || !merchantId.equals(product.getMerchantId())) {
+                return AjaxResult.error("商品不存在或不属于当前商户");
+            }
         }
 
         if (file.getSize() > 5 * 1024 * 1024) {
@@ -77,39 +95,49 @@ public class MallMerchantProductImageController extends BaseController {
             return AjaxResult.error("仅支持jpg/png/webp格式");
         }
 
+        String contentType = file.getContentType();
+        if (contentType != null && !isAllowedMimeType(contentType)) {
+            return AjaxResult.error("仅支持jpg/png/webp格式");
+        }
+
         String uploadRoot = RuoYiConfig.getProfile() + "/merchant_images";
 
         try {
             StringBuilder dirBuilder = new StringBuilder();
-            dirBuilder.append(merchantId).append(File.separator);
-            dirBuilder.append("product").append(File.separator);
+            dirBuilder.append(merchantId).append("/");
+            dirBuilder.append("product").append("/");
 
             if (productId != null) {
-                dirBuilder.append(productId).append(File.separator);
+                dirBuilder.append(productId).append("/");
             } else {
-                dirBuilder.append("temp").append(File.separator);
+                dirBuilder.append("temp").append("/");
             }
 
             String subDir = dirBuilder.toString();
-            File dir = new File(uploadRoot, subDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
+            Path basePath = Paths.get(uploadRoot).toAbsolutePath().normalize();
+            Path dirPath = basePath.resolve(subDir).normalize();
+            if (!dirPath.startsWith(basePath)) {
+                return AjaxResult.error("非法上传路径");
             }
+            Files.createDirectories(dirPath);
 
             String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-            String fileName = imageType + "_" + uuid + "." + ext;
+            String fileName = normalizedImageType + "_" + uuid + "." + ext;
             String relativePath = subDir + fileName;
 
-            File dest = new File(uploadRoot, relativePath);
-            file.transferTo(dest);
+            Path destPath = basePath.resolve(relativePath).normalize();
+            if (!destPath.startsWith(basePath)) {
+                return AjaxResult.error("非法上传路径");
+            }
+            file.transferTo(destPath.toFile());
 
-            String url = "/profile/merchant_images/" + relativePath.replace(File.separator, "/");
+            String url = "/profile/merchant_images/" + relativePath;
 
             if (productId != null) {
                 ProductImage image = new ProductImage();
                 image.setProductId(productId);
                 image.setMerchantId(merchantId);
-                image.setImageType(imageType);
+                image.setImageType(normalizedImageType);
                 image.setImageUrl(url);
                 image.setStatus(1);
                 productImageService.insertProductImage(image);
@@ -118,12 +146,18 @@ public class MallMerchantProductImageController extends BaseController {
             Map<String, Object> result = new HashMap<>();
             result.put("url", url);
             result.put("fileName", fileName);
-            result.put("relativePath", relativePath.replace(File.separator, "/"));
+            result.put("relativePath", relativePath);
             return AjaxResult.success(result);
 
         } catch (IOException e) {
             return AjaxResult.error("文件上传失败: " + e.getMessage());
         }
+    }
+
+    private boolean isAllowedMimeType(String contentType) {
+        return "image/jpeg".equals(contentType)
+                || "image/png".equals(contentType)
+                || "image/webp".equals(contentType);
     }
 
     private String detectImageExtension(InputStream is) throws IOException {

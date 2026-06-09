@@ -20,6 +20,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.net.URI;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -28,7 +29,7 @@ public class WxRefundEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(WxRefundEventListener.class);
 
-    @Value("${wx.pay.refund-notify-url:https://xxx.com/api/wxmini/pay/refund-notify}")
+    @Value("${wx.pay.refund-notify-url}")
     private String refundNotifyUrl;
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
@@ -97,6 +98,7 @@ public class WxRefundEventListener {
             amount.setTotal(totalAmountFen);
             amount.setCurrency("CNY");
             request.setAmount(amount);
+            validateNotifyUrl(refundNotifyUrl, "退款回调地址");
             request.setNotifyUrl(refundNotifyUrl);
 
             WxPayRefundV3Result result = wxPayService.refundV3(request);
@@ -125,5 +127,37 @@ public class WxRefundEventListener {
     private void markRefundAbnormal(RefundRecord refundRecord) {
         refundRecord.setStatus(RefundRecord.STATUS_ABNORMAL);
         refundRecordMapper.updateRefundRecord(refundRecord);
+    }
+
+    private void validateNotifyUrl(String notifyUrl, String label) {
+        if (StringUtils.isBlank(notifyUrl)) {
+            throw new IllegalStateException(label + "必须配置为公网 HTTPS 地址");
+        }
+        try {
+            URI uri = URI.create(notifyUrl.trim());
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || isUnsafeNotifyHost(uri.getHost())) {
+                throw new IllegalStateException(label + "必须配置为公网 HTTPS 地址");
+            }
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException(label + "必须配置为公网 HTTPS 地址", e);
+        }
+    }
+
+    private boolean isUnsafeNotifyHost(String host) {
+        if (StringUtils.isBlank(host)) {
+            return true;
+        }
+        String lowerHost = host.toLowerCase();
+        return "localhost".equals(lowerHost)
+                || lowerHost.endsWith(".localhost")
+                || "0.0.0.0".equals(lowerHost)
+                || lowerHost.startsWith("127.")
+                || lowerHost.startsWith("10.")
+                || lowerHost.startsWith("192.168.")
+                || lowerHost.matches("^172\\.(1[6-9]|2\\d|3[0-1])\\..*")
+                || lowerHost.contains("example")
+                || lowerHost.contains("invalid")
+                || lowerHost.contains("placeholder")
+                || lowerHost.contains("xxx");
     }
 }

@@ -16,10 +16,6 @@ const cancelOrder = (orderNo) => {
   return post(`/wxmini/order/cancel/${orderNo}`)
 }
 
-const writeOffOrder = (code) => {
-  return post(`/wxmini/order/writeOff/${code}`)
-}
-
 const createPayOrder = (data) => {
   return post('/wxmini/pay/order/create', data)
 }
@@ -33,7 +29,6 @@ module.exports = {
   getOrderDetail,
   createOrder,
   cancelOrder,
-  writeOffOrder,
   createPayOrder,
   queryOrder
 }

@@ -105,6 +105,7 @@ Page({
     versionText: 'v1.1.0',
     isLoggedIn: false,
     merchantName: '当前商户',
+    privacyInfo: {},
     licenseList: [],
     activePanel: '',
     panelData: {},
@@ -125,10 +126,52 @@ Page({
   initStaticInfo() {
     const templateMeta = templateService.getTemplateSection('templateMeta') || {}
     const brandInfo = templateService.getTemplateSection('brandInfo') || {}
+    const privacyInfo = templateService.getTemplateSection('privacyInfo') || {}
     this.setData({
       versionText: `v${templateMeta.version || '1.1.0'}`,
-      merchantName: brandInfo.name || '当前商户'
+      merchantName: brandInfo.name || '当前商户',
+      privacyInfo
     })
+    templateService.fetchTemplateConfig({ useRemote: true, force: true }).then(() => {
+      const remoteTemplateMeta = templateService.getTemplateSection('templateMeta') || {}
+      const remoteBrandInfo = templateService.getTemplateSection('brandInfo') || {}
+      const remotePrivacyInfo = templateService.getTemplateSection('privacyInfo') || {}
+      this.setData({
+        versionText: `v${remoteTemplateMeta.version || '1.1.0'}`,
+        merchantName: remoteBrandInfo.name || this.data.merchantName,
+        privacyInfo: remotePrivacyInfo
+      })
+    }).catch(() => {})
+  },
+
+  buildPanelData(type) {
+    const basePanel = PANEL_CONTENT[type]
+    if (!basePanel) return null
+    const panelData = JSON.parse(JSON.stringify(basePanel))
+    if (type !== 'summary') {
+      return panelData
+    }
+
+    const privacyInfo = this.data.privacyInfo || {}
+    const contactItems = [
+      privacyInfo.operatorName ? `个人信息处理者：${privacyInfo.operatorName}` : '',
+      privacyInfo.servicePhone ? `客服电话：${privacyInfo.servicePhone}` : '',
+      privacyInfo.contactEmail ? `联系邮箱：${privacyInfo.contactEmail}` : '',
+      privacyInfo.contactAddress ? `联系地址：${privacyInfo.contactAddress}` : '',
+      privacyInfo.rightsRequestTips || ''
+    ].filter(Boolean)
+
+    if (privacyInfo.configured === false && privacyInfo.missingFields && privacyInfo.missingFields.length) {
+      contactItems.push(`后台待补充：${privacyInfo.missingFields.join('、')}`)
+    }
+
+    if (contactItems.length) {
+      panelData.groups.push({
+        title: '联系方式与个人信息权利请求',
+        items: contactItems
+      })
+    }
+    return panelData
   },
 
   loadMerchantQualification() {
@@ -175,7 +218,7 @@ Page({
 
   openPanel(e) {
     const type = e.currentTarget.dataset.type
-    const panelData = PANEL_CONTENT[type]
+    const panelData = this.buildPanelData(type)
     if (!panelData) return
     this.setData({
       activePanel: type,

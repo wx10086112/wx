@@ -1,13 +1,6 @@
 const ORDER_STORAGE_KEY = 'o2o_order_list'
 const ORDER_FILTER_KEY = 'o2o_order_filter'
-
-const legacyImageMap = {
-  'https://img.zcool.cn/community/01e07155431210000019ae9dd17df.jpg': '/assets/images/merchant-spa.png',
-  'https://img.zcool.cn/community/01786555431210000019ae9d4c90b.jpg': '/assets/images/merchant-neck.png',
-  'https://img.zcool.cn/community/01d8a155431210000019ae9d9c2d9.jpg': '/assets/images/merchant-fitness.png',
-  'https://img.zcool.cn/community/01686555431210000019ae9d8c7f0.jpg': '/assets/images/merchant-meal.png',
-  'https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4nibH0KlMECNjjGxQUq24ZEaGT4poC6icRiccVGKSyXwibcPq4BWmiaIGuG1icwxaQX6grC9V62zibQ/132': '/assets/images/avatar.svg'
-}
+const { normalizeImageUrl, normalizeImageFields } = require('./image-url')
 
 const orderStatusMap = {
   PENDING_PAY: { text: '待支付', class: 'status-pending', icon: '⏳' },
@@ -58,29 +51,6 @@ const formatTime = (date) => {
 }
 
 const clone = (data) => JSON.parse(JSON.stringify(data))
-
-const normalizeImageUrl = (url = '') => {
-  return legacyImageMap[url] || url
-}
-
-const normalizeImageFields = (data) => {
-  if (Array.isArray(data)) {
-    return data.map((item) => normalizeImageFields(item))
-  }
-
-  if (!data || typeof data !== 'object') {
-    return data
-  }
-
-  const normalized = { ...data }
-  ;['image', 'avatar', 'coverImage', 'avatarUrl'].forEach((key) => {
-    if (typeof normalized[key] === 'string') {
-      normalized[key] = normalizeImageUrl(normalized[key])
-    }
-  })
-
-  return normalized
-}
 
 const buildImageCropStyle = (crop = {}) => {
   const scale = Math.min(Math.max(Number(crop.scale || 1), 1), 2.2)

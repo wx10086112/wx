@@ -18,7 +18,7 @@ import com.ruoyi.wxmini.dto.merchant.MerchantMiniUploadResultDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniVerifyRecordDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniWithdrawRecordDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniWorkbenchStatsDto;
-import com.ruoyi.wxmini.service.IMerchantMiniMockService;
+import com.ruoyi.wxmini.service.IMerchantMiniService;
 import com.ruoyi.mall.common.service.IWxMiniJwtService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -37,7 +37,7 @@ import java.util.Map;
 
 @Service
 @Profile("dev")  // 仅开发环境生效，生产环境不注册此Bean
-public class MerchantMiniMockServiceImpl implements IMerchantMiniMockService {
+public class MerchantMiniMockServiceImpl implements IMerchantMiniService {
 
     private static final Long MERCHANT_ID = 1L;
     private static final Long STORE_ID = 1001L;

@@ -1,4 +1,5 @@
 const util = require('../../../utils/merchant-util')
+const { toStorageImageUrl } = require('../../../utils/image-url')
 const api = require('../../../api/merchant-mini/index')
 
 const app = getApp()
@@ -211,7 +212,7 @@ Page({
       goodsId: this.data.goodsId || null,
       title: form.title,
       subtitle: form.subtitle,
-      imageUrl: form.imageUrl,
+      imageUrl: toStorageImageUrl(form.imageUrl),
       imageCrop: normalizeCropWithOffset(form.imageCrop),
       price: Math.round(Number(form.price || 0) * 100),
       originalPrice: Math.round(Number(form.originalPrice || 0) * 100),

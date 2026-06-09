@@ -14,6 +14,27 @@ const defaultTemplateConfig = {
     servicePhone: '',
     primaryColor: '#1677ff'
   },
+  contactInfo: {
+    operatorName: '商家名称',
+    servicePhone: '',
+    contactEmail: '',
+    contactAddress: '',
+    businessHoursText: '',
+    rightsRequestTips: '可通过小程序“联系客服”、订单详情商户联系方式或微信小程序主体公示联系方式提交个人信息权利请求。',
+    configured: false,
+    missingFields: ['运营主体名称', '客服电话', '联系邮箱', '注册地址或常用联系地址']
+  },
+  privacyInfo: {
+    operatorName: '商家名称',
+    processorText: '本小程序个人信息处理者为当前小程序认证主体及对应商户。',
+    servicePhone: '',
+    contactEmail: '',
+    contactAddress: '',
+    rightsRequestTips: '可通过小程序“联系客服”、订单详情商户联系方式或微信小程序主体公示联系方式提交个人信息权利请求。',
+    wechatPrivacyFillReminder: '微信公众平台隐私保护指引需与小程序内展示的运营主体、电话、邮箱、地址保持一致。',
+    configured: false,
+    missingFields: ['运营主体名称', '客服电话', '联系邮箱', '注册地址或常用联系地址']
+  },
   home: {
     locationLabel: '距离本店',
     noticeTag: '',

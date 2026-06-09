@@ -8,7 +8,7 @@ import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.service.IWriteOffService;
 import com.ruoyi.wxmini.dto.merchant.*;
-import com.ruoyi.wxmini.service.IMerchantMiniMockService;
+import com.ruoyi.wxmini.service.IMerchantMiniService;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,7 +50,7 @@ public class MerchantMiniController {
     private static final String PERMISSION_FINANCE_MANAGE = "finance.manage";
 
     @Resource
-    private IMerchantMiniMockService merchantMiniMockService;
+    private IMerchantMiniService merchantMiniService;
     @Resource
     private IMerchantService merchantService;
     @Resource
@@ -101,7 +101,7 @@ public class MerchantMiniController {
         if (StringUtils.isBlank(appId)) {
             appId = request.getParameter("appid");
         }
-        return AjaxResult.success(merchantMiniMockService.login(
+        return AjaxResult.success(merchantMiniService.login(
                 requestDto.getUsername(),
                 requestDto.getPassword(),
                 requestDto.getMerchantId(),
@@ -139,7 +139,7 @@ public class MerchantMiniController {
         if (accessDenied != null) {
             return accessDenied;
         }
-        return AjaxResult.success(merchantMiniMockService.getWorkbenchOverview(WxMiniUserContext.getCurrentUserId()));
+        return AjaxResult.success(merchantMiniService.getWorkbenchOverview(WxMiniUserContext.getCurrentUserId()));
     }
 
     @GetMapping("/order/list")
@@ -148,7 +148,7 @@ public class MerchantMiniController {
         if (accessDenied != null) {
             return accessDenied;
         }
-        return AjaxResult.success(merchantMiniMockService.listOrders(status));
+        return AjaxResult.success(merchantMiniService.listOrders(status));
     }
 
     @GetMapping("/order/detail/{orderNo}")
@@ -158,7 +158,7 @@ public class MerchantMiniController {
             return accessDenied;
         }
         try {
-            return AjaxResult.success(merchantMiniMockService.getOrderDetail(orderNo));
+            return AjaxResult.success(merchantMiniService.getOrderDetail(orderNo));
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
@@ -186,7 +186,7 @@ public class MerchantMiniController {
             return accessDenied;
         }
         try {
-            return AjaxResult.success(merchantMiniMockService.acceptOrder(orderNo));
+            return AjaxResult.success(merchantMiniService.acceptOrder(orderNo));
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
@@ -200,7 +200,7 @@ public class MerchantMiniController {
         }
         try {
             String reason = requestDto != null ? requestDto.getReason() : null;
-            return AjaxResult.success(merchantMiniMockService.rejectOrder(orderNo, reason));
+            return AjaxResult.success(merchantMiniService.rejectOrder(orderNo, reason));
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
@@ -214,7 +214,7 @@ public class MerchantMiniController {
         }
         try {
             String reason = requestDto != null ? requestDto.getReason() : null;
-            return AjaxResult.success(merchantMiniMockService.cancelOrder(orderNo, reason));
+            return AjaxResult.success(merchantMiniService.cancelOrder(orderNo, reason));
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
@@ -227,7 +227,7 @@ public class MerchantMiniController {
             return accessDenied;
         }
         try {
-            return AjaxResult.success(merchantMiniMockService.approveRefund(orderNo));
+            return AjaxResult.success(merchantMiniService.approveRefund(orderNo));
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
@@ -241,7 +241,7 @@ public class MerchantMiniController {
         }
         try {
             String reason = requestDto != null ? requestDto.getReason() : null;
-            return AjaxResult.success(merchantMiniMockService.rejectRefund(orderNo, reason));
+            return AjaxResult.success(merchantMiniService.rejectRefund(orderNo, reason));
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
@@ -253,7 +253,7 @@ public class MerchantMiniController {
         if (accessDenied != null) {
             return accessDenied;
         }
-        return AjaxResult.success(merchantMiniMockService.listVerifyRecords(status));
+        return AjaxResult.success(merchantMiniService.listVerifyRecords(status));
     }
 
     @GetMapping("/goods/list")
@@ -262,7 +262,7 @@ public class MerchantMiniController {
         if (accessDenied != null) {
             return accessDenied;
         }
-        return AjaxResult.success(merchantMiniMockService.listGoods(status));
+        return AjaxResult.success(merchantMiniService.listGoods(status));
     }
 
     @GetMapping("/goods/detail/{id}")
@@ -271,7 +271,7 @@ public class MerchantMiniController {
         if (accessDenied != null) {
             return accessDenied;
         }
-        return AjaxResult.success(merchantMiniMockService.getGoodsDetail(id));
+        return AjaxResult.success(merchantMiniService.getGoodsDetail(id));
     }
 
     @PostMapping("/goods/save")
@@ -281,7 +281,7 @@ public class MerchantMiniController {
             return accessDenied;
         }
         try {
-            return AjaxResult.success(merchantMiniMockService.saveGoods(goodsDto));
+            return AjaxResult.success(merchantMiniService.saveGoods(goodsDto));
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
@@ -296,7 +296,7 @@ public class MerchantMiniController {
         try {
             Long goodsId = requestDto == null ? null : requestDto.getGoodsId();
             String status = requestDto == null ? null : requestDto.getStatus();
-            return AjaxResult.success(merchantMiniMockService.updateGoodsStatus(goodsId, status));
+            return AjaxResult.success(merchantMiniService.updateGoodsStatus(goodsId, status));
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
@@ -309,7 +309,7 @@ public class MerchantMiniController {
             return accessDenied;
         }
         try {
-            return AjaxResult.success(merchantMiniMockService.uploadGoodsImage(file));
+            return AjaxResult.success(merchantMiniService.uploadGoodsImage(file));
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
@@ -331,7 +331,7 @@ public class MerchantMiniController {
                     goodsIds.add(n.longValue());
                 }
             }
-            int count = merchantMiniMockService.batchUpdateGoodsStatus(goodsIds, status);
+            int count = merchantMiniService.batchUpdateGoodsStatus(goodsIds, status);
             Map<String, Object> result = new HashMap<>();
             result.put("count", count);
             return AjaxResult.success(result);
@@ -346,7 +346,7 @@ public class MerchantMiniController {
         if (accessDenied != null) {
             return accessDenied;
         }
-        return AjaxResult.success(merchantMiniMockService.getStoreProfile());
+        return AjaxResult.success(merchantMiniService.getStoreProfile());
     }
 
     @PutMapping("/store/profile")
@@ -356,7 +356,7 @@ public class MerchantMiniController {
             return accessDenied;
         }
         try {
-            return AjaxResult.success(merchantMiniMockService.updateStoreProfile(storeDto));
+            return AjaxResult.success(merchantMiniService.updateStoreProfile(storeDto));
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
@@ -368,7 +368,7 @@ public class MerchantMiniController {
         if (accessDenied != null) {
             return accessDenied;
         }
-        return AjaxResult.success(merchantMiniMockService.listStaff());
+        return AjaxResult.success(merchantMiniService.listStaff());
     }
 
     @PutMapping("/staff/permission")
@@ -378,7 +378,7 @@ public class MerchantMiniController {
             return accessDenied;
         }
         try {
-            return AjaxResult.success(merchantMiniMockService.updateStaffPermission(requestDto));
+            return AjaxResult.success(merchantMiniService.updateStaffPermission(requestDto));
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
@@ -391,7 +391,7 @@ public class MerchantMiniController {
             return accessDenied;
         }
         try {
-            return AjaxResult.success(merchantMiniMockService.addStaff(requestDto));
+            return AjaxResult.success(merchantMiniService.addStaff(requestDto));
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
@@ -404,7 +404,7 @@ public class MerchantMiniController {
             return accessDenied;
         }
         try {
-            return AjaxResult.success(merchantMiniMockService.updateStaff(requestDto));
+            return AjaxResult.success(merchantMiniService.updateStaff(requestDto));
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
@@ -714,10 +714,6 @@ public class MerchantMiniController {
     }
 
     private AjaxResult checkAccess(String... permissionCodes) {
-        // 通过AppID识别商家的场景：仅允许数据浏览
-        if (WxMiniUserContext.getAppIdMerchantId() != null && !WxMiniUserContext.isMerchantStaff()) {
-            return null; // AppID模式下允许访问（数据按AppID隔离）
-        }
         if (!WxMiniUserContext.isMerchantStaff()) {
             return AjaxResult.error(HttpStatus.FORBIDDEN, "仅商家员工可访问");
         }

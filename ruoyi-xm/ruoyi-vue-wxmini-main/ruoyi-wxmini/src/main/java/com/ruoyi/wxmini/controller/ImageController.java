@@ -42,6 +42,14 @@ public class ImageController {
     @GetMapping("/profile/**")
     public void serveImage(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String path = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (contextPath != null && !contextPath.isEmpty() && path.startsWith(contextPath)) {
+            path = path.substring(contextPath.length());
+        }
+        if (!path.startsWith("/profile/")) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
         String relativePath = path.substring("/profile/".length());
 
         // 拒绝路径穿越

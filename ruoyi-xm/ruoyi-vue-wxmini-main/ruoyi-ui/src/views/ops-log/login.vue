@@ -88,7 +88,7 @@ export default {
     async fetchData() {
       this.loading = true
       try {
-        const res = await getLoginLogList(this.queryParams)
+        const res = await getLoginLogList(this.queryParams, this.dateRange)
         this.tableList = res.rows
         this.total = res.total
       } finally {

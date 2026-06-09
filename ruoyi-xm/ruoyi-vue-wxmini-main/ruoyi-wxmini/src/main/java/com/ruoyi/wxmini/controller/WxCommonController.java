@@ -1,13 +1,17 @@
 package com.ruoyi.wxmini.controller;
 
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.mall.common.util.WxMiniUserContext;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -21,6 +25,10 @@ public class WxCommonController {
 
     @PostMapping("/upload")
     public AjaxResult upload(@RequestParam("file") MultipartFile file) {
+        String currentUserId = WxMiniUserContext.getCurrentUserId();
+        if (StringUtils.isBlank(currentUserId)) {
+            return AjaxResult.error("请先登录");
+        }
         if (file == null || file.isEmpty()) {
             return AjaxResult.error("请选择要上传的文件");
         }
@@ -40,19 +48,33 @@ public class WxCommonController {
             return AjaxResult.error("仅支持jpg/png/webp格式");
         }
 
+        String contentType = file.getContentType();
+        if (contentType != null && !isAllowedMimeType(contentType)) {
+            return AjaxResult.error("仅支持jpg/png/webp格式");
+        }
+
         try {
-            String subDir = "wxmini";
-            String uploadDir = profilePath + "/" + subDir + "/";
-            File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
+            Long merchantId = WxMiniUserContext.getCurrentMerchantId();
+            if (merchantId == null) {
+                merchantId = WxMiniUserContext.getAppIdMerchantId();
             }
+            String safeUserId = currentUserId.replaceAll("[^a-zA-Z0-9_-]", "_");
+            String subDir = "wxmini/" + (merchantId != null ? merchantId : "unknown") + "/user/" + safeUserId;
+            Path basePath = Paths.get(profilePath).toAbsolutePath().normalize();
+            Path dirPath = basePath.resolve(subDir).normalize();
+            if (!dirPath.startsWith(basePath)) {
+                return AjaxResult.error("非法上传路径");
+            }
+            Files.createDirectories(dirPath);
 
             // 后端生成文件名，不使用用户原始文件名
             String fileName = subDir + "/" + System.currentTimeMillis() + "_"
                     + UUID.randomUUID().toString().replace("-", "").substring(0, 8) + "." + ext;
-            File dest = new File(profilePath + "/" + fileName);
-            file.transferTo(dest);
+            Path destPath = basePath.resolve(fileName).normalize();
+            if (!destPath.startsWith(basePath)) {
+                return AjaxResult.error("非法上传路径");
+            }
+            file.transferTo(destPath.toFile());
 
             Map<String, Object> result = new HashMap<>();
             result.put("url", "/profile/" + fileName);
@@ -61,6 +83,12 @@ public class WxCommonController {
         } catch (IOException e) {
             return AjaxResult.error("文件上传失败: " + e.getMessage());
         }
+    }
+
+    private boolean isAllowedMimeType(String contentType) {
+        return "image/jpeg".equals(contentType)
+                || "image/png".equals(contentType)
+                || "image/webp".equals(contentType);
     }
 
     private String detectImageExtension(InputStream is) throws IOException {

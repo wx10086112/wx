@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,7 +22,7 @@ public abstract class AbsWxPayBaseService<P> {
     @Resource
     private WxPayService wxPayService;
 
-    @Value("${wx.pay.notify-url:https://xxx.com/api/wxmini/pay/notify}")
+    @Value("${wx.pay.notify-url}")
     private String wxPayNotifyUrl;
 
     private final ConcurrentHashMap<String, Object> resourceFlagMap = new ConcurrentHashMap<>();
@@ -160,5 +161,38 @@ public abstract class AbsWxPayBaseService<P> {
                 || StringUtils.isBlank(wxPayService.getConfig().getMchId())) {
             throw new IllegalStateException("微信服务商支付配置不完整");
         }
+        validateNotifyUrl(wxPayNotifyUrl, "支付回调地址");
+    }
+
+    private void validateNotifyUrl(String notifyUrl, String label) {
+        if (StringUtils.isBlank(notifyUrl)) {
+            throw new IllegalStateException(label + "必须配置为公网 HTTPS 地址");
+        }
+        try {
+            URI uri = URI.create(notifyUrl.trim());
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || isUnsafeNotifyHost(uri.getHost())) {
+                throw new IllegalStateException(label + "必须配置为公网 HTTPS 地址");
+            }
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException(label + "必须配置为公网 HTTPS 地址", e);
+        }
+    }
+
+    private boolean isUnsafeNotifyHost(String host) {
+        if (StringUtils.isBlank(host)) {
+            return true;
+        }
+        String lowerHost = host.toLowerCase();
+        return "localhost".equals(lowerHost)
+                || lowerHost.endsWith(".localhost")
+                || "0.0.0.0".equals(lowerHost)
+                || lowerHost.startsWith("127.")
+                || lowerHost.startsWith("10.")
+                || lowerHost.startsWith("192.168.")
+                || lowerHost.matches("^172\\.(1[6-9]|2\\d|3[0-1])\\..*")
+                || lowerHost.contains("example")
+                || lowerHost.contains("invalid")
+                || lowerHost.contains("placeholder")
+                || lowerHost.contains("xxx");
     }
 }

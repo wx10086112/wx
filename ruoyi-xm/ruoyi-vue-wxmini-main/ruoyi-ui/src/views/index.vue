@@ -144,7 +144,7 @@ export default {
           todayOrders: rawStats.todayOrders || 0,
           todayRevenue: Number(rawStats.todayAmount || 0),
           merchantCount: rawStats.merchantCount || 0
-        } : { todayOrders: 328, todayRevenue: 45920, merchantCount: 156 }
+        } : { todayOrders: 0, todayRevenue: 0, merchantCount: 0 }
         // 适配后端字段名: amounts→revenues
         const rawTrend = trendRes.data
         this.trendData = rawTrend ? {
@@ -152,16 +152,16 @@ export default {
           orderCounts: rawTrend.orderCounts || [],
           completedCounts: rawTrend.completedCounts || [],
           revenues: (rawTrend.amounts || rawTrend.revenues || [])
-        } : this.getMockTrend()
+        } : this.getEmptyTrend()
         // 适配后端字段名: count→value
         const rawStatus = statusRes.data
         this.orderStatus = Array.isArray(rawStatus) && rawStatus.length > 0
           ? rawStatus.map(i => ({ name: i.name, value: i.count || i.value || 0 }))
-          : this.getMockOrderStatus()
+          : this.getEmptyOrderStatus()
       } catch (e) {
-        this.stats = { todayOrders: 328, todayRevenue: 45920, merchantCount: 156 }
-        this.trendData = this.getMockTrend()
-        this.orderStatus = this.getMockOrderStatus()
+        this.stats = { todayOrders: 0, todayRevenue: 0, merchantCount: 0 }
+        this.trendData = this.getEmptyTrend()
+        this.orderStatus = this.getEmptyOrderStatus()
       }
       this.$nextTick(() => {
         this.initOrderTrendChart()
@@ -170,20 +170,21 @@ export default {
         window.addEventListener('resize', this.handleResize)
       })
     },
-    getMockTrend() {
+    getEmptyTrend(range = 'day') {
+      const labels = this.getRangeLabels(range)
       return {
-        dates: this.getLast7Days(),
-        orderCounts: [280, 310, 295, 340, 328, 365, 328],
-        completedCounts: [220, 260, 240, 290, 275, 310, 285],
-        revenues: [38500, 42100, 39800, 47600, 45920, 51300, 45920]
+        dates: labels,
+        orderCounts: labels.map(() => 0),
+        completedCounts: labels.map(() => 0),
+        revenues: labels.map(() => 0)
       }
     },
-    getMockOrderStatus() {
+    getEmptyOrderStatus() {
       return [
-        { value: 85, name: '待支付' },
-        { value: 156, name: '已支付' },
-        { value: 520, name: '已完成' },
-        { value: 42, name: '已取消' }
+        { value: 0, name: '待支付' },
+        { value: 0, name: '已支付' },
+        { value: 0, name: '已完成' },
+        { value: 0, name: '已取消' }
       ]
     },
     handleResize() {
@@ -337,16 +338,6 @@ export default {
       }
       return labels
     },
-    generateMockData(range) {
-      const labels = this.getRangeLabels(range)
-      const count = labels.length
-      return {
-        dates: labels,
-        orderCounts: Array.from({ length: count }, () => Math.floor(Math.random() * 200 + 200)),
-        completedCounts: Array.from({ length: count }, () => Math.floor(Math.random() * 150 + 150)),
-        revenues: Array.from({ length: count }, () => Math.floor(Math.random() * 20000 + 30000))
-      }
-    },
     async onRangeChange(type) {
       const range = type === 'order' ? this.orderRange : this.revenueRange
       try {
@@ -355,6 +346,7 @@ export default {
           const data = {
             dates: res.data.dates || [],
             orderCounts: res.data.orderCounts || [],
+            completedCounts: res.data.completedCounts || [],
             revenues: res.data.amounts || []
           }
           if (type === 'order') {
@@ -366,7 +358,7 @@ export default {
           }
         }
       } catch (e) {
-        const data = this.generateMockData(range)
+        const data = this.getEmptyTrend(range)
         if (type === 'order') {
           this.updateOrderTrendChart(data)
         } else {

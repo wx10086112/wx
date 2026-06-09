@@ -26,7 +26,7 @@ import com.ruoyi.mall.product.mapper.ProductMapper;
 import com.ruoyi.mall.user.domain.MallUser;
 import com.ruoyi.mall.user.mapper.MallUserMapper;
 import com.ruoyi.wxmini.dto.merchant.*;
-import com.ruoyi.wxmini.service.IMerchantMiniMockService;
+import com.ruoyi.wxmini.service.IMerchantMiniService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Primary;
@@ -35,21 +35,23 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
  * 商家端小程序 - 真实数据库实现
- * 替代 MerchantMiniMockServiceImpl
+ * 商家小程序真实数据库服务实现。
  */
 @Primary
 @Service
-public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
+public class MerchantMiniServiceImpl implements IMerchantMiniService {
 
     private static final String STATUS_ACTIVE = "ACTIVE";
     private static final String GOODS_STATUS_ON_SHELF = "ON_SHELF";
@@ -408,16 +410,25 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
         if (ext == null) {
             throw new IllegalArgumentException("仅支持jpg/png/webp格式");
         }
+        String contentType = file.getContentType();
+        if (contentType != null && !isAllowedImageMimeType(contentType)) {
+            throw new IllegalArgumentException("仅支持jpg/png/webp格式");
+        }
         try {
-            String subDir = "merchant-goods";
-            String uploadDir = profilePath + "/" + subDir + "/";
-            File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
+            Long merchantId = getMerchantIdFromContext();
+            String subDir = "merchant-goods/" + merchantId;
+            Path basePath = Paths.get(profilePath).toAbsolutePath().normalize();
+            Path dirPath = basePath.resolve(subDir).normalize();
+            if (!dirPath.startsWith(basePath)) {
+                throw new IllegalArgumentException("非法上传路径");
             }
+            Files.createDirectories(dirPath);
             String fileName = subDir + "/" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8) + "." + ext;
-            File dest = new File(profilePath + "/" + fileName);
-            file.transferTo(dest);
+            Path destPath = basePath.resolve(fileName).normalize();
+            if (!destPath.startsWith(basePath)) {
+                throw new IllegalArgumentException("非法上传路径");
+            }
+            file.transferTo(destPath.toFile());
 
             MerchantMiniUploadResultDto result = new MerchantMiniUploadResultDto();
             result.setFileName(fileName);
@@ -432,6 +443,12 @@ public class MerchantMiniServiceImpl implements IMerchantMiniMockService {
     /**
      * 根据 magic byte 检测图片真实类型
      */
+    private boolean isAllowedImageMimeType(String contentType) {
+        return "image/jpeg".equals(contentType)
+                || "image/png".equals(contentType)
+                || "image/webp".equals(contentType);
+    }
+
     private String detectImageExtension(InputStream is) throws IOException {
         byte[] header = new byte[12];
         int read = is.read(header);

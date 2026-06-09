@@ -27,14 +27,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -218,7 +221,8 @@ public class MallGrouponController extends BaseController {
             return AjaxResult.error("请选择要上传的文件");
         }
 
-        if (!ALLOWED_IMAGE_TYPES.contains(imageType)) {
+        String normalizedImageType = imageType == null ? "cover" : imageType.trim().toLowerCase(Locale.ROOT);
+        if (!ALLOWED_IMAGE_TYPES.contains(normalizedImageType)) {
             return AjaxResult.error("不支持的图片类型");
         }
 
@@ -251,43 +255,53 @@ public class MallGrouponController extends BaseController {
             return AjaxResult.error("仅支持jpg/png/webp格式");
         }
 
+        String contentType = file.getContentType();
+        if (contentType != null && !isAllowedMimeType(contentType)) {
+            return AjaxResult.error("仅支持jpg/png/webp格式");
+        }
+
         String uploadRoot = RuoYiConfig.getProfile() + "/merchant_images";
 
         try {
             StringBuilder dirBuilder = new StringBuilder();
-            dirBuilder.append(merchantId).append(File.separator);
-            dirBuilder.append("groupon").append(File.separator);
+            dirBuilder.append(merchantId).append("/");
+            dirBuilder.append("groupon").append("/");
 
             if (grouponId != null) {
-                dirBuilder.append(grouponId).append(File.separator);
+                dirBuilder.append(grouponId).append("/");
             } else if (tempToken != null) {
                 if (!tempToken.matches("^[a-zA-Z0-9_-]{1,64}$")) {
                     return AjaxResult.error("无效的tempToken");
                 }
-                dirBuilder.append("temp").append(File.separator).append(tempToken).append(File.separator);
+                dirBuilder.append("temp").append("/").append(tempToken).append("/");
             } else {
-                dirBuilder.append("temp").append(File.separator);
+                dirBuilder.append("temp").append("/");
             }
 
             String subDir = dirBuilder.toString();
-            File dir = new File(uploadRoot, subDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
+            Path basePath = Paths.get(uploadRoot).toAbsolutePath().normalize();
+            Path dirPath = basePath.resolve(subDir).normalize();
+            if (!dirPath.startsWith(basePath)) {
+                return AjaxResult.error("非法上传路径");
             }
+            Files.createDirectories(dirPath);
 
             String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-            String fileName = imageType + "_" + uuid + "." + ext;
+            String fileName = normalizedImageType + "_" + uuid + "." + ext;
             String relativePath = subDir + fileName;
 
-            File dest = new File(uploadRoot, relativePath);
-            file.transferTo(dest);
+            Path destPath = basePath.resolve(relativePath).normalize();
+            if (!destPath.startsWith(basePath)) {
+                return AjaxResult.error("非法上传路径");
+            }
+            file.transferTo(destPath.toFile());
 
-            String url = "/profile/merchant_images/" + relativePath.replace(File.separator, "/");
+            String url = "/profile/merchant_images/" + relativePath;
 
             Map<String, Object> result = new HashMap<>();
             result.put("url", url);
             result.put("fileName", fileName);
-            result.put("relativePath", relativePath.replace(File.separator, "/"));
+            result.put("relativePath", relativePath);
             return AjaxResult.success(result);
 
         } catch (IOException e) {
@@ -415,6 +429,12 @@ public class MallGrouponController extends BaseController {
             return AjaxResult.error("商家运营条件不满足：" + merchant.getOperateBlockReason());
         }
         return null;
+    }
+
+    private boolean isAllowedMimeType(String contentType) {
+        return "image/jpeg".equals(contentType)
+                || "image/png".equals(contentType)
+                || "image/webp".equals(contentType);
     }
 
     private String detectImageExtension(InputStream is) throws IOException {

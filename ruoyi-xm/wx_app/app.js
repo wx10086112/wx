@@ -1,13 +1,21 @@
 const util = require('./utils/util')
 const merchantUtil = require('./utils/merchant-util')
+const templateService = require('./services/template')
 const MERCHANT_ENTRY_KEY = 'merchantEntry'
 const BASE_URL_STORAGE_KEY = 'baseUrl'
 const DEFAULT_BASE_URL = 'https://ld-console.lingdian.site/prod-api'
 
+const isUnsafeBaseUrl = (baseUrl = '') => {
+  const normalized = String(baseUrl || '').trim()
+  return !/^https:\/\//i.test(normalized) ||
+    /^https?:\/\/(localhost|127\.|0\.0\.0\.0|10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/i.test(normalized) ||
+    /(example|invalid|placeholder|xxx)/i.test(normalized)
+}
+
 const normalizeBaseUrl = (value = '') => {
   if (!value || typeof value !== 'string') return DEFAULT_BASE_URL
   const baseUrl = value.trim().replace(/\/+$/, '')
-  if (!baseUrl || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(baseUrl)) {
+  if (!baseUrl || isUnsafeBaseUrl(baseUrl)) {
     return DEFAULT_BASE_URL
   }
   return baseUrl
@@ -77,6 +85,7 @@ App({
     this.restoreMerchantEntry()
     this.applyMerchantEntryOptions(options)
     this.restoreMerchantLogin()
+    this.loadTemplateConfig()
   },
 
   onShow(options = {}) {
@@ -90,6 +99,13 @@ App({
     if (accountInfo && accountInfo.miniProgram) {
       this.globalData.appId = accountInfo.miniProgram.appId || ''
     }
+  },
+
+  loadTemplateConfig() {
+    templateService.fetchTemplateConfig({
+      useRemote: true,
+      force: true
+    }).catch(() => {})
   },
 
   checkLoginStatus() {

@@ -9,11 +9,11 @@ const getGrouponDetail = (id) => {
 }
 
 const getProductList = (data = {}) => {
-  return get('/wxmini/product/list', data)
+  return get('/wxmini/groupon/list', data)
 }
 
 const getProductDetail = (id) => {
-  return get(`/wxmini/product/detail/${id}`)
+  return get(`/wxmini/groupon/detail/${id}`)
 }
 
 module.exports = {

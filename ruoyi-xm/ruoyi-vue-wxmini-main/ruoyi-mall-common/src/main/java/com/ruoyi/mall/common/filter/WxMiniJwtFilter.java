@@ -33,7 +33,7 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            String path = request.getRequestURI();
+            String path = getRequestPath(request);
             if (this.checkIsExcludeUri(path)) {
                 filterChain.doFilter(request, response);
                 return;
@@ -112,6 +112,19 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
         }
     }
 
+    private String getRequestPath(HttpServletRequest request) {
+        String path = request.getServletPath();
+        if (StringUtils.isNotBlank(path)) {
+            return path;
+        }
+        path = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (StringUtils.isNotBlank(contextPath) && path.startsWith(contextPath)) {
+            return path.substring(contextPath.length());
+        }
+        return path;
+    }
+
     /**
      * 公开浏览接口也需要先按 C 端 AppID 识别商家，否则商家列表、团购列表会失去租户上下文。
      */
@@ -131,7 +144,7 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
      */
     private void handleMerchantMiniRequest(HttpServletRequest request, HttpServletResponse response,
                                            FilterChain filterChain) throws ServletException, IOException {
-        if (isMerchantMiniPublicUri(request.getRequestURI())) {
+        if (isMerchantMiniPublicUri(getRequestPath(request))) {
             filterChain.doFilter(request, response);
             return;
         }

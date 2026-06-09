@@ -1,10 +1,17 @@
 package com.ruoyi.wxmini.controller;
 
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.mall.merchant.domain.Merchant;
+import com.ruoyi.mall.merchant.service.IMerchantService;
+import com.ruoyi.system.service.ISysConfigService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -15,9 +22,35 @@ import java.util.Map;
 @RequestMapping("/wxmini/template")
 public class WxTemplateController {
 
+    private static final String DEFAULT_OPERATOR_NAME = "请在后台参数 mall.privacy.operatorName 配置运营主体";
+    private static final String DEFAULT_RIGHTS_TIPS = "可通过小程序“联系客服”、订单详情商户联系方式或微信小程序主体公示联系方式提交个人信息权利请求。";
+
+    @Resource
+    private ISysConfigService configService;
+
+    @Resource
+    private IMerchantService merchantService;
+
     @GetMapping("/config")
-    public AjaxResult config() {
+    public AjaxResult config(@RequestHeader(value = "X-Wx-AppId", required = false) String wxAppId,
+                             @RequestParam(value = "appid", required = false) String appid) {
         Map<String, Object> data = new HashMap<>();
+
+        String requestAppId = StringUtils.defaultIfBlank(wxAppId, appid);
+        Merchant appMerchant = resolveMerchantByCAppId(requestAppId);
+
+        String operatorName = firstNonBlank(valueFromMerchant(appMerchant, "name"),
+                configValue("mall.privacy.operatorName", DEFAULT_OPERATOR_NAME));
+        String servicePhone = firstNonBlank(valueFromMerchant(appMerchant, "phone"),
+                configValue("mall.privacy.servicePhone", ""));
+        String contactEmail = configValue("mall.privacy.contactEmail", "");
+        String contactAddress = firstNonBlank(valueFromMerchant(appMerchant, "address"),
+                configValue("mall.privacy.contactAddress", ""));
+        String businessHoursText = firstNonBlank(valueFromMerchant(appMerchant, "businessHours"),
+                configValue("mall.privacy.businessHoursText", ""));
+        String rightsRequestTips = configValue("mall.privacy.rightsRequestTips", DEFAULT_RIGHTS_TIPS);
+        List<String> missingPrivacyFields = buildMissingPrivacyFields(operatorName, servicePhone, contactEmail,
+                contactAddress, requestAppId, appMerchant);
 
         // templateMeta
         Map<String, Object> templateMeta = new HashMap<>();
@@ -31,13 +64,40 @@ public class WxTemplateController {
         // brandInfo
         Map<String, Object> brandInfo = new HashMap<>();
         brandInfo.put("id", "brand_001");
-        brandInfo.put("name", "蓝屿轻养生活馆");
+        brandInfo.put("name", operatorName);
         brandInfo.put("slogan", "");
         brandInfo.put("notice", "欢迎使用门店团购小程序");
-        brandInfo.put("servicePhone", "010-88886601");
+        brandInfo.put("servicePhone", servicePhone);
         brandInfo.put("searchPlaceholder", "搜索套餐、服务项目");
         brandInfo.put("primaryColor", "#1677ff");
         data.put("brandInfo", brandInfo);
+
+        Map<String, Object> contactInfo = new HashMap<>();
+        contactInfo.put("operatorName", operatorName);
+        contactInfo.put("servicePhone", servicePhone);
+        contactInfo.put("contactEmail", contactEmail);
+        contactInfo.put("contactAddress", contactAddress);
+        contactInfo.put("businessHoursText", businessHoursText);
+        contactInfo.put("rightsRequestTips", rightsRequestTips);
+        contactInfo.put("configured", missingPrivacyFields.isEmpty());
+        contactInfo.put("missingFields", missingPrivacyFields);
+        contactInfo.put("configSource", appMerchant != null ? "merchant" : "system");
+        contactInfo.put("matchedAppId", appMerchant != null);
+        data.put("contactInfo", contactInfo);
+
+        Map<String, Object> privacyInfo = new HashMap<>();
+        privacyInfo.put("operatorName", operatorName);
+        privacyInfo.put("processorText", "本小程序个人信息处理者为：" + operatorName);
+        privacyInfo.put("servicePhone", servicePhone);
+        privacyInfo.put("contactEmail", contactEmail);
+        privacyInfo.put("contactAddress", contactAddress);
+        privacyInfo.put("rightsRequestTips", rightsRequestTips);
+        privacyInfo.put("wechatPrivacyFillReminder", "微信公众平台隐私保护指引需与小程序内展示的运营主体、电话、邮箱、地址保持一致。");
+        privacyInfo.put("configured", missingPrivacyFields.isEmpty());
+        privacyInfo.put("missingFields", missingPrivacyFields);
+        privacyInfo.put("configSource", appMerchant != null ? "merchant" : "system");
+        privacyInfo.put("matchedAppId", appMerchant != null);
+        data.put("privacyInfo", privacyInfo);
 
         // home
         Map<String, Object> home = new HashMap<>();
@@ -168,5 +228,62 @@ public class WxTemplateController {
         data.put("featureToggle", featureToggle);
 
         return AjaxResult.success(data);
+    }
+
+    private String configValue(String key, String fallback) {
+        String value = configService.selectConfigByKey(key);
+        return StringUtils.isNotBlank(value) ? value.trim() : fallback;
+    }
+
+    private Merchant resolveMerchantByCAppId(String appId) {
+        if (StringUtils.isBlank(appId)) {
+            return null;
+        }
+        return merchantService.selectMerchantByCAppId(appId.trim());
+    }
+
+    private String valueFromMerchant(Merchant merchant, String field) {
+        if (merchant == null) {
+            return "";
+        }
+        if ("name".equals(field)) {
+            return merchant.getName();
+        }
+        if ("phone".equals(field)) {
+            return merchant.getPhone();
+        }
+        if ("address".equals(field)) {
+            return merchant.getAddress();
+        }
+        if ("businessHours".equals(field)) {
+            return merchant.getBusinessHours();
+        }
+        return "";
+    }
+
+    private String firstNonBlank(String first, String fallback) {
+        return StringUtils.isNotBlank(first) ? first.trim() : fallback;
+    }
+
+    private List<String> buildMissingPrivacyFields(String operatorName, String servicePhone,
+                                                   String contactEmail, String contactAddress,
+                                                   String requestAppId, Merchant appMerchant) {
+        List<String> missing = new ArrayList<>();
+        if (StringUtils.isNotBlank(requestAppId) && appMerchant == null) {
+            missing.add("小程序AppID对应商户");
+        }
+        if (DEFAULT_OPERATOR_NAME.equals(operatorName)) {
+            missing.add("运营主体名称");
+        }
+        if (StringUtils.isBlank(servicePhone)) {
+            missing.add("客服电话");
+        }
+        if (StringUtils.isBlank(contactEmail)) {
+            missing.add("联系邮箱");
+        }
+        if (StringUtils.isBlank(contactAddress)) {
+            missing.add("注册地址或常用联系地址");
+        }
+        return missing;
     }
 }

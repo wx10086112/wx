@@ -1,12 +1,39 @@
-const app = getApp()
 const DEFAULT_BASE_URL = 'https://ld-console.lingdian.site/prod-api'
 const BASE_URL_STORAGE_KEY = 'baseUrl'
+const { normalizeImageFields } = require('./image-url')
+
+const normalizeBaseUrl = (baseUrl = DEFAULT_BASE_URL) => {
+  const normalized = String(baseUrl || DEFAULT_BASE_URL).trim().replace(/\/+$/, '')
+  const unsafe = !/^https:\/\//i.test(normalized) ||
+    /^https?:\/\/(localhost|127\.|0\.0\.0\.0|10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/i.test(normalized) ||
+    /(example|invalid|placeholder|xxx)/i.test(normalized)
+  return unsafe ? DEFAULT_BASE_URL : normalized
+}
+
+const getAppInstance = () => {
+  try {
+    return getApp()
+  } catch (e) {
+    return null
+  }
+}
 
 const getBaseUrl = () => {
-  const runtimeBaseUrl = app.baseUrl || wx.getStorageSync(BASE_URL_STORAGE_KEY) || DEFAULT_BASE_URL
-  return String(runtimeBaseUrl).trim().replace(/\/+$/, '') || DEFAULT_BASE_URL
+  const app = getAppInstance()
+  const runtimeBaseUrl = (app && app.baseUrl) || wx.getStorageSync(BASE_URL_STORAGE_KEY) || DEFAULT_BASE_URL
+  return normalizeBaseUrl(runtimeBaseUrl)
 }
-const getAppId = () => (app.globalData && app.globalData.appId) || ''
+const getAppId = () => {
+  const app = getAppInstance()
+  return (app && app.globalData && app.globalData.appId) || ''
+}
+
+const clearLoginInfo = () => {
+  const app = getAppInstance()
+  if (app && app.clearLoginInfo) {
+    app.clearLoginInfo()
+  }
+}
 
 const parseUploadResponse = (rawData = '') => {
   try {
@@ -37,10 +64,11 @@ const request = (options) => {
       header: header,
       success: (res) => {
         if (res.statusCode === 200) {
-          if (res.data.code === 200 || res.data.code === 0) {
-            resolve(res.data)
-          } else if (res.data.code === 401) {
-            app.clearLoginInfo()
+          const responseData = normalizeImageFields(res.data || {})
+          if (responseData.code === 200 || responseData.code === 0) {
+            resolve(responseData)
+          } else if (responseData.code === 401) {
+            clearLoginInfo()
             wx.showToast({
               title: '登录已过期，请重新登录',
               icon: 'none'
@@ -48,10 +76,10 @@ const request = (options) => {
             reject(new Error('登录已过期'))
           } else {
             wx.showToast({
-              title: res.data.msg || '请求失败',
+              title: responseData.msg || '请求失败',
               icon: 'none'
             })
-            reject(new Error(res.data.msg || '请求失败'))
+            reject(new Error(responseData.msg || '请求失败'))
           }
         } else {
           wx.showToast({
@@ -121,7 +149,7 @@ const uploadFile = (filePath, url = '/wxmini/common/upload') => {
       header,
       success: (res) => {
         if (res.statusCode === 401) {
-          app.clearLoginInfo()
+          clearLoginInfo()
           reject(new Error('登录已过期'))
           return
         }
@@ -135,10 +163,11 @@ const uploadFile = (filePath, url = '/wxmini/common/upload') => {
           reject(new Error('上传返回异常'))
           return
         }
-        if (data.code === 200 || data.code === 0) {
-          resolve(data)
+        const responseData = normalizeImageFields(data)
+        if (responseData.code === 200 || responseData.code === 0) {
+          resolve(responseData)
         } else {
-          reject(new Error(data.msg || '上传失败'))
+          reject(new Error(responseData.msg || '上传失败'))
         }
       },
       fail: (err) => {

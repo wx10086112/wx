@@ -1,5 +1,5 @@
 const { get, post, put, getBaseUrl } = require('../../utils/merchant-request')
-const app = getApp()
+const { normalizeImageFields } = require('../../utils/image-url')
 
 const getMerchantGoodsList = (data = {}) => get('/wxmini/merchant-mini/goods/list', data)
 const saveMerchantGoods = (data) => post('/wxmini/merchant-mini/goods/save', data)
@@ -13,15 +13,36 @@ const parseUploadResponse = (rawData = '') => {
   }
 }
 
+const getAppInstance = () => {
+  try {
+    return getApp()
+  } catch (e) {
+    return null
+  }
+}
+
+const getAppId = () => {
+  const app = getAppInstance()
+  return (app && app.globalData && app.globalData.appId) || ''
+}
+
+const getMerchantEntry = () => {
+  const app = getAppInstance()
+  return app && app.getMerchantEntry ? app.getMerchantEntry() : null
+}
+
 const uploadMerchantGoodsImage = (filePath) => {
   return new Promise((resolve, reject) => {
     const token = wx.getStorageSync('merchantToken')
-    const appId = (app.globalData && app.globalData.appId) || ''
+    const merchantEntry = getMerchantEntry()
     const header = {
-      'X-Merchant-AppId': appId
+      'X-Merchant-AppId': getAppId()
+    }
+    if (merchantEntry && merchantEntry.merchantId) {
+      header['X-Merchant-Id'] = String(merchantEntry.merchantId)
     }
     if (token) {
-      header['Wx-Authorization'] = `Bearer ${token}`
+      header['Wx-Authorization'] = token.startsWith('Bearer ') ? token : `Bearer ${token}`
     }
     wx.uploadFile({
       url: `${getBaseUrl()}/wxmini/merchant-mini/goods/image/upload`,
@@ -38,7 +59,7 @@ const uploadMerchantGoodsImage = (filePath) => {
           return
         }
 
-        const responseData = parseUploadResponse(res.data)
+        const responseData = normalizeImageFields(parseUploadResponse(res.data))
         if (!responseData) {
           reject(new Error('图片上传返回异常'))
           return

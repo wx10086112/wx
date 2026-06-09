@@ -43,7 +43,7 @@
       <el-table-column label="ID" prop="id" width="70" align="center" />
       <el-table-column label="活动封面" width="90" align="center">
         <template slot-scope="scope">
-          <el-image v-if="scope.row.coverImage" :src="scope.row.coverImage" style="width: 60px; height: 60px;" fit="cover" :preview-src-list="[scope.row.coverImage]" />
+          <el-image v-if="scope.row.coverImage" :src="displayImageUrl(scope.row.coverImage)" style="width: 60px; height: 60px;" fit="cover" :preview-src-list="[displayImageUrl(scope.row.coverImage)]" />
           <span v-else style="color: #ccc;">无</span>
         </template>
       </el-table-column>
@@ -152,7 +152,7 @@
             :before-upload="beforeImageUpload"
             :data="uploadData('cover')"
           >
-            <img v-if="form.coverImage" :src="form.coverImage" class="image-preview">
+            <img v-if="form.coverImage" :src="displayImageUrl(form.coverImage)" class="image-preview">
             <i v-else class="el-icon-plus image-uploader-icon"></i>
           </el-upload>
           <div class="upload-tip">封面图，支持 jpg/jpeg/png/webp，不超过5MB</div>
@@ -167,7 +167,7 @@
             :before-upload="beforeImageUpload"
             :data="uploadData('poster')"
           >
-            <img v-if="form.posterImage" :src="form.posterImage" class="image-preview">
+            <img v-if="form.posterImage" :src="displayImageUrl(form.posterImage)" class="image-preview">
             <i v-else class="el-icon-plus image-uploader-icon"></i>
           </el-upload>
           <div class="upload-tip">海报图，可选</div>
@@ -178,7 +178,7 @@
             :headers="uploadHeaders"
             list-type="picture-card"
             :file-list="detailFileList"
-            :on-success="(res) => handleDetailImageSuccess(res)"
+            :on-success="handleDetailImageSuccess"
             :before-upload="beforeImageUpload"
             :on-remove="handleDetailImageRemove"
             :data="uploadData('detail')"
@@ -299,6 +299,16 @@ export default {
     this.getList()
   },
   methods: {
+    displayImageUrl(url) {
+      if (!url || /^(https?:)?\/\//i.test(url) || url.startsWith('data:') || url.startsWith('blob:')) {
+        return url || ''
+      }
+      const baseApi = (process.env.VUE_APP_BASE_API || '').replace(/\/+$/, '')
+      return baseApi + (url.startsWith('/') ? url : '/' + url)
+    },
+    getUploadFileUrl(file) {
+      return file.rawUrl || (file.response && file.response.data && file.response.data.url) || file.url || ''
+    },
     /** 获取列表 */
     getList() {
       this.loading = true
@@ -360,7 +370,7 @@ export default {
       getGroupon(row.id).then(res => {
         this.form = { ...res.data }
         if (!this.form.detailImages) this.form.detailImages = '[]'
-        this.detailFileList = JSON.parse(this.form.detailImages).map(url => ({ url, name: url.split('/').pop() }))
+        this.detailFileList = JSON.parse(this.form.detailImages).map(url => ({ rawUrl: url, url: this.displayImageUrl(url), name: url.split('/').pop() }))
         this.dialogVisible = true
       })
     },
@@ -420,8 +430,10 @@ export default {
         this.$message.error(res.msg || '上传失败')
       }
     },
-    handleDetailImageSuccess(res) {
+    handleDetailImageSuccess(res, file) {
       if (res.code === 200) {
+        file.rawUrl = res.data.url
+        file.url = this.displayImageUrl(res.data.url)
         const list = JSON.parse(this.form.detailImages || '[]')
         list.push(res.data.url)
         this.form.detailImages = JSON.stringify(list)
@@ -431,7 +443,7 @@ export default {
     },
     handleDetailImageRemove(file) {
       const list = JSON.parse(this.form.detailImages || '[]')
-      const idx = list.indexOf(file.url)
+      const idx = list.indexOf(this.getUploadFileUrl(file))
       if (idx > -1) {
         list.splice(idx, 1)
         this.form.detailImages = JSON.stringify(list)

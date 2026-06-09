@@ -64,12 +64,7 @@ Vue.use(VueMeta)
 DictData.install()
 
 /**
- * If you don't want to use mock-server
- * you want to use MockJs for mock api
- * you can execute: mockXHR()
- *
- * Currently MockJs will be used in the production environment,
- * please remove it before going online! ! !
+ * MockJs is intentionally disabled. Business pages should call real backend APIs.
  */
 
 Vue.use(Element, {

@@ -18,7 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-public interface IMerchantMiniMockService {
+public interface IMerchantMiniService {
 
     MerchantMiniLoginResponseDto login(String username, String password, Long merchantId, String appid);
 

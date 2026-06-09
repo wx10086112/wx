@@ -4,10 +4,6 @@ const login = (appid, code) => {
   return get('/wxmini/login', { appid, code })
 }
 
-const quickLogin = (loginCode, phoneCode) => {
-  return post('/wxmini/login/quick', { loginCode, phoneCode })
-}
-
 const bindPhoneByCode = (code) => {
   return post('/wxmini/user/phone/bind', { code })
 }
@@ -26,7 +22,6 @@ const cancelAccount = () => {
 
 module.exports = {
   login,
-  quickLogin,
   bindPhoneByCode,
   getUserInfo,
   updateUserInfo,

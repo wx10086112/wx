@@ -57,6 +57,8 @@
         <text class="agreement-doc__meta">更新日期：2026年6月9日　生效日期：2026年6月9日</text>
         <text class="agreement-doc__p">本指引说明商家端在经营管理和订单履约过程中涉及的数据处理规则。商家及员工应以最小必要原则使用平台提供的数据，不得超出订单履约和经营管理目的处理用户个人信息。</text>
         <text class="agreement-doc__p">商家端个人信息处理者为当前小程序认证主体及对应入驻商户，具体主体名称、门店联系方式和经营资质以小程序主体信息、商家资质公示、门店页面及“联系客服”页面展示为准。</text>
+        <text wx:if="{{privacyInfo.operatorName}}" class="agreement-doc__p">当前配置的个人信息处理者：{{privacyInfo.operatorName}}</text>
+        <text wx:if="{{privacyContactLine}}" class="agreement-doc__p">联系方式：{{privacyContactLine}}</text>
         <text class="agreement-doc__section">一、商家端处理的信息</text>
         <text class="agreement-doc__p">1. 商家资料：包括门店名称、联系人、联系电话、地址、简介、营业状态、退款支持、预约支持、小程序接入参数、结算配置和资质相关信息，用于门店展示、后台管理和系统接入。</text>
         <text class="agreement-doc__p">2. 员工资料：包括员工账号、姓名、手机号、角色权限、登录状态和操作记录，用于身份识别、权限控制、履约管理和安全审计。</text>
@@ -104,6 +106,8 @@
         <text class="agreement-doc__meta">更新日期：2026年6月9日　生效日期：2026年6月9日</text>
         <text class="agreement-doc__p">本指引依据《中华人民共和国个人信息保护法》等相关法律法规，并结合本项目实际功能制定。我们仅处理实现小程序功能所必要的信息，并在本指引明示的目的内使用。</text>
         <text class="agreement-doc__p">本小程序个人信息处理者为当前小程序认证主体及对应商户。具体主体名称、经营资质、门店电话、客服入口和联系地址以微信小程序主体信息、商家资质公示、门店页面及“联系客服”页面展示为准。</text>
+        <text wx:if="{{privacyInfo.operatorName}}" class="agreement-doc__p">当前配置的个人信息处理者：{{privacyInfo.operatorName}}</text>
+        <text wx:if="{{privacyContactLine}}" class="agreement-doc__p">联系方式：{{privacyContactLine}}</text>
         <text class="agreement-doc__section">一、我们处理的信息及用途</text>
         <text class="agreement-doc__p">1. 微信登录标识：包括 openid、用户ID、登录凭证和登录状态，用于识别账号、保持登录、查询你的订单和保障账号安全。</text>
         <text class="agreement-doc__p">2. 昵称和头像：当你使用头像选择、昵称输入或编辑资料功能时，我们会处理你的微信头像、昵称或你主动填写的展示名称，用于个人中心和订单中的必要展示。</text>
@@ -129,7 +133,7 @@
         <text class="agreement-doc__section">九、未成年人保护</text>
         <text class="agreement-doc__p">未成年人使用本小程序应取得监护人同意。若监护人认为未成年人个人信息被不当处理，可通过商户客服或平台运营渠道联系我们处理。</text>
         <text class="agreement-doc__section">十、联系方式</text>
-        <text class="agreement-doc__p">如你对个人信息处理有查阅、复制、更正、删除、撤回授权、注销或投诉建议等需求，可优先通过小程序“联系客服”、订单详情页商家联系方式或微信小程序主体公示联系方式处理。我们将在合理期限内核验身份并处理你的请求。</text>
+        <text class="agreement-doc__p">{{privacyRightsText}}</text>
       </view>
 
       <view wx:else class="agreement-doc">

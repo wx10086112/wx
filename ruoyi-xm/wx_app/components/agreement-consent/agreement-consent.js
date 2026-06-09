@@ -1,4 +1,5 @@
 const agreement = require('../../utils/agreement')
+const templateService = require('../../services/template')
 
 const AGREEMENT_CONFIGS = {
   user: {
@@ -30,6 +31,18 @@ const getAgreementConfig = (audience = 'user') => {
   return AGREEMENT_CONFIGS[normalizeAudience(audience)]
 }
 
+const buildPrivacyContactLine = (privacyInfo = {}) => {
+  const parts = []
+  if (privacyInfo.servicePhone) parts.push(`电话 ${privacyInfo.servicePhone}`)
+  if (privacyInfo.contactEmail) parts.push(`邮箱 ${privacyInfo.contactEmail}`)
+  if (privacyInfo.contactAddress) parts.push(`地址 ${privacyInfo.contactAddress}`)
+  return parts.join('；')
+}
+
+const buildPrivacyRightsText = (privacyInfo = {}) => {
+  return privacyInfo.rightsRequestTips || '如你对个人信息处理有查阅、复制、更正、删除、撤回授权、注销或投诉建议等需求，可优先通过小程序“联系客服”、订单详情页商家联系方式或微信小程序主体公示联系方式处理。我们将在合理期限内核验身份并处理你的请求。'
+}
+
 Component({
   properties: {
     audience: {
@@ -54,7 +67,10 @@ Component({
     tabs: AGREEMENT_CONFIGS.user.tabs,
     sheetTitle: AGREEMENT_CONFIGS.user.sheetTitle,
     serviceTitle: AGREEMENT_CONFIGS.user.serviceTitle,
-    privacyTitle: AGREEMENT_CONFIGS.user.privacyTitle
+    privacyTitle: AGREEMENT_CONFIGS.user.privacyTitle,
+    privacyInfo: {},
+    privacyContactLine: '',
+    privacyRightsText: buildPrivacyRightsText()
   },
 
   observers: {
@@ -66,6 +82,7 @@ Component({
   lifetimes: {
     attached() {
       this.applyAudienceConfig(this.data.audience, true)
+      this.refreshPrivacyInfo()
     }
   },
 
@@ -95,6 +112,21 @@ Component({
       if (shouldSyncChecked) {
         this.triggerEvent('change', { checked: nextData.checked })
       }
+    },
+
+    refreshPrivacyInfo() {
+      const applyPrivacyInfo = () => {
+        const privacyInfo = templateService.getTemplateSection('privacyInfo') || {}
+        this.setData({
+          privacyInfo,
+          privacyContactLine: buildPrivacyContactLine(privacyInfo),
+          privacyRightsText: buildPrivacyRightsText(privacyInfo)
+        })
+      }
+      applyPrivacyInfo()
+      templateService.fetchTemplateConfig({ useRemote: true, force: true }).then(() => {
+        applyPrivacyInfo()
+      }).catch(() => {})
     },
 
     syncCheckedState() {

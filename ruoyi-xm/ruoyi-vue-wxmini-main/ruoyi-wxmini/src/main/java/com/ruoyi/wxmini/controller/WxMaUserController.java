@@ -127,9 +127,11 @@ public class WxMaUserController {
     }
 
     @PostMapping("/phone/bind")
-    public AjaxResult bindPhone(@RequestBody Map<String, String> body) {
-        String code = body.get("code");
-        String appid = body.get("appid");
+    public AjaxResult bindPhone(@RequestBody Map<String, String> body,
+                                @RequestHeader(value = "X-Wx-AppId", required = false) String headerAppId) {
+        String code = body != null ? body.get("code") : null;
+        String bodyAppId = body != null ? body.get("appid") : null;
+        String appid = StringUtils.defaultIfBlank(bodyAppId, headerAppId);
         if (StringUtils.isBlank(code)) {
             return AjaxResult.error("code不能为空");
         }
