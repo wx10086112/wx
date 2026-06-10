@@ -4,27 +4,13 @@ const templateService = require('./services/template')
 const MERCHANT_ENTRY_KEY = 'merchantEntry'
 const BASE_URL_STORAGE_KEY = 'baseUrl'
 const PROD_BASE_URL = 'https://ld-console.lingdian.site/prod-api'
-const DEV_BASE_URL = 'http://127.0.0.1:8080'
-
-const getEnvVersion = () => {
-  try {
-    const accountInfo = wx.getAccountInfoSync()
-    return (accountInfo && accountInfo.miniProgram && accountInfo.miniProgram.envVersion) || 'release'
-  } catch (e) {
-    return 'release'
-  }
-}
 
 const getDefaultBaseUrl = () => {
-  return getEnvVersion() === 'develop' ? DEV_BASE_URL : PROD_BASE_URL
+  return PROD_BASE_URL
 }
 
 const isUnsafeBaseUrl = (baseUrl = '') => {
   const normalized = String(baseUrl || '').trim()
-  const isDevelop = getEnvVersion() === 'develop'
-  if (isDevelop && /^https?:\/\/(localhost|127\.|0\.0\.0\.0|10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/i.test(normalized)) {
-    return false
-  }
   return !/^https:\/\//i.test(normalized) ||
     /^https?:\/\/(localhost|127\.|0\.0\.0\.0|10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/i.test(normalized) ||
     /(example|invalid|placeholder|xxx)/i.test(normalized)
@@ -114,8 +100,7 @@ App({
   initEnv() {
     const storedBaseUrl = wx.getStorageSync(BASE_URL_STORAGE_KEY)
     const defaultBaseUrl = getDefaultBaseUrl()
-    const shouldUseDevDefault = getEnvVersion() === 'develop' && (!storedBaseUrl || storedBaseUrl === PROD_BASE_URL)
-    this.baseUrl = normalizeBaseUrl(shouldUseDevDefault ? defaultBaseUrl : (storedBaseUrl || defaultBaseUrl))
+    this.baseUrl = normalizeBaseUrl(storedBaseUrl || defaultBaseUrl)
     wx.setStorageSync(BASE_URL_STORAGE_KEY, this.baseUrl)
     const accountInfo = wx.getAccountInfoSync()
     if (accountInfo && accountInfo.miniProgram) {
