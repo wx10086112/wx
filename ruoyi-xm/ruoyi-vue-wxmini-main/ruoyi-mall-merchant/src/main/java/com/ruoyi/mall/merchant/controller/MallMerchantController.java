@@ -41,6 +41,7 @@ import javax.net.ssl.SSLHandshakeException;
 @RequestMapping("/mall/merchant")
 public class MallMerchantController extends BaseController {
 
+    private static final String MINI_APP_ENTRY_PAGE = "pages/login/login";
     private static final String MERCHANT_LOGIN_PAGE = "pages/merchant/login/login";
     private static final int MERCHANT_ENTRY_CODE_WIDTH = 430;
 
@@ -50,7 +51,7 @@ public class MallMerchantController extends BaseController {
     private WxMaServiceManager wxMaServiceManager;
     @Value("${wx.miniapp.qrcode.env-version:release}")
     private String qrCodeEnvVersion;
-    @Value("${wx.miniapp.qrcode.check-path:true}")
+    @Value("${wx.miniapp.qrcode.check-path:false}")
     private boolean qrCodeCheckPath;
 
     @DataScopeBiz(distributorAlias = "m")
@@ -450,7 +451,7 @@ public class MallMerchantController extends BaseController {
                 }
                 File tempFile = maService.getQrcodeService().createWxaCodeUnlimit(
                         scene,
-                        MERCHANT_LOGIN_PAGE,
+                        MINI_APP_ENTRY_PAGE,
                         qrCodeCheckPath,
                         normalizeQrCodeEnvVersion(),
                         MERCHANT_ENTRY_CODE_WIDTH,
@@ -495,7 +496,7 @@ public class MallMerchantController extends BaseController {
     private String buildWxMiniCodeErrorMessage(WxErrorException e) {
         String message = e.getMessage();
         if (StringUtils.contains(message, "41030") || StringUtils.containsIgnoreCase(message, "invalid page")) {
-            return message + "。请确认 AppID 对应的小程序版本已包含页面 /" + MERCHANT_LOGIN_PAGE
+            return message + "。请确认 AppID 对应的小程序版本已包含页面 /" + MINI_APP_ENTRY_PAGE
                     + "；上线前测试可配置 wx.miniapp.qrcode.env-version=trial，必要时临时配置 wx.miniapp.qrcode.check-path=false。";
         }
         return message;

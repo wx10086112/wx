@@ -136,8 +136,8 @@ wx:
     qrcode:
       # 正式上线使用 release；体验版测试可切到 trial
       env-version: release
-      # 正式环境建议保持 true，确保页面路径已真实发布
-      check-path: true
+      # 微信侧路径库可能未同步体验版页面，关闭预校验后仍按 page 参数进入指定页面
+      check-path: false
     configs:
       - appid: test #微信小程序的appid
         secret: test #微信小程序的Secret

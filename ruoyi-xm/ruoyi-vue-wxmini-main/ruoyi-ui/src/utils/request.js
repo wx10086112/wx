@@ -81,6 +81,7 @@ service.interceptors.response.use(res => {
     if (res.request.responseType ===  'blob' || res.request.responseType ===  'arraybuffer') {
       return res.data
     }
+    const hideErrorMessage = [true, 'true'].includes((res.config.headers || {}).hideErrorMessage)
     if (code === 401) {
       if (!isRelogin.show) {
         isRelogin.show = true
@@ -95,7 +96,9 @@ service.interceptors.response.use(res => {
     }
       return Promise.reject('无效的会话，或者会话已过期，请重新登录。')
     } else if (code === 500) {
-      Message({ message: msg, type: 'error' })
+      if (!hideErrorMessage) {
+        Message({ message: msg, type: 'error' })
+      }
       return Promise.reject(new Error(msg))
     } else if (code === 601) {
       Message({ message: msg, type: 'warning' })

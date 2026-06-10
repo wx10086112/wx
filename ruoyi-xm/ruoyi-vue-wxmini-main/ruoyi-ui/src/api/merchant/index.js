@@ -20,7 +20,10 @@ export function getMerchantDetail(id) {
 export function getMerchantEntryQrCode(id) {
   return request({
     url: '/mall/merchant/entry-qrcode/' + id,
-    method: 'get'
+    method: 'get',
+    headers: {
+      hideErrorMessage: true
+    }
   })
 }
 
