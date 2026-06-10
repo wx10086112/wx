@@ -9,6 +9,8 @@ import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.MallDataScopeHelper;
 import com.ruoyi.mall.product.domain.Product;
+import com.ruoyi.mall.product.domain.ProductCategory;
+import com.ruoyi.mall.product.mapper.ProductCategoryMapper;
 import com.ruoyi.mall.product.service.IProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -43,6 +45,9 @@ public class MallProductController extends BaseController {
 
     @Autowired
     private IProductService productService;
+
+    @Autowired
+    private ProductCategoryMapper productCategoryMapper;
 
     private static final Set<String> ALLOWED_IMAGE_TYPES = new HashSet<>(Arrays.asList(
             "main", "detail", "cover", "sku"
@@ -80,6 +85,10 @@ public class MallProductController extends BaseController {
         if (denied != null) {
             return denied;
         }
+        AjaxResult categoryDenied = checkCategoryAccess(product.getCategoryId(), product.getMerchantId());
+        if (categoryDenied != null) {
+            return categoryDenied;
+        }
         return toAjax(productService.insertProduct(product));
     }
 
@@ -95,6 +104,11 @@ public class MallProductController extends BaseController {
         if (MallDataScopeHelper.currentEffectiveMerchantId() != null
                 || MallDataScopeHelper.currentEffectiveDistributorId() != null) {
             product.setMerchantId(existing.getMerchantId());
+        }
+        Long merchantId = product.getMerchantId() != null ? product.getMerchantId() : existing.getMerchantId();
+        AjaxResult categoryDenied = checkCategoryAccess(product.getCategoryId(), merchantId);
+        if (categoryDenied != null) {
+            return categoryDenied;
         }
         return toAjax(productService.updateProduct(product));
     }
@@ -222,6 +236,9 @@ public class MallProductController extends BaseController {
     }
 
     private AjaxResult checkMerchantAccess(Long merchantId, String label) {
+        if (merchantId == null) {
+            return AjaxResult.error(label + "缺少商家ID");
+        }
         Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
         if (effMerchantId != null && !effMerchantId.equals(merchantId)) {
             return AjaxResult.error("无权操作该" + label);
@@ -229,6 +246,20 @@ public class MallProductController extends BaseController {
         Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
         if (effDistributorId != null && !productService.isMerchantAccessibleByDistributor(merchantId, effDistributorId)) {
             return AjaxResult.error("无权操作该" + label);
+        }
+        return null;
+    }
+
+    private AjaxResult checkCategoryAccess(Long categoryId, Long merchantId) {
+        if (categoryId == null) {
+            return null;
+        }
+        ProductCategory category = productCategoryMapper.selectProductCategoryById(categoryId);
+        if (category == null || (category.getStatus() != null && category.getStatus() != 1)) {
+            return AjaxResult.error("商品分类不存在或已停用");
+        }
+        if (!category.getMerchantId().equals(merchantId)) {
+            return AjaxResult.error("商品分类不属于当前商家");
         }
         return null;
     }

@@ -1,4 +1,5 @@
-const DEFAULT_BASE_URL = 'https://ld-console.lingdian.site/prod-api'
+const PROD_BASE_URL = 'https://ld-console.lingdian.site/prod-api'
+const DEV_BASE_URL = 'http://127.0.0.1:8080'
 const BASE_URL_STORAGE_KEY = 'baseUrl'
 
 const legacyImageMap = {
@@ -17,17 +18,32 @@ const getAppInstance = () => {
   }
 }
 
-const normalizeBaseUrl = (baseUrl = DEFAULT_BASE_URL) => {
-  const normalized = String(baseUrl || DEFAULT_BASE_URL).trim().replace(/\/+$/, '')
-  const unsafe = !/^https:\/\//i.test(normalized) ||
+const getEnvVersion = () => {
+  try {
+    const accountInfo = wx.getAccountInfoSync()
+    return (accountInfo && accountInfo.miniProgram && accountInfo.miniProgram.envVersion) || 'release'
+  } catch (e) {
+    return 'release'
+  }
+}
+
+const getDefaultBaseUrl = () => {
+  return getEnvVersion() === 'develop' ? DEV_BASE_URL : PROD_BASE_URL
+}
+
+const normalizeBaseUrl = (baseUrl = getDefaultBaseUrl()) => {
+  const normalized = String(baseUrl || getDefaultBaseUrl()).trim().replace(/\/+$/, '')
+  const allowLocal = getEnvVersion() === 'develop' &&
+    /^https?:\/\/(localhost|127\.|0\.0\.0\.0|10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/i.test(normalized)
+  const unsafe = !allowLocal && (!/^https:\/\//i.test(normalized) ||
     /^https?:\/\/(localhost|127\.|0\.0\.0\.0|10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/i.test(normalized) ||
-    /(example|invalid|placeholder|xxx)/i.test(normalized)
-  return unsafe ? DEFAULT_BASE_URL : normalized
+    /(example|invalid|placeholder|xxx)/i.test(normalized))
+  return unsafe ? getDefaultBaseUrl() : normalized
 }
 
 const getRuntimeBaseUrl = () => {
   const app = getAppInstance()
-  const runtimeBaseUrl = (app && app.baseUrl) || wx.getStorageSync(BASE_URL_STORAGE_KEY) || DEFAULT_BASE_URL
+  const runtimeBaseUrl = (app && app.baseUrl) || wx.getStorageSync(BASE_URL_STORAGE_KEY) || getDefaultBaseUrl()
   return normalizeBaseUrl(runtimeBaseUrl)
 }
 

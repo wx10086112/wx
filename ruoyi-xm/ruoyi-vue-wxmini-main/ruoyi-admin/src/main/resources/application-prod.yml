@@ -42,6 +42,9 @@ swagger:
 
 wx:
   miniapp:
+    qrcode:
+      env-version: ${WX_MINI_QRCODE_ENV_VERSION:release}
+      check-path: ${WX_MINI_QRCODE_CHECK_PATH:true}
     configs:
       - appid: ${WX_MINI_APPID}
         secret: ${WX_MINI_SECRET}

@@ -1,11 +1,6 @@
 package com.ruoyi.mall.merchant.controller;
 
 import cn.binarywang.wx.miniapp.api.WxMaService;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.EncodeHintType;
-import com.google.zxing.WriterException;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
 import com.ruoyi.common.annotation.DataScopeBiz;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.config.RuoYiConfig;
@@ -21,37 +16,42 @@ import com.ruoyi.mall.merchant.service.IMerchantService;
 import me.chanjar.weixin.common.error.WxErrorException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
-import java.awt.Color;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.net.ssl.SSLHandshakeException;
 
 @RestController
 @RequestMapping("/mall/merchant")
 public class MallMerchantController extends BaseController {
 
+    private static final String MERCHANT_LOGIN_PAGE = "pages/merchant/login/login";
+    private static final int MERCHANT_ENTRY_CODE_WIDTH = 430;
+
     @Autowired
     private IMerchantService merchantService;
     @Autowired
-    private WxMaService wxMaService;
-    @Autowired
     private WxMaServiceManager wxMaServiceManager;
+    @Value("${wx.miniapp.qrcode.env-version:release}")
+    private String qrCodeEnvVersion;
+    @Value("${wx.miniapp.qrcode.check-path:true}")
+    private boolean qrCodeCheckPath;
 
     @DataScopeBiz(distributorAlias = "m")
     @PreAuthorize("@ss.hasPermi('mall:merchant:list')")
@@ -112,9 +112,9 @@ public class MallMerchantController extends BaseController {
         }
 
         String scene = "merchantId=" + id;
-        String loginPage = "/pages/merchant/login/login?merchantId=" + id;
+        String loginPage = "/" + MERCHANT_LOGIN_PAGE + "?merchantId=" + id;
         try {
-            String relativePath = generateMerchantEntryCode(id, appId, scene, request);
+            String relativePath = generateMerchantEntryCode(id, appId, merchant.getCMiniAppSecret(), scene);
             Map<String, Object> data = buildEntryQrResponse(merchant, appId, scene, loginPage, request, relativePath);
             return AjaxResult.success(data);
         } catch (IOException e) {
@@ -434,21 +434,37 @@ public class MallMerchantController extends BaseController {
         data.put("entryAppId", appId);
         data.put("scene", scene);
         data.put("loginPage", loginPage);
+        data.put("qrCodeEnvVersion", normalizeQrCodeEnvVersion());
+        data.put("qrCodeCheckPath", qrCodeCheckPath);
         data.put("qrCodeUrl", buildFullUrl(request, relativePath));
         return data;
     }
 
-    private String generateMerchantEntryCode(Long merchantId, String appId, String scene, HttpServletRequest request) throws IOException {
+    private String generateMerchantEntryCode(Long merchantId, String appId, String secret, String scene) throws IOException {
         try {
             if (shouldUseWxMiniCode(appId)) {
-                wxMaService.switchoverTo(appId);
-                File tempFile = wxMaService.getQrcodeService().createWxaCodeUnlimit(scene, "pages/merchant/login/login");
+                wxMaServiceManager.registerOrRefresh(appId, secret);
+                WxMaService maService = wxMaServiceManager.getService(appId);
+                if (maService == null) {
+                    throw new IOException("无法加载该商户小程序配置");
+                }
+                File tempFile = maService.getQrcodeService().createWxaCodeUnlimit(
+                        scene,
+                        MERCHANT_LOGIN_PAGE,
+                        qrCodeCheckPath,
+                        normalizeQrCodeEnvVersion(),
+                        MERCHANT_ENTRY_CODE_WIDTH,
+                        false,
+                        null,
+                        false);
                 return saveMerchantEntryCode(merchantId, tempFile);
             }
         } catch (WxErrorException e) {
-            return saveMerchantEntryFallbackCode(merchantId, buildMerchantEntryLandingUrl(request, merchantId));
+            throw new IOException("生成微信小程序码失败：" + buildWxMiniCodeErrorMessage(e), e);
+        } catch (RuntimeException e) {
+            throw new IOException("生成微信小程序码失败：" + buildRuntimeMiniCodeErrorMessage(e), e);
         }
-        return saveMerchantEntryFallbackCode(merchantId, buildMerchantEntryLandingUrl(request, merchantId));
+        throw new IOException("该商户小程序 AppID 无效");
     }
 
     private boolean shouldUseWxMiniCode(String appId) {
@@ -468,38 +484,44 @@ public class MallMerchantController extends BaseController {
         return "/profile/merchant_entry_codes/" + fileName;
     }
 
-    private String saveMerchantEntryFallbackCode(Long merchantId, String entryUrl) throws IOException {
-        String fileName = "merchant-entry-" + merchantId + ".png";
-        Path targetDir = Paths.get(RuoYiConfig.getProfile(), "merchant_entry_codes");
-        Files.createDirectories(targetDir);
-        Path targetFile = targetDir.resolve(fileName);
-        try {
-            QRCodeWriter writer = new QRCodeWriter();
-            Map<EncodeHintType, Object> hints = new EnumMap<>(EncodeHintType.class);
-            hints.put(EncodeHintType.CHARACTER_SET, StandardCharsets.UTF_8.name());
-            hints.put(EncodeHintType.MARGIN, 1);
-            BitMatrix bitMatrix = writer.encode(entryUrl, BarcodeFormat.QR_CODE, 430, 430, hints);
-            writeBitMatrixToPng(bitMatrix, targetFile);
-            return "/profile/merchant_entry_codes/" + fileName;
-        } catch (WriterException e) {
-            throw new IOException("本地二维码生成失败：" + e.getMessage(), e);
+    private String normalizeQrCodeEnvVersion() {
+        String envVersion = StringUtils.trimToEmpty(qrCodeEnvVersion).toLowerCase();
+        if ("develop".equals(envVersion) || "trial".equals(envVersion) || "release".equals(envVersion)) {
+            return envVersion;
         }
+        return "release";
     }
 
-    private void writeBitMatrixToPng(BitMatrix bitMatrix, Path targetFile) throws IOException {
-        int width = bitMatrix.getWidth();
-        int height = bitMatrix.getHeight();
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                image.setRGB(x, y, bitMatrix.get(x, y) ? Color.BLACK.getRGB() : Color.WHITE.getRGB());
+    private String buildWxMiniCodeErrorMessage(WxErrorException e) {
+        String message = e.getMessage();
+        if (StringUtils.contains(message, "41030") || StringUtils.containsIgnoreCase(message, "invalid page")) {
+            return message + "。请确认 AppID 对应的小程序版本已包含页面 /" + MERCHANT_LOGIN_PAGE
+                    + "；上线前测试可配置 wx.miniapp.qrcode.env-version=trial，必要时临时配置 wx.miniapp.qrcode.check-path=false。";
+        }
+        return message;
+    }
+
+    private String buildRuntimeMiniCodeErrorMessage(RuntimeException e) {
+        String message = StringUtils.defaultIfBlank(e.getMessage(), e.getClass().getSimpleName());
+        if (hasCause(e, SSLHandshakeException.class)) {
+            return "后端访问微信接口 HTTPS 握手失败，请检查服务器网络、代理/VPN、DNS 或防火墙，确保后端机器可直连 https://api.weixin.qq.com。原始错误：" + message;
+        }
+        if (hasCause(e, SocketTimeoutException.class) || hasCause(e, ConnectException.class)
+                || hasCause(e, UnknownHostException.class)) {
+            return "后端访问微信接口超时或无法连接，请检查服务器网络、代理/VPN、DNS 或防火墙，确保后端机器可访问 https://api.weixin.qq.com。原始错误：" + message;
+        }
+        return message;
+    }
+
+    private boolean hasCause(Throwable throwable, Class<? extends Throwable> causeType) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (causeType.isInstance(current)) {
+                return true;
             }
+            current = current.getCause();
         }
-        ImageIO.write(image, "PNG", targetFile.toFile());
-    }
-
-    private String buildMerchantEntryLandingUrl(HttpServletRequest request, Long merchantId) {
-        return buildFullUrl(request, "/wxmini/merchant-mini/entry/" + merchantId);
+        return false;
     }
 
     private String buildFullUrl(HttpServletRequest request, String relativePath) {

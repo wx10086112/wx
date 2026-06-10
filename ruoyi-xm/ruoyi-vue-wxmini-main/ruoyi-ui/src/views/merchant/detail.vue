@@ -173,7 +173,9 @@
                 </template>
               </el-table-column>
               <el-table-column label="商品名称" prop="name" min-width="180" show-overflow-tooltip />
-              <el-table-column label="分类" prop="categoryId" width="80" />
+              <el-table-column label="分类" width="110">
+                <template slot-scope="scope">{{ scope.row.categoryName || categoryNameText(scope.row.categoryId) }}</template>
+              </el-table-column>
               <el-table-column label="原价" width="90">
                 <template slot-scope="scope">¥{{ moneyText(scope.row.originalPrice) }}</template>
               </el-table-column>
@@ -368,7 +370,18 @@
           <el-input v-model="productForm.name" placeholder="请输入商品名称" />
         </el-form-item>
         <el-form-item label="分类" prop="categoryId">
-          <el-input v-model="productForm.categoryId" placeholder="请输入分类" />
+          <div class="category-picker">
+            <el-select v-model="productForm.categoryId" filterable placeholder="请选择分类" style="flex: 1;">
+              <el-option
+                v-for="item in productCategoryOptions"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              />
+            </el-select>
+            <el-button type="text" icon="el-icon-plus" @click="handleAddCategory">新增分类</el-button>
+          </div>
+          <div v-if="!productCategoryOptions.length" class="form-tip">暂无分类，请先新增分类后再保存商品。</div>
         </el-form-item>
         <el-row :gutter="20">
           <el-col :span="12">
@@ -848,7 +861,7 @@
 </template>
 
 <script>
-import { getMerchantDetail, getMerchantEntryQrCode, getProductList, addProduct, updateProduct, deleteProduct, getMerchantOrders, getMerchantFlowList, orderStatusMap, getMerchantUserList, addMerchantUser, resetMerchantUserPwd, changeMerchantUserStatus, updateMerchant } from '@/api/merchant'
+import { getMerchantDetail, getMerchantEntryQrCode, getProductList, getProductCategoryList, addProductCategory, addProduct, updateProduct, deleteProduct, getMerchantOrders, getMerchantFlowList, orderStatusMap, getMerchantUserList, addMerchantUser, resetMerchantUserPwd, changeMerchantUserStatus, updateMerchant } from '@/api/merchant'
 import { listGroupon, getGroupon, addGroupon, updateGroupon, deleteGroupon, changeGrouponStatus, listGrouponItem, addGrouponItem, updateGrouponItem, deleteGrouponItem, changeGrouponItemStatus } from '@/api/marketing/groupon'
 import { getToken } from '@/utils/auth'
 
@@ -874,12 +887,13 @@ export default {
       productList: [],
       productTotal: 0,
       productQuery: { name: '', status: '', pageNum: 1, pageSize: 10 },
+      productCategoryOptions: [],
       productDialogVisible: false,
       productDialogTitle: '新增商品',
       productForm: { id: null, name: '', categoryId: null, originalPrice: 0, price: 0, stock: 0, validDays: 30, mainImage: '', coverImage: '', description: '' },
       productRules: {
         name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
-        categoryId: [{ required: true, message: '请输入分类', trigger: 'blur' }],
+        categoryId: [{ required: true, message: '请选择分类', trigger: 'change' }],
         price: [{ required: true, message: '请输入现价', trigger: 'blur' }]
       },
 
@@ -961,7 +975,7 @@ export default {
       itemUploadUrl: process.env.VUE_APP_BASE_API + '/mall/groupon/item/image/upload',
       itemDetailFileList: [],
       // 图片上传
-      uploadUrl: process.env.VUE_APP_BASE_API + '/mall/product/image/upload',
+      uploadUrl: process.env.VUE_APP_BASE_API + '/mall/product/image/upload'
     }
   },
   computed: {
@@ -1031,6 +1045,7 @@ export default {
       return
     }
     this.fetchDetail()
+    this.loadProductCategories()
     this.loadProducts()
   },
   methods: {
@@ -1151,6 +1166,44 @@ export default {
     },
 
     // ========== 商品管理 ==========
+    async loadProductCategories() {
+      const res = await getProductCategoryList({ merchantId: this.merchantId, status: 1 })
+      const list = Array.isArray(res.data) ? res.data : []
+      this.productCategoryOptions = list.map(item => ({
+        ...item,
+        id: Number(item.id),
+        sort: Number(item.sort || 0)
+      }))
+    },
+    categoryNameText(categoryId) {
+      const id = Number(categoryId)
+      const category = this.productCategoryOptions.find(item => Number(item.id) === id)
+      return category ? category.name : (categoryId || '-')
+    },
+    async handleAddCategory() {
+      try {
+        const { value } = await this.$prompt('请输入分类名称，例如：水果、套餐、饮品', '新增商品分类', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          inputPlaceholder: '请输入分类名称',
+          inputValidator: val => {
+            const name = String(val || '').trim()
+            if (!name) return '分类名称不能为空'
+            if (name.length > 50) return '分类名称不能超过50个字符'
+            return true
+          }
+        })
+        const name = String(value || '').trim()
+        const res = await addProductCategory({ merchantId: this.merchantId, name, sort: 0, status: 1 })
+        await this.loadProductCategories()
+        if (res && res.data && res.data.id) {
+          this.productForm.categoryId = Number(res.data.id)
+        }
+        this.$message.success('分类已准备好')
+      } catch (e) {
+        // 用户取消输入时不提示错误。
+      }
+    },
     async loadProducts() {
       this.productLoading = true
       try {
@@ -1170,15 +1223,18 @@ export default {
       this.loadProducts()
     },
     handleAddProduct() {
+      this.loadProductCategories()
       this.productDialogTitle = '新增商品'
       this.productForm = { id: null, merchantId: this.merchantId, name: '', categoryId: null, originalPrice: 0, price: 0, stock: 0, validDays: 30, mainImage: '', coverImage: '', description: '' }
       this.productDialogVisible = true
       this.$nextTick(() => { this.$refs.productForm && this.$refs.productForm.clearValidate() })
     },
     handleEditProduct(row) {
+      this.loadProductCategories()
       this.productDialogTitle = '编辑商品'
       this.productForm = {
         ...row,
+        categoryId: row.categoryId === null || row.categoryId === undefined ? null : Number(row.categoryId),
         originalPrice: Number(row.originalPrice || 0),
         price: Number(row.price || 0),
         stock: Number(row.stock || 0),
@@ -1190,13 +1246,21 @@ export default {
     submitProductForm() {
       this.$refs.productForm.validate(async valid => {
         if (!valid) return
-        this.productForm.merchantId = this.merchantId
-        if (this.productForm.id) {
-          await updateProduct(this.productForm)
+        const payload = {
+          ...this.productForm,
+          merchantId: this.merchantId,
+          categoryId: Number(this.productForm.categoryId)
+        }
+        if (!Number.isFinite(payload.categoryId)) {
+          this.$message.error('请选择正确的商品分类')
+          return
+        }
+        if (payload.id) {
+          await updateProduct(payload)
           this.$message.success('修改成功')
         } else {
-          this.productForm.status = 1
-          await addProduct(this.productForm)
+          payload.status = 1
+          await addProduct(payload)
           this.$message.success('新增成功')
         }
         this.productDialogVisible = false
@@ -1206,14 +1270,14 @@ export default {
     handleToggleStatus(row) {
       const newStatus = row.status === 1 ? 0 : 1
       const text = newStatus === 1 ? '上架' : '下架'
-      this.$confirm(`确认${text}该商品？`, '提示', { type: 'warning' }).then(async () => {
+      this.$confirm(`确认${text}该商品？`, '提示', { type: 'warning' }).then(async() => {
         await updateProduct({ id: row.id, status: newStatus })
         this.$message.success(`${text}成功`)
         this.loadProducts()
       }).catch(() => {})
     },
     handleDeleteProduct(row) {
-      this.$confirm('确认删除该商品？', '提示', { type: 'warning' }).then(async () => {
+      this.$confirm('确认删除该商品？', '提示', { type: 'warning' }).then(async() => {
         await deleteProduct(row.id)
         this.$message.success('删除成功')
         this.loadProducts()
@@ -1285,7 +1349,7 @@ export default {
       })
     },
     handleResetPwd(row) {
-      this.$confirm(`确认重置 ${row.username} 的密码为系统默认密码？`, '提示', { type: 'warning' }).then(async () => {
+      this.$confirm(`确认重置 ${row.username} 的密码为系统默认密码？`, '提示', { type: 'warning' }).then(async() => {
         await resetMerchantUserPwd(row.id, '')
         this.$message.success('密码已重置为系统默认密码')
       }).catch(() => {})
@@ -1293,7 +1357,7 @@ export default {
     handleToggleAccountStatus(row) {
       const newStatus = row.status === 1 ? 0 : 1
       const text = newStatus === 1 ? '启用' : '禁用'
-      this.$confirm(`确认${text}账号 ${row.username}？`, '提示', { type: 'warning' }).then(async () => {
+      this.$confirm(`确认${text}账号 ${row.username}？`, '提示', { type: 'warning' }).then(async() => {
         await changeMerchantUserStatus(row.id, newStatus)
         this.$message.success(`${text}成功`)
         this.loadAccounts()
@@ -1854,6 +1918,11 @@ export default {
 .entry-panel__empty i {
   font-size: 28px;
   color: #1677FF;
+}
+.category-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .search-bar {
   display: flex;

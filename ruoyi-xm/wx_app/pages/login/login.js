@@ -9,6 +9,22 @@ const DEFAULT_BRAND_NAME = '鼎立老碗葫芦头'
 const DEFAULT_BRAND_LOGO = '/assets/images/merchant-logo-dingli.jpg'
 const DEFAULT_BRAND_SUBTITLE = '生活有点苦，今天团点甜'
 
+const isPlaceholderBrandName = (value = '') => {
+  const text = String(value || '').trim()
+  return !text ||
+    text === '商家名称' ||
+    /mall\.privacy\.operatorName|后台参数|配置运营主体/.test(text)
+}
+
+const parseMerchantIdFromOptions = (options = {}) => {
+  const directMerchantId = Number(options.merchantId || 0)
+  if (directMerchantId) return directMerchantId
+
+  const scene = decodeURIComponent(options.scene || '')
+  const match = scene.match(/(?:^|&)merchantId=(\d+)(?:&|$)/)
+  return match ? Number(match[1]) : 0
+}
+
 const normalizeLoginUser = (info = {}) => {
   return {
     userId: info.userId || '',
@@ -33,12 +49,28 @@ Page({
     submitting: false
   },
 
-  onLoad() {
+  onLoad(options = {}) {
+    if (this.redirectMerchantLoginIfNeeded(options)) {
+      return
+    }
     this.initBrand()
     this.syncAgreementState()
     if (app.globalData.isLoggedIn) {
       this.goMine()
     }
+  },
+
+  redirectMerchantLoginIfNeeded(options = {}) {
+    const merchantId = parseMerchantIdFromOptions(options)
+    if (!merchantId) return false
+
+    if (app.setMerchantEntry) {
+      app.setMerchantEntry({ merchantId })
+    }
+    wx.redirectTo({
+      url: `/pages/merchant/login/login?merchantId=${merchantId}`
+    })
+    return true
   },
 
   onShow() {
@@ -47,7 +79,7 @@ Page({
 
   initBrand() {
     const brandInfo = templateService.getTemplateSection('brandInfo') || {}
-    const title = brandInfo.name && brandInfo.name !== '商家名称' ? brandInfo.name : DEFAULT_BRAND_NAME
+    const title = isPlaceholderBrandName(brandInfo.name) ? DEFAULT_BRAND_NAME : brandInfo.name
     this.setData({
       brandTitle: title,
       brandInitial: title.slice(0, 1).toUpperCase(),

@@ -7,7 +7,7 @@ ruoyi:
   # 版权年份
   copyrightYear: 2025
   # 文件路径 示例（ Windows配置D:/ruoyi/uploadPath，Linux配置 /home/ruoyi/uploadPath）
-  profile: ${RUOYI_PROFILE:F:/wx/ruoyi-xm/runtime/uploadPath}
+  profile: ${RUOYI_PROFILE:E:/ruoyi/wx/ruoyi-xm/runtime/uploadPath}
   # 获取ip地址开关
   addressEnabled: false
   # 验证码类型 math 数字计算 char 字符验证
@@ -133,6 +133,11 @@ xss:
 
 wx:
   miniapp:
+    qrcode:
+      # 正式上线使用 release；体验版测试可切到 trial
+      env-version: release
+      # 正式环境建议保持 true，确保页面路径已真实发布
+      check-path: true
     configs:
       - appid: test #微信小程序的appid
         secret: test #微信小程序的Secret

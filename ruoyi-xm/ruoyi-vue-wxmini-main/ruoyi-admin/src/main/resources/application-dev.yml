@@ -2,6 +2,11 @@
 ## 使用方式：在 application.yml 中设置 spring.profiles.active: druid,dev
 
 wx:
+  miniapp:
+    qrcode:
+      # 开发/上线前联调用体验版小程序码；正式环境不要使用 dev 配置
+      env-version: ${WX_MINI_QRCODE_ENV_VERSION:trial}
+      check-path: ${WX_MINI_QRCODE_CHECK_PATH:false}
   pay:
     stub-enabled: false
 

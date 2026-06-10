@@ -12,6 +12,7 @@ import com.ruoyi.mall.merchant.domain.MerchantUser;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.merchant.service.IMerchantUserService;
 import com.ruoyi.system.service.ISysConfigService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -72,9 +73,16 @@ public class MallMerchantUserController extends BaseController {
     @Log(title = "商家用户管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody MerchantUser merchantUser) {
+        normalizeMerchantUserForAdd(merchantUser);
         AjaxResult check = checkMerchantOwnership(merchantUser.getMerchantId());
         if (check != null) {
             return check;
+        }
+        if (StringUtils.isBlank(merchantUser.getUsername())) {
+            return error("登录账号不能为空");
+        }
+        if (StringUtils.isBlank(merchantUser.getRealName())) {
+            return error("姓名不能为空");
         }
         if (!merchantUserService.checkUsernameUnique(merchantUser.getUsername(), null)) {
             return error("新增用户'" + merchantUser.getUsername() + "'失败，登录账号已存在");
@@ -187,5 +195,24 @@ public class MallMerchantUserController extends BaseController {
             return error("无权操作该商家用户");
         }
         return null;
+    }
+
+    private void normalizeMerchantUserForAdd(MerchantUser merchantUser) {
+        merchantUser.setUsername(StringUtils.trimToNull(merchantUser.getUsername()));
+        merchantUser.setPassword(defaultPasswordIfBlank(merchantUser.getPassword()));
+        merchantUser.setRealName(StringUtils.trimToNull(merchantUser.getRealName()));
+        merchantUser.setPhone(StringUtils.trimToNull(merchantUser.getPhone()));
+        merchantUser.setRole(StringUtils.defaultIfBlank(merchantUser.getRole(), "member"));
+        if (merchantUser.getStatus() == null) {
+            merchantUser.setStatus(1);
+        }
+    }
+
+    private String defaultPasswordIfBlank(String password) {
+        if (StringUtils.isNotBlank(password)) {
+            return password.trim();
+        }
+        String defaultPassword = configService.selectConfigByKey("sys.user.initPassword");
+        return StringUtils.defaultIfBlank(defaultPassword, "123456");
     }
 }

@@ -52,6 +52,24 @@ export function getProductList(query) {
   })
 }
 
+// 商品分类列表
+export function getProductCategoryList(query) {
+  return request({
+    url: '/mall/product/category/list',
+    method: 'get',
+    params: query
+  })
+}
+
+// 新增商品分类
+export function addProductCategory(data) {
+  return request({
+    url: '/mall/product/category',
+    method: 'post',
+    data: data
+  })
+}
+
 // 新增商品
 export function addProduct(data) {
   return request({

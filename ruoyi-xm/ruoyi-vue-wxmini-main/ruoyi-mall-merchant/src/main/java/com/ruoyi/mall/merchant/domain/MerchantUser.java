@@ -1,6 +1,6 @@
 package com.ruoyi.mall.merchant.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ruoyi.common.core.domain.BaseEntity;
 import java.util.Date;
 
@@ -10,7 +10,7 @@ public class MerchantUser extends BaseEntity {
     private Long id;
     private Long merchantId;
     private String username;
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     private String realName;
     private String phone;

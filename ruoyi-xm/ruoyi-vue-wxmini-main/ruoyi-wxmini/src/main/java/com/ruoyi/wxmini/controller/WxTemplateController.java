@@ -22,7 +22,7 @@ import java.util.Map;
 @RequestMapping("/wxmini/template")
 public class WxTemplateController {
 
-    private static final String DEFAULT_OPERATOR_NAME = "请在后台参数 mall.privacy.operatorName 配置运营主体";
+    private static final String DEFAULT_OPERATOR_NAME = "本地生活";
     private static final String DEFAULT_RIGHTS_TIPS = "可通过小程序“联系客服”、订单详情商户联系方式或微信小程序主体公示联系方式提交个人信息权利请求。";
 
     @Resource
@@ -39,8 +39,11 @@ public class WxTemplateController {
         String requestAppId = StringUtils.defaultIfBlank(wxAppId, appid);
         Merchant appMerchant = resolveMerchantByCAppId(requestAppId);
 
+        String configuredOperatorName = configValue("mall.privacy.operatorName", "");
+        boolean operatorNameMissing = StringUtils.isBlank(valueFromMerchant(appMerchant, "name"))
+                && StringUtils.isBlank(configuredOperatorName);
         String operatorName = firstNonBlank(valueFromMerchant(appMerchant, "name"),
-                configValue("mall.privacy.operatorName", DEFAULT_OPERATOR_NAME));
+                firstNonBlank(configuredOperatorName, DEFAULT_OPERATOR_NAME));
         String servicePhone = firstNonBlank(valueFromMerchant(appMerchant, "phone"),
                 configValue("mall.privacy.servicePhone", ""));
         String contactEmail = configValue("mall.privacy.contactEmail", "");
@@ -49,7 +52,7 @@ public class WxTemplateController {
         String businessHoursText = firstNonBlank(valueFromMerchant(appMerchant, "businessHours"),
                 configValue("mall.privacy.businessHoursText", ""));
         String rightsRequestTips = configValue("mall.privacy.rightsRequestTips", DEFAULT_RIGHTS_TIPS);
-        List<String> missingPrivacyFields = buildMissingPrivacyFields(operatorName, servicePhone, contactEmail,
+        List<String> missingPrivacyFields = buildMissingPrivacyFields(operatorNameMissing, servicePhone, contactEmail,
                 contactAddress, requestAppId, appMerchant);
 
         // templateMeta
@@ -265,14 +268,14 @@ public class WxTemplateController {
         return StringUtils.isNotBlank(first) ? first.trim() : fallback;
     }
 
-    private List<String> buildMissingPrivacyFields(String operatorName, String servicePhone,
+    private List<String> buildMissingPrivacyFields(boolean operatorNameMissing, String servicePhone,
                                                    String contactEmail, String contactAddress,
                                                    String requestAppId, Merchant appMerchant) {
         List<String> missing = new ArrayList<>();
         if (StringUtils.isNotBlank(requestAppId) && appMerchant == null) {
             missing.add("小程序AppID对应商户");
         }
-        if (DEFAULT_OPERATOR_NAME.equals(operatorName)) {
+        if (operatorNameMissing) {
             missing.add("运营主体名称");
         }
         if (StringUtils.isBlank(servicePhone)) {

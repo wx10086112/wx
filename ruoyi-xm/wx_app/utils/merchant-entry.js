@@ -67,7 +67,7 @@ const openMerchantPortal = () => {
       hideLoading()
 
       if (!entry) {
-        util.showToast('未识别到可用门店入口')
+        util.showToast('请扫描后台生成的商家入口码')
         return
       }
 
@@ -76,7 +76,7 @@ const openMerchantPortal = () => {
     })
     .catch((err) => {
       hideLoading()
-      util.showToast((err && err.message) || '门店入口加载失败')
+      util.showToast((err && err.message) || '请扫描后台生成的商家入口码')
     })
 }
 

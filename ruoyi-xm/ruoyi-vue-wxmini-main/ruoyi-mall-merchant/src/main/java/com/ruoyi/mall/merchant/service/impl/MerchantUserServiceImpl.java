@@ -1,13 +1,14 @@
 package com.ruoyi.mall.merchant.service.impl;
 
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.merchant.domain.MerchantUser;
 import com.ruoyi.mall.merchant.mapper.MerchantUserMapper;
 import com.ruoyi.mall.merchant.service.IMerchantUserService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -30,6 +31,9 @@ public class MerchantUserServiceImpl implements IMerchantUserService {
 
     @Override
     public int insertMerchantUser(MerchantUser merchantUser) {
+        if (StringUtils.isBlank(merchantUser.getPassword())) {
+            throw new ServiceException("商家用户初始密码不能为空");
+        }
         // 加密密码
         merchantUser.setPassword(encoder.encode(merchantUser.getPassword()));
         if (merchantUser.getStatus() == null) {
@@ -64,6 +68,9 @@ public class MerchantUserServiceImpl implements IMerchantUserService {
 
     @Override
     public void resetPassword(Long id, String newPassword) {
+        if (StringUtils.isBlank(newPassword)) {
+            throw new ServiceException("新密码不能为空");
+        }
         MerchantUser user = new MerchantUser();
         user.setId(id);
         user.setPassword(encoder.encode(newPassword));
