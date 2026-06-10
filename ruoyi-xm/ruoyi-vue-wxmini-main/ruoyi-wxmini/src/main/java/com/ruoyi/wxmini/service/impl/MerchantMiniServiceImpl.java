@@ -739,9 +739,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
     public MerchantMiniOrderDto approveRefund(String orderNo) {
         Long merchantId = getMerchantIdFromContext();
         MallOrder order = getOrderAndCheckMerchant(orderNo, merchantId);
-        if (order.getStatus() != ORDER_STATUS_PAID
-                && order.getStatus() != ORDER_STATUS_USED
-                && order.getStatus() != ORDER_STATUS_COMPLETED) {
+        if (order.getStatus() != ORDER_STATUS_PAID) {
             throw new IllegalArgumentException("当前订单状态不可同意退款");
         }
         RefundRecord refundRecord = findPendingRefundRecord(orderNo, merchantId);
@@ -765,9 +763,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
     public MerchantMiniOrderDto rejectRefund(String orderNo, String reason) {
         Long merchantId = getMerchantIdFromContext();
         MallOrder order = getOrderAndCheckMerchant(orderNo, merchantId);
-        if (order.getStatus() != ORDER_STATUS_PAID
-                && order.getStatus() != ORDER_STATUS_USED
-                && order.getStatus() != ORDER_STATUS_COMPLETED) {
+        if (order.getStatus() != ORDER_STATUS_PAID) {
             throw new IllegalArgumentException("当前订单状态不可拒绝退款");
         }
         RefundRecord refundRecord = findPendingRefundRecord(orderNo, merchantId);

@@ -18,7 +18,6 @@ public final class MallOrderStatus {
     }
 
     public static boolean isRefundable(Integer status) {
-        return status != null
-                && (status == PAID || status == USED || status == COMPLETED);
+        return status != null && status == PAID;
     }
 }
