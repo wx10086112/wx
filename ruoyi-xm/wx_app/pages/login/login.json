@@ -1,6 +1,6 @@
 {
   "navigationStyle": "custom",
-  "navigationBarTitleText": "湘缘食尚湘菜",
+  "navigationBarTitleText": "湘缘餐厅",
   "usingComponents": {
     "agreement-consent": "/components/agreement-consent/agreement-consent"
   }

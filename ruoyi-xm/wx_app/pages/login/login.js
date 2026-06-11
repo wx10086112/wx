@@ -5,8 +5,8 @@ const userApi = require('../../api/user')
 const templateService = require('../../services/template')
 const merchantEntry = require('../../utils/merchant-entry')
 
-const DEFAULT_BRAND_NAME = '湘缘食尚湘菜'
-const DEFAULT_BRAND_LOGO = '/assets/images/merchant-logo-dingli.jpg'
+const DEFAULT_BRAND_NAME = '湘缘餐厅'
+const DEFAULT_BRAND_LOGO = '/assets/images/merchant-logo-xiangyuan.png'
 const DEFAULT_BRAND_SUBTITLE = '生活有点苦，今天团点甜'
 
 const parseMerchantIdFromOptions = (options = {}) => {
@@ -76,7 +76,7 @@ Page({
     this.setData({
       brandTitle: title,
       brandInitial: title.slice(0, 1).toUpperCase(),
-      brandLogo: brandInfo.logo || brandInfo.avatar || DEFAULT_BRAND_LOGO,
+      brandLogo: DEFAULT_BRAND_LOGO,
       brandSubtitle: brandInfo.slogan || DEFAULT_BRAND_SUBTITLE
     })
   },
