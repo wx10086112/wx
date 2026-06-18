@@ -22,8 +22,6 @@ public class SettlementEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(SettlementEventListener.class);
 
-    private static final BigDecimal DISTRIBUTOR_RATE = new BigDecimal("5");
-
     @Resource
     private IMerchantSettlementRecordService settlementService;
     @Resource
@@ -77,7 +75,7 @@ public class SettlementEventListener {
             if (distributorId != null && ledger != null
                     && ledger.getDistributorAmount().compareTo(BigDecimal.ZERO) > 0) {
                 distributorSettlementService.createSettlementForOrder(orderNo, merchantId, distributorId,
-                        ledger.getDistributorAmount(), DISTRIBUTOR_RATE);
+                        ledger.getDistributorAmount(), ledger.getDistributorRate());
             }
 
             log.info("订单 {} 三方结算记录生成完成: merchant={}, distributor={}", orderNo, merchantId, distributorId);

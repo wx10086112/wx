@@ -1,6 +1,6 @@
 package com.ruoyi.mall.common.service;
 
-import com.github.binarywang.wxpay.bean.request.WxPayPartnerUnifiedOrderV3Request;
+import com.github.binarywang.wxpay.bean.request.WxPayUnifiedOrderV3Request;
 import com.github.binarywang.wxpay.bean.result.WxPayUnifiedOrderV3Result;
 import com.github.binarywang.wxpay.bean.result.enums.TradeTypeEnum;
 import com.github.binarywang.wxpay.exception.WxPayException;
@@ -78,7 +78,7 @@ public abstract class AbsWxPayBaseService<P> {
     }
 
     public Boolean queryPayResultAndUpdOrderStatus(String orderNo) throws WxPayException {
-        throw new UnsupportedOperationException("微信支付仅支持服务商模式，请在业务服务中实现子商户维度的查询/关单");
+        throw new UnsupportedOperationException("微信支付查询/关单请在业务服务中实现");
     }
 
     public Boolean handlePayResult(Boolean payResult, String orderNo) {
@@ -111,30 +111,29 @@ public abstract class AbsWxPayBaseService<P> {
     }
 
     private WxPayUnifiedOrderV3Result.JsapiResult createOrder(WxPayCreateOrderParam orderParam) throws WxPayException {
-        validatePartnerOrderParam(orderParam);
+        validateOrderParam(orderParam);
 
-        WxPayPartnerUnifiedOrderV3Request partnerRequest = new WxPayPartnerUnifiedOrderV3Request();
-        partnerRequest.setSpAppid(wxPayService.getConfig().getAppId());
-        partnerRequest.setSpMchId(wxPayService.getConfig().getMchId());
-        partnerRequest.setSubAppid(orderParam.getSubAppId());
-        partnerRequest.setSubMchId(orderParam.getSubMchId());
-        partnerRequest.setDescription(orderParam.getOrderDesc());
-        partnerRequest.setOutTradeNo(orderParam.getOrderNo());
-        partnerRequest.setTimeExpire(orderParam.getTimeExpire());
-        partnerRequest.setNotifyUrl(wxPayNotifyUrl);
+        WxPayUnifiedOrderV3Request request = new WxPayUnifiedOrderV3Request();
+        request.setAppid(StringUtils.defaultIfBlank(orderParam.getAppId(), wxPayService.getConfig().getAppId()));
+        request.setMchid(wxPayService.getConfig().getMchId());
+        request.setDescription(orderParam.getOrderDesc());
+        request.setOutTradeNo(orderParam.getOrderNo());
+        request.setTimeExpire(orderParam.getTimeExpire());
+        request.setNotifyUrl(wxPayNotifyUrl);
 
-        WxPayPartnerUnifiedOrderV3Request.Amount amountObj = new WxPayPartnerUnifiedOrderV3Request.Amount();
+        WxPayUnifiedOrderV3Request.Amount amountObj = new WxPayUnifiedOrderV3Request.Amount();
         amountObj.setTotal(orderParam.getAmount());
-        partnerRequest.setAmount(amountObj);
+        amountObj.setCurrency("CNY");
+        request.setAmount(amountObj);
 
-        WxPayPartnerUnifiedOrderV3Request.Payer payer = new WxPayPartnerUnifiedOrderV3Request.Payer();
-        payer.setSubOpenid(orderParam.getOpenId());
-        partnerRequest.setPayer(payer);
+        WxPayUnifiedOrderV3Request.Payer payer = new WxPayUnifiedOrderV3Request.Payer();
+        payer.setOpenid(orderParam.getOpenId());
+        request.setPayer(payer);
 
-        return wxPayService.createPartnerOrderV3(TradeTypeEnum.JSAPI, partnerRequest);
+        return wxPayService.createOrderV3(TradeTypeEnum.JSAPI, request);
     }
 
-    private void validatePartnerOrderParam(WxPayCreateOrderParam orderParam) {
+    private void validateOrderParam(WxPayCreateOrderParam orderParam) {
         if (orderParam == null) {
             throw new IllegalArgumentException("支付参数不能为空");
         }
@@ -147,19 +146,16 @@ public abstract class AbsWxPayBaseService<P> {
         if (orderParam.getAmount() == null || orderParam.getAmount() <= 0) {
             throw new IllegalArgumentException("支付金额必须大于0分");
         }
-        if (StringUtils.isBlank(orderParam.getSubAppId())) {
-            throw new IllegalArgumentException("服务商模式下 sub_appid 不能为空");
-        }
-        if (StringUtils.isBlank(orderParam.getSubMchId())) {
-            throw new IllegalArgumentException("服务商模式下 sub_mchid 不能为空");
+        if (StringUtils.isBlank(orderParam.getAppId())) {
+            throw new IllegalArgumentException("小程序AppID不能为空");
         }
         if (StringUtils.isBlank(orderParam.getOpenId())) {
-            throw new IllegalArgumentException("服务商模式下 sub_openid 不能为空");
+            throw new IllegalArgumentException("openid不能为空");
         }
         if (wxPayService == null || wxPayService.getConfig() == null
                 || StringUtils.isBlank(wxPayService.getConfig().getAppId())
                 || StringUtils.isBlank(wxPayService.getConfig().getMchId())) {
-            throw new IllegalStateException("微信服务商支付配置不完整");
+            throw new IllegalStateException("微信支付配置不完整");
         }
         validateNotifyUrl(wxPayNotifyUrl, "支付回调地址");
     }

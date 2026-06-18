@@ -30,12 +30,6 @@
 
       <!-- 工具栏 -->
       <el-row :gutter="10" class="toolbar">
-        <el-button type="primary" size="small" :disabled="multipleSelection.length === 0" @click="handleBatchTransfer">
-          批量发起打款
-        </el-button>
-        <el-button type="success" size="small" :disabled="multipleSelection.length === 0" @click="handleMarkArrived">
-          标记已到账
-        </el-button>
         <el-button type="warning" size="small" :disabled="multipleSelection.length === 0" @click="handleWxBatchTransfer">
           微信批量打款
         </el-button>
@@ -91,7 +85,7 @@
 </template>
 
 <script>
-import { getMerchantSettlementList, merchantBatchTransfer, merchantMarkArrived, merchantBatchTransferReal } from '@/api/finance/settlement'
+import { getMerchantSettlementList, merchantBatchTransferReal } from '@/api/finance/settlement'
 
 export default {
   name: 'MerchantSettlement',
@@ -169,30 +163,6 @@ export default {
     handleCurrentChange(val) {
       this.queryParams.pageNum = val
       this.getList()
-    },
-    handleBatchTransfer() {
-      const ids = this.multipleSelection.map(item => item.id)
-      this.$confirm('确认对选中的 ' + ids.length + ' 条记录发起批量打款?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
-        await merchantBatchTransfer(ids)
-        this.$message.success('批量打款已发起')
-        this.getList()
-      }).catch(() => {})
-    },
-    handleMarkArrived() {
-      const ids = this.multipleSelection.map(item => item.id)
-      this.$confirm('确认将选中的 ' + ids.length + ' 条记录标记为已到账?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
-        await merchantMarkArrived(ids)
-        this.$message.success('已标记为到账')
-        this.getList()
-      }).catch(() => {})
     },
     handleWxBatchTransfer() {
       const ids = this.multipleSelection.map(item => item.id)

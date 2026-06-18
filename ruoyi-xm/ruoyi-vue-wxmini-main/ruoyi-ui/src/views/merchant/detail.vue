@@ -125,22 +125,22 @@
             </el-descriptions>
 
             <div class="section-header">
-              <h3 class="section-title">微信支付与三方分账</h3>
+              <h3 class="section-title">微信支付与T+1结算</h3>
               <el-button type="primary" icon="el-icon-edit" size="small" @click="handleEditWxApplyment">编辑配置</el-button>
             </div>
             <el-descriptions :column="2" border style="margin-top: 10px;">
               <el-descriptions-item label="接入方式">{{ wxPaymentAccessTypeText(merchant.wxPaymentAccessType) }}</el-descriptions-item>
-              <el-descriptions-item label="商家商户号">{{ configText(merchant.effectiveMerchantWxMchId || merchant.merchantWxMchId) }}</el-descriptions-item>
+              <el-descriptions-item label="商家商户号">{{ configText(merchant.effectiveMerchantWxMchId || merchant.merchantWxMchId, '资料未填写') }}</el-descriptions-item>
               <el-descriptions-item label="商户名称">{{ configText(merchant.merchantWxMchName) }}</el-descriptions-item>
-              <el-descriptions-item label="分账开关">
+              <el-descriptions-item label="T+1结算开关">
                 <el-tag :type="merchant.wxProfitSharingEnabled === 1 ? 'success' : 'info'" size="small">{{ merchant.wxProfitSharingEnabled === 1 ? '已开启' : '未开启' }}</el-tag>
               </el-descriptions-item>
-              <el-descriptions-item label="商家留存">{{ percentText(merchant.merchantShareRate) }}</el-descriptions-item>
-              <el-descriptions-item label="平台分账">{{ percentText(merchant.platformShareRate) }}</el-descriptions-item>
-              <el-descriptions-item label="分销商分账">{{ percentText(merchant.distributorShareRate) }}</el-descriptions-item>
+              <el-descriptions-item label="商家到账比例">{{ percentText(merchant.merchantShareRate) }}</el-descriptions-item>
+              <el-descriptions-item label="平台留存比例">{{ percentText(merchant.platformShareRate) }}</el-descriptions-item>
+              <el-descriptions-item label="分销商到账比例">{{ percentText(merchant.distributorShareRate) }}</el-descriptions-item>
               <el-descriptions-item label="到账周期">{{ merchant.settlementCycle || 'T1' }}</el-descriptions-item>
-              <el-descriptions-item label="平台接收方">{{ configText(merchant.platformReceiverMchId, merchant.platformShareRate > 0 ? '待填写' : '无分账比例') }}</el-descriptions-item>
-              <el-descriptions-item label="分销商接收方">{{ configText(merchant.distributorReceiverMchId, merchant.distributorShareRate > 0 ? '待填写' : '无分账比例') }}</el-descriptions-item>
+              <el-descriptions-item label="商家收款OpenID">{{ configText(merchant.receiverOpenid, merchant.merchantShareRate > 0 ? '待填写' : '无需填写') }}</el-descriptions-item>
+              <el-descriptions-item label="分销商收款OpenID">{{ merchant.distributorId && Number(merchant.distributorShareRate || 0) > 0 ? '在分销商资料中配置' : '无分销商到账比例' }}</el-descriptions-item>
               <el-descriptions-item label="运营准入" :span="2">
                 <el-tag :type="merchant.canOperate ? 'success' : 'warning'" size="small">{{ merchant.canOperate ? '可运营' : (merchant.operateBlockReason || '配置未完成') }}</el-tag>
               </el-descriptions-item>
@@ -506,8 +506,8 @@
       </div>
     </el-dialog>
 
-    <!-- 编辑微信支付与三方分账配置弹窗 -->
-    <el-dialog title="编辑微信支付与三方分账配置" :visible.sync="wxApplymentDialogVisible" width="680px" append-to-body>
+    <!-- 编辑微信支付与T+1结算配置弹窗 -->
+    <el-dialog title="编辑微信支付与T+1结算配置" :visible.sync="wxApplymentDialogVisible" width="680px" append-to-body>
       <el-form ref="wxApplymentForm" :model="wxApplymentForm" label-width="140px">
         <el-divider content-position="left">商家支付账号</el-divider>
         <el-form-item label="接入方式">
@@ -529,25 +529,23 @@
           :closable="false"
           style="margin-bottom: 16px;"
         />
-        <el-divider content-position="left">微信分账配置</el-divider>
-        <el-form-item label="启用分账">
+        <el-divider content-position="left">T+1结算配置</el-divider>
+        <el-form-item label="启用T+1结算">
           <el-switch v-model="wxApplymentForm.wxProfitSharingEnabled" :active-value="1" :inactive-value="0" />
         </el-form-item>
-        <el-form-item label="商家留存比例">
+        <el-form-item label="商家到账比例">
           <el-input-number v-model="wxApplymentForm.merchantShareRate" :min="0" :max="100" :precision="2" :controls="false" style="width: 100%;" />
         </el-form-item>
-        <el-form-item label="平台分账比例">
+        <el-form-item label="平台留存比例">
           <el-input-number v-model="wxApplymentForm.platformShareRate" :min="0" :max="100" :precision="2" :controls="false" style="width: 100%;" />
         </el-form-item>
-        <el-form-item label="分销商分账比例">
+        <el-form-item label="分销商到账比例">
           <el-input-number v-model="wxApplymentForm.distributorShareRate" :min="0" :max="100" :precision="2" :controls="false" style="width: 100%;" />
-          <div style="font-size: 12px; color: #909399; margin-top: 4px;">三方比例合计必须等于100%，商家比例代表留存在商家微信支付账户的部分。</div>
+          <div style="font-size: 12px; color: #909399; margin-top: 4px;">三方比例合计必须等于100%。商家和分销商到账由系统按T+1自动转账，平台比例留存在平台账户。</div>
         </el-form-item>
-        <el-form-item label="平台接收方">
-          <el-input v-model="wxApplymentForm.platformReceiverMchId" placeholder="平台作为分账接收方的微信商户号" />
-        </el-form-item>
-        <el-form-item label="分销商接收方">
-          <el-input v-model="wxApplymentForm.distributorReceiverMchId" placeholder="分销商作为分账接收方的微信商户号" />
+        <el-form-item label="商家收款OpenID">
+          <el-input v-model="wxApplymentForm.receiverOpenid" placeholder="用于T+1转账到商家的微信OpenID" />
+          <div style="font-size: 12px; color: #909399; margin-top: 4px;">商家到账比例大于0时必填。分销商收款OpenID请在分销商资料中配置。</div>
         </el-form-item>
         <el-form-item label="到账周期">
           <el-select v-model="wxApplymentForm.settlementCycle" style="width: 100%;">
@@ -933,7 +931,7 @@ export default {
       wxApplymentDialogVisible: false,
       wxApplymentForm: {
         wxPaymentAccessType: 'EXISTING_MCH', merchantWxMchId: '', merchantWxMchName: '',
-        wxProfitSharingEnabled: 0, platformReceiverMchId: '', distributorReceiverMchId: '',
+        wxProfitSharingEnabled: 0, receiverOpenid: '',
         merchantShareRate: 100, platformShareRate: 0, distributorShareRate: 0, settlementCycle: 'T1'
       },
 
@@ -1429,8 +1427,7 @@ export default {
         merchantWxMchId: this.merchant.merchantWxMchId || '',
         merchantWxMchName: this.merchant.merchantWxMchName || '',
         wxProfitSharingEnabled: this.merchant.wxProfitSharingEnabled === 1 ? 1 : 0,
-        platformReceiverMchId: this.merchant.platformReceiverMchId || '',
-        distributorReceiverMchId: this.merchant.distributorReceiverMchId || '',
+        receiverOpenid: this.merchant.receiverOpenid || '',
         merchantShareRate: this.merchant.merchantShareRate !== undefined && this.merchant.merchantShareRate !== null ? this.merchant.merchantShareRate : 100,
         platformShareRate: this.merchant.platformShareRate !== undefined && this.merchant.platformShareRate !== null ? this.merchant.platformShareRate : 0,
         distributorShareRate: this.merchant.distributorShareRate !== undefined && this.merchant.distributorShareRate !== null ? this.merchant.distributorShareRate : 0,
@@ -1442,6 +1439,10 @@ export default {
       const total = Number(this.wxApplymentForm.merchantShareRate || 0) + Number(this.wxApplymentForm.platformShareRate || 0) + Number(this.wxApplymentForm.distributorShareRate || 0)
       if (Math.abs(total - 100) > 0.0001) {
         this.$message.error('商家、平台、分销商三方分账比例合计必须等于100%')
+        return
+      }
+      if (Number(this.wxApplymentForm.merchantShareRate || 0) > 0 && !String(this.wxApplymentForm.receiverOpenid || '').trim()) {
+        this.$message.error('商家到账比例大于0时，商家收款OpenID必填')
         return
       }
       const res = await updateMerchant(this.wxApplymentForm)

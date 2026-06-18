@@ -84,6 +84,16 @@
         order by dsr.create_time desc
     </select>
 
+    <select id="selectWaitingTransfer" resultMap="DistSettlementResult">
+        select <include refid="selectColumns"/> from distributor_settlement_record dsr
+        LEFT JOIN merchant m ON dsr.merchant_id = m.id
+        LEFT JOIN distributor d ON dsr.distributor_id = d.id
+        where dsr.status = 'WAITING_SETTLEMENT' and dsr.del_flag = '0'
+        and dsr.expected_transfer_time &lt;= NOW()
+        order by dsr.expected_transfer_time asc
+        limit #{limit}
+    </select>
+
     <insert id="insert" parameterType="com.ruoyi.mall.finance.domain.DistributorSettlementRecord" useGeneratedKeys="true" keyProperty="id">
         insert into distributor_settlement_record
         <trim prefix="(" suffix=")" suffixOverrides=",">

@@ -1,7 +1,7 @@
 package com.ruoyi.wxmini.controller;
 
-import com.github.binarywang.wxpay.bean.request.WxPayPartnerOrderQueryV3Request;
-import com.github.binarywang.wxpay.bean.result.WxPayPartnerOrderQueryV3Result;
+import com.github.binarywang.wxpay.bean.request.WxPayOrderQueryV3Request;
+import com.github.binarywang.wxpay.bean.result.WxPayOrderQueryV3Result;
 import com.github.binarywang.wxpay.service.WxPayService;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.mall.common.service.IWxPayOrderService;
@@ -139,16 +139,10 @@ public class WxPayController {
         boolean isLocalPaid = MallOrderStatus.isPaidState(order.getStatus());
         if (!isLocalPaid && !stubEnabled && wxPayService != null) {
             try {
-                Merchant merchant = merchantService.selectMerchantById(order.getMerchantId());
-                if (merchant == null || StringUtils.isBlank(merchant.getEffectiveMerchantWxMchId())) {
-                    return AjaxResult.error("商户支付配置不完整");
-                }
-
-                WxPayPartnerOrderQueryV3Request queryReq = new WxPayPartnerOrderQueryV3Request()
+                WxPayOrderQueryV3Request queryReq = new WxPayOrderQueryV3Request()
                         .setOutTradeNo(outTradeNo)
-                        .setSpMchId(wxPayService.getConfig().getMchId())
-                        .setSubMchId(merchant.getEffectiveMerchantWxMchId());
-                WxPayPartnerOrderQueryV3Result wxResult = wxPayService.queryPartnerOrderV3(queryReq);
+                        .setMchid(wxPayService.getConfig().getMchId());
+                WxPayOrderQueryV3Result wxResult = wxPayService.queryOrderV3(queryReq);
                 if ("SUCCESS".equals(wxResult.getTradeState())) {
                     java.util.Date payTime = new java.util.Date();
                     mallOrderService.markOrderPaid(outTradeNo, payTime);

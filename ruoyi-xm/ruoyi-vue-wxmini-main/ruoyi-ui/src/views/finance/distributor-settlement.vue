@@ -34,16 +34,6 @@
       <el-row :gutter="10" class="mb8">
         <el-col :span="1.5">
           <el-button
-            type="primary"
-            plain
-            icon="el-icon-check"
-            size="mini"
-            :disabled="multipleSelection.length === 0"
-            @click="handleBatchArrived"
-          >批量确认到账</el-button>
-        </el-col>
-        <el-col :span="1.5">
-          <el-button
             type="warning"
             plain
             icon="el-icon-money"
@@ -101,7 +91,7 @@
 </template>
 
 <script>
-import { getDistributorSettlementList, distributorBatchArrived, distributorBatchTransferReal } from '@/api/finance/settlement'
+import { getDistributorSettlementList, distributorBatchTransferReal } from '@/api/finance/settlement'
 
 export default {
   name: 'DistributorSettlement',
@@ -168,21 +158,6 @@ export default {
     },
     handleSelectionChange(selection) {
       this.multipleSelection = selection
-    },
-    async handleBatchArrived() {
-      const ids = this.multipleSelection.map(row => row.id)
-      if (ids.length === 0) {
-        this.$message.warning('请选择要确认到账的记录')
-        return
-      }
-      await this.$confirm('确认批量将选中的结算记录标记为已到账？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      })
-      await distributorBatchArrived(ids)
-      this.$message.success('操作成功')
-      this.getList()
     },
     async handleWxBatchTransfer() {
       const ids = this.multipleSelection.map(row => row.id)

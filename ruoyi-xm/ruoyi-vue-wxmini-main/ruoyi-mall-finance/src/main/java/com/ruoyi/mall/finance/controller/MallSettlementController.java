@@ -64,8 +64,9 @@ public class MallSettlementController extends BaseController {
         if (denied != null) {
             return denied;
         }
-        merchantSettlementService.batchTransfer(ids);
-        return AjaxResult.success();
+        String operatorId = getUsername();
+        List<PlatformTransferRecord> records = platformTransferService.batchCreateMerchantTransfer(ids, operatorId);
+        return AjaxResult.success(records);
     }
 
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")
@@ -75,8 +76,7 @@ public class MallSettlementController extends BaseController {
         if (denied != null) {
             return denied;
         }
-        merchantSettlementService.batchMarkArrived(ids);
-        return AjaxResult.success();
+        return AjaxResult.error("请通过微信转账回调或状态同步更新到账状态，禁止手工标记到账");
     }
 
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")
@@ -124,8 +124,7 @@ public class MallSettlementController extends BaseController {
         if (denied != null) {
             return denied;
         }
-        distributorSettlementService.batchMarkArrived(ids);
-        return AjaxResult.success();
+        return AjaxResult.error("请通过微信转账回调或状态同步更新到账状态，禁止手工标记到账");
     }
 
     @PreAuthorize("@ss.hasPermi('mall:settlement:edit')")

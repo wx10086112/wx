@@ -18,6 +18,8 @@ public interface DistributorSettlementRecordMapper {
 
     List<DistributorSettlementRecord> selectByDistributorIdAndStatuses(@Param("distributorId") Long distributorId, @Param("statuses") List<String> statuses);
 
+    List<DistributorSettlementRecord> selectWaitingTransfer(@Param("limit") int limit);
+
     int insert(DistributorSettlementRecord record);
 
     int updateById(DistributorSettlementRecord record);

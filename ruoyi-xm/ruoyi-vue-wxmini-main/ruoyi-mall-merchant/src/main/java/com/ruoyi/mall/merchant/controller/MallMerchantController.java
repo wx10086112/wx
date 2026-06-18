@@ -183,7 +183,7 @@ public class MallMerchantController extends BaseController {
             merchant.setDistributorId(existing.getDistributorId());
         }
 
-        AjaxResult paymentCheck = validateProfitShareConfig(merchant);
+        AjaxResult paymentCheck = validateProfitShareConfig(buildProfitShareValidationTarget(merchant, existing));
         if (paymentCheck != null) {
             return paymentCheck;
         }
@@ -347,6 +347,16 @@ public class MallMerchantController extends BaseController {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
+    private Merchant buildProfitShareValidationTarget(Merchant request, Merchant existing) {
+        Merchant target = new Merchant();
+        target.setDistributorId(request.getDistributorId() != null ? request.getDistributorId() : existing.getDistributorId());
+        target.setMerchantShareRate(request.getMerchantShareRate() != null ? request.getMerchantShareRate() : existing.getMerchantShareRate());
+        target.setPlatformShareRate(request.getPlatformShareRate() != null ? request.getPlatformShareRate() : existing.getPlatformShareRate());
+        target.setDistributorShareRate(request.getDistributorShareRate() != null ? request.getDistributorShareRate() : existing.getDistributorShareRate());
+        target.setReceiverOpenid(request.getReceiverOpenid() != null ? request.getReceiverOpenid() : existing.getReceiverOpenid());
+        return target;
+    }
+
     private Map<String, Object> toSafeMap(Merchant merchant) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", merchant.getId());
@@ -378,6 +388,7 @@ public class MallMerchantController extends BaseController {
         map.put("wxPayMchId", merchant.getWxPayMchId());
         map.put("wxPayApiKeyConfigured", StringUtils.isNotBlank(merchant.getWxPayApiKey()));
         map.put("wxPayApiKeyMasked", "******");
+        map.put("receiverOpenid", merchant.getReceiverOpenid());
 
         map.put("mapClaimStatus", merchant.getMapClaimStatus());
         map.put("mapPoiId", merchant.getMapPoiId());
@@ -423,6 +434,14 @@ public class MallMerchantController extends BaseController {
                 .add(merchant.getDistributorShareRate());
         if (sum.compareTo(new BigDecimal("100")) != 0) {
             return AjaxResult.error("商家、平台、分销商三方分账比例合计必须等于100%");
+        }
+        if (merchant.getDistributorId() == null
+                && merchant.getDistributorShareRate().compareTo(BigDecimal.ZERO) > 0) {
+            return AjaxResult.error("平台直营网商户的分销商到账比例必须为0%");
+        }
+        if (merchant.getMerchantShareRate().compareTo(BigDecimal.ZERO) > 0
+                && StringUtils.isBlank(merchant.getReceiverOpenid())) {
+            return AjaxResult.error("商家到账比例大于0时，商家收款OpenID必填");
         }
         return null;
     }

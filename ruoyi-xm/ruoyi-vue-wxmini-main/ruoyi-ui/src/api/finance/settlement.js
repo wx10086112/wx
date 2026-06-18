@@ -11,7 +11,7 @@ export function getMerchantSettlementDetail(id) {
 }
 
 export function merchantBatchTransfer(ids) {
-  return request({ url: '/mall/settlement/merchant/batch-transfer', method: 'post', data: ids })
+  return request({ url: '/mall/settlement/merchant/batch-transfer-real', method: 'post', data: ids })
 }
 
 export function merchantMarkArrived(ids) {

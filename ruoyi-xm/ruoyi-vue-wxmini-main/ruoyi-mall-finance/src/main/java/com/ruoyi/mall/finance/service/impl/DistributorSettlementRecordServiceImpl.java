@@ -45,6 +45,11 @@ public class DistributorSettlementRecordServiceImpl implements IDistributorSettl
     }
 
     @Override
+    public List<DistributorSettlementRecord> selectWaitingTransfer(int limit) {
+        return distributorSettlementMapper.selectWaitingTransfer(limit);
+    }
+
+    @Override
     public int updateById(DistributorSettlementRecord record) {
         return distributorSettlementMapper.updateById(record);
     }
@@ -120,14 +125,7 @@ public class DistributorSettlementRecordServiceImpl implements IDistributorSettl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchMarkArrived(List<Long> ids) {
-        for (Long id : ids) {
-            DistributorSettlementRecord record = distributorSettlementMapper.selectById(id);
-            if (record != null && !"ARRIVED".equals(record.getStatus()) && !"CANCELLED".equals(record.getStatus())) {
-                record.setStatus("ARRIVED");
-                record.setArriveTime(new Date());
-                distributorSettlementMapper.updateById(record);
-            }
-        }
+        throw new UnsupportedOperationException("请通过微信转账回调或状态同步更新到账状态，禁止手工标记到账");
     }
 
     @Override
@@ -153,8 +151,7 @@ public class DistributorSettlementRecordServiceImpl implements IDistributorSettl
 
     private Date nextMonday() {
         Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.WEEK_OF_YEAR, 1);
-        cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+        cal.add(Calendar.DAY_OF_MONTH, 1);
         cal.set(Calendar.HOUR_OF_DAY, 10);
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);

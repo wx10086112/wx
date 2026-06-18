@@ -15,6 +15,8 @@ public interface IDistributorSettlementRecordService {
 
     List<DistributorSettlementRecord> selectList(DistributorSettlementRecord query);
 
+    List<DistributorSettlementRecord> selectWaitingTransfer(int limit);
+
     int updateById(DistributorSettlementRecord record);
 
     /**

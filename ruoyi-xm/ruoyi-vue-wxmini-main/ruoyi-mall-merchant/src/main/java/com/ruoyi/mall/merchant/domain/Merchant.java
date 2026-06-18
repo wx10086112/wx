@@ -182,7 +182,7 @@ public class Merchant extends BaseEntity {
 
     /**
      * 检查商户是否可以正式运营（上架团购商品）
-     * 需要同时满足：status=1 + 地图认领 + 小程序AppID + 进件完成 + 子商户号 + 签约 + 结算账户 + 分账授权
+     * 需要同时满足：status=1 + 小程序AppID + T+1结算开关 + 三方结算比例 + 必要收款openid
      */
     public boolean canOperate() {
         return getOperateBlockReason() == null;
@@ -198,20 +198,17 @@ public class Merchant extends BaseEntity {
         if (this.cMiniAppId == null || this.cMiniAppId.isEmpty()) {
             return "C端小程序AppID未配置";
         }
-        if (!hasText(getEffectiveMerchantWxMchId())) {
-            return "商家微信支付商户号未配置";
-        }
         if (this.wxProfitSharingEnabled == null || this.wxProfitSharingEnabled != 1) {
-            return "微信分账未开启";
+            return "T+1结算未开启";
         }
         if (!shareRatesValid()) {
             return "商家/平台/分销商三方分账比例合计必须为100%";
         }
-        if (positive(this.platformShareRate) && !hasText(this.platformReceiverMchId)) {
-            return "平台分账接收方未配置";
+        if (positive(this.merchantShareRate) && !hasText(this.receiverOpenid)) {
+            return "merchant receiver_openid is required for T+1 settlement";
         }
-        if (positive(this.distributorShareRate) && !hasText(this.distributorReceiverMchId)) {
-            return "分销商分账接收方未配置";
+        if (this.distributorId == null && positive(this.distributorShareRate)) {
+            return "direct platform merchant distributor share rate must be 0";
         }
         return null;
     }

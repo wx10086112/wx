@@ -76,28 +76,13 @@ public class MerchantSettlementRecordServiceImpl implements IMerchantSettlementR
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchTransfer(List<Long> ids) {
-        for (Long id : ids) {
-            MerchantSettlementRecord record = settlementMapper.selectById(id);
-            if (record != null && STATUS_WAITING_T1.equals(record.getStatus())) {
-                record.setStatus(STATUS_TRANSFERRING);
-                record.setTransferTime(new Date());
-                settlementMapper.updateById(record);
-            }
-        }
+        throw new UnsupportedOperationException("请调用 PlatformTransferService 发起微信转账，禁止仅修改结算状态");
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchMarkArrived(List<Long> ids) {
-        for (Long id : ids) {
-            MerchantSettlementRecord record = settlementMapper.selectById(id);
-            if (record != null && !STATUS_ARRIVED.equals(record.getStatus())
-                    && !STATUS_CANCELLED.equals(record.getStatus())) {
-                record.setStatus(STATUS_ARRIVED);
-                record.setArriveTime(new Date());
-                settlementMapper.updateById(record);
-            }
-        }
+        throw new UnsupportedOperationException("请通过微信转账回调或状态同步更新到账状态，禁止手工标记到账");
     }
 
     @Override
@@ -150,20 +135,7 @@ public class MerchantSettlementRecordServiceImpl implements IMerchantSettlementR
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void processWaitingTransfer(int batchSize) {
-        List<MerchantSettlementRecord> waitingList = settlementMapper.selectWaitingTransfer(batchSize);
-        for (MerchantSettlementRecord record : waitingList) {
-            try {
-                record.setStatus(STATUS_TRANSFERRING);
-                record.setTransferTime(new Date());
-                settlementMapper.updateById(record);
-                log.info("结算记录 {} 进入打款流程", record.getSettlementNo());
-            } catch (Exception e) {
-                log.error("处理结算记录 {} 失败: {}", record.getSettlementNo(), e.getMessage(), e);
-                record.setStatus(STATUS_FAILED);
-                record.setFailReason("系统异常: " + e.getMessage());
-                settlementMapper.updateById(record);
-            }
-        }
+        throw new UnsupportedOperationException("请通过 SettlementTransferTask 调用 PlatformTransferService 发起微信转账");
     }
 
     @Override

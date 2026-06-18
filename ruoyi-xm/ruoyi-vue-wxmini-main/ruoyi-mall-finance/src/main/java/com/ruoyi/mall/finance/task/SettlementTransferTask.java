@@ -1,6 +1,8 @@
 package com.ruoyi.mall.finance.task;
 
 import com.ruoyi.mall.finance.domain.MerchantSettlementRecord;
+import com.ruoyi.mall.finance.domain.DistributorSettlementRecord;
+import com.ruoyi.mall.finance.service.IDistributorSettlementRecordService;
 import com.ruoyi.mall.finance.service.IMerchantSettlementRecordService;
 import com.ruoyi.mall.finance.service.IPlatformTransferService;
 import org.slf4j.Logger;
@@ -23,6 +25,8 @@ public class SettlementTransferTask {
     @Resource
     private IMerchantSettlementRecordService settlementService;
     @Resource
+    private IDistributorSettlementRecordService distributorSettlementService;
+    @Resource
     private IPlatformTransferService platformTransferService;
 
     /**
@@ -39,6 +43,17 @@ public class SettlementTransferTask {
                     log.info("自动发起转账: settlementNo={}, merchantId={}", record.getSettlementNo(), record.getMerchantId());
                 } catch (Exception e) {
                     log.error("自动发起转账失败: settlementNo={}, error={}", record.getSettlementNo(), e.getMessage(), e);
+                }
+            }
+            List<DistributorSettlementRecord> distributorWaitingList = distributorSettlementService.selectWaitingTransfer(50);
+            for (DistributorSettlementRecord record : distributorWaitingList) {
+                try {
+                    platformTransferService.createDistributorTransfer(record.getId(), "system-auto");
+                    log.info("auto distributor transfer created: settlementNo={}, distributorId={}",
+                            record.getSettlementNo(), record.getDistributorId());
+                } catch (Exception e) {
+                    log.error("auto distributor transfer failed: settlementNo={}, error={}",
+                            record.getSettlementNo(), e.getMessage(), e);
                 }
             }
         } catch (Exception e) {

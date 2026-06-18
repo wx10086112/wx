@@ -1,8 +1,8 @@
 package com.ruoyi.wxmini.service.impl;
 
-import com.github.binarywang.wxpay.bean.request.WxPayPartnerOrderCloseV3Request;
-import com.github.binarywang.wxpay.bean.request.WxPayPartnerOrderQueryV3Request;
-import com.github.binarywang.wxpay.bean.result.WxPayPartnerOrderQueryV3Result;
+import com.github.binarywang.wxpay.bean.request.WxPayOrderCloseV3Request;
+import com.github.binarywang.wxpay.bean.request.WxPayOrderQueryV3Request;
+import com.github.binarywang.wxpay.bean.result.WxPayOrderQueryV3Result;
 import com.ruoyi.mall.common.bo.WxPayCreateOrderParam;
 import com.ruoyi.mall.common.service.AbsWxPayBaseService;
 import com.ruoyi.mall.common.service.IWxPayOrderService;
@@ -14,6 +14,8 @@ import com.ruoyi.mall.order.constant.MallOrderStatus;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.service.IMallOrderService;
 import com.ruoyi.mall.pay.service.IPaymentRecordService;
+import com.ruoyi.mall.product.domain.Distributor;
+import com.ruoyi.mall.product.service.IDistributorService;
 import com.ruoyi.mall.user.domain.UserInfo;
 import com.ruoyi.mall.user.service.IUserInfoService;
 import org.apache.commons.lang3.StringUtils;
@@ -40,6 +42,8 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
     private IPaymentRecordService paymentRecordService;
     @Resource
     private IUserInfoService userInfoService;
+    @Resource
+    private IDistributorService distributorService;
 
     @Override
     public String getResourceId(WxPayOrderVo payVo) {
@@ -84,25 +88,19 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
         if (StringUtils.isNotBlank(blockReason)) {
             throw new RuntimeException("商户支付配置不完整: " + blockReason);
         }
+        checkDistributorSettlementReceiver(merchant);
         if (StringUtils.isBlank(merchant.getCMiniAppId())) {
             throw new RuntimeException("商户小程序AppID未配置");
         }
-        if (StringUtils.isBlank(merchant.getEffectiveMerchantWxMchId())) {
-            throw new RuntimeException("商户微信商户号未配置");
-        }
-
         WxPayCreateOrderParam param = new WxPayCreateOrderParam();
         param.setOrderNo(order.getOrderNo());
         param.setOrderDesc("团购订单-" + order.getOrderNo());
         param.setAmount(toFenExact(order.getPayAmount()));
+        param.setAppId(merchant.getCMiniAppId());
         param.setOpenId(payVo.getOpenId());
-        param.setSubAppId(merchant.getCMiniAppId());
-        param.setSubMchId(merchant.getEffectiveMerchantWxMchId());
         param.setTimeExpire(formatExpireTime(30 * 60));
 
         contextMap.put("merchantId", order.getMerchantId());
-        contextMap.put("subMchId", merchant.getEffectiveMerchantWxMchId());
-        contextMap.put("subAppId", merchant.getCMiniAppId());
         return param;
     }
 
@@ -173,20 +171,17 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
         if (order == null) {
             return false;
         }
-        Merchant merchant = requireMerchant(order.getMerchantId());
         checkOrderTenant(order);
-        WxPayPartnerOrderQueryV3Request request = new WxPayPartnerOrderQueryV3Request()
+        WxPayOrderQueryV3Request request = new WxPayOrderQueryV3Request()
                 .setOutTradeNo(orderNo)
-                .setSpMchId(getWxPayService().getConfig().getMchId())
-                .setSubMchId(merchant.getEffectiveMerchantWxMchId());
-        WxPayPartnerOrderQueryV3Result result = getWxPayService().queryPartnerOrderV3(request);
+                .setMchid(getWxPayService().getConfig().getMchId());
+        WxPayOrderQueryV3Result result = getWxPayService().queryOrderV3(request);
         boolean payResult = "SUCCESS".equals(result.getTradeState());
         if (!payResult) {
-            WxPayPartnerOrderCloseV3Request closeRequest = new WxPayPartnerOrderCloseV3Request()
+            WxPayOrderCloseV3Request closeRequest = new WxPayOrderCloseV3Request()
                     .setOutTradeNo(orderNo)
-                    .setSpMchId(getWxPayService().getConfig().getMchId())
-                    .setSubMchId(merchant.getEffectiveMerchantWxMchId());
-            getWxPayService().closePartnerOrderV3(closeRequest);
+                    .setMchid(getWxPayService().getConfig().getMchId());
+            getWxPayService().closeOrderV3(closeRequest);
         }
         this.handlePayResult(payResult, orderNo);
         return payResult;
@@ -206,6 +201,18 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
             throw new RuntimeException("商户不存在");
         }
         return merchant;
+    }
+
+    private void checkDistributorSettlementReceiver(Merchant merchant) {
+        if (merchant.getDistributorId() == null
+                || merchant.getDistributorShareRate() == null
+                || merchant.getDistributorShareRate().compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        Distributor distributor = distributorService.selectDistributorById(merchant.getDistributorId());
+        if (distributor == null || StringUtils.isBlank(distributor.getReceiverOpenid())) {
+            throw new RuntimeException("distributor receiver_openid is required for T+1 settlement");
+        }
     }
 
     private void checkOrderTenant(MallOrder order) {
