@@ -17,6 +17,8 @@ import com.ruoyi.mall.pay.service.IPaymentRecordService;
 import com.ruoyi.mall.user.domain.UserInfo;
 import com.ruoyi.mall.user.service.IUserInfoService;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,6 +37,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/wxmini/pay")
 public class WxPayController {
+
+    private static final Logger log = LoggerFactory.getLogger(WxPayController.class);
 
     @Value("${wx.pay.stub-enabled:false}")
     private boolean stubEnabled;
@@ -162,8 +166,12 @@ public class WxPayController {
                             wxResult.getPayer() != null ? wxResult.getPayer().getSubOpenid() : null);
                     order.setPayTime(payTime);
                     isLocalPaid = true;
+                } else if ("SUCCESS".equals(wxResult.getTradeState())) {
+                    log.warn("微信支付查单归属不匹配，拒绝同步本地订单状态: orderNo={}, spMchId={}, subMchId={}, subAppId={}",
+                            outTradeNo, wxResult.getSpMchId(), wxResult.getSubMchId(), wxResult.getSubAppid());
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.warn("微信支付查单同步失败: orderNo={}, error={}", outTradeNo, e.getMessage());
             }
         }
 

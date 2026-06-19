@@ -191,7 +191,12 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
                 .setSpMchId(getWxPayService().getConfig().getMchId())
                 .setSubMchId(merchant.getEffectiveMerchantWxMchId());
         WxPayPartnerOrderQueryV3Result result = getWxPayService().queryPartnerOrderV3(request);
-        boolean payResult = "SUCCESS".equals(result.getTradeState());
+        boolean payResult = "SUCCESS".equals(result.getTradeState()) && isSamePartnerPayment(merchant, result);
+        if ("SUCCESS".equals(result.getTradeState()) && !payResult) {
+            log.warn("微信支付查单归属不匹配，拒绝更新订单状态: orderNo={}, spMchId={}, subMchId={}, subAppId={}",
+                    orderNo, result.getSpMchId(), result.getSubMchId(), result.getSubAppid());
+            throw new IllegalStateException("WeChat Pay partner order ownership mismatch");
+        }
         if (!payResult) {
             WxPayPartnerOrderCloseV3Request closeRequest = new WxPayPartnerOrderCloseV3Request()
                     .setOutTradeNo(orderNo)
@@ -201,6 +206,15 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
         }
         this.handlePayResult(payResult, orderNo);
         return payResult;
+    }
+
+    private boolean isSamePartnerPayment(Merchant merchant, WxPayPartnerOrderQueryV3Result result) {
+        return merchant != null
+                && getWxPayService() != null
+                && getWxPayService().getConfig() != null
+                && StringUtils.equals(result.getSpMchId(), getWxPayService().getConfig().getMchId())
+                && StringUtils.equals(result.getSubMchId(), merchant.getEffectiveMerchantWxMchId())
+                && StringUtils.equals(result.getSubAppid(), merchant.getCMiniAppId());
     }
 
     private boolean isUserOrder(String userId, MallOrder order) {
