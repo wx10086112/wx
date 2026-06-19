@@ -52,6 +52,7 @@ public class MallOrderController extends BaseController {
         Map<String, Object> data = new HashMap<>();
         data.put("order", order);
         data.put("items", items);
+        data.put("history", mallOrderService.selectOrderStatusHistory(order.getOrderNo()));
         return success(data);
     }
 

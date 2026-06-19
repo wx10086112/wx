@@ -88,6 +88,23 @@
         <text class="total-price fs-40">¥{{order.payAmountText}}</text>
       </view>
     </view>
+
+    <view wx:if="{{order.historyList && order.historyList.length}}" class="history-card">
+      <view class="card-header mb-24">
+        <text class="card-title fs-32 text-bold">订单历史</text>
+      </view>
+      <view class="history-timeline">
+        <view wx:for="{{order.historyList}}" wx:key="key" class="history-item {{item.className}}">
+          <view class="history-dot"></view>
+          <view class="history-content">
+            <text class="history-label">{{item.label}}</text>
+            <text wx:if="{{item.timeText}}" class="history-time">{{item.timeText}}</text>
+            <text wx:if="{{item.operatorText}}" class="history-extra">{{item.operatorText}}</text>
+            <text wx:if="{{item.remarkText}}" class="history-extra">说明：{{item.remarkText}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
   </view>
 
   <view class="bottom-bar safe-area-bottom" wx:if="{{!loading}}">

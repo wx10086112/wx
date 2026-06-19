@@ -7,6 +7,7 @@ import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.RefundRecord;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.order.mapper.RefundRecordMapper;
+import com.ruoyi.mall.order.service.IMallOrderService;
 import com.ruoyi.mall.user.domain.UserInfo;
 import com.ruoyi.mall.user.service.IUserInfoService;
 import org.apache.commons.lang3.StringUtils;
@@ -32,6 +33,8 @@ public class WxRefundController {
     private MallOrderMapper mallOrderMapper;
     @Resource
     private RefundRecordMapper refundRecordMapper;
+    @Resource
+    private IMallOrderService mallOrderService;
     @Resource
     private IUserInfoService userInfoService;
 
@@ -80,6 +83,9 @@ public class WxRefundController {
         refundRecord.setRefundType(1);
         refundRecord.setStatus(RefundRecord.STATUS_PENDING);
         refundRecordMapper.insertRefundRecord(refundRecord);
+        mallOrderService.recordOrderStatusHistory(order, order.getStatus(), order.getStatus(),
+                "REFUND_APPLY", "WXMINI", order.getUserId(),
+                currentUser != null ? currentUser.getUserName() : null, refundRecord.getRefundReason());
 
         return AjaxResult.success("退款申请已提交，请等待审核");
     }

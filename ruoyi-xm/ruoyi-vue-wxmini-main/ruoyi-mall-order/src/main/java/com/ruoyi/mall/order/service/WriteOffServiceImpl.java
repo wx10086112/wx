@@ -32,6 +32,8 @@ public class WriteOffServiceImpl implements IWriteOffService {
     private OrderItemMapper orderItemMapper;
     @Resource
     private ApplicationEventPublisher eventPublisher;
+    @Resource
+    private IMallOrderService mallOrderService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -69,6 +71,9 @@ public class WriteOffServiceImpl implements IWriteOffService {
         if (affectedRows == 0) {
             throw new ServiceException("订单状态已变更，请刷新后重试");
         }
+
+        mallOrderService.recordOrderStatusHistory(order, order.getStatus(), MallOrderStatus.COMPLETED,
+                "WRITE_OFF_COMPLETE", "MERCHANT_MINI", operatorId, operatorName, null);
 
         WriteOffRecord record = new WriteOffRecord();
         record.setOrderId(order.getId());

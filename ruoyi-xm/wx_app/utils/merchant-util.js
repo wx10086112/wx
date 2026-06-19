@@ -158,6 +158,36 @@ const getMerchantNavList = (currentKey = '') => {
 
 const getOrderStatusMeta = (status) => orderStatusMap[status] || { text: '未知', className: 'gray' }
 
+const orderHistoryActionMap = {
+  CREATE: '创建订单',
+  PAY_SUCCESS: '支付成功',
+  CANCEL: '取消订单',
+  WRITE_OFF_COMPLETE: '核销完成',
+  REFUND_APPLY: '申请退款',
+  REFUND_APPROVE: '同意退款',
+  REFUND_REJECT: '拒绝退款',
+  REFUND_SUCCESS: '退款成功',
+  MERCHANT_ACCEPT: '商家接单',
+  MERCHANT_REJECT: '商家拒单',
+  MERCHANT_CANCEL: '商家取消',
+  ADMIN_UPDATE_STATUS: '后台改状态'
+}
+
+const failedHistoryActions = ['CANCEL', 'MERCHANT_REJECT', 'MERCHANT_CANCEL', 'REFUND_REJECT']
+
+const formatOrderHistory = (history = []) => {
+  if (!Array.isArray(history)) return []
+  return history.map((item, index) => ({
+    ...item,
+    key: `${item.action || 'history'}-${item.changeTime || index}`,
+    label: orderHistoryActionMap[item.action] || item.action || '订单更新',
+    timeText: item.changeTime ? formatDate(item.changeTime) : '',
+    operatorText: item.operatorName ? `操作人：${item.operatorName}` : '',
+    remarkText: item.remark || '',
+    className: failedHistoryActions.includes(item.action) ? 'failed' : 'done'
+  }))
+}
+
 const isGrouponOrder = (order = {}) => {
   return GROUPON_ORDER_STATUSES.includes(order.status) && (!order.orderType || order.orderType === 'GROUPON')
 }
@@ -187,7 +217,8 @@ const normalizeGrouponOrders = (orderList = []) => {
       refundRejectTime: item.refundRejectTime,
       cancelReason: item.cancelReason,
       cancelTime: item.cancelTime,
-      remark: item.remark || ''
+      remark: item.remark || '',
+      history: item.history || []
     }))
 }
 
@@ -234,6 +265,7 @@ module.exports = {
   switchTab,
   getMerchantNavList,
   getOrderStatusMeta,
+  formatOrderHistory,
   isGrouponOrder,
   normalizeGrouponOrders,
   getOrderList,

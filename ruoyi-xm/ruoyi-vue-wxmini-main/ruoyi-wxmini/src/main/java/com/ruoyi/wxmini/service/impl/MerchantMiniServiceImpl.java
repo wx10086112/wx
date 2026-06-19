@@ -15,11 +15,13 @@ import com.ruoyi.mall.merchant.mapper.MerchantMapper;
 import com.ruoyi.mall.merchant.mapper.MerchantStoreMapper;
 import com.ruoyi.mall.merchant.mapper.MerchantUserMapper;
 import com.ruoyi.mall.order.domain.MallOrder;
+import com.ruoyi.mall.order.domain.MallOrderStatusHistory;
 import com.ruoyi.mall.order.domain.OrderItem;
 import com.ruoyi.mall.order.domain.RefundRecord;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.order.mapper.OrderItemMapper;
 import com.ruoyi.mall.order.mapper.RefundRecordMapper;
+import com.ruoyi.mall.order.service.IMallOrderService;
 import com.ruoyi.mall.order.service.IWriteOffService;
 import com.ruoyi.mall.product.domain.Product;
 import com.ruoyi.mall.product.mapper.ProductMapper;
@@ -114,6 +116,8 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
     private WithdrawRecordMapper withdrawRecordMapper;
     @Resource
     private MallUserMapper mallUserMapper;
+    @Resource
+    private IMallOrderService mallOrderService;
     @Resource
     private IWriteOffService writeOffService;
     @Resource
@@ -697,7 +701,11 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         MallOrder update = new MallOrder();
         update.setId(order.getId());
         update.setStatus(ORDER_STATUS_PAID);
-        mallOrderMapper.updateMallOrder(update);
+        int rows = mallOrderMapper.updateMallOrder(update);
+        if (rows > 0 && order.getStatus() != ORDER_STATUS_PAID) {
+            recordMerchantOrderHistory(order, order.getStatus(), ORDER_STATUS_PAID,
+                    "MERCHANT_ACCEPT", null);
+        }
         order.setStatus(ORDER_STATUS_PAID);
         return convertOrderToDto(order);
     }
@@ -713,7 +721,11 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         MallOrder update = new MallOrder();
         update.setId(order.getId());
         update.setStatus(ORDER_STATUS_CANCELLED);
-        mallOrderMapper.updateMallOrder(update);
+        int rows = mallOrderMapper.updateMallOrder(update);
+        if (rows > 0) {
+            recordMerchantOrderHistory(order, order.getStatus(), ORDER_STATUS_CANCELLED,
+                    "MERCHANT_REJECT", reason);
+        }
         order.setStatus(ORDER_STATUS_CANCELLED);
         return convertOrderToDto(order);
     }
@@ -729,7 +741,11 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         MallOrder update = new MallOrder();
         update.setId(order.getId());
         update.setStatus(ORDER_STATUS_CANCELLED);
-        mallOrderMapper.updateMallOrder(update);
+        int rows = mallOrderMapper.updateMallOrder(update);
+        if (rows > 0) {
+            recordMerchantOrderHistory(order, order.getStatus(), ORDER_STATUS_CANCELLED,
+                    "MERCHANT_CANCEL", reason);
+        }
         order.setStatus(ORDER_STATUS_CANCELLED);
         return convertOrderToDto(order);
     }
@@ -754,6 +770,8 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         if (rows == 0) {
             throw new IllegalArgumentException("退款记录状态已变更，请刷新后重试");
         }
+        recordMerchantOrderHistory(order, order.getStatus(), order.getStatus(),
+                "REFUND_APPROVE", null);
         applicationContext.publishEvent(new RefundApprovedEvent(this, orderNo, refundRecord.getId(), currentOperator()));
         return convertOrderToDto(order);
     }
@@ -779,7 +797,17 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         if (rows == 0) {
             throw new IllegalArgumentException("退款记录状态已变更，请刷新后重试");
         }
+        recordMerchantOrderHistory(order, order.getStatus(), order.getStatus(),
+                "REFUND_REJECT", refundRecord.getRejectReason());
         return convertOrderToDto(order);
+    }
+
+    private void recordMerchantOrderHistory(MallOrder order, Integer fromStatus, Integer toStatus,
+                                            String action, String remark) {
+        Long operatorId = com.ruoyi.mall.common.util.WxMiniUserContext.getCurrentStaffId();
+        String operatorName = currentOperator();
+        mallOrderService.recordOrderStatusHistory(order, fromStatus, toStatus, action,
+                "MERCHANT_MINI", operatorId, operatorName, remark);
     }
 
     private RefundRecord findPendingRefundRecord(String orderNo, Long merchantId) {
@@ -920,7 +948,9 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
             case ORDER_STATUS_COMPLETED:
                 return STATUS_COMPLETED;
             case ORDER_STATUS_REFUNDED:
-                return STATUS_REFUNDING;
+                return "REFUNDED";
+            case ORDER_STATUS_CANCELLED:
+                return "CANCELLED";
             default:
                 return "OTHER";
         }
@@ -951,6 +981,9 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         dto.setCreateTime(order.getCreateTime() != null ? order.getCreateTime().getTime() : 0L);
         dto.setPayTime(order.getPayTime() != null ? order.getPayTime().getTime() : null);
         dto.setVerifyTime(order.getUseTime() != null ? order.getUseTime().getTime() : null);
+        dto.setCancelTime(order.getCancelTime() != null ? order.getCancelTime().getTime() : null);
+        dto.setRefundTime(order.getRefundTime() != null ? order.getRefundTime().getTime() : null);
+        dto.setRemark(order.getRemark());
 
         // 查订单商品明细取商品名
         List<OrderItem> items = orderItemMapper.selectOrderItemByOrderId(order.getId());
@@ -972,7 +1005,65 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
             }
         }
 
+        enrichRefundInfo(dto, order);
+        dto.setHistory(buildMerchantOrderHistory(order.getOrderNo()));
+
         return dto;
+    }
+
+    private void enrichRefundInfo(MerchantMiniOrderDto dto, MallOrder order) {
+        RefundRecord refundRecord = latestRefundRecord(order.getOrderNo());
+        if (refundRecord == null) {
+            return;
+        }
+        dto.setRefundReason(refundRecord.getRefundReason());
+        if (refundRecord.getStatus() != null
+                && (refundRecord.getStatus() == RefundRecord.STATUS_PENDING
+                || refundRecord.getStatus() == RefundRecord.STATUS_APPROVED)) {
+            dto.setStatus(STATUS_REFUNDING);
+        }
+        if (refundRecord.getStatus() != null && refundRecord.getStatus() == RefundRecord.STATUS_REJECTED) {
+            dto.setRefundRejectReason(refundRecord.getRejectReason());
+            dto.setRefundRejectTime(refundRecord.getAuditTime() != null ? refundRecord.getAuditTime().getTime() : null);
+        }
+        if (refundRecord.getStatus() != null && refundRecord.getStatus() == RefundRecord.STATUS_REFUNDED) {
+            dto.setStatus("REFUNDED");
+            dto.setRefundTime(refundRecord.getRefundTime() != null ? refundRecord.getRefundTime().getTime() : dto.getRefundTime());
+        }
+    }
+
+    private RefundRecord latestRefundRecord(String orderNo) {
+        if (StringUtils.isBlank(orderNo)) {
+            return null;
+        }
+        RefundRecord query = new RefundRecord();
+        query.setOrderNo(orderNo);
+        List<RefundRecord> records = refundRecordMapper.selectRefundRecordList(query);
+        return records == null || records.isEmpty() ? null : records.get(0);
+    }
+
+    private List<MerchantMiniOrderDto.HistoryItem> buildMerchantOrderHistory(String orderNo) {
+        List<MerchantMiniOrderDto.HistoryItem> result = new ArrayList<>();
+        if (StringUtils.isBlank(orderNo)) {
+            return result;
+        }
+        List<MallOrderStatusHistory> histories = mallOrderService.selectOrderStatusHistory(orderNo);
+        if (histories == null) {
+            return result;
+        }
+        for (MallOrderStatusHistory history : histories) {
+            MerchantMiniOrderDto.HistoryItem item = new MerchantMiniOrderDto.HistoryItem();
+            item.setFromStatus(history.getFromStatus());
+            item.setToStatus(history.getToStatus());
+            item.setStatus(mapOrderStatus(history.getToStatus()));
+            item.setAction(history.getAction());
+            item.setSource(history.getSource());
+            item.setOperatorName(history.getOperatorName());
+            item.setRemark(history.getRemark());
+            item.setChangeTime(history.getChangeTime() != null ? history.getChangeTime().getTime() : null);
+            result.add(item);
+        }
+        return result;
     }
 
     private MerchantMiniGoodsDto convertProductToDto(Product product) {

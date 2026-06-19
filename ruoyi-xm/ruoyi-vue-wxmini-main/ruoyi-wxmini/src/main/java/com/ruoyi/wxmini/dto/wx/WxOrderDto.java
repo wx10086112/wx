@@ -1,5 +1,8 @@
 package com.ruoyi.wxmini.dto.wx;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class WxOrderDto {
 
     private Long id;
@@ -24,6 +27,7 @@ public class WxOrderDto {
     private String refundReason;
     private Long refundTime;
     private Long expireTime;
+    private List<HistoryItem> history = new ArrayList<>();
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -69,4 +73,34 @@ public class WxOrderDto {
     public void setRefundTime(Long refundTime) { this.refundTime = refundTime; }
     public Long getExpireTime() { return expireTime; }
     public void setExpireTime(Long expireTime) { this.expireTime = expireTime; }
+    public List<HistoryItem> getHistory() { return history; }
+    public void setHistory(List<HistoryItem> history) { this.history = history == null ? new ArrayList<>() : history; }
+
+    public static class HistoryItem {
+        private Integer fromStatus;
+        private Integer toStatus;
+        private String status;
+        private String action;
+        private String source;
+        private String operatorName;
+        private String remark;
+        private Long changeTime;
+
+        public Integer getFromStatus() { return fromStatus; }
+        public void setFromStatus(Integer fromStatus) { this.fromStatus = fromStatus; }
+        public Integer getToStatus() { return toStatus; }
+        public void setToStatus(Integer toStatus) { this.toStatus = toStatus; }
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+        public String getAction() { return action; }
+        public void setAction(String action) { this.action = action; }
+        public String getSource() { return source; }
+        public void setSource(String source) { this.source = source; }
+        public String getOperatorName() { return operatorName; }
+        public void setOperatorName(String operatorName) { this.operatorName = operatorName; }
+        public String getRemark() { return remark; }
+        public void setRemark(String remark) { this.remark = remark; }
+        public Long getChangeTime() { return changeTime; }
+        public void setChangeTime(Long changeTime) { this.changeTime = changeTime; }
+    }
 }

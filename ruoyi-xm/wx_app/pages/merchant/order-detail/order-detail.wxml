@@ -55,6 +55,18 @@
   <view class="detail-card panel">
     <text class="detail-section-title">订单进度</text>
     <view class="timeline">
+      <block wx:if="{{order.historyList && order.historyList.length}}">
+        <view wx:for="{{order.historyList}}" wx:key="key" class="timeline-item {{item.className}}">
+          <view class="timeline-dot"></view>
+          <view class="timeline-content">
+            <text class="timeline-label">{{item.label}}</text>
+            <text wx:if="{{item.timeText}}" class="timeline-time">{{item.timeText}}</text>
+            <text wx:if="{{item.operatorText}}" class="timeline-reason">{{item.operatorText}}</text>
+            <text wx:if="{{item.remarkText}}" class="timeline-reason">Note: {{item.remarkText}}</text>
+          </view>
+        </view>
+      </block>
+      <block wx:else>
       <view class="timeline-item done">
         <view class="timeline-dot"></view>
         <view class="timeline-content">
@@ -107,6 +119,7 @@
           <text wx:if="{{order.cancelReason}}" class="timeline-reason">原因：{{order.cancelReason}}</text>
         </view>
       </view>
+      </block>
     </view>
   </view>
 

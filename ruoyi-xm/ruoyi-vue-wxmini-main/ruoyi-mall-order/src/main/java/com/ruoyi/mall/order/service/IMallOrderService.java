@@ -1,6 +1,7 @@
 package com.ruoyi.mall.order.service;
 
 import com.ruoyi.mall.order.domain.MallOrder;
+import com.ruoyi.mall.order.domain.MallOrderStatusHistory;
 import com.ruoyi.mall.order.domain.OrderItem;
 import com.ruoyi.mall.order.domain.RefundRecord;
 
@@ -42,4 +43,10 @@ public interface IMallOrderService {
     void createOrderWithItems(MallOrder mallOrder, List<OrderItem> orderItems);
 
     boolean cancelPendingOrder(String orderNo);
+
+    List<MallOrderStatusHistory> selectOrderStatusHistory(String orderNo);
+
+    void recordOrderStatusHistory(MallOrder order, Integer fromStatus, Integer toStatus,
+                                  String action, String source, Long operatorId,
+                                  String operatorName, String remark);
 }

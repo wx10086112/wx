@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.order.mapper.MallOrderStatusHistoryMapper">
+
+    <resultMap type="com.ruoyi.mall.order.domain.MallOrderStatusHistory" id="MallOrderStatusHistoryResult">
+        <result property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="merchantId" column="merchant_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="fromStatus" column="from_status"/>
+        <result property="toStatus" column="to_status"/>
+        <result property="action" column="action"/>
+        <result property="source" column="source"/>
+        <result property="operatorId" column="operator_id"/>
+        <result property="operatorName" column="operator_name"/>
+        <result property="remark" column="remark"/>
+        <result property="changeTime" column="change_time"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="delFlag" column="del_flag"/>
+    </resultMap>
+
+    <sql id="selectHistoryVo">
+        select id, order_id, order_no, merchant_id, user_id, from_status, to_status,
+               action, source, operator_id, operator_name, remark, change_time,
+               create_time, update_time, del_flag
+        from mall_order_status_history
+    </sql>
+
+    <insert id="insertHistory" parameterType="com.ruoyi.mall.order.domain.MallOrderStatusHistory" useGeneratedKeys="true" keyProperty="id">
+        insert into mall_order_status_history
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">order_id,</if>
+            <if test="orderNo != null">order_no,</if>
+            <if test="merchantId != null">merchant_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="fromStatus != null">from_status,</if>
+            <if test="toStatus != null">to_status,</if>
+            <if test="action != null">action,</if>
+            <if test="source != null">source,</if>
+            <if test="operatorId != null">operator_id,</if>
+            <if test="operatorName != null">operator_name,</if>
+            <if test="remark != null">remark,</if>
+            <if test="changeTime != null">change_time,</if>
+            del_flag,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">#{orderId},</if>
+            <if test="orderNo != null">#{orderNo},</if>
+            <if test="merchantId != null">#{merchantId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="fromStatus != null">#{fromStatus},</if>
+            <if test="toStatus != null">#{toStatus},</if>
+            <if test="action != null">#{action},</if>
+            <if test="source != null">#{source},</if>
+            <if test="operatorId != null">#{operatorId},</if>
+            <if test="operatorName != null">#{operatorName},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="changeTime != null">#{changeTime},</if>
+            '0',
+        </trim>
+    </insert>
+
+    <select id="selectByOrderNo" resultMap="MallOrderStatusHistoryResult">
+        <include refid="selectHistoryVo"/>
+        where order_no = #{orderNo}
+          and del_flag = '0'
+        order by change_time asc, id asc
+    </select>
+
+    <select id="selectList" parameterType="com.ruoyi.mall.order.domain.MallOrderStatusHistory" resultMap="MallOrderStatusHistoryResult">
+        <include refid="selectHistoryVo"/>
+        <where>
+            and del_flag = '0'
+            <if test="orderNo != null and orderNo != ''">and order_no = #{orderNo}</if>
+            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
+            <if test="userId != null">and user_id = #{userId}</if>
+            <if test="toStatus != null">and to_status = #{toStatus}</if>
+            <if test="action != null and action != ''">and action = #{action}</if>
+        </where>
+        order by change_time desc, id desc
+    </select>
+</mapper>

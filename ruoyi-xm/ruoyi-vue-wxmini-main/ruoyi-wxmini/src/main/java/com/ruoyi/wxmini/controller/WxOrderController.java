@@ -8,6 +8,7 @@ import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.constant.MallOrderStatus;
 import com.ruoyi.mall.order.domain.MallOrder;
+import com.ruoyi.mall.order.domain.MallOrderStatusHistory;
 import com.ruoyi.mall.order.domain.OrderItem;
 import com.ruoyi.mall.order.domain.RefundRecord;
 import com.ruoyi.mall.order.mapper.RefundRecordMapper;
@@ -348,8 +349,33 @@ public class WxOrderController {
         if (order.getPayTime() != null) {
             dto.setWriteOffDeadline(order.getPayTime().getTime() + 30L * 24 * 60 * 60 * 1000L);
         }
+        dto.setHistory(buildHistory(order.getOrderNo()));
 
         return dto;
+    }
+
+    private List<WxOrderDto.HistoryItem> buildHistory(String orderNo) {
+        List<WxOrderDto.HistoryItem> result = new ArrayList<>();
+        if (StringUtils.isBlank(orderNo)) {
+            return result;
+        }
+        List<MallOrderStatusHistory> histories = mallOrderService.selectOrderStatusHistory(orderNo);
+        if (histories == null) {
+            return result;
+        }
+        for (MallOrderStatusHistory history : histories) {
+            WxOrderDto.HistoryItem item = new WxOrderDto.HistoryItem();
+            item.setFromStatus(history.getFromStatus());
+            item.setToStatus(history.getToStatus());
+            item.setStatus(mapDbStatus(history.getToStatus()));
+            item.setAction(history.getAction());
+            item.setSource(history.getSource());
+            item.setOperatorName(history.getOperatorName());
+            item.setRemark(history.getRemark());
+            item.setChangeTime(history.getChangeTime() != null ? history.getChangeTime().getTime() : null);
+            result.add(item);
+        }
+        return result;
     }
 
     private String mapDbStatus(Integer dbStatus) {

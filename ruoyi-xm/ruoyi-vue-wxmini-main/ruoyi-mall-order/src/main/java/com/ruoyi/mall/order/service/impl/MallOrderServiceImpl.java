@@ -4,9 +4,11 @@ import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.mall.common.event.RefundApprovedEvent;
 import com.ruoyi.mall.order.constant.MallOrderStatus;
 import com.ruoyi.mall.order.domain.MallOrder;
+import com.ruoyi.mall.order.domain.MallOrderStatusHistory;
 import com.ruoyi.mall.order.domain.OrderItem;
 import com.ruoyi.mall.order.domain.RefundRecord;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
+import com.ruoyi.mall.order.mapper.MallOrderStatusHistoryMapper;
 import com.ruoyi.mall.order.mapper.OrderItemMapper;
 import com.ruoyi.mall.order.mapper.RefundRecordMapper;
 import com.ruoyi.mall.order.service.IMallOrderService;
@@ -25,6 +27,8 @@ public class MallOrderServiceImpl implements IMallOrderService {
     @Autowired
     private MallOrderMapper mallOrderMapper;
     @Autowired
+    private MallOrderStatusHistoryMapper statusHistoryMapper;
+    @Autowired
     private OrderItemMapper orderItemMapper;
     @Autowired
     private RefundRecordMapper refundRecordMapper;
@@ -32,6 +36,34 @@ public class MallOrderServiceImpl implements IMallOrderService {
     private ApplicationContext applicationContext;
     @Autowired
     private IProductService productService;
+
+    @Override
+    public List<MallOrderStatusHistory> selectOrderStatusHistory(String orderNo) {
+        return statusHistoryMapper.selectByOrderNo(orderNo);
+    }
+
+    @Override
+    public void recordOrderStatusHistory(MallOrder order, Integer fromStatus, Integer toStatus,
+                                         String action, String source, Long operatorId,
+                                         String operatorName, String remark) {
+        if (order == null || order.getOrderNo() == null || toStatus == null) {
+            return;
+        }
+        MallOrderStatusHistory history = new MallOrderStatusHistory();
+        history.setOrderId(order.getId());
+        history.setOrderNo(order.getOrderNo());
+        history.setMerchantId(order.getMerchantId());
+        history.setUserId(order.getUserId());
+        history.setFromStatus(fromStatus);
+        history.setToStatus(toStatus);
+        history.setAction(action);
+        history.setSource(source);
+        history.setOperatorId(operatorId);
+        history.setOperatorName(operatorName);
+        history.setRemark(remark);
+        history.setChangeTime(new Date());
+        statusHistoryMapper.insertHistory(history);
+    }
 
     @Override
     public MallOrder selectMallOrderById(Long id) {
@@ -50,8 +82,17 @@ public class MallOrderServiceImpl implements IMallOrderService {
 
     @Override
     public int updateMallOrder(MallOrder mallOrder) {
+        MallOrder existing = null;
+        if (mallOrder != null && mallOrder.getId() != null && mallOrder.getStatus() != null) {
+            existing = mallOrderMapper.selectMallOrderById(mallOrder.getId());
+        }
         mallOrder.setUpdateTime(DateUtils.getNowDate());
-        return mallOrderMapper.updateMallOrder(mallOrder);
+        int rows = mallOrderMapper.updateMallOrder(mallOrder);
+        if (rows > 0 && existing != null && !mallOrder.getStatus().equals(existing.getStatus())) {
+            recordOrderStatusHistory(existing, existing.getStatus(), mallOrder.getStatus(),
+                    "ADMIN_UPDATE_STATUS", "ADMIN", null, null, mallOrder.getRemark());
+        }
+        return rows;
     }
 
     @Override
@@ -129,12 +170,24 @@ public class MallOrderServiceImpl implements IMallOrderService {
 
     @Override
     public boolean markOrderPaid(String orderNo, Date payTime) {
-        return mallOrderMapper.markOrderPaid(orderNo, payTime) > 0;
+        MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(orderNo);
+        int affectedRows = mallOrderMapper.markOrderPaid(orderNo, payTime);
+        if (affectedRows > 0) {
+            recordOrderStatusHistory(order, order != null ? order.getStatus() : null, MallOrderStatus.PAID,
+                    "PAY_SUCCESS", "WECHAT_PAY", null, null, null);
+        }
+        return affectedRows > 0;
     }
 
     @Override
     public boolean markOrderRefunded(String orderNo, Date refundTime) {
-        return mallOrderMapper.markOrderRefunded(orderNo, refundTime) > 0;
+        MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(orderNo);
+        int affectedRows = mallOrderMapper.markOrderRefunded(orderNo, refundTime);
+        if (affectedRows > 0) {
+            recordOrderStatusHistory(order, order != null ? order.getStatus() : null, MallOrderStatus.REFUNDED,
+                    "REFUND_SUCCESS", "WECHAT_REFUND", null, null, null);
+        }
+        return affectedRows > 0;
     }
 
     @Override
@@ -165,6 +218,8 @@ public class MallOrderServiceImpl implements IMallOrderService {
             orderItem.setOrderId(mallOrder.getId());
             orderItemMapper.insertOrderItem(orderItem);
         }
+        recordOrderStatusHistory(mallOrder, null, mallOrder.getStatus(),
+                "CREATE", "WXMINI", mallOrder.getUserId(), null, null);
     }
 
     @Override
@@ -179,6 +234,8 @@ public class MallOrderServiceImpl implements IMallOrderService {
         if (affectedRows == 0) {
             return false;
         }
+        recordOrderStatusHistory(order, order.getStatus(), MallOrderStatus.CANCELLED,
+                "CANCEL", "WXMINI", order.getUserId(), null, null);
 
         List<OrderItem> orderItems = orderItemMapper.selectOrderItemByOrderNo(orderNo);
         if (orderItems != null) {

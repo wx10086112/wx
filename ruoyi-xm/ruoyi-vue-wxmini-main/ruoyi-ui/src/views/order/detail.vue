@@ -58,6 +58,27 @@
             <el-descriptions-item label="用户ID">{{ order.userId }}</el-descriptions-item>
           </el-descriptions>
         </el-card>
+        <el-card shadow="never" class="info-card">
+          <div slot="header"><span>订单历史</span></div>
+          <el-timeline v-if="history.length">
+            <el-timeline-item
+              v-for="item in history"
+              :key="item.id || item.changeTime || item.action"
+              :timestamp="item.changeTime"
+              :type="historyTimelineType(item.action)"
+              placement="top"
+            >
+              <div class="history-title">{{ historyActionText(item.action) }}</div>
+              <div class="history-meta">
+                <span>状态：{{ statusText(item.fromStatus) }} → {{ statusText(item.toStatus) }}</span>
+                <span v-if="item.operatorName">操作人：{{ item.operatorName }}</span>
+                <span v-if="item.source">来源：{{ item.source }}</span>
+              </div>
+              <div v-if="item.remark" class="history-remark">说明：{{ item.remark }}</div>
+            </el-timeline-item>
+          </el-timeline>
+          <el-empty v-else description="暂无订单历史" />
+        </el-card>
       </template>
     </el-card>
   </div>
@@ -73,6 +94,21 @@ export default {
       loading: false,
       order: null,
       items: [],
+      history: [],
+      historyActionMap: {
+        CREATE: '创建订单',
+        PAY_SUCCESS: '支付成功',
+        CANCEL: '取消订单',
+        WRITE_OFF_COMPLETE: '核销完成',
+        REFUND_APPLY: '申请退款',
+        REFUND_APPROVE: '同意退款',
+        REFUND_REJECT: '拒绝退款',
+        REFUND_SUCCESS: '退款成功',
+        MERCHANT_ACCEPT: '商家接单',
+        MERCHANT_REJECT: '商家拒单',
+        MERCHANT_CANCEL: '商家取消',
+        ADMIN_UPDATE_STATUS: '后台改状态'
+      },
       statusMap: {
         0: { text: '待付款', type: 'warning' },
         1: { text: '已付款', type: '' },
@@ -125,9 +161,20 @@ export default {
         const res = await getOrderDetail(id)
         this.order = res.data.order
         this.items = res.data.items || []
+        this.history = res.data.history || []
       } finally {
         this.loading = false
       }
+    },
+    statusText(status) {
+      return this.statusMap[status] ? this.statusMap[status].text : '未知'
+    },
+    historyActionText(action) {
+      return this.historyActionMap[action] || action || '订单更新'
+    },
+    historyTimelineType(action) {
+      const dangerActions = ['CANCEL', 'MERCHANT_REJECT', 'MERCHANT_CANCEL', 'REFUND_REJECT']
+      return dangerActions.includes(action) ? 'danger' : 'success'
     },
     goBack() {
       this.$router.go(-1)
@@ -182,5 +229,22 @@ export default {
 }
 .text-danger {
   color: #F56C6C;
+}
+.history-title {
+  font-weight: 600;
+  color: #303133;
+}
+.history-meta {
+  margin-top: 6px;
+  color: #606266;
+  font-size: 13px;
+}
+.history-meta span {
+  margin-right: 16px;
+}
+.history-remark {
+  margin-top: 6px;
+  color: #909399;
+  font-size: 13px;
 }
 </style>

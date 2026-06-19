@@ -58,7 +58,8 @@ Page({
       verifyTimeText: util.formatDate(order.verifyTime),
       refundTimeText: util.formatDate(order.refundTime),
       refundRejectTimeText: util.formatDate(order.refundRejectTime),
-      cancelTimeText: util.formatDate(order.cancelTime)
+      cancelTimeText: util.formatDate(order.cancelTime),
+      historyList: util.formatOrderHistory(order.history)
     }
   },
 

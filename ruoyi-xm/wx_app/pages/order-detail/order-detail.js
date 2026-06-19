@@ -44,7 +44,8 @@ Page({
       couponAmountText: ((order.couponAmount || 0) / 100).toFixed(2),
       payAmountText: (payAmount / 100).toFixed(2),
       image: order.image || order.coverImage || order.mainImage || '',
-      title: order.title || order.productName || order.name || ''
+      title: order.title || order.productName || order.name || '',
+      historyList: util.formatOrderHistory(order.history)
     }
   },
 
