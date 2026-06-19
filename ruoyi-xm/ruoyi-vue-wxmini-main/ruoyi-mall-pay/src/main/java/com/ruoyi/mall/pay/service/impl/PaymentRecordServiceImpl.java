@@ -47,12 +47,22 @@ public class PaymentRecordServiceImpl implements IPaymentRecordService {
 
     @Override
     public void createPayment(String orderNo, Long merchantId, Long userId, BigDecimal amount, String outTradeNo) {
+        createPayment(orderNo, merchantId, userId, amount, outTradeNo, null, null, null, null);
+    }
+
+    @Override
+    public void createPayment(String orderNo, Long merchantId, Long userId, BigDecimal amount, String outTradeNo,
+                              String spMchId, String subMchId, String subAppId, String payerOpenid) {
         PaymentRecord record = new PaymentRecord();
         record.setOrderNo(orderNo);
         record.setMerchantId(merchantId);
         record.setUserId(userId);
         record.setAmount(amount);
-        record.setPayType("JSAPI");
+        record.setPayType("wechat_partner");
+        record.setSpMchId(spMchId);
+        record.setSubMchId(subMchId);
+        record.setSubAppId(subAppId);
+        record.setPayerOpenid(payerOpenid);
         record.setOutTradeNo(outTradeNo != null ? outTradeNo : orderNo);
         record.setPayStatus(STATUS_PENDING);
 
@@ -73,6 +83,13 @@ public class PaymentRecordServiceImpl implements IPaymentRecordService {
     @Override
     public void markPaySuccess(String orderNo, Long merchantId, Long userId, BigDecimal amount,
                                String transactionId, String notifyResult) {
+        markPaySuccess(orderNo, merchantId, userId, amount, transactionId, notifyResult, null, null, null, null);
+    }
+
+    @Override
+    public void markPaySuccess(String orderNo, Long merchantId, Long userId, BigDecimal amount,
+                               String transactionId, String notifyResult,
+                               String spMchId, String subMchId, String subAppId, String payerOpenid) {
         PaymentRecord record = paymentRecordMapper.selectByOrderNo(orderNo);
         if (record == null) {
             log.warn("支付成功回调: 订单 {} 无支付记录，创建带订单上下文的补录", orderNo);
@@ -81,7 +98,11 @@ public class PaymentRecordServiceImpl implements IPaymentRecordService {
             record.setMerchantId(merchantId);
             record.setUserId(userId);
             record.setAmount(amount);
-            record.setPayType("JSAPI");
+            record.setPayType("wechat_partner");
+            record.setSpMchId(spMchId);
+            record.setSubMchId(subMchId);
+            record.setSubAppId(subAppId);
+            record.setPayerOpenid(payerOpenid);
             record.setOutTradeNo(orderNo);
             record.setPayStatus(STATUS_PAID);
             record.setTransactionId(transactionId);
@@ -89,7 +110,8 @@ public class PaymentRecordServiceImpl implements IPaymentRecordService {
             record.setNotifyResult(notifyResult);
             int affectedRows = paymentRecordMapper.insertIfAbsent(record);
             if (affectedRows == 0) {
-                paymentRecordMapper.markPaySuccess(orderNo, transactionId, notifyResult, new Date());
+                paymentRecordMapper.markPaySuccess(orderNo, transactionId, notifyResult, new Date(),
+                        spMchId, subMchId, subAppId, payerOpenid);
             }
             return;
         }
@@ -100,7 +122,8 @@ public class PaymentRecordServiceImpl implements IPaymentRecordService {
             return;
         }
 
-        int affectedRows = paymentRecordMapper.markPaySuccess(orderNo, transactionId, notifyResult, new Date());
+        int affectedRows = paymentRecordMapper.markPaySuccess(orderNo, transactionId, notifyResult, new Date(),
+                spMchId, subMchId, subAppId, payerOpenid);
         if (affectedRows > 0) {
             log.info("支付记录 {} 更新为已支付: transactionId={}", record.getId(), transactionId);
         }

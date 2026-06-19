@@ -1,7 +1,7 @@
 package com.ruoyi.wxmini.controller;
 
-import com.github.binarywang.wxpay.bean.request.WxPayOrderQueryV3Request;
-import com.github.binarywang.wxpay.bean.result.WxPayOrderQueryV3Result;
+import com.github.binarywang.wxpay.bean.request.WxPayPartnerOrderQueryV3Request;
+import com.github.binarywang.wxpay.bean.result.WxPayPartnerOrderQueryV3Result;
 import com.github.binarywang.wxpay.service.WxPayService;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.mall.common.service.IWxPayOrderService;
@@ -82,7 +82,12 @@ public class WxPayController {
         }
 
         if (stubEnabled) {
-            paymentRecordService.createPayment(orderNo, order.getMerchantId(), currentUser.getId(), order.getPayAmount(), orderNo);
+            Merchant merchant = merchantService.selectMerchantById(order.getMerchantId());
+            paymentRecordService.createPayment(orderNo, order.getMerchantId(), currentUser.getId(), order.getPayAmount(), orderNo,
+                    wxPayService != null && wxPayService.getConfig() != null ? wxPayService.getConfig().getMchId() : null,
+                    merchant != null ? merchant.getEffectiveMerchantWxMchId() : null,
+                    merchant != null ? merchant.getCMiniAppId() : null,
+                    currentUser.getOpenId());
 
             Map<String, Object> result = new HashMap<>();
             result.put("timeStamp", String.valueOf(System.currentTimeMillis() / 1000));
@@ -139,15 +144,22 @@ public class WxPayController {
         boolean isLocalPaid = MallOrderStatus.isPaidState(order.getStatus());
         if (!isLocalPaid && !stubEnabled && wxPayService != null) {
             try {
-                WxPayOrderQueryV3Request queryReq = new WxPayOrderQueryV3Request()
+                Merchant merchant = merchantService.selectMerchantById(order.getMerchantId());
+                if (merchant == null || StringUtils.isBlank(merchant.getEffectiveMerchantWxMchId())) {
+                    return AjaxResult.error("商户微信支付子商户号未配置");
+                }
+                WxPayPartnerOrderQueryV3Request queryReq = new WxPayPartnerOrderQueryV3Request()
                         .setOutTradeNo(outTradeNo)
-                        .setMchid(wxPayService.getConfig().getMchId());
-                WxPayOrderQueryV3Result wxResult = wxPayService.queryOrderV3(queryReq);
-                if ("SUCCESS".equals(wxResult.getTradeState())) {
+                        .setSpMchId(wxPayService.getConfig().getMchId())
+                        .setSubMchId(merchant != null ? merchant.getEffectiveMerchantWxMchId() : null);
+                WxPayPartnerOrderQueryV3Result wxResult = wxPayService.queryPartnerOrderV3(queryReq);
+                if ("SUCCESS".equals(wxResult.getTradeState()) && isSamePartnerPayment(merchant, wxResult)) {
                     java.util.Date payTime = new java.util.Date();
                     mallOrderService.markOrderPaid(outTradeNo, payTime);
                     paymentRecordService.markPaySuccess(outTradeNo, order.getMerchantId(), order.getUserId(),
-                            order.getPayAmount(), wxResult.getTransactionId(), "query-sync");
+                            order.getPayAmount(), wxResult.getTransactionId(), "query-sync",
+                            wxResult.getSpMchId(), wxResult.getSubMchId(), wxResult.getSubAppid(),
+                            wxResult.getPayer() != null ? wxResult.getPayer().getSubOpenid() : null);
                     order.setPayTime(payTime);
                     isLocalPaid = true;
                 }
@@ -163,6 +175,15 @@ public class WxPayController {
         result.put("successTime", order.getPayTime() != null
                 ? new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").format(order.getPayTime()) : null);
         return AjaxResult.success(result);
+    }
+
+    private boolean isSamePartnerPayment(Merchant merchant, WxPayPartnerOrderQueryV3Result wxResult) {
+        return merchant != null
+                && wxPayService != null
+                && wxPayService.getConfig() != null
+                && StringUtils.equals(wxResult.getSpMchId(), wxPayService.getConfig().getMchId())
+                && StringUtils.equals(wxResult.getSubMchId(), merchant.getEffectiveMerchantWxMchId())
+                && StringUtils.equals(wxResult.getSubAppid(), merchant.getCMiniAppId());
     }
 
     private AjaxResult checkMerchantPayReady(Long merchantId) {

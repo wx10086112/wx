@@ -198,6 +198,9 @@ public class Merchant extends BaseEntity {
         if (this.cMiniAppId == null || this.cMiniAppId.isEmpty()) {
             return "C端小程序AppID未配置";
         }
+        if (!hasText(getEffectiveMerchantWxMchId())) {
+            return "sub_mchid is required for WeChat Pay service provider mode";
+        }
         if (this.wxProfitSharingEnabled == null || this.wxProfitSharingEnabled != 1) {
             return "T+1结算未开启";
         }

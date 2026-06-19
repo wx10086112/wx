@@ -20,6 +20,9 @@ public interface IPaymentRecordService {
      */
     void createPayment(String orderNo, Long merchantId, Long userId, BigDecimal amount, String outTradeNo);
 
+    void createPayment(String orderNo, Long merchantId, Long userId, BigDecimal amount, String outTradeNo,
+                       String spMchId, String subMchId, String subAppId, String payerOpenid);
+
     /**
      * 支付成功回调：更新 transactionId、payStatus、payTime
      */
@@ -30,6 +33,10 @@ public interface IPaymentRecordService {
      */
     void markPaySuccess(String orderNo, Long merchantId, Long userId, BigDecimal amount,
                         String transactionId, String notifyResult);
+
+    void markPaySuccess(String orderNo, Long merchantId, Long userId, BigDecimal amount,
+                        String transactionId, String notifyResult,
+                        String spMchId, String subMchId, String subAppId, String payerOpenid);
 
     /**
      * 微信退款成功回调：将支付记录标记为已退款

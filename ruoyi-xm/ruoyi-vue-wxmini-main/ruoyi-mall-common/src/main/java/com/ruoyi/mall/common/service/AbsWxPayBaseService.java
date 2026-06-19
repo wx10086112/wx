@@ -1,6 +1,6 @@
 package com.ruoyi.mall.common.service;
 
-import com.github.binarywang.wxpay.bean.request.WxPayUnifiedOrderV3Request;
+import com.github.binarywang.wxpay.bean.request.WxPayPartnerUnifiedOrderV3Request;
 import com.github.binarywang.wxpay.bean.result.WxPayUnifiedOrderV3Result;
 import com.github.binarywang.wxpay.bean.result.enums.TradeTypeEnum;
 import com.github.binarywang.wxpay.exception.WxPayException;
@@ -113,24 +113,28 @@ public abstract class AbsWxPayBaseService<P> {
     private WxPayUnifiedOrderV3Result.JsapiResult createOrder(WxPayCreateOrderParam orderParam) throws WxPayException {
         validateOrderParam(orderParam);
 
-        WxPayUnifiedOrderV3Request request = new WxPayUnifiedOrderV3Request();
-        request.setAppid(StringUtils.defaultIfBlank(orderParam.getAppId(), wxPayService.getConfig().getAppId()));
-        request.setMchid(wxPayService.getConfig().getMchId());
+        String subAppId = StringUtils.defaultIfBlank(orderParam.getSubAppId(), orderParam.getAppId());
+        String subOpenId = StringUtils.defaultIfBlank(orderParam.getSubOpenId(), orderParam.getOpenId());
+        WxPayPartnerUnifiedOrderV3Request request = new WxPayPartnerUnifiedOrderV3Request();
+        request.setSpAppid(StringUtils.defaultIfBlank(orderParam.getSpAppId(), wxPayService.getConfig().getAppId()));
+        request.setSpMchId(StringUtils.defaultIfBlank(orderParam.getSpMchId(), wxPayService.getConfig().getMchId()));
+        request.setSubAppid(subAppId);
+        request.setSubMchId(orderParam.getSubMchId());
         request.setDescription(orderParam.getOrderDesc());
         request.setOutTradeNo(orderParam.getOrderNo());
         request.setTimeExpire(orderParam.getTimeExpire());
         request.setNotifyUrl(wxPayNotifyUrl);
 
-        WxPayUnifiedOrderV3Request.Amount amountObj = new WxPayUnifiedOrderV3Request.Amount();
+        WxPayPartnerUnifiedOrderV3Request.Amount amountObj = new WxPayPartnerUnifiedOrderV3Request.Amount();
         amountObj.setTotal(orderParam.getAmount());
         amountObj.setCurrency("CNY");
         request.setAmount(amountObj);
 
-        WxPayUnifiedOrderV3Request.Payer payer = new WxPayUnifiedOrderV3Request.Payer();
-        payer.setOpenid(orderParam.getOpenId());
+        WxPayPartnerUnifiedOrderV3Request.Payer payer = new WxPayPartnerUnifiedOrderV3Request.Payer();
+        payer.setSubOpenid(subOpenId);
         request.setPayer(payer);
 
-        return wxPayService.createOrderV3(TradeTypeEnum.JSAPI, request);
+        return wxPayService.createPartnerOrderV3(TradeTypeEnum.JSAPI, request);
     }
 
     private void validateOrderParam(WxPayCreateOrderParam orderParam) {
@@ -146,7 +150,13 @@ public abstract class AbsWxPayBaseService<P> {
         if (orderParam.getAmount() == null || orderParam.getAmount() <= 0) {
             throw new IllegalArgumentException("支付金额必须大于0分");
         }
-        if (StringUtils.isBlank(orderParam.getAppId())) {
+        if (StringUtils.isBlank(orderParam.getSubMchId())) {
+            throw new IllegalArgumentException("sub_mchid is required for WeChat Pay service provider mode");
+        }
+        if (StringUtils.isBlank(StringUtils.defaultIfBlank(orderParam.getSubOpenId(), orderParam.getOpenId()))) {
+            throw new IllegalArgumentException("sub_openid is required for WeChat Pay service provider mode");
+        }
+        if (StringUtils.isBlank(StringUtils.defaultIfBlank(orderParam.getSubAppId(), orderParam.getAppId()))) {
             throw new IllegalArgumentException("小程序AppID不能为空");
         }
         if (StringUtils.isBlank(orderParam.getOpenId())) {

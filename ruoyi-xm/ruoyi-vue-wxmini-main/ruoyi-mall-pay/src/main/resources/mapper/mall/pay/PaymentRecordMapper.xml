@@ -11,6 +11,10 @@
         <result property="userId" column="user_id"/>
         <result property="amount" column="amount"/>
         <result property="payType" column="pay_type"/>
+        <result property="spMchId" column="sp_mchid"/>
+        <result property="subMchId" column="sub_mchid"/>
+        <result property="subAppId" column="sub_appid"/>
+        <result property="payerOpenid" column="payer_openid"/>
         <result property="transactionId" column="transaction_id"/>
         <result property="outTradeNo" column="out_trade_no"/>
         <result property="payStatus" column="pay_status"/>
@@ -21,7 +25,8 @@
     </resultMap>
 
     <sql id="selectPaymentRecordVo">
-        select id, order_no, merchant_id, user_id, amount, pay_type, transaction_id,
+        select id, order_no, merchant_id, user_id, amount, pay_type,
+               sp_mchid, sub_mchid, sub_appid, payer_openid, transaction_id,
                out_trade_no, pay_status, pay_time, notify_result, create_time, del_flag
         from payment_record
     </sql>
@@ -64,6 +69,10 @@
             <if test="userId != null">user_id,</if>
             <if test="amount != null">amount,</if>
             <if test="payType != null">pay_type,</if>
+            <if test="spMchId != null">sp_mchid,</if>
+            <if test="subMchId != null">sub_mchid,</if>
+            <if test="subAppId != null">sub_appid,</if>
+            <if test="payerOpenid != null">payer_openid,</if>
             <if test="transactionId != null">transaction_id,</if>
             <if test="outTradeNo != null">out_trade_no,</if>
             <if test="payStatus != null">pay_status,</if>
@@ -77,6 +86,10 @@
             <if test="userId != null">#{userId},</if>
             <if test="amount != null">#{amount},</if>
             <if test="payType != null">#{payType},</if>
+            <if test="spMchId != null">#{spMchId},</if>
+            <if test="subMchId != null">#{subMchId},</if>
+            <if test="subAppId != null">#{subAppId},</if>
+            <if test="payerOpenid != null">#{payerOpenid},</if>
             <if test="transactionId != null">#{transactionId},</if>
             <if test="outTradeNo != null">#{outTradeNo},</if>
             <if test="payStatus != null">#{payStatus},</if>
@@ -88,9 +101,11 @@
 
     <insert id="insertIfAbsent" parameterType="com.ruoyi.mall.pay.domain.PaymentRecord" useGeneratedKeys="true" keyProperty="id">
         insert into payment_record
-            (order_no, merchant_id, user_id, amount, pay_type, transaction_id,
+            (order_no, merchant_id, user_id, amount, pay_type,
+             sp_mchid, sub_mchid, sub_appid, payer_openid, transaction_id,
              out_trade_no, pay_status, pay_time, notify_result, del_flag)
-        select #{orderNo}, #{merchantId}, #{userId}, #{amount}, #{payType}, #{transactionId},
+        select #{orderNo}, #{merchantId}, #{userId}, #{amount}, #{payType},
+               #{spMchId}, #{subMchId}, #{subAppId}, #{payerOpenid}, #{transactionId},
                #{outTradeNo}, #{payStatus}, #{payTime}, #{notifyResult}, '0'
         from dual
         where not exists (
@@ -109,6 +124,10 @@
             <if test="userId != null">user_id = #{userId},</if>
             <if test="amount != null">amount = #{amount},</if>
             <if test="payType != null">pay_type = #{payType},</if>
+            <if test="spMchId != null">sp_mchid = #{spMchId},</if>
+            <if test="subMchId != null">sub_mchid = #{subMchId},</if>
+            <if test="subAppId != null">sub_appid = #{subAppId},</if>
+            <if test="payerOpenid != null">payer_openid = #{payerOpenid},</if>
             <if test="transactionId != null">transaction_id = #{transactionId},</if>
             <if test="outTradeNo != null">out_trade_no = #{outTradeNo},</if>
             <if test="payStatus != null">pay_status = #{payStatus},</if>
@@ -123,7 +142,11 @@
         set pay_status = 1,
             transaction_id = #{transactionId},
             pay_time = #{payTime},
-            notify_result = #{notifyResult}
+            notify_result = #{notifyResult},
+            sp_mchid = coalesce(#{spMchId}, sp_mchid),
+            sub_mchid = coalesce(#{subMchId}, sub_mchid),
+            sub_appid = coalesce(#{subAppId}, sub_appid),
+            payer_openid = coalesce(#{payerOpenid}, payer_openid)
         where order_no = #{orderNo}
           and del_flag = '0'
           and (pay_status is null or pay_status not in (1, 3))

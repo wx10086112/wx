@@ -7,6 +7,10 @@ CREATE TABLE IF NOT EXISTS payment_record (
     user_id BIGINT DEFAULT NULL COMMENT '用户ID',
     amount DECIMAL(10,2) DEFAULT NULL COMMENT '支付金额（元）',
     pay_type VARCHAR(20) DEFAULT 'JSAPI' COMMENT '支付类型: JSAPI/NATIVE/APP',
+    sp_mchid VARCHAR(64) DEFAULT NULL COMMENT '服务商商户号',
+    sub_mchid VARCHAR(64) DEFAULT NULL COMMENT '子商户号',
+    sub_appid VARCHAR(64) DEFAULT NULL COMMENT '子商户小程序AppID',
+    payer_openid VARCHAR(128) DEFAULT NULL COMMENT '付款人sub_openid',
     transaction_id VARCHAR(64) DEFAULT NULL COMMENT '微信支付交易号',
     out_trade_no VARCHAR(64) DEFAULT NULL COMMENT '商户订单号',
     pay_status INT DEFAULT 0 COMMENT '支付状态: 0待支付, 1已支付, 2已关闭, 3已退款',
@@ -22,5 +26,9 @@ CREATE TABLE IF NOT EXISTS payment_record (
     KEY idx_out_trade_no (out_trade_no),
     KEY idx_merchant_id (merchant_id),
     KEY idx_user_id (user_id),
-    KEY idx_pay_status (pay_status)
+    KEY idx_pay_status (pay_status),
+    KEY idx_payment_sp_mchid (sp_mchid),
+    KEY idx_payment_sub_mchid (sub_mchid),
+    KEY idx_payment_sub_appid (sub_appid),
+    KEY idx_payment_payer_openid (payer_openid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='支付记录表';

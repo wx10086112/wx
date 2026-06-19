@@ -1,8 +1,8 @@
 package com.ruoyi.wxmini.controller;
 
 import com.github.binarywang.wxpay.bean.notify.SignatureHeader;
-import com.github.binarywang.wxpay.bean.notify.WxPayNotifyV3Result;
-import com.github.binarywang.wxpay.bean.notify.WxPayRefundNotifyV3Result;
+import com.github.binarywang.wxpay.bean.notify.WxPayPartnerNotifyV3Result;
+import com.github.binarywang.wxpay.bean.notify.WxPayPartnerRefundNotifyV3Result;
 import com.github.binarywang.wxpay.service.WxPayService;
 import com.ruoyi.mall.common.event.RefundSucceededEvent;
 import com.ruoyi.mall.merchant.domain.Merchant;
@@ -60,28 +60,30 @@ public class WxPayNotifyController {
             header.setSignature(request.getHeader("Wechatpay-Signature"));
             header.setSerial(request.getHeader("Wechatpay-Serial"));
 
-            WxPayNotifyV3Result result = wxPayService.parseOrderNotifyV3Result(body, header);
+            WxPayPartnerNotifyV3Result result = wxPayService.parsePartnerOrderNotifyV3Result(body, header);
             String outTradeNo = result.getResult().getOutTradeNo();
             String transactionId = result.getResult().getTransactionId();
             String tradeState = result.getResult().getTradeState();
-            String mchId = result.getResult().getMchid();
-            String appId = result.getResult().getAppid();
+            String spMchId = result.getResult().getSpMchid();
+            String subMchId = result.getResult().getSubMchid();
+            String subAppId = result.getResult().getSubAppid();
+            String payerOpenid = result.getResult().getPayer() != null ? result.getResult().getPayer().getSubOpenid() : null;
 
             MallOrder order = mallOrderService.selectMallOrderByOrderNo(outTradeNo);
             if (order == null) {
                 log.error("支付回调订单不存在: {}", outTradeNo);
                 return buildSuccessResponse();
             }
-            if (!validatePlatformPayNotify(order, mchId, appId)) {
-                log.error("支付回调商户信息不匹配: orderNo={}, mchId={}, appId={}",
-                        outTradeNo, mchId, appId);
+            if (!validatePlatformPayNotify(order, spMchId, subMchId, subAppId)) {
+                log.error("支付回调商户信息不匹配: orderNo={}, spMchId={}, subMchId={}",
+                        outTradeNo, spMchId, subMchId);
                 return buildErrorResponse("商户信息不匹配");
             }
 
             if (MallOrderStatus.isPaidState(order.getStatus())) {
                 if ("SUCCESS".equals(tradeState)) {
                     paymentRecordService.markPaySuccess(outTradeNo, order.getMerchantId(), order.getUserId(),
-                            order.getPayAmount(), transactionId, body);
+                            order.getPayAmount(), transactionId, body, spMchId, subMchId, subAppId, payerOpenid);
                 }
                 log.info("订单{}已处于支付完成链路，跳过重复处理", outTradeNo);
                 return buildSuccessResponse();
@@ -91,7 +93,7 @@ public class WxPayNotifyController {
                 Date payTime = new Date();
                 boolean markedPaid = mallOrderService.markOrderPaid(outTradeNo, payTime);
                 paymentRecordService.markPaySuccess(outTradeNo, order.getMerchantId(), order.getUserId(),
-                        order.getPayAmount(), transactionId, body);
+                        order.getPayAmount(), transactionId, body, spMchId, subMchId, subAppId, payerOpenid);
                 if (markedPaid) {
                     log.info("订单{}支付成功，transactionId={}", outTradeNo, transactionId);
                 } else {
@@ -123,10 +125,11 @@ public class WxPayNotifyController {
             header.setSignature(request.getHeader("Wechatpay-Signature"));
             header.setSerial(request.getHeader("Wechatpay-Serial"));
 
-            WxPayRefundNotifyV3Result result = wxPayService.parseRefundNotifyV3Result(body, header);
+            WxPayPartnerRefundNotifyV3Result result = wxPayService.parsePartnerRefundNotifyV3Result(body, header);
             String outRefundNo = result.getResult().getOutRefundNo();
             String refundStatus = result.getResult().getRefundStatus();
-            String mchId = result.getResult().getMchid();
+            String spMchId = result.getResult().getSpMchId();
+            String subMchId = result.getResult().getSubMchId();
             RefundRecord refundRecord = refundRecordMapper.selectRefundRecordByRefundNo(outRefundNo);
 
             if (refundRecord == null) {
@@ -138,9 +141,9 @@ public class WxPayNotifyController {
                 log.error("退款回调订单不存在: orderNo={}, refundNo={}", refundRecord.getOrderNo(), outRefundNo);
                 return buildErrorResponse("订单不存在");
             }
-            if (!validatePlatformMchId(mchId)) {
+            if (!validatePlatformRefundNotify(order, spMchId, subMchId)) {
                 log.error("退款回调商户信息不匹配: orderNo={}, refundNo={}, mchId={}",
-                        order.getOrderNo(), outRefundNo, mchId);
+                        order.getOrderNo(), outRefundNo, spMchId);
                 return buildErrorResponse("商户信息不匹配");
             }
 
@@ -181,18 +184,24 @@ public class WxPayNotifyController {
         return sb.toString();
     }
 
-    private boolean validatePlatformPayNotify(MallOrder order, String mchId, String appId) {
+    private boolean validatePlatformPayNotify(MallOrder order, String spMchId, String subMchId, String subAppId) {
         if (wxPayService == null || wxPayService.getConfig() == null
-                || !StringUtils.equals(mchId, wxPayService.getConfig().getMchId())) {
+                || !StringUtils.equals(spMchId, wxPayService.getConfig().getMchId())) {
             return false;
         }
         Merchant merchant = merchantService.selectMerchantById(order.getMerchantId());
-        return merchant != null && StringUtils.equals(appId, merchant.getCMiniAppId());
+        return merchant != null
+                && StringUtils.equals(subMchId, merchant.getEffectiveMerchantWxMchId())
+                && StringUtils.equals(subAppId, merchant.getCMiniAppId());
     }
 
-    private boolean validatePlatformMchId(String mchId) {
-        return wxPayService != null && wxPayService.getConfig() != null
-                && StringUtils.equals(mchId, wxPayService.getConfig().getMchId());
+    private boolean validatePlatformRefundNotify(MallOrder order, String spMchId, String subMchId) {
+        if (wxPayService == null || wxPayService.getConfig() == null
+                || !StringUtils.equals(spMchId, wxPayService.getConfig().getMchId())) {
+            return false;
+        }
+        Merchant merchant = merchantService.selectMerchantById(order.getMerchantId());
+        return merchant != null && StringUtils.equals(subMchId, merchant.getEffectiveMerchantWxMchId());
     }
 
     private String buildSuccessResponse() {

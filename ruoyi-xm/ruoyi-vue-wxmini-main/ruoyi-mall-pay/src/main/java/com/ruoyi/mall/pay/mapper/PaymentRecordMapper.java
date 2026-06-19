@@ -24,7 +24,11 @@ public interface PaymentRecordMapper {
     int markPaySuccess(@Param("orderNo") String orderNo,
                        @Param("transactionId") String transactionId,
                        @Param("notifyResult") String notifyResult,
-                       @Param("payTime") java.util.Date payTime);
+                       @Param("payTime") java.util.Date payTime,
+                       @Param("spMchId") String spMchId,
+                       @Param("subMchId") String subMchId,
+                       @Param("subAppId") String subAppId,
+                       @Param("payerOpenid") String payerOpenid);
 
     int markRefunded(@Param("orderNo") String orderNo, @Param("notifyResult") String notifyResult);
 

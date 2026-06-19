@@ -5,6 +5,10 @@ public class WxPayCreateOrderParam {
     private String orderNo;
     private String orderDesc;
     private Integer amount;
+    private String spAppId;
+    private String spMchId;
+    private String subAppId;
+    private String subMchId;
     private String appId;
     private String openId;
     private String timeExpire;
@@ -33,6 +37,38 @@ public class WxPayCreateOrderParam {
         this.amount = amount;
     }
 
+    public String getSpAppId() {
+        return spAppId;
+    }
+
+    public void setSpAppId(String spAppId) {
+        this.spAppId = spAppId;
+    }
+
+    public String getSpMchId() {
+        return spMchId;
+    }
+
+    public void setSpMchId(String spMchId) {
+        this.spMchId = spMchId;
+    }
+
+    public String getSubAppId() {
+        return subAppId;
+    }
+
+    public void setSubAppId(String subAppId) {
+        this.subAppId = subAppId;
+    }
+
+    public String getSubMchId() {
+        return subMchId;
+    }
+
+    public void setSubMchId(String subMchId) {
+        this.subMchId = subMchId;
+    }
+
     public String getAppId() {
         return appId;
     }
@@ -47,6 +83,14 @@ public class WxPayCreateOrderParam {
 
     public void setOpenId(String openId) {
         this.openId = openId;
+    }
+
+    public String getSubOpenId() {
+        return openId;
+    }
+
+    public void setSubOpenId(String subOpenId) {
+        this.openId = subOpenId;
     }
 
     public String getTimeExpire() {

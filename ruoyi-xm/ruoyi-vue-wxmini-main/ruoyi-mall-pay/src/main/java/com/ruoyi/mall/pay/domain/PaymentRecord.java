@@ -14,6 +14,10 @@ public class PaymentRecord extends BaseEntity {
     private Long userId;
     private BigDecimal amount;
     private String payType;
+    private String spMchId;
+    private String subMchId;
+    private String subAppId;
+    private String payerOpenid;
     private String transactionId;
     private String outTradeNo;
     private Integer payStatus;
@@ -34,6 +38,14 @@ public class PaymentRecord extends BaseEntity {
     public void setAmount(BigDecimal amount) { this.amount = amount; }
     public String getPayType() { return payType; }
     public void setPayType(String payType) { this.payType = payType; }
+    public String getSpMchId() { return spMchId; }
+    public void setSpMchId(String spMchId) { this.spMchId = spMchId; }
+    public String getSubMchId() { return subMchId; }
+    public void setSubMchId(String subMchId) { this.subMchId = subMchId; }
+    public String getSubAppId() { return subAppId; }
+    public void setSubAppId(String subAppId) { this.subAppId = subAppId; }
+    public String getPayerOpenid() { return payerOpenid; }
+    public void setPayerOpenid(String payerOpenid) { this.payerOpenid = payerOpenid; }
     public String getTransactionId() { return transactionId; }
     public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
     public String getOutTradeNo() { return outTradeNo; }

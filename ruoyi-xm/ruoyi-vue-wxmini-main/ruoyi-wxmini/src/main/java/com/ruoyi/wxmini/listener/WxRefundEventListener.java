@@ -1,9 +1,12 @@
 package com.ruoyi.wxmini.listener;
 
+import com.github.binarywang.wxpay.bean.request.WxPayPartnerRefundV3Request;
 import com.github.binarywang.wxpay.bean.request.WxPayRefundV3Request;
 import com.github.binarywang.wxpay.bean.result.WxPayRefundV3Result;
 import com.github.binarywang.wxpay.service.WxPayService;
 import com.ruoyi.mall.common.event.RefundApprovedEvent;
+import com.ruoyi.mall.merchant.domain.Merchant;
+import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.RefundRecord;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
@@ -35,6 +38,8 @@ public class WxRefundEventListener {
     private RefundRecordMapper refundRecordMapper;
     @Resource
     private MallOrderMapper mallOrderMapper;
+    @Resource
+    private IMerchantService merchantService;
     @EventListener
     @Async
     public void onRefundApproved(RefundApprovedEvent event) {
@@ -65,8 +70,16 @@ public class WxRefundEventListener {
                 return;
             }
 
-            WxPayRefundV3Request request = new WxPayRefundV3Request();
+            Merchant merchant = merchantService.selectMerchantById(order.getMerchantId());
+            if (merchant == null || StringUtils.isBlank(merchant.getEffectiveMerchantWxMchId())) {
+                log.error("sub_mchid is missing for refund: orderNo={}, merchantId={}", orderNo, order.getMerchantId());
+                markRefundAbnormal(refundRecord);
+                return;
+            }
+
+            WxPayPartnerRefundV3Request request = new WxPayPartnerRefundV3Request();
             request.setOutTradeNo(orderNo);
+            request.setSubMchid(merchant.getEffectiveMerchantWxMchId());
             request.setOutRefundNo(refundRecord.getRefundNo() != null ? refundRecord.getRefundNo() : "RF_" + orderNo);
             request.setReason(refundRecord.getRefundReason() != null ? refundRecord.getRefundReason() : "用户申请退款");
 

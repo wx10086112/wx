@@ -1,8 +1,8 @@
 package com.ruoyi.wxmini.service.impl;
 
-import com.github.binarywang.wxpay.bean.request.WxPayOrderCloseV3Request;
-import com.github.binarywang.wxpay.bean.request.WxPayOrderQueryV3Request;
-import com.github.binarywang.wxpay.bean.result.WxPayOrderQueryV3Result;
+import com.github.binarywang.wxpay.bean.request.WxPayPartnerOrderCloseV3Request;
+import com.github.binarywang.wxpay.bean.request.WxPayPartnerOrderQueryV3Request;
+import com.github.binarywang.wxpay.bean.result.WxPayPartnerOrderQueryV3Result;
 import com.ruoyi.mall.common.bo.WxPayCreateOrderParam;
 import com.ruoyi.mall.common.service.AbsWxPayBaseService;
 import com.ruoyi.mall.common.service.IWxPayOrderService;
@@ -92,15 +92,27 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
         if (StringUtils.isBlank(merchant.getCMiniAppId())) {
             throw new RuntimeException("商户小程序AppID未配置");
         }
+        if (StringUtils.isBlank(merchant.getEffectiveMerchantWxMchId())) {
+            throw new RuntimeException("sub_mchid is required for WeChat Pay service provider mode");
+        }
         WxPayCreateOrderParam param = new WxPayCreateOrderParam();
         param.setOrderNo(order.getOrderNo());
         param.setOrderDesc("团购订单-" + order.getOrderNo());
         param.setAmount(toFenExact(order.getPayAmount()));
         param.setAppId(merchant.getCMiniAppId());
         param.setOpenId(payVo.getOpenId());
+        param.setSpAppId(getWxPayService().getConfig().getAppId());
+        param.setSpMchId(getWxPayService().getConfig().getMchId());
+        param.setSubAppId(merchant.getCMiniAppId());
+        param.setSubMchId(merchant.getEffectiveMerchantWxMchId());
+        param.setSubOpenId(payVo.getOpenId());
         param.setTimeExpire(formatExpireTime(30 * 60));
 
         contextMap.put("merchantId", order.getMerchantId());
+        contextMap.put("spMchId", param.getSpMchId());
+        contextMap.put("subMchId", param.getSubMchId());
+        contextMap.put("subAppId", param.getSubAppId());
+        contextMap.put("payerOpenid", param.getSubOpenId());
         return param;
     }
 
@@ -116,7 +128,8 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
                                  HashMap<String, Object> contextMap) {
         MallOrder order = mallOrderService.selectMallOrderByOrderNo(orderNo);
         if (order != null) {
-            paymentRecordService.createPayment(orderNo, order.getMerchantId(), order.getUserId(), order.getPayAmount(), orderNo);
+            paymentRecordService.createPayment(orderNo, order.getMerchantId(), order.getUserId(), order.getPayAmount(), orderNo,
+                    orderParam.getSpMchId(), orderParam.getSubMchId(), orderParam.getSubAppId(), orderParam.getSubOpenId());
         }
         log.info("订单{}支付参数已生成，等待用户支付", orderNo);
         return true;
@@ -172,16 +185,19 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
             return false;
         }
         checkOrderTenant(order);
-        WxPayOrderQueryV3Request request = new WxPayOrderQueryV3Request()
+        Merchant merchant = requireMerchant(order.getMerchantId());
+        WxPayPartnerOrderQueryV3Request request = new WxPayPartnerOrderQueryV3Request()
                 .setOutTradeNo(orderNo)
-                .setMchid(getWxPayService().getConfig().getMchId());
-        WxPayOrderQueryV3Result result = getWxPayService().queryOrderV3(request);
+                .setSpMchId(getWxPayService().getConfig().getMchId())
+                .setSubMchId(merchant.getEffectiveMerchantWxMchId());
+        WxPayPartnerOrderQueryV3Result result = getWxPayService().queryPartnerOrderV3(request);
         boolean payResult = "SUCCESS".equals(result.getTradeState());
         if (!payResult) {
-            WxPayOrderCloseV3Request closeRequest = new WxPayOrderCloseV3Request()
+            WxPayPartnerOrderCloseV3Request closeRequest = new WxPayPartnerOrderCloseV3Request()
                     .setOutTradeNo(orderNo)
-                    .setMchid(getWxPayService().getConfig().getMchId());
-            getWxPayService().closeOrderV3(closeRequest);
+                    .setSpMchId(getWxPayService().getConfig().getMchId())
+                    .setSubMchId(merchant.getEffectiveMerchantWxMchId());
+            getWxPayService().closePartnerOrderV3(closeRequest);
         }
         this.handlePayResult(payResult, orderNo);
         return payResult;
