@@ -444,7 +444,7 @@ public class MerchantMiniController {
         if (accessDenied != null) {
             return accessDenied;
         }
-        return AjaxResult.error("该版本已切换为微信自动结算，无需商家手动提现");
+        return AjaxResult.error("当前使用微信支付商户号结算，无需平台提现");
     }
 
     // ==================== 结算概览（真实数据） ====================

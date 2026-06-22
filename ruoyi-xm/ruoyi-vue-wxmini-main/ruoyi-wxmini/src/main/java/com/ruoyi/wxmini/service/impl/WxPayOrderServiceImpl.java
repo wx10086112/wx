@@ -14,13 +14,12 @@ import com.ruoyi.mall.order.constant.MallOrderStatus;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.service.IMallOrderService;
 import com.ruoyi.mall.pay.service.IPaymentRecordService;
-import com.ruoyi.mall.product.domain.Distributor;
-import com.ruoyi.mall.product.service.IDistributorService;
 import com.ruoyi.mall.user.domain.UserInfo;
 import com.ruoyi.mall.user.service.IUserInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -34,6 +33,9 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
 
     private static final Logger log = LoggerFactory.getLogger(WxPayOrderServiceImpl.class);
 
+    @Value("${wx.pay.profit-sharing-enabled:true}")
+    private boolean profitSharingEnabled;
+
     @Resource
     private IMallOrderService mallOrderService;
     @Resource
@@ -42,8 +44,6 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
     private IPaymentRecordService paymentRecordService;
     @Resource
     private IUserInfoService userInfoService;
-    @Resource
-    private IDistributorService distributorService;
 
     @Override
     public String getResourceId(WxPayOrderVo payVo) {
@@ -88,7 +88,6 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
         if (StringUtils.isNotBlank(blockReason)) {
             throw new RuntimeException("商户支付配置不完整: " + blockReason);
         }
-        checkDistributorSettlementReceiver(merchant);
         if (StringUtils.isBlank(merchant.getCMiniAppId())) {
             throw new RuntimeException("商户小程序AppID未配置");
         }
@@ -107,12 +106,14 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
         param.setSubMchId(merchant.getEffectiveMerchantWxMchId());
         param.setSubOpenId(payVo.getOpenId());
         param.setTimeExpire(formatExpireTime(30 * 60));
+        param.setProfitSharing(shouldRequestProfitSharing(merchant));
 
         contextMap.put("merchantId", order.getMerchantId());
         contextMap.put("spMchId", param.getSpMchId());
         contextMap.put("subMchId", param.getSubMchId());
         contextMap.put("subAppId", param.getSubAppId());
         contextMap.put("payerOpenid", param.getSubOpenId());
+        contextMap.put("profitSharing", param.getProfitSharing());
         return param;
     }
 
@@ -191,10 +192,12 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
                 .setSpMchId(getWxPayService().getConfig().getMchId())
                 .setSubMchId(merchant.getEffectiveMerchantWxMchId());
         WxPayPartnerOrderQueryV3Result result = getWxPayService().queryPartnerOrderV3(request);
-        boolean payResult = "SUCCESS".equals(result.getTradeState()) && isSamePartnerPayment(merchant, result);
+        boolean payResult = "SUCCESS".equals(result.getTradeState()) && isSamePartnerPayment(order, merchant, result);
         if ("SUCCESS".equals(result.getTradeState()) && !payResult) {
-            log.warn("微信支付查单归属不匹配，拒绝更新订单状态: orderNo={}, spMchId={}, subMchId={}, subAppId={}",
-                    orderNo, result.getSpMchId(), result.getSubMchId(), result.getSubAppid());
+            log.warn("微信支付查单归属或金额不匹配，拒绝更新订单状态: orderNo={}, spMchId={}, subMchId={}, subAppId={}, localAmount={}, wxAmount={}",
+                    orderNo, result.getSpMchId(), result.getSubMchId(), result.getSubAppid(),
+                    toFenExact(order.getPayAmount()),
+                    result.getAmount() != null ? result.getAmount().getTotal() : null);
             throw new IllegalStateException("WeChat Pay partner order ownership mismatch");
         }
         if (!payResult) {
@@ -208,13 +211,16 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
         return payResult;
     }
 
-    private boolean isSamePartnerPayment(Merchant merchant, WxPayPartnerOrderQueryV3Result result) {
+    private boolean isSamePartnerPayment(MallOrder order, Merchant merchant, WxPayPartnerOrderQueryV3Result result) {
         return merchant != null
                 && getWxPayService() != null
                 && getWxPayService().getConfig() != null
                 && StringUtils.equals(result.getSpMchId(), getWxPayService().getConfig().getMchId())
                 && StringUtils.equals(result.getSubMchId(), merchant.getEffectiveMerchantWxMchId())
-                && StringUtils.equals(result.getSubAppid(), merchant.getCMiniAppId());
+                && StringUtils.equals(result.getSubAppid(), merchant.getCMiniAppId())
+                && result.getAmount() != null
+                && result.getAmount().getTotal() != null
+                && result.getAmount().getTotal() == toFenExact(order.getPayAmount());
     }
 
     private boolean isUserOrder(String userId, MallOrder order) {
@@ -233,18 +239,6 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
         return merchant;
     }
 
-    private void checkDistributorSettlementReceiver(Merchant merchant) {
-        if (merchant.getDistributorId() == null
-                || merchant.getDistributorShareRate() == null
-                || merchant.getDistributorShareRate().compareTo(BigDecimal.ZERO) <= 0) {
-            return;
-        }
-        Distributor distributor = distributorService.selectDistributorById(merchant.getDistributorId());
-        if (distributor == null || StringUtils.isBlank(distributor.getReceiverOpenid())) {
-            throw new RuntimeException("distributor receiver_openid is required for T+1 settlement");
-        }
-    }
-
     private void checkOrderTenant(MallOrder order) {
         Long tokenMerchantId = WxMiniUserContext.getCurrentMerchantId();
         if (tokenMerchantId == null || !tokenMerchantId.equals(order.getMerchantId())) {
@@ -254,6 +248,17 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
         if (appIdMerchantId != null && !appIdMerchantId.equals(order.getMerchantId())) {
             throw new RuntimeException("订单商户与当前小程序AppID不匹配");
         }
+    }
+
+    private boolean shouldRequestProfitSharing(Merchant merchant) {
+        return profitSharingEnabled
+                && merchant != null
+                && Integer.valueOf(1).equals(merchant.getWxProfitSharingEnabled())
+                && (positive(merchant.getPlatformShareRate()) || positive(merchant.getDistributorShareRate()));
+    }
+
+    private boolean positive(BigDecimal value) {
+        return value != null && value.compareTo(BigDecimal.ZERO) > 0;
     }
 
     private int toFenExact(BigDecimal amount) {

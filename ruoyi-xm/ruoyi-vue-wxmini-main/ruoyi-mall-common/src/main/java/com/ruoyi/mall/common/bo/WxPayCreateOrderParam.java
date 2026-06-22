@@ -12,6 +12,7 @@ public class WxPayCreateOrderParam {
     private String appId;
     private String openId;
     private String timeExpire;
+    private Boolean profitSharing;
 
     public String getOrderNo() {
         return orderNo;
@@ -99,5 +100,13 @@ public class WxPayCreateOrderParam {
 
     public void setTimeExpire(String timeExpire) {
         this.timeExpire = timeExpire;
+    }
+
+    public Boolean getProfitSharing() {
+        return profitSharing;
+    }
+
+    public void setProfitSharing(Boolean profitSharing) {
+        this.profitSharing = profitSharing;
     }
 }

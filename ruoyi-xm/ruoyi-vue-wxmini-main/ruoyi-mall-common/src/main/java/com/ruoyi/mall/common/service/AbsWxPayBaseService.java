@@ -124,6 +124,11 @@ public abstract class AbsWxPayBaseService<P> {
         request.setOutTradeNo(orderParam.getOrderNo());
         request.setTimeExpire(orderParam.getTimeExpire());
         request.setNotifyUrl(wxPayNotifyUrl);
+        if (Boolean.TRUE.equals(orderParam.getProfitSharing())) {
+            WxPayPartnerUnifiedOrderV3Request.SettleInfo settleInfo = new WxPayPartnerUnifiedOrderV3Request.SettleInfo();
+            settleInfo.setProfitSharing(true);
+            request.setSettleInfo(settleInfo);
+        }
 
         WxPayPartnerUnifiedOrderV3Request.Amount amountObj = new WxPayPartnerUnifiedOrderV3Request.Amount();
         amountObj.setTotal(orderParam.getAmount());

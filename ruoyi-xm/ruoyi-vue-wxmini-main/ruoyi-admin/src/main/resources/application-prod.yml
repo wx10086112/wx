@@ -53,6 +53,12 @@ wx:
         msgDataFormat: JSON
   pay:
     stub-enabled: false
+    profit-sharing-enabled: ${WX_PAY_PROFIT_SHARING_ENABLED:true}
+    profit-sharing-auto-submit-enabled: ${WX_PAY_PROFIT_SHARING_AUTO_SUBMIT_ENABLED:true}
+    profit-sharing-add-receiver-enabled: ${WX_PAY_PROFIT_SHARING_ADD_RECEIVER_ENABLED:true}
+    profit-sharing-platform-mch-id: ${WX_PAY_PROFIT_SHARING_PLATFORM_MCH_ID:}
+    transfer-enabled: ${WX_PAY_TRANSFER_ENABLED:false}
+    transfer-task-enabled: ${WX_PAY_TRANSFER_TASK_ENABLED:false}
     notify-url: ${WX_PAY_NOTIFY_URL}
     refund-notify-url: ${WX_PAY_REFUND_NOTIFY_URL}
     appId: ${WX_PAY_APP_ID}

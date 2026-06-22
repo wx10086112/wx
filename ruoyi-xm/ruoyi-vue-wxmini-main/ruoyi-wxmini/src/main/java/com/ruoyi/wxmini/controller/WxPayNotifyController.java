@@ -77,7 +77,13 @@ public class WxPayNotifyController {
             if (!validatePlatformPayNotify(order, spMchId, subMchId, subAppId)) {
                 log.error("支付回调商户信息不匹配: orderNo={}, spMchId={}, subMchId={}",
                         outTradeNo, spMchId, subMchId);
-                return buildErrorResponse("商户信息不匹配");
+                return buildSuccessResponse();
+            }
+            if (!validatePayAmount(order, result.getResult().getAmount())) {
+                log.error("支付回调金额不匹配: orderNo={}, localAmount={}, wxAmount={}",
+                        outTradeNo, toFen(order.getPayAmount()),
+                        result.getResult().getAmount() != null ? result.getResult().getAmount().getTotal() : null);
+                return buildSuccessResponse();
             }
 
             if (MallOrderStatus.isPaidState(order.getStatus())) {
@@ -144,7 +150,14 @@ public class WxPayNotifyController {
             if (!validatePlatformRefundNotify(order, spMchId, subMchId)) {
                 log.error("退款回调商户信息不匹配: orderNo={}, refundNo={}, mchId={}",
                         order.getOrderNo(), outRefundNo, spMchId);
-                return buildErrorResponse("商户信息不匹配");
+                return buildSuccessResponse();
+            }
+            if (!validateRefundAmount(order, refundRecord, result.getResult().getAmount())) {
+                log.error("退款回调金额不匹配: orderNo={}, refundNo={}, localTotal={}, localRefund={}, wxTotal={}, wxRefund={}",
+                        order.getOrderNo(), outRefundNo, toFen(order.getPayAmount()), toFen(refundRecord.getRefundAmount()),
+                        result.getResult().getAmount() != null ? result.getResult().getAmount().getTotal() : null,
+                        result.getResult().getAmount() != null ? result.getResult().getAmount().getRefund() : null);
+                return buildSuccessResponse();
             }
 
             if ("SUCCESS".equals(refundStatus)) {
@@ -153,12 +166,14 @@ public class WxPayNotifyController {
                 if (affectedRows > 0) {
                     refundRecord.setRefundTime(refundTime);
                     boolean orderMarkedRefunded = mallOrderService.markOrderRefunded(order.getOrderNo(), refundRecord.getRefundTime());
+                    paymentRecordService.markRefunded(order.getOrderNo(), body);
+                    applicationContext.publishEvent(new RefundSucceededEvent(
+                            this, order.getOrderNo(), refundRecord.getId(), outRefundNo));
                     if (orderMarkedRefunded) {
-                        paymentRecordService.markRefunded(order.getOrderNo(), body);
-                        applicationContext.publishEvent(new RefundSucceededEvent(
-                                this, order.getOrderNo(), refundRecord.getId(), outRefundNo));
+                        log.info("退款已由微信确认，订单和财务均已完成退款处理: orderNo={}, refundNo={}",
+                                order.getOrderNo(), outRefundNo);
                     } else {
-                        log.warn("退款已由微信确认，但订单当前状态不可退款，跳过支付记录退款标记和分账冲正: orderNo={}, refundNo={}, orderStatus={}",
+                        log.warn("退款已由微信确认，但订单当前状态不可迁移为退款；已完成支付记录退款标记和财务冲正: orderNo={}, refundNo={}, orderStatus={}",
                                 order.getOrderNo(), outRefundNo, order.getStatus());
                     }
                 }
@@ -202,6 +217,31 @@ public class WxPayNotifyController {
         }
         Merchant merchant = merchantService.selectMerchantById(order.getMerchantId());
         return merchant != null && StringUtils.equals(subMchId, merchant.getEffectiveMerchantWxMchId());
+    }
+
+    private boolean validatePayAmount(MallOrder order, WxPayPartnerNotifyV3Result.Amount amount) {
+        return order != null
+                && amount != null
+                && amount.getTotal() != null
+                && amount.getTotal() == toFen(order.getPayAmount());
+    }
+
+    private boolean validateRefundAmount(MallOrder order, RefundRecord refundRecord,
+                                         WxPayPartnerRefundNotifyV3Result.Amount amount) {
+        return order != null
+                && refundRecord != null
+                && amount != null
+                && amount.getTotal() != null
+                && amount.getRefund() != null
+                && amount.getTotal() == toFen(order.getPayAmount())
+                && amount.getRefund() == toFen(refundRecord.getRefundAmount());
+    }
+
+    private int toFen(java.math.BigDecimal amount) {
+        if (amount == null) {
+            return 0;
+        }
+        return amount.movePointRight(2).setScale(0, java.math.RoundingMode.UNNECESSARY).intValueExact();
     }
 
     private String buildSuccessResponse() {

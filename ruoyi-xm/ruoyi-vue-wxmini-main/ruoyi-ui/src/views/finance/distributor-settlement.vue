@@ -30,23 +30,8 @@
         </el-form-item>
       </el-form>
 
-      <!-- 工具栏 -->
-      <el-row :gutter="10" class="mb8">
-        <el-col :span="1.5">
-          <el-button
-            type="warning"
-            plain
-            icon="el-icon-money"
-            size="mini"
-            :disabled="multipleSelection.length === 0"
-            @click="handleWxBatchTransfer"
-          >微信批量打款</el-button>
-        </el-col>
-      </el-row>
-
       <!-- 表格 -->
-      <el-table v-loading="loading" :data="tableList" border @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="50" align="center" />
+      <el-table v-loading="loading" :data="tableList" border>
         <el-table-column label="结算单号" prop="settlementNo" width="200" align="center" />
         <el-table-column label="分销商ID" prop="distributorId" width="110" align="center" />
         <el-table-column label="商家名称" prop="merchantName" width="110" align="center" />
@@ -91,7 +76,7 @@
 </template>
 
 <script>
-import { getDistributorSettlementList, distributorBatchTransferReal } from '@/api/finance/settlement'
+import { getDistributorSettlementList } from '@/api/finance/settlement'
 
 export default {
   name: 'DistributorSettlement',
@@ -100,7 +85,6 @@ export default {
       loading: false,
       tableList: [],
       total: 0,
-      multipleSelection: [],
       queryParams: {
         distributorId: '',
         merchantName: '',
@@ -156,24 +140,6 @@ export default {
       }
       this.getList()
     },
-    handleSelectionChange(selection) {
-      this.multipleSelection = selection
-    },
-    async handleWxBatchTransfer() {
-      const ids = this.multipleSelection.map(row => row.id)
-      if (ids.length === 0) {
-        this.$message.warning('请选择要打款的记录')
-        return
-      }
-      await this.$confirm('确认通过微信对选中的 ' + ids.length + ' 条记录发起打款?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      })
-      await distributorBatchTransferReal(ids)
-      this.$message.success('微信打款已发起')
-      this.getList()
-    },
     handleSizeChange(val) {
       this.queryParams.pageSize = val
       this.getList()
@@ -193,9 +159,6 @@ export default {
 .pagination {
   margin-top: 16px;
   text-align: right;
-}
-.mb8 {
-  margin-bottom: 8px;
 }
 .text-primary {
   color: #409EFF;

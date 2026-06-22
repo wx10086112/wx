@@ -157,7 +157,9 @@ public class WxPayController {
                         .setSpMchId(wxPayService.getConfig().getMchId())
                         .setSubMchId(merchant != null ? merchant.getEffectiveMerchantWxMchId() : null);
                 WxPayPartnerOrderQueryV3Result wxResult = wxPayService.queryPartnerOrderV3(queryReq);
-                if ("SUCCESS".equals(wxResult.getTradeState()) && isSamePartnerPayment(merchant, wxResult)) {
+                if ("SUCCESS".equals(wxResult.getTradeState())
+                        && isSamePartnerPayment(merchant, wxResult)
+                        && isSameAmount(order, wxResult)) {
                     java.util.Date payTime = new java.util.Date();
                     mallOrderService.markOrderPaid(outTradeNo, payTime);
                     paymentRecordService.markPaySuccess(outTradeNo, order.getMerchantId(), order.getUserId(),
@@ -167,8 +169,10 @@ public class WxPayController {
                     order.setPayTime(payTime);
                     isLocalPaid = true;
                 } else if ("SUCCESS".equals(wxResult.getTradeState())) {
-                    log.warn("微信支付查单归属不匹配，拒绝同步本地订单状态: orderNo={}, spMchId={}, subMchId={}, subAppId={}",
-                            outTradeNo, wxResult.getSpMchId(), wxResult.getSubMchId(), wxResult.getSubAppid());
+                    log.warn("微信支付查单归属或金额不匹配，拒绝同步本地订单状态: orderNo={}, spMchId={}, subMchId={}, subAppId={}, localAmount={}, wxAmount={}",
+                            outTradeNo, wxResult.getSpMchId(), wxResult.getSubMchId(), wxResult.getSubAppid(),
+                            toFen(order.getPayAmount()),
+                            wxResult.getAmount() != null ? wxResult.getAmount().getTotal() : null);
                 }
             } catch (Exception e) {
                 log.warn("微信支付查单同步失败: orderNo={}, error={}", outTradeNo, e.getMessage());
@@ -192,6 +196,14 @@ public class WxPayController {
                 && StringUtils.equals(wxResult.getSpMchId(), wxPayService.getConfig().getMchId())
                 && StringUtils.equals(wxResult.getSubMchId(), merchant.getEffectiveMerchantWxMchId())
                 && StringUtils.equals(wxResult.getSubAppid(), merchant.getCMiniAppId());
+    }
+
+    private boolean isSameAmount(MallOrder order, WxPayPartnerOrderQueryV3Result wxResult) {
+        return order != null
+                && wxResult != null
+                && wxResult.getAmount() != null
+                && wxResult.getAmount().getTotal() != null
+                && wxResult.getAmount().getTotal() == toFen(order.getPayAmount());
     }
 
     private AjaxResult checkMerchantPayReady(Long merchantId) {

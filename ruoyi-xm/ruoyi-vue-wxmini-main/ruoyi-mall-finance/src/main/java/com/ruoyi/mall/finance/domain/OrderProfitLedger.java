@@ -23,6 +23,7 @@ public class OrderProfitLedger extends BaseEntity {
     private String status;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date finishTime;
+    private String remark;
     private String delFlag;
 
     public Long getId() { return id; }
@@ -62,6 +63,8 @@ public class OrderProfitLedger extends BaseEntity {
     public void setStatus(String status) { this.status = status; }
     public Date getFinishTime() { return finishTime; }
     public void setFinishTime(Date finishTime) { this.finishTime = finishTime; }
+    public String getRemark() { return remark; }
+    public void setRemark(String remark) { this.remark = remark; }
     public String getDelFlag() { return delFlag; }
     public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 }

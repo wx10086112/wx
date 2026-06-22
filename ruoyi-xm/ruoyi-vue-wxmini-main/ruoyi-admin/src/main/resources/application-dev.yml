@@ -9,6 +9,12 @@ wx:
       check-path: ${WX_MINI_QRCODE_CHECK_PATH:false}
   pay:
     stub-enabled: false
+    profit-sharing-enabled: false
+    profit-sharing-auto-submit-enabled: false
+    profit-sharing-add-receiver-enabled: false
+    profit-sharing-platform-mch-id:
+    transfer-enabled: false
+    transfer-task-enabled: false
 
 wxmini:
   login:

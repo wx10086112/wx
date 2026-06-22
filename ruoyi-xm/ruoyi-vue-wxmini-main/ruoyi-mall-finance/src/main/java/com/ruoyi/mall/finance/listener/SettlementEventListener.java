@@ -5,6 +5,7 @@ import com.ruoyi.mall.finance.service.IDistributorSettlementRecordService;
 import com.ruoyi.mall.finance.service.IMerchantSettlementRecordService;
 import com.ruoyi.mall.finance.service.IOrderProfitLedgerService;
 import com.ruoyi.mall.finance.service.IPlatformIncomeService;
+import com.ruoyi.mall.finance.service.IWechatProfitSharingService;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.event.OrderCompletedEvent;
@@ -32,6 +33,8 @@ public class SettlementEventListener {
     private IMerchantService merchantService;
     @Resource
     private IPlatformIncomeService platformIncomeService;
+    @Resource
+    private IWechatProfitSharingService wechatProfitSharingService;
 
     @Async
     @EventListener
@@ -76,6 +79,10 @@ public class SettlementEventListener {
                     && ledger.getDistributorAmount().compareTo(BigDecimal.ZERO) > 0) {
                 distributorSettlementService.createSettlementForOrder(orderNo, merchantId, distributorId,
                         ledger.getDistributorAmount(), ledger.getDistributorRate());
+            }
+
+            if (ledger != null) {
+                wechatProfitSharingService.processOrderProfitSharing(orderNo);
             }
 
             log.info("订单 {} 三方结算记录生成完成: merchant={}, distributor={}", orderNo, merchantId, distributorId);

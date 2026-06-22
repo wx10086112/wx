@@ -358,7 +358,7 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniService {
         overviewDto.setPendingAutoTransferAmount(pendingSettleAmount);
         overviewDto.setPlatformFeeAmount(platformFeeAmount);
         overviewDto.setCompletedOrderCount(completedOrderCount);
-        overviewDto.setAutoTransferMode("T+1");
+        overviewDto.setAutoTransferMode("微信支付商户结算");
         overviewDto.setNextAutoTransferTime(nextAutoTransferTime());
         overviewDto.setSettlementAccount(buildSettlementAccount());
         overviewDto.setSettlementRecordList(settlementRecordList);
@@ -368,7 +368,7 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniService {
 
     @Override
     public synchronized MerchantMiniWithdrawRecordDto applyWithdraw(Long amount) {
-        throw new IllegalArgumentException("该版本已切换为微信自动结算，无需商家手动提现");
+        throw new IllegalArgumentException("当前使用微信支付商户号结算，无需平台提现");
     }
 
     // ==================== 订单操作 ====================
@@ -974,10 +974,10 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniService {
         if (LEDGER_STATUS_SETTLED.equals(ledgerDto.getStatus())) {
             dto.setStatus(SETTLEMENT_STATUS_ARRIVED);
             dto.setArriveTime(ledgerDto.getSettleTime());
-            dto.setRemark("微信已自动打款至结算卡");
+            dto.setRemark("微信支付按商户号结算");
         } else {
             dto.setStatus(SETTLEMENT_STATUS_WAITING_T1);
-            dto.setRemark("订单完成后进入 T+1 自动打款队列");
+            dto.setRemark("待微信支付结算周期处理");
         }
         return dto;
     }

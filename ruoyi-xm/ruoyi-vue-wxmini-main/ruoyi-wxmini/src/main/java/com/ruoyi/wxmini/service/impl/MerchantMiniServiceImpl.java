@@ -675,7 +675,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         overviewDto.setPendingAutoTransferAmount(pendingSettleAmount);
         overviewDto.setPlatformFeeAmount(platformFeeAmount);
         overviewDto.setCompletedOrderCount((int) completedOrderCount);
-        overviewDto.setAutoTransferMode("T+1");
+        overviewDto.setAutoTransferMode("微信支付商户结算");
         overviewDto.setNextAutoTransferTime(nextAutoTransferTime());
         overviewDto.setSettlementAccount(buildSettlementAccount(merchantId));
         overviewDto.setSettlementRecordList(settlementRecordList);
@@ -685,7 +685,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
 
     @Override
     public MerchantMiniWithdrawRecordDto applyWithdraw(Long amount) {
-        throw new IllegalArgumentException("该版本已切换为微信自动结算，无需商家手动提现");
+        throw new IllegalArgumentException("当前使用微信支付商户号结算，无需平台提现");
     }
 
     // ==================== 订单操作 ====================
@@ -1235,7 +1235,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         Merchant merchant = merchantMapper.selectMerchantById(merchantId);
         MerchantMiniSettlementAccountDto dto = new MerchantMiniSettlementAccountDto();
         dto.setAccountName(merchant != null ? merchant.getName() : "");
-        dto.setBankName("待配置结算银行");
+        dto.setBankName("微信支付商户平台结算账户");
         dto.setAccountNoTail("");
         dto.setStatus("PENDING");
         return dto;
@@ -1252,10 +1252,10 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         if (LEDGER_STATUS_SETTLED.equals(ledger.getStatus())) {
             dto.setStatus(SETTLEMENT_STATUS_ARRIVED);
             dto.setArriveTime(ledger.getSettleTime());
-            dto.setRemark("微信已自动打款至结算卡");
+            dto.setRemark("微信支付按商户号结算");
         } else {
             dto.setStatus(SETTLEMENT_STATUS_WAITING_T1);
-            dto.setRemark("订单完成后进入 T+1 自动打款队列");
+            dto.setRemark("待微信支付结算周期处理");
         }
         return dto;
     }

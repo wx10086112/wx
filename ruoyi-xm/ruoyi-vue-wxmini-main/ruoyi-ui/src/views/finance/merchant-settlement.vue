@@ -28,16 +28,8 @@
         </el-form-item>
       </el-form>
 
-      <!-- 工具栏 -->
-      <el-row :gutter="10" class="toolbar">
-        <el-button type="warning" size="small" :disabled="multipleSelection.length === 0" @click="handleWxBatchTransfer">
-          微信批量打款
-        </el-button>
-      </el-row>
-
       <!-- 表格 -->
-      <el-table v-loading="loading" :data="tableList" border @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="50" align="center" />
+      <el-table v-loading="loading" :data="tableList" border>
         <el-table-column label="结算单号" prop="settlementNo" width="200" />
         <el-table-column label="订单号" prop="orderNo" width="180" />
         <el-table-column label="标题" prop="title" min-width="160" show-overflow-tooltip />
@@ -85,7 +77,7 @@
 </template>
 
 <script>
-import { getMerchantSettlementList, merchantBatchTransferReal } from '@/api/finance/settlement'
+import { getMerchantSettlementList } from '@/api/finance/settlement'
 
 export default {
   name: 'MerchantSettlement',
@@ -94,7 +86,6 @@ export default {
       loading: false,
       tableList: [],
       total: 0,
-      multipleSelection: [],
       queryParams: {
         merchantName: '',
         orderNo: '',
@@ -139,9 +130,6 @@ export default {
     formatAmount(val) {
       return Number(val || 0).toFixed(2)
     },
-    handleSelectionChange(selection) {
-      this.multipleSelection = selection
-    },
     handleQuery() {
       this.queryParams.pageNum = 1
       this.getList()
@@ -163,18 +151,6 @@ export default {
     handleCurrentChange(val) {
       this.queryParams.pageNum = val
       this.getList()
-    },
-    handleWxBatchTransfer() {
-      const ids = this.multipleSelection.map(item => item.id)
-      this.$confirm('确认通过微信对选中的 ' + ids.length + ' 条记录发起打款?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
-        await merchantBatchTransferReal(ids)
-        this.$message.success('微信打款已发起')
-        this.getList()
-      }).catch(() => {})
     }
   }
 }
@@ -182,9 +158,6 @@ export default {
 
 <style scoped>
 .search-form {
-  margin-bottom: 16px;
-}
-.toolbar {
   margin-bottom: 16px;
 }
 .pagination {

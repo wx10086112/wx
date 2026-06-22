@@ -37,6 +37,8 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
 
     @Value("${wx.pay.stub-enabled:false}")
     private boolean stubEnabled;
+    @Value("${wx.pay.transfer-enabled:false}")
+    private boolean transferEnabled;
 
     @Autowired
     private PlatformTransferRecordMapper transferMapper;
@@ -72,6 +74,7 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PlatformTransferRecord createMerchantTransfer(Long settlementId, String operatorId) {
+        ensureTransferEnabled();
         MerchantSettlementRecord settlement = merchantSettlementService.selectByIdForUpdate(settlementId);
         if (settlement == null) {
             throw new RuntimeException("结算记录不存在");
@@ -143,6 +146,7 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PlatformTransferRecord createDistributorTransfer(Long settlementId, String operatorId) {
+        ensureTransferEnabled();
         DistributorSettlementRecord settlement = distributorSettlementService.selectByIdForUpdate(settlementId);
         if (settlement == null) {
             throw new RuntimeException("分销商结算记录不存在");
@@ -530,6 +534,12 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
             log.warn("解析收款人姓名失败: transferNo={}, error={}", record.getTransferNo(), e.getMessage());
         }
         return null;
+    }
+
+    private void ensureTransferEnabled() {
+        if (!transferEnabled) {
+            throw new IllegalStateException("微信转账功能未开启，请配置 wx.pay.transfer-enabled=true 后再发起转账");
+        }
     }
 
     /**

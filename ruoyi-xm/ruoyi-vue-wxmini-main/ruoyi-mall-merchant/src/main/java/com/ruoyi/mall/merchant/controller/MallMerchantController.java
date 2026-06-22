@@ -439,10 +439,6 @@ public class MallMerchantController extends BaseController {
                 && merchant.getDistributorShareRate().compareTo(BigDecimal.ZERO) > 0) {
             return AjaxResult.error("平台直营网商户的分销商到账比例必须为0%");
         }
-        if (merchant.getMerchantShareRate().compareTo(BigDecimal.ZERO) > 0
-                && StringUtils.isBlank(merchant.getReceiverOpenid())) {
-            return AjaxResult.error("商家到账比例大于0时，商家收款OpenID必填");
-        }
         return null;
     }
 

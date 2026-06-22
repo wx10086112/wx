@@ -26,6 +26,10 @@
         </dependency>
         <dependency>
             <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-mall-pay</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.ruoyi</groupId>
             <artifactId>ruoyi-mall-product</artifactId>
         </dependency>
     </dependencies>

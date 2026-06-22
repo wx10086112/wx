@@ -7,6 +7,7 @@ import com.ruoyi.mall.finance.service.IMerchantSettlementRecordService;
 import com.ruoyi.mall.finance.service.IPlatformTransferService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -28,12 +29,17 @@ public class SettlementTransferTask {
     private IDistributorSettlementRecordService distributorSettlementService;
     @Resource
     private IPlatformTransferService platformTransferService;
+    @Value("${wx.pay.transfer-task-enabled:false}")
+    private boolean transferTaskEnabled;
 
     /**
      * 每5分钟执行一次，扫描待打款的结算记录并自动发起转账
      */
     @Scheduled(cron = "0 */5 * * * ?")
     public void processWaitingTransfer() {
+        if (!transferTaskEnabled) {
+            return;
+        }
         log.info("T+1 自动打款任务开始执行");
         try {
             List<MerchantSettlementRecord> waitingList = settlementService.selectWaitingTransfer(50);
@@ -67,6 +73,9 @@ public class SettlementTransferTask {
      */
     @Scheduled(cron = "0 */10 * * * ?")
     public void processTimeoutTransfers() {
+        if (!transferTaskEnabled) {
+            return;
+        }
         log.info("超时转账状态同步任务开始执行");
         try {
             platformTransferService.processTimeoutTransfers(30, 50);

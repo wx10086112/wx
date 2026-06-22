@@ -181,8 +181,9 @@ public class Merchant extends BaseEntity {
     public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 
     /**
-     * 检查商户是否可以正式运营（上架团购商品）
-     * 需要同时满足：status=1 + 小程序AppID + T+1结算开关 + 三方结算比例 + 必要收款openid
+     * 检查商户是否可以正式运营（上架团购商品/发起微信支付）
+     * 服务商模式下运营准入只依赖商户状态、小程序 AppID 和子商户号。
+     * 三方比例用于平台内部账务统计；若已配置，则必须完整且合计 100%。
      */
     public boolean canOperate() {
         return getOperateBlockReason() == null;
@@ -201,14 +202,8 @@ public class Merchant extends BaseEntity {
         if (!hasText(getEffectiveMerchantWxMchId())) {
             return "sub_mchid is required for WeChat Pay service provider mode";
         }
-        if (this.wxProfitSharingEnabled == null || this.wxProfitSharingEnabled != 1) {
-            return "T+1结算未开启";
-        }
-        if (!shareRatesValid()) {
+        if (hasAnyShareRate() && !shareRatesValid()) {
             return "商家/平台/分销商三方分账比例合计必须为100%";
-        }
-        if (positive(this.merchantShareRate) && !hasText(this.receiverOpenid)) {
-            return "merchant receiver_openid is required for T+1 settlement";
         }
         if (this.distributorId == null && positive(this.distributorShareRate)) {
             return "direct platform merchant distributor share rate must be 0";
@@ -229,6 +224,10 @@ public class Merchant extends BaseEntity {
         }
         BigDecimal sum = this.merchantShareRate.add(this.platformShareRate).add(this.distributorShareRate);
         return sum.compareTo(new BigDecimal("100")) == 0;
+    }
+
+    private boolean hasAnyShareRate() {
+        return this.merchantShareRate != null || this.platformShareRate != null || this.distributorShareRate != null;
     }
 
     private boolean positive(BigDecimal value) {
