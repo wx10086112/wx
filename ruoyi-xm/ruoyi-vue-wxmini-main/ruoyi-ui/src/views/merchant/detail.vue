@@ -517,6 +517,12 @@
           <el-input v-model="wxApplymentForm.merchantWxMchName" placeholder="商家微信支付商户名称" />
         </el-form-item>
         <el-alert
+          title="服务商模式下，用户付款结算到商家的微信支付子商户号；普通商家收款不需要填写 OpenID。"
+          type="success"
+          :closable="false"
+          style="margin-bottom: 16px;"
+        />
+        <el-alert
           v-if="wxApplymentForm.wxPaymentAccessType === 'APPLYMENT_ASSISTED'"
           title="平台仅协助商家完成微信支付商户号申请，申请完成后在此填写商户号即可。"
           type="info"
