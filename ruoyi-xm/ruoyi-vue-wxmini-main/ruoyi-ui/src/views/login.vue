@@ -73,8 +73,8 @@ export default {
       title: "零点科技后台管理系统",
       codeUrl: "",
       loginForm: {
-        username: "admin",
-        password: "admin123",
+        username: "",
+        password: "",
         rememberMe: false,
         code: "",
         uuid: ""

@@ -29,7 +29,7 @@ spring:
         username: ${DB_USERNAME}
         password: ${DB_PASSWORD}
       statViewServlet:
-        allow: ${DRUID_ALLOW:}
+        allow: ${DRUID_ALLOW:127.0.0.1}
         login-username: ${DRUID_USERNAME}
         login-password: ${DRUID_PASSWORD}
 
