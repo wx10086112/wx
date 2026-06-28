@@ -52,7 +52,10 @@
 
     <view class="section-head">
       <text class="section-title">团购优惠</text>
-      <text class="section-count">{{displayGrouponList.length}} 项</text>
+      <view class="section-actions">
+        <text class="section-count">{{displayGrouponList.length}} 项</text>
+        <text class="cart-link" bindtap="goCart">购物车</text>
+      </view>
     </view>
 
     <view wx:if="{{displayGrouponList.length}}" class="service-list">
@@ -69,5 +72,9 @@
       <text class="empty-title">暂无上架服务</text>
       <text class="empty-desc">门店服务正在整理中，请稍后再来看看</text>
     </view>
+  </view>
+
+  <view class="floating-cart-btn" wx:if="{{!loading}}" bindtap="goCart">
+    <text class="floating-cart-text">购物车</text>
   </view>
 </view>

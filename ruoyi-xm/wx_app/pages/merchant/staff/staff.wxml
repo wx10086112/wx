@@ -10,24 +10,29 @@
         <text class="empty-card-text">当前还没有员工账号，先创建店长或店员登录账号。</text>
       </view>
 
-      <view wx:for="{{staffList}}" wx:key="staffId" class="staff-row">
-        <view class="staff-main">
-          <view class="staff-name-row">
-            <text class="staff-name">{{item.name}}</text>
-            <text class="staff-role-tag">{{item.roleName}}</text>
+      <view wx:for="{{staffList}}" wx:key="staffId" class="staff-card">
+        <view class="staff-card-head">
+          <view class="staff-identity">
+            <view class="staff-name-row">
+              <text class="staff-name">{{item.name}}</text>
+              <text class="staff-role-tag">{{item.roleName}}</text>
+            </view>
+            <view class="staff-meta-grid">
+              <text class="staff-meta">账号：{{item.username}}</text>
+              <text class="staff-meta">手机号：{{item.phone || '未设置'}}</text>
+            </view>
           </view>
-          <text class="staff-meta">账号：{{item.username}}</text>
-          <text class="staff-meta">手机号：{{item.phone || '未设置'}}</text>
+          <view class="status-tag {{item.status === 'ACTIVE' ? 'green' : 'gray'}}">{{item.statusText}}</view>
+        </view>
+        <view class="staff-permission">
+          <text class="permission-label">权限</text>
           <text class="staff-summary">{{item.permissionSummary}}</text>
         </view>
-        <view class="staff-side">
-          <view class="status-tag {{item.status === 'ACTIVE' ? 'green' : 'gray'}}">{{item.statusText}}</view>
-          <view class="staff-btn-group">
-            <button class="ghost-btn mini-btn" catchtap="showEditStaff" data-id="{{item.staffId}}">编辑</button>
-            <button class="ghost-btn mini-btn" catchtap="toggleStaffStatus" data-id="{{item.staffId}}">
-              {{item.status === 'ACTIVE' ? '停用' : '启用'}}
-            </button>
-          </view>
+        <view class="staff-btn-group">
+          <button class="ghost-btn mini-btn" catchtap="showEditStaff" data-id="{{item.staffId}}">编辑</button>
+          <button class="ghost-btn mini-btn" catchtap="toggleStaffStatus" data-id="{{item.staffId}}">
+            {{item.status === 'ACTIVE' ? '停用' : '启用'}}
+          </button>
         </view>
       </view>
     </view>

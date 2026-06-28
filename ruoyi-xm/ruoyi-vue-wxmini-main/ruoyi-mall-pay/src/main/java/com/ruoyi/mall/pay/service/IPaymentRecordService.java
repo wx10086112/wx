@@ -42,4 +42,9 @@ public interface IPaymentRecordService {
      * 微信退款成功回调：将支付记录标记为已退款
      */
     void markRefunded(String orderNo, String notifyResult);
+
+    /**
+     * 订单关闭：将仍处于待支付的支付记录标记为已关闭
+     */
+    void markClosed(String orderNo, String closeResult);
 }

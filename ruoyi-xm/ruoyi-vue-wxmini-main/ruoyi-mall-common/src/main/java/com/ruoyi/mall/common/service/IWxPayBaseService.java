@@ -33,6 +33,11 @@ public interface IWxPayBaseService<P> {
     public Boolean queryPayResultAndUpdOrderStatus(String orderNo) throws WxPayException;
 
     /**
+     * 关闭待支付订单
+     */
+    public Boolean closeOrder(String orderNo);
+
+    /**
      * 处理支付结果
      */
     public Boolean handlePayResult(Boolean payResult, String orderNo);

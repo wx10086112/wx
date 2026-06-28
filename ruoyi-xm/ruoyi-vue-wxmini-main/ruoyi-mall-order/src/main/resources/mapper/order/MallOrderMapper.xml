@@ -92,6 +92,15 @@
         order by o.create_time desc
     </select>
 
+    <select id="selectPendingOrdersCreatedBefore" resultMap="MallOrderResult">
+        <include refid="selectMallOrderVo"/>
+        where o.status = 0
+          and o.del_flag = '0'
+          and o.create_time &lt;= #{expireBefore}
+        order by o.create_time asc
+        limit #{limit}
+    </select>
+
     <insert id="insertMallOrder" parameterType="com.ruoyi.mall.order.domain.MallOrder" useGeneratedKeys="true" keyProperty="id">
         insert into mall_order
         <trim prefix="(" suffix=")" suffixOverrides=",">

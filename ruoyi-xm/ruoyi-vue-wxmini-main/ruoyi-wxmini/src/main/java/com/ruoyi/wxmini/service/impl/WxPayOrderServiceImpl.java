@@ -13,6 +13,7 @@ import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.constant.MallOrderStatus;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.service.IMallOrderService;
+import com.ruoyi.mall.pay.domain.PaymentRecord;
 import com.ruoyi.mall.pay.service.IPaymentRecordService;
 import com.ruoyi.mall.user.domain.UserInfo;
 import com.ruoyi.mall.user.service.IUserInfoService;
@@ -171,8 +172,14 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
         if (order.getStatus() == null || order.getStatus() != MallOrderStatus.PENDING) {
             return true;
         }
+        PaymentRecord paymentRecord = paymentRecordService.selectByOrderNo(orderNo);
+        if (paymentRecord != null && !tryCloseWechatOrder(order)) {
+            log.warn("订单{}存在支付记录，微信关单未成功，暂不执行本地取消", orderNo);
+            return false;
+        }
         boolean closed = mallOrderService.cancelPendingOrder(orderNo);
         if (closed) {
+            paymentRecordService.markClosed(orderNo, "ORDER_CLOSED");
             log.info("订单{}已关闭", orderNo);
         }
         return closed;
@@ -240,12 +247,33 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
 
     private void checkOrderTenant(MallOrder order) {
         Long tokenMerchantId = WxMiniUserContext.getCurrentMerchantId();
-        if (tokenMerchantId == null || !tokenMerchantId.equals(order.getMerchantId())) {
+        Long appIdMerchantId = WxMiniUserContext.getAppIdMerchantId();
+        if (tokenMerchantId == null && appIdMerchantId == null) {
+            return;
+        }
+        if (tokenMerchantId != null && !tokenMerchantId.equals(order.getMerchantId())) {
             throw new RuntimeException("订单商户与当前小程序登录态不匹配");
         }
-        Long appIdMerchantId = WxMiniUserContext.getAppIdMerchantId();
         if (appIdMerchantId != null && !appIdMerchantId.equals(order.getMerchantId())) {
             throw new RuntimeException("订单商户与当前小程序AppID不匹配");
+        }
+    }
+
+    private boolean tryCloseWechatOrder(MallOrder order) {
+        try {
+            Merchant merchant = requireMerchant(order.getMerchantId());
+            if (StringUtils.isBlank(merchant.getEffectiveMerchantWxMchId())) {
+                return false;
+            }
+            WxPayPartnerOrderCloseV3Request closeRequest = new WxPayPartnerOrderCloseV3Request()
+                    .setOutTradeNo(order.getOrderNo())
+                    .setSpMchId(getWxPayService().getConfig().getMchId())
+                    .setSubMchId(merchant.getEffectiveMerchantWxMchId());
+            getWxPayService().closePartnerOrderV3(closeRequest);
+            return true;
+        } catch (Exception e) {
+            log.warn("微信关单失败: orderNo={}, reason={}", order.getOrderNo(), e.getMessage());
+            return false;
         }
     }
 

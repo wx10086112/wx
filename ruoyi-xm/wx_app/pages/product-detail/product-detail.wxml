@@ -70,8 +70,13 @@
 
   </view>
 
-  <view class="bottom-bar safe-area-bottom" wx:if="{{!loading}}">
+  <view class="bottom-bar" wx:if="{{!loading}}">
     <button class="share-btn" open-type="share">{{productConfig.shareText}}</button>
+    <button class="add-cart-btn {{product.soldOut ? 'is-disabled' : ''}}" bindtap="addToCart">{{product.soldOut ? '已售罄' : '加入'}}</button>
     <button class="buy-btn {{product.soldOut ? 'is-disabled' : ''}}" bindtap="buyNow">{{product.soldOut ? '已售罄' : productConfig.buyButtonText}}</button>
+  </view>
+
+  <view class="floating-cart-btn" wx:if="{{!loading}}" bindtap="goCart">
+    <text class="floating-cart-text">购物车</text>
   </view>
 </view>

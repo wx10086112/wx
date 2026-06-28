@@ -112,6 +112,14 @@
   align-items: center;
   justify-content: flex-start;
   gap: 12rpx;
+  flex-wrap: wrap;
+}
+
+.order-meta text {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .order-price {

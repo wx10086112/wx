@@ -27,6 +27,7 @@ public class WxOrderDto {
     private String refundReason;
     private Long refundTime;
     private Long expireTime;
+    private List<Item> items = new ArrayList<>();
     private List<HistoryItem> history = new ArrayList<>();
 
     public Long getId() { return id; }
@@ -73,8 +74,32 @@ public class WxOrderDto {
     public void setRefundTime(Long refundTime) { this.refundTime = refundTime; }
     public Long getExpireTime() { return expireTime; }
     public void setExpireTime(Long expireTime) { this.expireTime = expireTime; }
+    public List<Item> getItems() { return items; }
+    public void setItems(List<Item> items) { this.items = items == null ? new ArrayList<>() : items; }
     public List<HistoryItem> getHistory() { return history; }
     public void setHistory(List<HistoryItem> history) { this.history = history == null ? new ArrayList<>() : history; }
+
+    public static class Item {
+        private Long productId;
+        private String title;
+        private String image;
+        private Integer quantity;
+        private Long price;
+        private Long subtotal;
+
+        public Long getProductId() { return productId; }
+        public void setProductId(Long productId) { this.productId = productId; }
+        public String getTitle() { return title; }
+        public void setTitle(String title) { this.title = title; }
+        public String getImage() { return image; }
+        public void setImage(String image) { this.image = image; }
+        public Integer getQuantity() { return quantity; }
+        public void setQuantity(Integer quantity) { this.quantity = quantity; }
+        public Long getPrice() { return price; }
+        public void setPrice(Long price) { this.price = price; }
+        public Long getSubtotal() { return subtotal; }
+        public void setSubtotal(Long subtotal) { this.subtotal = subtotal; }
+    }
 
     public static class HistoryItem {
         private Integer fromStatus;

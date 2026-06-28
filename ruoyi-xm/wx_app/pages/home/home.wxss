@@ -279,8 +279,54 @@
   line-height: 1.5;
 }
 
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.cart-link {
+  height: 44rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  background: #e7f4ff;
+  color: #237bc7;
+  font-size: 23rpx;
+  font-weight: 680;
+  line-height: 44rpx;
+}
+
 .service-list {
   display: flex;
   flex-direction: column;
   gap: 22rpx;
+}
+
+.floating-cart-btn {
+  position: fixed;
+  right: 28rpx;
+  bottom: 150rpx;
+  z-index: 1000;
+  width: 108rpx;
+  height: 108rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1677ff 0%, #59a8ff 100%);
+  box-shadow: 0 16rpx 34rpx rgba(22, 119, 255, 0.26);
+}
+
+.floating-cart-btn:active {
+  opacity: 0.9;
+  transform: translateY(1rpx) scale(0.97);
+}
+
+.floating-cart-text {
+  width: 68rpx;
+  color: #ffffff;
+  font-size: 24rpx;
+  font-weight: 760;
+  line-height: 1.15;
+  text-align: center;
 }

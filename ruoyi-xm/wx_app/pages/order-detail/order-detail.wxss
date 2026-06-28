@@ -67,6 +67,12 @@
   color: #20304a;
 }
 
+.item-count-text {
+  flex-shrink: 0;
+  color: #72839a;
+  font-size: 24rpx;
+}
+
 .code-display {
   display: flex;
   justify-content: center;
@@ -99,12 +105,64 @@
   height: 160rpx;
   border-radius: 18rpx;
   flex-shrink: 0;
+  background: #dbeefa;
 }
 
 .product-merchant,
 .info-label,
 .price-label {
   color: #7a8aa0;
+}
+
+.order-product-list {
+  margin-top: 20rpx;
+}
+
+.order-product-item {
+  display: flex;
+  gap: 20rpx;
+  padding: 22rpx 0;
+  border-top: 1rpx solid rgba(20, 54, 91, 0.08);
+}
+
+.order-product-item:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.order-product-item:last-child {
+  padding-bottom: 0;
+}
+
+.product-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.product-price-row {
+  margin-top: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.item-price {
+  color: #237bc7;
+  font-size: 32rpx;
+  font-weight: 760;
+}
+
+.item-quantity,
+.item-subtotal {
+  color: #72839a;
+  font-size: 24rpx;
+}
+
+.item-subtotal {
+  display: block;
+  margin-top: 8rpx;
+  text-align: right;
 }
 
 .info-item:last-child {

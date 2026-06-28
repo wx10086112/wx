@@ -81,6 +81,11 @@ public class MallOrderServiceImpl implements IMallOrderService {
     }
 
     @Override
+    public List<MallOrder> selectPendingOrdersCreatedBefore(Date expireBefore, int limit) {
+        return mallOrderMapper.selectPendingOrdersCreatedBefore(expireBefore, Math.max(1, limit));
+    }
+
+    @Override
     public int updateMallOrder(MallOrder mallOrder) {
         MallOrder existing = null;
         if (mallOrder != null && mallOrder.getId() != null && mallOrder.getStatus() != null) {

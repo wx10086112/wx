@@ -5,13 +5,14 @@ const productApi = require('../../api/product')
 const merchantApi = require('../../api/merchant')
 const userApi = require('../../api/user')
 const agreement = require('../../utils/agreement')
+const cartStore = require('../../utils/cart')
 const { toListThumbnailUrl } = require('../../utils/image-url')
 const app = getApp()
 const DEFAULT_PRODUCT_IMAGE = '/assets/images/merchant-logo-xiangyuan.png'
 const LOGIN_EXPIRED_TEXT = '登录已过期'
 
-const buildCheckoutReturnUrl = (productId) => {
-  return `/pages/checkout/checkout?id=${productId}`
+const buildCheckoutReturnUrl = (productId, fromCart) => {
+  return fromCart ? '/pages/checkout/checkout?cart=1' : `/pages/checkout/checkout?id=${productId}`
 }
 
 const normalizeUserInfo = (info = {}) => {
@@ -27,8 +28,10 @@ const normalizeUserInfo = (info = {}) => {
 Page({
   data: {
     productId: null,
+    fromCart: false,
     checkoutConfig: {},
     product: {},
+    productList: [],
     merchant: {},
     quantity: 1,
     phone: '',
@@ -40,13 +43,14 @@ Page({
   },
 
   onLoad(options) {
+    const fromCart = options.cart === '1'
     const productId = parseInt(options.id, 10)
-    if (!productId) {
+    if (!fromCart && !productId) {
       util.showToast('商品不存在')
       setTimeout(() => { wx.navigateBack() }, 500)
       return
     }
-    this.setData({ productId })
+    this.setData({ productId, fromCart })
     this.loadData()
   },
 
@@ -79,24 +83,29 @@ Page({
   },
 
   loadData() {
+    if (this.data.fromCart) {
+      this.loadCartCheckout()
+      return
+    }
+    this.loadSingleCheckout()
+  },
+
+  loadSingleCheckout() {
     const checkoutConfig = templateService.getTemplateSection('checkout')
     const phone = String((app.globalData.userInfo && app.globalData.userInfo.phone) || '').trim()
 
     productApi.getGrouponDetail(this.data.productId)
       .then((res) => {
         const product = this.formatProduct(res.data || res || {})
+        const productList = [this.formatCheckoutItem(product, 1)]
         const merchantId = product.merchantId
-        const useRuleList = [
-          `有效期：${product.validPeriod || '购买后有效'}`,
-          `核销说明：${product.verifyNotice || '到店出示核销码即可使用'}`,
-          `预约说明：${product.bookingRule || '无需预约'}`,
-          `退款规则：${product.refundRule || '按商家规则处理'}`
-        ]
+        const useRuleList = this.buildUseRuleList(product)
 
         const applyData = (merchantData) => {
           this.setData({
             checkoutConfig,
             product,
+            productList,
             merchant: this.formatMerchant(merchantData || {}),
             useRuleList,
             phone,
@@ -117,14 +126,94 @@ Page({
       })
   },
 
+  loadCartCheckout() {
+    const checkoutConfig = templateService.getTemplateSection('checkout')
+    const phone = String((app.globalData.userInfo && app.globalData.userInfo.phone) || '').trim()
+    const cart = cartStore.getCart()
+    if (!cart.items.length) {
+      util.showToast('购物车为空')
+      setTimeout(() => { util.redirectTo('/pages/cart/cart') }, 500)
+      return
+    }
+
+    const productList = cart.items.map((item) => this.formatCheckoutItem(item, item.quantity))
+    const firstProduct = productList[0] || {}
+    const product = {
+      ...firstProduct,
+      id: firstProduct.productId,
+      title: productList.length > 1 ? `${firstProduct.title}等${productList.length}件商品` : firstProduct.title,
+      soldOut: productList.some((item) => item.soldOut)
+    }
+    const useRuleList = [
+      '有效期：按各商品详情页说明执行',
+      '核销说明：支付成功后生成同一订单使用码，到店出示核销',
+      '预约说明：如商品要求预约，请按门店规则提前联系',
+      '退款规则：按商家规则处理'
+    ]
+
+    const applyData = (merchantData) => {
+      this.setData({
+        checkoutConfig,
+        product,
+        productList,
+        merchant: this.formatMerchant({
+          ...(merchantData || {}),
+          id: cart.merchantId,
+          name: (merchantData && merchantData.name) || cart.merchantName,
+          shortName: (merchantData && merchantData.shortName) || cart.merchantName
+        }),
+        useRuleList,
+        phone,
+        phoneBound: /^1\d{10}$/.test(phone)
+      }, () => { this.syncPriceState() })
+    }
+
+    if (cart.merchantId) {
+      merchantApi.getMerchantDetail(cart.merchantId)
+        .then((merchantRes) => { applyData(merchantRes.data || merchantRes || {}) })
+        .catch(() => { applyData() })
+    } else {
+      applyData()
+    }
+  },
+
+  buildUseRuleList(product = {}) {
+    return [
+      `有效期：${product.validPeriod || '购买后有效'}`,
+      `核销说明：${product.verifyNotice || '到店出示核销码即可使用'}`,
+      `预约说明：${product.bookingRule || '无需预约'}`,
+      `退款规则：${product.refundRule || '按商家规则处理'}`
+    ]
+  },
+
   formatProduct(product = {}) {
     const price = product.price || 0
     return {
       ...product,
+      productId: product.id || product.goodsId || product.productId,
       title: product.title || product.name || '',
       image: toListThumbnailUrl(product.image || product.coverImage || product.mainImage || DEFAULT_PRODUCT_IMAGE),
       soldOut: Number(product.stock || 0) <= 0,
+      price,
       priceText: (price / 100).toFixed(2)
+    }
+  },
+
+  formatCheckoutItem(item = {}, quantity = 1) {
+    const price = Number(item.price || 0)
+    const itemQuantity = Math.max(1, Number(quantity || item.quantity || 1))
+    const stock = Number(item.stock || 0)
+    return {
+      ...item,
+      productId: item.productId || item.id || item.goodsId,
+      title: item.title || item.name || item.productName || '',
+      image: toListThumbnailUrl(item.image || item.coverImage || item.mainImage || DEFAULT_PRODUCT_IMAGE),
+      price,
+      quantity: itemQuantity,
+      stock,
+      soldOut: stock <= 0 || itemQuantity > stock,
+      priceText: (price / 100).toFixed(2),
+      subtotalText: ((price * itemQuantity) / 100).toFixed(2)
     }
   },
 
@@ -138,7 +227,9 @@ Page({
   },
 
   syncPriceState() {
-    const payAmount = (this.data.product.price || 0) * this.data.quantity
+    const payAmount = this.data.productList.reduce((sum, item) => {
+      return sum + Number(item.price || 0) * Number(item.quantity || 0)
+    }, 0)
     this.setData({
       payAmount,
       subtotalText: (payAmount / 100).toFixed(2),
@@ -147,6 +238,10 @@ Page({
   },
 
   changeQuantity(e) {
+    if (this.data.fromCart) {
+      this.goCart()
+      return
+    }
     const delta = Number(e.currentTarget.dataset.delta)
     const nextQuantity = this.data.quantity + delta
     const quantity = Math.max(1, Math.min(nextQuantity, this.data.product.stock || nextQuantity))
@@ -154,16 +249,25 @@ Page({
       util.showToast('已达到库存上限')
       return
     }
-    this.setData({ quantity }, () => { this.syncPriceState() })
+    const productList = this.data.productList.map((item) => ({
+      ...item,
+      quantity,
+      subtotalText: ((Number(item.price || 0) * quantity) / 100).toFixed(2)
+    }))
+    this.setData({ quantity, productList }, () => { this.syncPriceState() })
   },
 
   goBindPhone() {
-    const returnUrl = encodeURIComponent(`/pages/checkout/checkout?id=${this.data.productId}`)
+    const returnUrl = encodeURIComponent(buildCheckoutReturnUrl(this.data.productId, this.data.fromCart))
     util.navigateTo(`/pages/profile-edit/profile-edit?from=checkout&returnUrl=${returnUrl}`)
   },
 
+  goCart() {
+    util.navigateTo('/pages/cart/cart')
+  },
+
   goLogin() {
-    const returnUrl = encodeURIComponent(buildCheckoutReturnUrl(this.data.productId))
+    const returnUrl = encodeURIComponent(buildCheckoutReturnUrl(this.data.productId, this.data.fromCart))
     util.navigateTo(`/pages/login/login?returnUrl=${returnUrl}`)
   },
 
@@ -192,8 +296,12 @@ Page({
 
   submitOrderWithReadyProfile() {
     const phone = String(this.data.phone || '').trim()
-    if (this.data.product.soldOut || Number(this.data.product.stock || 0) <= 0) {
-      util.showToast('当前商品已售罄')
+    if (!this.data.productList.length) {
+      util.showToast('请先选择商品')
+      return
+    }
+    if (this.data.productList.some((item) => item.soldOut)) {
+      util.showToast('部分商品库存不足')
       return
     }
     if (!/^1\d{10}$/.test(phone)) {
@@ -204,12 +312,14 @@ Page({
 
     util.showLoading('提交中...')
 
-    const apiPayload = this.buildApiPayload()
     orderApi
-      .createOrder(apiPayload)
+      .createOrder(this.buildApiPayload())
       .then((res) => {
         util.hideLoading()
         const orderNo = res.data ? res.data.orderNo : res.orderNo
+        if (this.data.fromCart) {
+          cartStore.clearCart()
+        }
         util.showToast('订单已创建', 'success')
         util.setPendingOrderFilter('PENDING_PAY')
         setTimeout(() => {
@@ -230,8 +340,12 @@ Page({
 
   buildApiPayload() {
     return {
-      productId: this.data.product.id || this.data.product.goodsId || this.data.productId,
-      quantity: this.data.quantity,
+      productId: this.data.productList[0] && this.data.productList[0].productId,
+      quantity: this.data.productList[0] && this.data.productList[0].quantity,
+      items: this.data.productList.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity
+      })),
       phone: String(this.data.phone || '').trim()
     }
   }

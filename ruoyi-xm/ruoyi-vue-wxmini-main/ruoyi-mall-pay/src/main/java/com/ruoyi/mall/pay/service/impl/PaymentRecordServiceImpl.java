@@ -145,4 +145,19 @@ public class PaymentRecordServiceImpl implements IPaymentRecordService {
             log.info("支付记录 {} 更新为已退款", record.getId());
         }
     }
+
+    @Override
+    public void markClosed(String orderNo, String closeResult) {
+        PaymentRecord record = paymentRecordMapper.selectByOrderNo(orderNo);
+        if (record == null) {
+            return;
+        }
+        if (record.getPayStatus() != null && record.getPayStatus() != STATUS_PENDING) {
+            return;
+        }
+        int affectedRows = paymentRecordMapper.markClosed(orderNo, closeResult);
+        if (affectedRows > 0) {
+            log.info("支付记录 {} 更新为已关闭", record.getId());
+        }
+    }
 }

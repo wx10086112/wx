@@ -21,6 +21,9 @@ public interface MallOrderMapper {
 
     List<MallOrder> selectMallOrderByMerchantId(Long merchantId);
 
+    List<MallOrder> selectPendingOrdersCreatedBefore(@Param("expireBefore") Date expireBefore,
+                                                     @Param("limit") int limit);
+
     int insertMallOrder(MallOrder mallOrder);
 
     int updateMallOrder(MallOrder mallOrder);

@@ -9,7 +9,8 @@
       <view class="order-title">{{viewOrder.title}}</view>
       <view class="order-merchant">{{viewOrder.merchantName}}</view>
       <view class="order-meta">
-        <text>数量 x{{viewOrder.quantity || 1}}</text>
+        <text>{{viewOrder.quantityText}}</text>
+        <text wx:if="{{viewOrder.items.length > 1}}">首件 ¥{{viewOrder.items[0].priceText}}</text>
       </view>
       <view class="order-price">
         <text class="price">¥{{viewOrder.payAmountText}}</text>

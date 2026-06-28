@@ -2,6 +2,7 @@ const util = require('../../utils/util')
 const templateService = require('../../services/template')
 const productApi = require('../../api/product')
 const merchantApi = require('../../api/merchant')
+const cartStore = require('../../utils/cart')
 const { toDetailThumbnailUrl, toListThumbnailUrl } = require('../../utils/image-url')
 const DEFAULT_PRODUCT_IMAGE = '/assets/images/merchant-logo-xiangyuan.png'
 const DEFAULT_MERCHANT_IMAGE = '/assets/images/merchant-logo-xiangyuan.png'
@@ -139,6 +140,30 @@ Page({
       return
     }
     util.navigateTo(`/pages/checkout/checkout?id=${this.data.product.id}`)
+  },
+
+  addToCart() {
+    if (this.data.product.soldOut || Number(this.data.product.stock || 0) <= 0) {
+      util.showToast('当前商品已售罄')
+      return
+    }
+    const result = cartStore.addItem({
+      ...this.data.product,
+      merchantName: this.data.merchant.name
+    })
+    if (result.conflict) {
+      util.showModal('更换门店商品', '购物车已有其他门店商品，是否清空后加入当前商品？').then((confirm) => {
+        if (!confirm) return
+        cartStore.replaceWithItem(result.nextItem)
+        util.showToast('已加入购物车', 'success')
+      })
+      return
+    }
+    util.showToast(result.ok ? '已加入购物车' : result.message, result.ok ? 'success' : 'none')
+  },
+
+  goCart() {
+    util.navigateTo('/pages/cart/cart')
   },
 
   onShareAppMessage() {

@@ -38,6 +38,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -47,6 +48,7 @@ import java.util.Random;
 public class WxOrderController {
 
     private static final int MAX_WRITE_OFF_CODE_RETRIES = 10;
+    private static final long PENDING_EXPIRE_MILLIS = 30 * 60 * 1000L;
 
     @Resource
     private IMallOrderService mallOrderService;
@@ -263,14 +265,25 @@ public class WxOrderController {
     }
 
     private List<WxOrderCreateRequestDto.OrderItemInput> buildItemInputs(WxOrderCreateRequestDto requestDto) {
-        List<WxOrderCreateRequestDto.OrderItemInput> itemInputs = new ArrayList<>();
+        Map<Long, Integer> quantityByProduct = new LinkedHashMap<>();
         if (requestDto.getItems() != null && !requestDto.getItems().isEmpty()) {
-            itemInputs.addAll(requestDto.getItems());
+            for (WxOrderCreateRequestDto.OrderItemInput input : requestDto.getItems()) {
+                if (input == null || input.getProductId() == null) {
+                    continue;
+                }
+                int quantity = normalizeQuantity(input.getQuantity());
+                quantityByProduct.merge(input.getProductId(), quantity, Integer::sum);
+            }
         } else if (requestDto.getProductId() != null) {
-            WxOrderCreateRequestDto.OrderItemInput single = new WxOrderCreateRequestDto.OrderItemInput();
-            single.setProductId(requestDto.getProductId());
-            single.setQuantity(requestDto.getQuantity() != null ? requestDto.getQuantity() : 1);
-            itemInputs.add(single);
+            quantityByProduct.put(requestDto.getProductId(), normalizeQuantity(requestDto.getQuantity()));
+        }
+
+        List<WxOrderCreateRequestDto.OrderItemInput> itemInputs = new ArrayList<>();
+        for (Map.Entry<Long, Integer> entry : quantityByProduct.entrySet()) {
+            WxOrderCreateRequestDto.OrderItemInput input = new WxOrderCreateRequestDto.OrderItemInput();
+            input.setProductId(entry.getKey());
+            input.setQuantity(entry.getValue());
+            itemInputs.add(input);
         }
         return itemInputs;
     }
@@ -322,12 +335,27 @@ public class WxOrderController {
 
         List<OrderItem> items = mallOrderService.selectOrderItemListByOrderId(order.getId());
         if (!items.isEmpty()) {
+            List<WxOrderDto.Item> dtoItems = new ArrayList<>();
+            int totalQuantity = 0;
+            for (OrderItem item : items) {
+                WxOrderDto.Item dtoItem = new WxOrderDto.Item();
+                dtoItem.setProductId(item.getProductId());
+                dtoItem.setTitle(item.getProductName());
+                dtoItem.setImage(appendListThumb(item.getProductImage()));
+                dtoItem.setQuantity(item.getQuantity());
+                dtoItem.setPrice(toFen(item.getPrice()));
+                dtoItem.setSubtotal(toFen(item.getSubtotal()));
+                dtoItems.add(dtoItem);
+                totalQuantity += item.getQuantity() != null ? item.getQuantity() : 0;
+            }
+            dto.setItems(dtoItems);
+            dto.setQuantity(totalQuantity > 0 ? totalQuantity : 1);
+
             OrderItem first = items.get(0);
             dto.setProductId(first.getProductId());
-            dto.setTitle(first.getProductName());
+            dto.setTitle(items.size() > 1 ? first.getProductName() + "等" + items.size() + "件商品" : first.getProductName());
             dto.setImage(appendListThumb(first.getProductImage()));
             dto.setPrice(toFen(first.getPrice()));
-            dto.setQuantity(first.getQuantity());
         }
 
         if (order.getMerchantId() != null) {
@@ -343,7 +371,7 @@ public class WxOrderController {
         }
 
         if (order.getStatus() != null && order.getStatus() == MallOrderStatus.PENDING && order.getCreateTime() != null) {
-            dto.setExpireTime(order.getCreateTime().getTime() + 15 * 60 * 1000L);
+            dto.setExpireTime(order.getCreateTime().getTime() + PENDING_EXPIRE_MILLIS);
         }
 
         if (order.getPayTime() != null) {

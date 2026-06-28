@@ -161,6 +161,15 @@
           and (pay_status is null or pay_status != 3)
     </update>
 
+    <update id="markClosed">
+        update payment_record
+        set pay_status = 2,
+            notify_result = #{notifyResult}
+        where order_no = #{orderNo}
+          and del_flag = '0'
+          and pay_status = 0
+    </update>
+
     <update id="deleteById" parameterType="Long">
         update payment_record set del_flag = '2' where id = #{id}
     </update>

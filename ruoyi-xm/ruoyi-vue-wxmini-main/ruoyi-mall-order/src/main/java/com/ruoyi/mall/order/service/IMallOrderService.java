@@ -16,6 +16,8 @@ public interface IMallOrderService {
 
     List<MallOrder> selectMallOrderList(MallOrder mallOrder);
 
+    List<MallOrder> selectPendingOrdersCreatedBefore(Date expireBefore, int limit);
+
     int updateMallOrder(MallOrder mallOrder);
 
     List<OrderItem> selectOrderItemListByOrderId(Long orderId);

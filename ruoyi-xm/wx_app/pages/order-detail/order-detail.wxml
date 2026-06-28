@@ -29,13 +29,21 @@
     </view>
 
     <view class="product-card">
-      <view class="product-info flex">
-        <image src="{{order.image}}" class="product-image" mode="aspectFill" lazy-load></image>
-        <view class="product-text flex-1 ml-20">
-          <text class="product-title text-ellipsis-2 fs-30">{{order.title}}</text>
-          <text class="product-merchant text-muted fs-24 mt-8">{{order.merchantName}}</text>
-          <view class="product-price mt-16">
-            <text class="price fs-36">¥{{order.payAmountText}}</text>
+      <view class="card-header flex flex-between flex-align-center">
+        <text class="card-title fs-32 text-bold">商品明细</text>
+        <text class="item-count-text">{{order.itemCountText}}</text>
+      </view>
+      <text class="product-merchant text-muted fs-24 mt-8">{{order.merchantName}}</text>
+      <view class="order-product-list">
+        <view wx:for="{{order.items}}" wx:key="productId" class="order-product-item">
+          <image src="{{item.image}}" class="product-image" mode="aspectFill" lazy-load></image>
+          <view class="product-text">
+            <text class="product-title text-ellipsis-2 fs-30">{{item.title}}</text>
+            <view class="product-price-row">
+              <text class="item-price">¥{{item.priceText}}</text>
+              <text class="item-quantity">x{{item.quantity}}</text>
+            </view>
+            <text class="item-subtotal">小计 ¥{{item.subtotalText}}</text>
           </view>
         </view>
       </view>

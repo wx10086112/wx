@@ -32,6 +32,8 @@ public interface PaymentRecordMapper {
 
     int markRefunded(@Param("orderNo") String orderNo, @Param("notifyResult") String notifyResult);
 
+    int markClosed(@Param("orderNo") String orderNo, @Param("notifyResult") String notifyResult);
+
     int deleteById(Long id);
 
     int deleteByIds(Long[] ids);
