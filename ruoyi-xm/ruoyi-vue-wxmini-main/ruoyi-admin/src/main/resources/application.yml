@@ -155,16 +155,21 @@ wx:
     transfer-task-enabled: ${WX_PAY_TRANSFER_TASK_ENABLED:false}
     notify-url: ${WX_PAY_NOTIFY_URL:}
     refund-notify-url: ${WX_PAY_REFUND_NOTIFY_URL:}
-    appId: test
-    mchId: 110 #商户id
-    apiV3Key: test #V3密钥
+    appId: ${WX_PAY_APP_ID:}
+    mchId: ${WX_PAY_MCH_ID:}
+    apiV3Key: ${WX_PAY_API_V3_KEY:}
     # https://pay.weixin.qq.com/doc/v3/merchant/4012365345
     # openssl x509 -in apiclient_cert.pem -noout -serial
-    certSerialNo: test
-    privateKeyPath: classpath:cert/apiclient_key.pem #apiclient_key.pem证书文件的绝对路径或者以classpath:开头的类路径
-    privateCertPath: classpath:cert/apiclient_cert.pem #apiclient_cert.pem证书文件的绝对路径或者以classpath:开头的类路径
+    certSerialNo: ${WX_PAY_CERT_SERIAL_NO:}
+    privateKeyPath: ${WX_PAY_PRIVATE_KEY_PATH:}
+    privateCertPath: ${WX_PAY_PRIVATE_CERT_PATH:}
+    publicKeyId: ${WX_PAY_PUBLIC_KEY_ID:}
+    publicKeyPath: ${WX_PAY_PUBLIC_KEY_PATH:}
 
 wxmini:
+  jwt:
+    # 小程序用户/商家端登录态有效期，单位分钟；默认10年，避免登录后频繁过期
+    expire-time-minutes: 5256000
   account:
     # 用户注销后再次使用同一微信身份注册的冷静期，防止反复注销/注册滥用权益
     cancel-reregister-delay-days: 7

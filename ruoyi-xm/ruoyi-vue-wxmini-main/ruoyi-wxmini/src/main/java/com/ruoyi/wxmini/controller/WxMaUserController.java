@@ -45,6 +45,11 @@ public class WxMaUserController {
     @GetMapping("/info")
     public AjaxResult info(String appid, String sessionKey,
                            String signature, String rawData, String encryptedData, String iv) {
+        UserInfo storedUserInfo = userInfoService.selectUserInfoByUserId(WxMiniUserContext.getCurrentUserId());
+        if (StringUtils.isAnyBlank(appid, sessionKey, encryptedData, iv)) {
+            return storedUserInfo == null ? AjaxResult.error("用户不存在") : AjaxResult.success(buildUserInfoResult(storedUserInfo));
+        }
+
         WxMaService maService = getOrLoadService(appid);
         if (maService == null) {
             return AjaxResult.error(String.format("未找到AppID [%s] 的配置", appid));
@@ -52,11 +57,10 @@ public class WxMaUserController {
 
         try {
             WxMaUserInfo wxUserInfo = maService.getUserService().getUserInfo(sessionKey, encryptedData, iv);
-            UserInfo userInfo = userInfoService.selectUserInfoByUserId(WxMiniUserContext.getCurrentUserId());
-            if (userInfo != null) {
-                userInfo.setAvatarUrl(wxUserInfo.getAvatarUrl());
-                userInfo.setUserName(wxUserInfo.getNickName());
-                userInfoService.updateUserInfo(userInfo);
+            if (storedUserInfo != null) {
+                storedUserInfo.setAvatarUrl(wxUserInfo.getAvatarUrl());
+                storedUserInfo.setUserName(wxUserInfo.getNickName());
+                userInfoService.updateUserInfo(storedUserInfo);
             }
             return AjaxResult.success(wxUserInfo);
         } catch (Exception e) {
@@ -65,6 +69,18 @@ public class WxMaUserController {
         } finally {
             WxMaConfigHolder.remove();
         }
+    }
+
+    private Map<String, Object> buildUserInfoResult(UserInfo userInfo) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("openId", userInfo.getOpenId());
+        result.put("userId", userInfo.getUserId());
+        result.put("userName", userInfo.getUserName());
+        result.put("userType", "0");
+        result.put("phone", userInfo.getPhone() != null ? userInfo.getPhone() : "");
+        result.put("avatarUrl", userInfo.getAvatarUrl());
+        result.put("apiToken", "");
+        return result;
     }
 
     @PutMapping("/info")

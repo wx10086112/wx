@@ -1,12 +1,13 @@
 const util = require('../../utils/util')
 const merchantApi = require('../../api/merchant')
+const { toDetailThumbnailUrl } = require('../../utils/image-url')
 
 const normalizeMerchantDetail = (merchant = {}) => {
   const tags = Array.isArray(merchant.tags) ? merchant.tags : []
   const serviceAbilityTags = Array.isArray(merchant.serviceAbilityTags) ? merchant.serviceAbilityTags : []
   const facilityTags = Array.isArray(merchant.facilityTags) ? merchant.facilityTags : []
   const albumList = Array.isArray(merchant.albumList) ? merchant.albumList.filter(Boolean) : []
-  const heroImage = merchant.coverImage || albumList[0] || merchant.avatar || ''
+  const heroImage = toDetailThumbnailUrl(merchant.coverImage || albumList[0] || merchant.avatar || '')
 
   return {
     ...merchant,

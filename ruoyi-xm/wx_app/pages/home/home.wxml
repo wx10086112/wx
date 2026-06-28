@@ -7,7 +7,6 @@
   <view wx:else class="content">
     <view wx:if="{{hasMerchantData}}" class="store-card">
       <view class="store-head">
-        <image src="{{currentMerchant.avatar}}" class="store-avatar" mode="aspectFill"></image>
         <view class="store-info" bindtap="goMerchantDetail">
           <view class="store-title-line">
             <text class="store-name">{{currentMerchant.name}}</text>
@@ -16,8 +15,10 @@
           <view class="store-subline">
             <text class="status-pill {{currentMerchant.businessStatus ? 'open' : 'closed'}}">{{currentMerchant.businessStatusText}}</text>
             <text>月售 {{currentMerchant.sales}}</text>
-            <text class="dot">·</text>
-            <text>{{currentMerchant.distance}}</text>
+            <block wx:if="{{currentMerchant.distance}}">
+              <text class="dot">·</text>
+              <text>{{currentMerchant.distance}}</text>
+            </block>
           </view>
         </view>
       </view>

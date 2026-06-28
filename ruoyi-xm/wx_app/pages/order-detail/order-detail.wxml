@@ -30,7 +30,7 @@
 
     <view class="product-card">
       <view class="product-info flex">
-        <image src="{{order.image}}" class="product-image" mode="aspectFill"></image>
+        <image src="{{order.image}}" class="product-image" mode="aspectFill" lazy-load></image>
         <view class="product-text flex-1 ml-20">
           <text class="product-title text-ellipsis-2 fs-30">{{order.title}}</text>
           <text class="product-merchant text-muted fs-24 mt-8">{{order.merchantName}}</text>
@@ -108,22 +108,22 @@
   </view>
 
   <view class="bottom-bar safe-area-bottom" wx:if="{{!loading}}">
-    <view wx:if="{{order.status === 'PENDING_PAY'}}" class="bar-actions flex flex-end flex-1">
-      <button class="action-btn action-btn-outline mr-24" bindtap="cancelOrder">取消订单</button>
+    <view wx:if="{{order.status === 'PENDING_PAY'}}" class="bar-actions is-pair">
+      <button class="action-btn action-btn-outline" bindtap="cancelOrder">取消订单</button>
       <button class="action-btn action-btn-primary" bindtap="payOrder">去支付</button>
     </view>
-    <view wx:if="{{order.status === 'PAID_UNUSED'}}" class="bar-actions flex flex-end flex-1">
-      <button class="action-btn action-btn-outline mr-24" bindtap="applyRefund">申请退款</button>
+    <view wx:if="{{order.status === 'PAID_UNUSED'}}" class="bar-actions is-pair">
+      <button class="action-btn action-btn-outline" bindtap="applyRefund">申请退款</button>
       <button class="action-btn action-btn-primary" bindtap="queryWriteOffResult">刷新核销状态</button>
     </view>
-    <view wx:if="{{order.status === 'USED_COMPLETED'}}" class="bar-actions flex flex-end flex-1">
+    <view wx:if="{{order.status === 'USED_COMPLETED'}}" class="bar-actions is-single">
       <button class="action-btn action-btn-primary" bindtap="buyAgain">再来一单</button>
     </view>
-    <view wx:if="{{order.status === 'REFUNDING' || order.status === 'REFUNDED'}}" class="bar-actions flex flex-end flex-1">
-      <button class="action-btn action-btn-outline mr-24" bindtap="contactMerchant">联系客服</button>
+    <view wx:if="{{order.status === 'REFUNDING' || order.status === 'REFUNDED'}}" class="bar-actions is-pair">
+      <button class="action-btn action-btn-outline" bindtap="contactMerchant">联系客服</button>
       <button class="action-btn action-btn-primary" bindtap="buyAgain">重新购买</button>
     </view>
-    <view wx:if="{{order.status === 'CANCELLED' || order.status === 'CLOSED'}}" class="bar-actions flex flex-end flex-1">
+    <view wx:if="{{order.status === 'CANCELLED' || order.status === 'CLOSED'}}" class="bar-actions is-single">
       <button class="action-btn action-btn-primary" bindtap="buyAgain">重新购买</button>
     </view>
   </view>

@@ -87,11 +87,19 @@
   font-size: 30rpx;
 }
 
-.phone-input {
-  width: 260rpx;
-  text-align: right;
+.phone-text,
+.phone-auth-btn {
+  max-width: 320rpx;
   font-size: 26rpx;
+  text-align: right;
+}
+
+.phone-text {
   color: #20304a;
+}
+
+.phone-auth-btn {
+  color: #237bc7;
 }
 
 .line-value-group {
@@ -188,4 +196,11 @@
 .pay-btn:active {
   opacity: 0.9;
   transform: translateY(1rpx) scale(0.985);
+}
+
+.pay-btn.is-disabled {
+  color: #98a2b3;
+  border-color: rgba(148, 163, 184, 0.2);
+  background: #f2f4f7;
+  box-shadow: none;
 }

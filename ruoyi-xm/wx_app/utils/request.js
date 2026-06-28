@@ -39,6 +39,15 @@ const clearLoginInfo = () => {
   }
 }
 
+const handleUnauthorized = (res = {}) => {
+  const data = res.data || {}
+  clearLoginInfo()
+  wx.showToast({
+    title: data.msg || '登录已过期，请重新登录',
+    icon: 'none'
+  })
+}
+
 const parseUploadResponse = (rawData = '') => {
   try {
     return JSON.parse(rawData || '{}')
@@ -67,16 +76,18 @@ const request = (options) => {
       data: options.data || {},
       header: header,
       success: (res) => {
+        if (res.statusCode === 401) {
+          handleUnauthorized(res)
+          reject(new Error('登录已过期'))
+          return
+        }
+
         if (res.statusCode === 200) {
           const responseData = normalizeImageFields(res.data || {})
           if (responseData.code === 200 || responseData.code === 0) {
             resolve(responseData)
           } else if (responseData.code === 401) {
-            clearLoginInfo()
-            wx.showToast({
-              title: '登录已过期，请重新登录',
-              icon: 'none'
-            })
+            handleUnauthorized(res)
             reject(new Error('登录已过期'))
           } else {
             wx.showToast({

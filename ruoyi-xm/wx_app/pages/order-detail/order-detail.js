@@ -2,6 +2,7 @@ const util = require('../../utils/util')
 const agreement = require('../../utils/agreement')
 const orderApi = require('../../api/order')
 const refundApi = require('../../api/refund')
+const { toListThumbnailUrl } = require('../../utils/image-url')
 
 Page({
   data: {
@@ -43,7 +44,7 @@ Page({
       priceAmountText: (priceAmount / 100).toFixed(2),
       couponAmountText: ((order.couponAmount || 0) / 100).toFixed(2),
       payAmountText: (payAmount / 100).toFixed(2),
-      image: order.image || order.coverImage || order.mainImage || '',
+      image: toListThumbnailUrl(order.image || order.coverImage || order.mainImage || ''),
       title: order.title || order.productName || order.name || '',
       historyList: util.formatOrderHistory(order.history)
     }
@@ -107,7 +108,7 @@ Page({
         .catch((err) => {
           util.hideLoading()
           if (err && err.message !== '用户取消支付') {
-            util.showToast(err.msg || '支付失败，请重试')
+            util.showToast(err.message || err.msg || '支付失败，请重试')
           }
         })
     })

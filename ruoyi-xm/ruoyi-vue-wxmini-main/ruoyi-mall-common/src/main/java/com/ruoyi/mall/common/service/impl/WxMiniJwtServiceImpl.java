@@ -44,8 +44,8 @@ public class WxMiniJwtServiceImpl implements IWxMiniJwtService {
     // jwt密钥
     @Value("${token.secret}")
     private String key;
-    // jwt有效期。单位分钟
-    @Value("${token.expireTime:60}")
+    // 小程序登录态有效期。单位分钟，默认10年，避免用户频繁重新登录。
+    @Value("${wxmini.jwt.expire-time-minutes:5256000}")
     private int expireTime;
 
     @PostConstruct

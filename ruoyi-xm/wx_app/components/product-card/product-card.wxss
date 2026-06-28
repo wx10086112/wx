@@ -110,3 +110,10 @@
   line-height: 56rpx;
   text-align: center;
 }
+
+.btn-buy.is-disabled {
+  color: #98a2b3;
+  border-color: rgba(148, 163, 184, 0.2);
+  background: #f2f4f7;
+  box-shadow: none;
+}

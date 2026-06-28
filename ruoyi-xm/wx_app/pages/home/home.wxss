@@ -77,16 +77,6 @@
 .store-head {
   display: flex;
   align-items: center;
-  gap: 24rpx;
-}
-
-.store-avatar {
-  width: 118rpx;
-  height: 118rpx;
-  border-radius: 30rpx;
-  background: #dbeefa;
-  box-shadow: 0 14rpx 28rpx rgba(45, 143, 232, 0.1);
-  flex-shrink: 0;
 }
 
 .store-info {

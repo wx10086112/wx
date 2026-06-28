@@ -72,7 +72,7 @@ public class WxGrouponController {
 
         List<WxGrouponItemDto> result = new ArrayList<>();
         for (Product product : products) {
-            result.add(convertToDto(product, merchantNameCache));
+            result.add(convertToDto(product, merchantNameCache, true));
         }
         return AjaxResult.success(result);
     }
@@ -97,17 +97,17 @@ public class WxGrouponController {
             return AjaxResult.error("商品不存在");
         }
         Map<Long, String> merchantNameCache = new HashMap<>();
-        return AjaxResult.success(convertToDto(product, merchantNameCache));
+        return AjaxResult.success(convertToDto(product, merchantNameCache, false));
     }
 
-    private WxGrouponItemDto convertToDto(Product product, Map<Long, String> merchantNameCache) {
+    private WxGrouponItemDto convertToDto(Product product, Map<Long, String> merchantNameCache, boolean listThumb) {
         WxGrouponItemDto dto = new WxGrouponItemDto();
         dto.setId(product.getId());
         dto.setGoodsId(product.getId());
         dto.setTitle(product.getName());
         dto.setSubtitle(product.getDescription());
         dto.setMerchantId(product.getMerchantId());
-        dto.setImage(product.getCoverImage());
+        dto.setImage(appendThumb(product.getCoverImage(), listThumb ? "list" : "detail"));
         dto.setPrice(toFen(product.getPrice()));
         dto.setOriginalPrice(toFen(product.getOriginalPrice()));
         dto.setSales(product.getSales());
@@ -144,6 +144,16 @@ public class WxGrouponController {
         dto.setLimitRule("");
 
         return dto;
+    }
+
+    private String appendThumb(String imageUrl, String thumb) {
+        if (StringUtils.isBlank(imageUrl)
+                || (!imageUrl.contains("/profile/merchant_images/") && !imageUrl.contains("/profile/merchant-goods/"))
+                || imageUrl.contains("?thumb=")
+                || imageUrl.contains("&thumb=")) {
+            return imageUrl;
+        }
+        return imageUrl + (imageUrl.contains("?") ? "&" : "?") + "thumb=" + thumb;
     }
 
     private long toFen(BigDecimal amount) {

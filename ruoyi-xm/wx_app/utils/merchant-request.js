@@ -36,6 +36,23 @@ const getMerchantEntry = () => {
   return app && app.getMerchantEntry ? app.getMerchantEntry() : null
 }
 
+const redirectToMerchantLogin = () => {
+  const app = getAppInstance()
+  const merchantEntry = getMerchantEntry()
+  if (app && app.clearMerchantLoginInfo) {
+    app.clearMerchantLoginInfo()
+  }
+  const merchantId = merchantEntry && merchantEntry.merchantId ? `?merchantId=${merchantEntry.merchantId}` : ''
+  wx.redirectTo({
+    url: `/pages/merchant/login/login${merchantId}`
+  })
+}
+
+const normalizeResponseMessage = (res = {}) => {
+  const data = res.data || {}
+  return data.msg || data.message || (res.statusCode === 401 ? '未登录' : '网络请求失败')
+}
+
 const request = (options) => {
   return new Promise((resolve, reject) => {
     const token = wx.getStorageSync('merchantToken')
@@ -60,8 +77,14 @@ const request = (options) => {
       data: options.data || {},
       header,
       success: (res) => {
+        if (res.statusCode === 401) {
+          redirectToMerchantLogin()
+          reject(new Error(normalizeResponseMessage(res)))
+          return
+        }
+
         if (res.statusCode !== 200) {
-          reject(new Error('网络请求失败'))
+          reject(new Error(normalizeResponseMessage(res)))
           return
         }
 

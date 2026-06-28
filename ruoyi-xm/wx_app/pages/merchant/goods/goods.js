@@ -1,5 +1,6 @@
 const util = require('../../../utils/merchant-util')
 const api = require('../../../api/merchant-mini/index')
+const { toListThumbnailUrl } = require('../../../utils/image-url')
 
 const app = getApp()
 const buildImageCropStyle = (crop = {}) => {
@@ -54,14 +55,16 @@ Page({
   },
 
   renderGoods(sourceList = []) {
-    const goodsList = sourceList
+    const selectedIdSet = new Set(this.data.selectedIds)
+    const goodsList = [...sourceList]
       .sort((a, b) => (a.sort || 0) - (b.sort || 0))
       .map((item) => ({
         ...item,
+        imageUrl: toListThumbnailUrl(item.imageUrl),
         priceText: util.formatPrice(item.price),
         originalPriceText: util.formatPrice(item.originalPrice),
         imageCropStyle: buildImageCropStyle(item.imageCrop),
-        selected: this.data.selectedIds.includes(item.goodsId)
+        selected: selectedIdSet.has(item.goodsId)
       }))
 
     this.setData({
@@ -77,7 +80,7 @@ Page({
   switchTab(e) {
     const tab = e.currentTarget.dataset.tab
     this.setData({ currentTab: tab }, () => {
-      this.loadData()
+      this.renderGoods(util.getGoodsList())
     })
   },
 
@@ -118,19 +121,25 @@ Page({
     this.setData({
       batchMode: !this.data.batchMode,
       selectedIds: []
-    }, () => this.loadData())
+    }, () => this.renderGoods(util.getGoodsList()))
   },
 
   toggleSelectGoods(e) {
     const goodsId = Number(e.currentTarget.dataset.id)
     let selectedIds = [...this.data.selectedIds]
     const index = selectedIds.indexOf(goodsId)
+    const nextSelected = index === -1
     if (index > -1) {
       selectedIds.splice(index, 1)
     } else {
       selectedIds.push(goodsId)
     }
-    this.setData({ selectedIds }, () => this.loadData())
+    const visibleIndex = this.data.goodsList.findIndex((item) => item.goodsId === goodsId)
+    const nextData = { selectedIds }
+    if (visibleIndex > -1) {
+      nextData[`goodsList[${visibleIndex}].selected`] = nextSelected
+    }
+    this.setData(nextData)
   },
 
   selectAll() {
@@ -138,7 +147,7 @@ Page({
     const isAllSelected = this.data.selectedIds.length === allIds.length
     this.setData({
       selectedIds: isAllSelected ? [] : allIds
-    }, () => this.loadData())
+    }, () => this.renderGoods(util.getGoodsList()))
   },
 
   batchOnShelf() {

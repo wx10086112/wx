@@ -86,7 +86,9 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
             }
 
             ProfitSharingV3Request request = new ProfitSharingV3Request();
-            request.setAppid(context.spAppId);
+            if (StringUtils.isNotBlank(context.spAppId)) {
+                request.setAppid(context.spAppId);
+            }
             request.setSubAppid(context.subAppId);
             request.setSubMchId(context.subMchId);
             request.setTransactionId(context.transactionId);
@@ -178,7 +180,7 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
         context.platformReceiverMchId = firstNotBlank(merchant.getPlatformReceiverMchId(), platformReceiverMchId, context.spMchId);
         context.distributorReceiverMchId = merchant.getDistributorReceiverMchId();
 
-        if (StringUtils.isBlank(context.spAppId) || StringUtils.isBlank(context.spMchId)) {
+        if (StringUtils.isBlank(context.spMchId)) {
             throw new IllegalStateException("wechat service provider pay config incomplete");
         }
         if (StringUtils.isBlank(context.subMchId)) {
@@ -225,7 +227,9 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
 
     private void addReceiver(ProfitSharingContext context, ProfitSharingV3Request.Receiver receiver) throws WxPayException {
         ProfitSharingReceiverV3Request request = new ProfitSharingReceiverV3Request();
-        request.setAppid(context.spAppId);
+        if (StringUtils.isNotBlank(context.spAppId)) {
+            request.setAppid(context.spAppId);
+        }
         request.setSubAppid(context.subAppId);
         request.setSubMchId(context.subMchId);
         request.setType(receiver.getType());

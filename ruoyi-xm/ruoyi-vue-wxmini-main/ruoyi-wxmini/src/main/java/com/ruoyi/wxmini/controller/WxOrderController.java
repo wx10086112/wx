@@ -325,7 +325,7 @@ public class WxOrderController {
             OrderItem first = items.get(0);
             dto.setProductId(first.getProductId());
             dto.setTitle(first.getProductName());
-            dto.setImage(first.getProductImage());
+            dto.setImage(appendListThumb(first.getProductImage()));
             dto.setPrice(toFen(first.getPrice()));
             dto.setQuantity(first.getQuantity());
         }
@@ -376,6 +376,16 @@ public class WxOrderController {
             result.add(item);
         }
         return result;
+    }
+
+    private String appendListThumb(String imageUrl) {
+        if (StringUtils.isBlank(imageUrl)
+                || (!imageUrl.contains("/profile/merchant_images/") && !imageUrl.contains("/profile/merchant-goods/"))
+                || imageUrl.contains("?thumb=")
+                || imageUrl.contains("&thumb=")) {
+            return imageUrl;
+        }
+        return imageUrl + (imageUrl.contains("?") ? "&" : "?") + "thumb=list";
     }
 
     private String mapDbStatus(Integer dbStatus) {

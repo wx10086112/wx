@@ -3,7 +3,7 @@
     <view class="section-title">{{checkoutConfig.productSectionTitle}}</view>
 
     <view class="product-row">
-      <image src="{{product.image}}" class="product-image" mode="aspectFill"></image>
+      <image src="{{product.image}}" class="product-image" mode="aspectFill" lazy-load></image>
       <view class="product-info">
         <text class="product-title">{{product.title}}</text>
         <text class="product-meta">{{merchant.name}}</text>
@@ -24,13 +24,14 @@
     </view>
     <view class="line-row">
       <text>{{checkoutConfig.phoneLabel}}</text>
-      <input class="phone-input" type="number" maxlength="11" value="{{phone}}" bindinput="handlePhoneInput" placeholder="请输入手机号" />
+      <view wx:if="{{phoneBound}}" class="phone-text">{{phone}}</view>
+      <view wx:else class="phone-auth-btn" bindtap="goBindPhone">去授权手机号</view>
     </view>
     <view class="line-row">
       <text>到店门店</text>
       <view class="line-value-group">
         <text>{{merchant.shortName || merchant.name}}</text>
-        <text class="line-value-tip">{{merchant.distance}}</text>
+        <text wx:if="{{merchant.distance}}" class="line-value-tip">{{merchant.distance}}</text>
       </view>
     </view>
   </view>
@@ -63,7 +64,7 @@
         <text class="summary-label">{{checkoutConfig.paySummaryLabel}}</text>
         <text class="summary-price">¥{{payAmountText}}</text>
       </view>
-      <button class="pay-btn" bindtap="submitOrder">{{checkoutConfig.submitButtonText}}</button>
+      <button class="pay-btn {{product.soldOut ? 'is-disabled' : ''}}" bindtap="submitOrder">{{product.soldOut ? '已售罄' : checkoutConfig.submitButtonText}}</button>
     </view>
   </view>
 </view>

@@ -62,9 +62,15 @@ wx:
     transfer-task-enabled: ${WX_PAY_TRANSFER_TASK_ENABLED:false}
     notify-url: ${WX_PAY_NOTIFY_URL}
     refund-notify-url: ${WX_PAY_REFUND_NOTIFY_URL}
-    appId: ${WX_PAY_APP_ID}
+    appId: ${WX_PAY_APP_ID:}
     mchId: ${WX_PAY_MCH_ID}
     apiV3Key: ${WX_PAY_API_V3_KEY}
     certSerialNo: ${WX_PAY_CERT_SERIAL_NO}
     privateKeyPath: ${WX_PAY_PRIVATE_KEY_PATH}
     privateCertPath: ${WX_PAY_PRIVATE_CERT_PATH}
+    publicKeyId: ${WX_PAY_PUBLIC_KEY_ID:}
+    publicKeyPath: ${WX_PAY_PUBLIC_KEY_PATH:}
+
+wxmini:
+  jwt:
+    expire-time-minutes: ${WXMINI_JWT_EXPIRE_MINUTES:5256000}

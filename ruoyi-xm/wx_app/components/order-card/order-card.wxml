@@ -4,7 +4,7 @@
     <view class="status-badge {{viewOrder.statusClass}}">{{viewOrder.statusText}}</view>
   </view>
   <view class="order-content">
-    <image src="{{viewOrder.image}}" class="order-image" mode="aspectFill"></image>
+    <image src="{{viewOrder.image}}" class="order-image" mode="aspectFill" lazy-load></image>
     <view class="order-info">
       <view class="order-title">{{viewOrder.title}}</view>
       <view class="order-merchant">{{viewOrder.merchantName}}</view>
@@ -13,7 +13,6 @@
       </view>
       <view class="order-price">
         <text class="price">¥{{viewOrder.payAmountText}}</text>
-        <text class="order-phone">{{viewOrder.phone || '未绑定手机号'}}</text>
       </view>
     </view>
   </view>

@@ -33,7 +33,7 @@
 }
 
 .edit-label {
-  width: 140rpx;
+  width: 180rpx;
   flex-shrink: 0;
   color: #111827;
   font-size: 32rpx;
@@ -59,8 +59,26 @@
   line-height: normal;
 }
 
-.avatar-btn::after {
+.phone-btn {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0;
   border: none;
+  background: transparent;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  line-height: normal;
+}
+
+.avatar-btn::after,
+.phone-btn::after {
+  border: none;
+}
+
+.phone-btn[disabled] {
+  opacity: 0.58;
 }
 
 .edit-avatar {
@@ -149,6 +167,10 @@
   border-color: rgba(148, 163, 184, 0.12);
   background: #e4edf5;
   box-shadow: none;
+}
+
+.save-btn-wide {
+  width: 320rpx;
 }
 
 .account-section {

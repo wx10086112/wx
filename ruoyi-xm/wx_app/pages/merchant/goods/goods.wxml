@@ -50,6 +50,7 @@
               class="goods-card__cover-image"
               src="{{item.imageUrl}}"
               mode="aspectFill"
+              lazy-load
               style="{{item.imageCropStyle}}"
             ></image>
             <text wx:else class="goods-card__cover-empty">暂无图片</text>

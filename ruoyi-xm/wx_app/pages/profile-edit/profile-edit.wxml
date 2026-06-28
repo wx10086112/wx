@@ -1,9 +1,14 @@
 <view class="profile-edit-page">
   <view class="edit-section">
     <view class="edit-item edit-item-avatar">
-      <text class="edit-label">头像</text>
+      <text class="edit-label">微信头像</text>
       <view class="edit-value">
-        <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <button
+          class="avatar-btn"
+          open-type="chooseAvatar"
+          bindchooseavatar="onChooseAvatar"
+          binderror="onOpenCapabilityError"
+        >
           <image src="{{avatarUrl}}" class="edit-avatar" mode="aspectFill"></image>
           <text class="edit-arrow">›</text>
         </button>
@@ -11,14 +16,16 @@
     </view>
 
     <view class="edit-item">
-      <text class="edit-label">昵称</text>
+      <text class="edit-label">微信昵称</text>
       <view class="edit-value">
         <input
           class="edit-input"
           type="nickname"
           value="{{nickName}}"
-          placeholder="请输入昵称"
+          placeholder="点击选择微信昵称"
           bindinput="onNickNameInput"
+          bindblur="onNickNameBlur"
+          focus="{{nickNameFocus}}"
           maxlength="20"
         />
       </view>
@@ -27,7 +34,17 @@
     <view class="edit-item">
       <text class="edit-label">手机号</text>
       <view class="edit-value">
-        <text class="edit-phone" user-select>{{phone || '未绑定'}}</text>
+        <button
+          class="phone-btn"
+          open-type="getPhoneNumber"
+          bindgetphonenumber="onGetPhoneNumber"
+          binderror="onOpenCapabilityError"
+          disabled="{{phoneBinding}}"
+          phone-number-no-quota-toast="{{true}}"
+        >
+          <text class="edit-phone">{{phone || '点击绑定手机号'}}</text>
+          <text class="edit-arrow">›</text>
+        </button>
       </view>
     </view>
   </view>
@@ -36,7 +53,14 @@
     <text class="tip-text">头像和昵称用于在小程序内展示，手机号用于到店服务通知</text>
   </view>
 
-  <view wx:if="{{hasProfileChanged}}" class="save-section">
+  <view wx:if="{{onboardingMode}}" class="save-section">
+    <agreement-consent class="profile-agreement"></agreement-consent>
+    <button class="save-btn save-btn-wide" bindtap="finishOnboarding" disabled="{{saving || phoneBinding}}">
+      {{saving ? '保存中...' : '完成并进入'}}
+    </button>
+  </view>
+
+  <view wx:elif="{{hasProfileChanged}}" class="save-section">
     <agreement-consent class="profile-agreement"></agreement-consent>
     <button class="save-btn" bindtap="saveProfile" disabled="{{saving}}">
       {{saving ? '保存中...' : '保存'}}

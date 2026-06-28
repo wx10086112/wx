@@ -31,11 +31,13 @@ public class ResourcesConfig implements WebMvcConfigurer
     {
         /** 本地文件上传路径 */
         registry.addResourceHandler(Constants.RESOURCE_PREFIX + "/**")
-                .addResourceLocations("file:" + RuoYiConfig.getProfile() + "/");
+                .addResourceLocations("file:" + RuoYiConfig.getProfile() + "/")
+                .setCacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic());
 
         /** 商家商品图片上传路径 */
         registry.addResourceHandler("/profile/merchant_images/**")
-                .addResourceLocations("file:" + RuoYiConfig.getProfile() + "/merchant_images/");
+                .addResourceLocations("file:" + RuoYiConfig.getProfile() + "/merchant_images/")
+                .setCacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic());
 
         /** swagger配置 */
         registry.addResourceHandler("/swagger-ui/**")

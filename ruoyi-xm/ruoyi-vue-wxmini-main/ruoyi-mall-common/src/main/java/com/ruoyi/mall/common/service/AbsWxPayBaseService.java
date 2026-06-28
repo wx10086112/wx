@@ -1,6 +1,7 @@
 package com.ruoyi.mall.common.service;
 
-import com.github.binarywang.wxpay.bean.request.WxPayPartnerUnifiedOrderV3Request;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.github.binarywang.wxpay.bean.result.WxPayUnifiedOrderV3Result;
 import com.github.binarywang.wxpay.bean.result.enums.TradeTypeEnum;
 import com.github.binarywang.wxpay.exception.WxPayException;
@@ -115,31 +116,46 @@ public abstract class AbsWxPayBaseService<P> {
 
         String subAppId = StringUtils.defaultIfBlank(orderParam.getSubAppId(), orderParam.getAppId());
         String subOpenId = StringUtils.defaultIfBlank(orderParam.getSubOpenId(), orderParam.getOpenId());
-        WxPayPartnerUnifiedOrderV3Request request = new WxPayPartnerUnifiedOrderV3Request();
-        request.setSpAppid(StringUtils.defaultIfBlank(orderParam.getSpAppId(), wxPayService.getConfig().getAppId()));
-        request.setSpMchId(StringUtils.defaultIfBlank(orderParam.getSpMchId(), wxPayService.getConfig().getMchId()));
-        request.setSubAppid(subAppId);
-        request.setSubMchId(orderParam.getSubMchId());
-        request.setDescription(orderParam.getOrderDesc());
-        request.setOutTradeNo(orderParam.getOrderNo());
-        request.setTimeExpire(orderParam.getTimeExpire());
-        request.setNotifyUrl(wxPayNotifyUrl);
+        String spMchId = StringUtils.defaultIfBlank(orderParam.getSpMchId(), wxPayService.getConfig().getMchId());
+        String spAppId = StringUtils.defaultIfBlank(orderParam.getSpAppId(), wxPayService.getConfig().getAppId());
+
+        HashMap<String, Object> request = new HashMap<>();
+        if (StringUtils.isNotBlank(spAppId)) {
+            request.put("sp_appid", spAppId);
+        }
+        request.put("sp_mchid", spMchId);
+        request.put("sub_appid", subAppId);
+        request.put("sub_mchid", orderParam.getSubMchId());
+        request.put("description", orderParam.getOrderDesc());
+        request.put("out_trade_no", orderParam.getOrderNo());
+        request.put("time_expire", orderParam.getTimeExpire());
+        request.put("notify_url", wxPayNotifyUrl);
         if (Boolean.TRUE.equals(orderParam.getProfitSharing())) {
-            WxPayPartnerUnifiedOrderV3Request.SettleInfo settleInfo = new WxPayPartnerUnifiedOrderV3Request.SettleInfo();
-            settleInfo.setProfitSharing(true);
-            request.setSettleInfo(settleInfo);
+            HashMap<String, Object> settleInfo = new HashMap<>();
+            settleInfo.put("profit_sharing", true);
+            request.put("settle_info", settleInfo);
         }
 
-        WxPayPartnerUnifiedOrderV3Request.Amount amountObj = new WxPayPartnerUnifiedOrderV3Request.Amount();
-        amountObj.setTotal(orderParam.getAmount());
-        amountObj.setCurrency("CNY");
-        request.setAmount(amountObj);
+        HashMap<String, Object> amount = new HashMap<>();
+        amount.put("total", orderParam.getAmount());
+        amount.put("currency", "CNY");
+        request.put("amount", amount);
 
-        WxPayPartnerUnifiedOrderV3Request.Payer payer = new WxPayPartnerUnifiedOrderV3Request.Payer();
-        payer.setSubOpenid(subOpenId);
-        request.setPayer(payer);
+        HashMap<String, Object> payer = new HashMap<>();
+        payer.put("sub_openid", subOpenId);
+        request.put("payer", payer);
 
-        return wxPayService.createPartnerOrderV3(TradeTypeEnum.JSAPI, request);
+        String url = wxPayService.getPayBaseUrl() + "/v3/pay/partner/transactions/jsapi";
+        String response = wxPayService.postV3(url, JSON.toJSONString(request));
+        JSONObject responseObject = JSON.parseObject(response);
+        String prepayId = responseObject != null ? responseObject.getString("prepay_id") : null;
+        if (StringUtils.isBlank(prepayId)) {
+            throw new WxPayException("微信支付未返回prepay_id");
+        }
+
+        WxPayUnifiedOrderV3Result result = new WxPayUnifiedOrderV3Result();
+        result.setPrepayId(prepayId);
+        return result.getPayInfo(TradeTypeEnum.JSAPI, subAppId, orderParam.getSubMchId(), wxPayService.getConfig().getPrivateKey());
     }
 
     private void validateOrderParam(WxPayCreateOrderParam orderParam) {
@@ -155,22 +171,24 @@ public abstract class AbsWxPayBaseService<P> {
         if (orderParam.getAmount() == null || orderParam.getAmount() <= 0) {
             throw new IllegalArgumentException("支付金额必须大于0分");
         }
+        if (wxPayService == null || wxPayService.getConfig() == null
+                || StringUtils.isBlank(wxPayService.getConfig().getMchId())) {
+            throw new IllegalStateException("微信支付配置不完整");
+        }
+        if (StringUtils.isBlank(StringUtils.defaultIfBlank(orderParam.getSpMchId(), wxPayService.getConfig().getMchId()))) {
+            throw new IllegalArgumentException("sp_mchid is required for WeChat Pay service provider mode");
+        }
+        if (StringUtils.isBlank(StringUtils.defaultIfBlank(orderParam.getSpAppId(), wxPayService.getConfig().getAppId()))) {
+            throw new IllegalArgumentException("sp_appid is required for WeChat Pay service provider JSAPI mode");
+        }
         if (StringUtils.isBlank(orderParam.getSubMchId())) {
             throw new IllegalArgumentException("sub_mchid is required for WeChat Pay service provider mode");
         }
+        if (StringUtils.isBlank(StringUtils.defaultIfBlank(orderParam.getSubAppId(), orderParam.getAppId()))) {
+            throw new IllegalArgumentException("商户小程序AppID不能为空");
+        }
         if (StringUtils.isBlank(StringUtils.defaultIfBlank(orderParam.getSubOpenId(), orderParam.getOpenId()))) {
             throw new IllegalArgumentException("sub_openid is required for WeChat Pay service provider mode");
-        }
-        if (StringUtils.isBlank(StringUtils.defaultIfBlank(orderParam.getSubAppId(), orderParam.getAppId()))) {
-            throw new IllegalArgumentException("小程序AppID不能为空");
-        }
-        if (StringUtils.isBlank(orderParam.getOpenId())) {
-            throw new IllegalArgumentException("openid不能为空");
-        }
-        if (wxPayService == null || wxPayService.getConfig() == null
-                || StringUtils.isBlank(wxPayService.getConfig().getAppId())
-                || StringUtils.isBlank(wxPayService.getConfig().getMchId())) {
-            throw new IllegalStateException("微信支付配置不完整");
         }
         validateNotifyUrl(wxPayNotifyUrl, "支付回调地址");
     }

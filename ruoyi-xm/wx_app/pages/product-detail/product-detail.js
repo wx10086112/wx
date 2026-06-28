@@ -2,6 +2,9 @@ const util = require('../../utils/util')
 const templateService = require('../../services/template')
 const productApi = require('../../api/product')
 const merchantApi = require('../../api/merchant')
+const { toDetailThumbnailUrl, toListThumbnailUrl } = require('../../utils/image-url')
+const DEFAULT_PRODUCT_IMAGE = '/assets/images/merchant-logo-xiangyuan.png'
+const DEFAULT_MERCHANT_IMAGE = '/assets/images/merchant-logo-xiangyuan.png'
 
 Page({
   data: {
@@ -9,7 +12,6 @@ Page({
     productConfig: {},
     product: {},
     merchant: {},
-    otherStoreList: [],
     decisionList: [],
     ruleList: [],
     serviceHighlightList: [],
@@ -28,11 +30,23 @@ Page({
     return {
       ...product,
       title: product.title || product.name || '',
-      image: product.image || product.coverImage || product.mainImage || '',
+      image: toDetailThumbnailUrl(product.image || product.coverImage || product.mainImage || DEFAULT_PRODUCT_IMAGE),
+      soldOut: Number(product.stock || 0) <= 0,
       priceText: (price / 100).toFixed(2),
       originalPriceText: (originalPrice / 100).toFixed(2),
       savingAmountText: ((Math.max(originalPrice - price, 0)) / 100).toFixed(0),
       bookingRequiredText: product.bookingRequired ? productConfig.bookingYesText : productConfig.bookingNoText
+    }
+  },
+
+  formatMerchant(merchant = {}) {
+    return {
+      ...merchant,
+      name: merchant.name || merchant.shortName || '门店信息待完善',
+      address: merchant.address || '门店地址待完善',
+      businessHours: merchant.businessHours || merchant.businessHoursText || '营业时间待完善',
+      distance: merchant.distance || '',
+      avatar: toListThumbnailUrl(merchant.avatar || merchant.coverImage || DEFAULT_MERCHANT_IMAGE)
     }
   },
 
@@ -68,10 +82,9 @@ Page({
         if (rawProduct.merchantId) {
           merchantApi.getMerchantDetail(rawProduct.merchantId)
             .then((merchantRes) => {
-              const merchant = merchantRes.data || merchantRes || {}
+              const merchant = this.formatMerchant(merchantRes.data || merchantRes || {})
               this.setData({
                 merchant,
-                otherStoreList: [merchant],
                 loading: false
               })
             })
@@ -121,6 +134,10 @@ Page({
   },
 
   buyNow() {
+    if (this.data.product.soldOut || Number(this.data.product.stock || 0) <= 0) {
+      util.showToast('当前商品已售罄')
+      return
+    }
     util.navigateTo(`/pages/checkout/checkout?id=${this.data.product.id}`)
   },
 

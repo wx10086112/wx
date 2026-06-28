@@ -1,4 +1,5 @@
 const util = require('../../utils/util')
+const { toListThumbnailUrl } = require('../../utils/image-url')
 
 Component({
   properties: {
@@ -25,6 +26,7 @@ Component({
       this.setData({
         viewOrder: {
           ...order,
+          image: toListThumbnailUrl(order.image || order.coverImage || order.mainImage || ''),
           statusText: meta.text,
           statusClass: meta.class,
           payAmountText: ((order.payAmount || order.price || 0) / 100).toFixed(2)

@@ -14,13 +14,12 @@
 
     <view class="price-section">
       <view class="price-row">
-        <text class="price fs-48">¥{{product.priceText}}</text>
-        <text wx:if="{{product.originalPrice > product.price}}" class="original-price ml-16">¥{{product.originalPrice / 100}}</text>
-        <view class="discount-tag ml-16" wx:if="{{product.originalPrice > product.price}}">
-          立省 {{product.savingAmountText}} 元
-        </view>
+        <text class="price">¥{{product.priceText}}</text>
+        <text wx:if="{{product.originalPrice > product.price}}" class="original-price">¥{{product.originalPriceText}}</text>
+        <text wx:if="{{product.originalPrice > product.price}}" class="discount-tag">立省{{product.savingAmountText}}元</text>
       </view>
       <text class="product-title">{{product.title}}</text>
+      <text wx:if="{{product.soldOut}}" class="sold-out-tip">当前商品已售罄</text>
       <text class="subtitle">{{product.subtitle}}</text>
       <view class="highlight-tags" wx:if="{{serviceHighlightList.length}}">
         <text wx:for="{{serviceHighlightList}}" wx:key="index" class="highlight-tag">{{item}}</text>
@@ -33,10 +32,11 @@
     </view>
 
     <view class="merchant-section" bindtap="goMerchant">
-      <image src="{{merchant.avatar}}" class="merchant-avatar" mode="aspectFill"></image>
+      <image src="{{merchant.avatar}}" class="merchant-avatar" mode="aspectFill" lazy-load></image>
       <view class="merchant-info">
         <text class="merchant-name">{{merchant.name}}</text>
-        <text class="merchant-meta">{{merchant.distance}} · {{merchant.businessHours}}</text>
+        <text wx:if="{{merchant.distance}}" class="merchant-meta">{{merchant.distance}} · {{merchant.businessHours}}</text>
+        <text wx:else class="merchant-meta">{{merchant.businessHours}}</text>
         <text class="merchant-address">{{merchant.address}}</text>
         <view class="merchant-actions">
           <text class="merchant-action" catchtap="callMerchant">联系门店</text>
@@ -68,25 +68,10 @@
       </view>
     </view>
 
-    <view class="detail-section">
-      <view class="section-title">{{productConfig.merchantSectionTitle}}</view>
-      <view class="detail-card">
-        <view wx:for="{{otherStoreList}}" wx:key="id" class="store-row">
-          <text class="store-name">{{item.name}}</text>
-          <text class="store-meta">{{item.distance}} · {{item.businessHours}}</text>
-        </view>
-      </view>
-    </view>
   </view>
 
   <view class="bottom-bar safe-area-bottom" wx:if="{{!loading}}">
-    <view class="bar-left">
-      <button class="bar-item share-item" open-type="share">
-        <text class="bar-label">{{productConfig.shareText}}</text>
-      </button>
-    </view>
-    <view class="bar-right">
-      <button class="buy-btn" bindtap="buyNow">{{productConfig.buyButtonText}}</button>
-    </view>
+    <button class="share-btn" open-type="share">{{productConfig.shareText}}</button>
+    <button class="buy-btn {{product.soldOut ? 'is-disabled' : ''}}" bindtap="buyNow">{{product.soldOut ? '已售罄' : productConfig.buyButtonText}}</button>
   </view>
 </view>

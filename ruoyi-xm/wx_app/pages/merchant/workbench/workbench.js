@@ -44,6 +44,16 @@ Page({
 
   handleLoadFailure(err = {}) {
     const message = err.message || '商家后台数据加载失败，请重新登录'
+    if (/未登录|登录已过期|商家身份校验失败|入口与登录账号不匹配/.test(message)) {
+      const entry = app.getMerchantEntry ? app.getMerchantEntry() : null
+      const merchantId = entry && entry.merchantId ? `?merchantId=${entry.merchantId}` : ''
+      app.clearMerchantLoginInfo()
+      wx.redirectTo({
+        url: `/pages/merchant/login/login${merchantId}`
+      })
+      return
+    }
+
     this.setData({
       staffUser: app.globalData.staffUser || {},
       storeInfo: {},
@@ -56,12 +66,6 @@ Page({
     })
 
     util.showToast(message)
-    if (/未登录|登录已过期|商家身份校验失败|入口与登录账号不匹配/.test(message)) {
-      app.clearMerchantLoginInfo()
-      wx.redirectTo({
-        url: '/pages/merchant/login/login'
-      })
-    }
   },
 
   buildStatsCardList(stats = {}) {

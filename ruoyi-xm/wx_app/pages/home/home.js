@@ -3,8 +3,9 @@ const templateService = require('../../services/template')
 const merchantApi = require('../../api/merchant')
 const productApi = require('../../api/product')
 const privacy = require('../../utils/privacy')
+const { toListThumbnailUrl } = require('../../utils/image-url')
 
-const DEFAULT_STORE_AVATAR = '/assets/images/avatar.svg'
+const DEFAULT_PRODUCT_IMAGE = '/assets/images/merchant-logo-xiangyuan.png'
 
 const normalizeText = (value, fallback) => {
   return value === undefined || value === null || value === '' ? fallback : value
@@ -65,7 +66,8 @@ Page({
           const grouponList = (grouponRes.data || grouponRes || []).map((item) => ({
             ...item,
             title: normalizeText(item.title || item.name || item.productName, '精选服务'),
-            image: item.image || item.coverImage || item.productImage || DEFAULT_STORE_AVATAR,
+            image: toListThumbnailUrl(item.image || item.coverImage || item.productImage || DEFAULT_PRODUCT_IMAGE),
+            soldOut: Number(item.stock || 0) <= 0,
             tags: item.tags || []
           }))
 
@@ -126,7 +128,7 @@ Page({
   },
 
   formatCurrentDistance(merchant = {}) {
-    return merchant.distance || '距离计算中'
+    return merchant.distance || ''
   },
 
   normalizeMerchant(m = {}) {
@@ -135,10 +137,9 @@ Page({
     return {
       ...m,
       name: normalizeText(m.name || m.storeName || m.merchantName, '门店信息待完善'),
-      avatar: m.avatar || m.logo || m.coverImage || DEFAULT_STORE_AVATAR,
       address: normalizeText(m.address, '门店地址待完善'),
       sales: normalizeText(m.sales || m.monthSales, 0),
-      distance: normalizeText(m.distance, '距离待计算'),
+      distance: m.distance || '',
       businessStatus,
       businessStatusText: businessStatus ? '营业中' : '休息中',
       bookingText: m.supportBooking === false ? '到店即用' : '可预约',
@@ -150,10 +151,9 @@ Page({
     return {
       id: '',
       name: '暂无门店信息',
-      avatar: DEFAULT_STORE_AVATAR,
       address: '暂无门店地址',
       sales: 0,
-      distance: '距离暂不可用',
+      distance: '',
       businessStatus: false,
       businessStatusText: '未营业',
       bookingText: '',
@@ -233,6 +233,10 @@ Page({
 
   onProductBuy(e) {
     const product = e.detail.product
+    if (!product || product.soldOut || Number(product.stock || 0) <= 0) {
+      util.showToast('当前商品已售罄')
+      return
+    }
     util.navigateTo(`/pages/checkout/checkout?id=${product.id}`)
   },
 

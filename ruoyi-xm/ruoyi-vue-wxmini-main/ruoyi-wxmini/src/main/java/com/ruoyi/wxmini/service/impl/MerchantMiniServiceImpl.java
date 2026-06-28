@@ -313,7 +313,9 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
             if (StringUtils.isNotBlank(status) && !"ALL".equals(status) && !status.equals(goodsStatus)) {
                 continue;
             }
-            result.add(convertProductToDto(product));
+            MerchantMiniGoodsDto goodsDto = convertProductToDto(product);
+            goodsDto.setImageUrl(appendListThumb(goodsDto.getImageUrl()));
+            result.add(goodsDto);
         }
         // 按排序倒序
         result.sort((a, b) -> Integer.compare(b.getSort() != null ? b.getSort() : 0, a.getSort() != null ? a.getSort() : 0));
@@ -1084,6 +1086,16 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         }
         dto.setVerifyNotice(StringUtils.defaultIfBlank(product.getVerifyNotice(), "到店出示核销码即可使用"));
         return dto;
+    }
+
+    private String appendListThumb(String imageUrl) {
+        if (StringUtils.isBlank(imageUrl)
+                || (!imageUrl.contains("/profile/merchant_images/") && !imageUrl.contains("/profile/merchant-goods/"))
+                || imageUrl.contains("?thumb=")
+                || imageUrl.contains("&thumb=")) {
+            return imageUrl;
+        }
+        return imageUrl + (imageUrl.contains("?") ? "&" : "?") + "thumb=list";
     }
 
     private Product convertDtoToProduct(MerchantMiniGoodsDto dto, Long merchantId) {

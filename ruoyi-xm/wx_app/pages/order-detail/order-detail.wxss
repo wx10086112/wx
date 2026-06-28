@@ -1,7 +1,7 @@
 .order-detail-page {
   min-height: 100vh;
   background: #f3f7fd;
-  padding-bottom: 128rpx;
+  padding-bottom: 150rpx;
 }
 
 .status-section {
@@ -188,19 +188,35 @@
   align-items: center;
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(18rpx);
-  padding: 16rpx 24rpx;
+  min-height: 118rpx;
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
   box-shadow: 0 -8rpx 30rpx rgba(14, 52, 110, 0.08);
+  box-sizing: border-box;
 }
 
 .bar-actions {
-  flex: 1;
   display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 18rpx;
+}
+
+.bar-actions.is-pair .action-btn {
+  flex: 1;
+  min-width: 0;
+}
+
+.bar-actions.is-single {
   justify-content: flex-end;
 }
 
+.bar-actions.is-single .action-btn {
+  width: 320rpx;
+}
+
 .action-btn {
+  flex-shrink: 1;
   height: 72rpx;
-  line-height: 72rpx;
   padding: 0 34rpx;
   border-radius: 999rpx;
   border: 1rpx solid transparent;
@@ -208,6 +224,12 @@
   font-weight: 680;
   margin: 0;
   box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.76);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .action-btn::after {

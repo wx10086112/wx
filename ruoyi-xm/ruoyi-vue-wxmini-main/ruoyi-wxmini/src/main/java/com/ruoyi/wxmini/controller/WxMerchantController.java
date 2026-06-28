@@ -220,8 +220,8 @@ public class WxMerchantController {
         dto.setMerchantId(merchant.getId());
         dto.setName(merchant.getName());
         dto.setShortName(merchant.getName());
-        dto.setAvatar(merchant.getLogo());
-        dto.setCoverImage(merchant.getLogo());
+        dto.setAvatar(appendThumb(merchant.getLogo(), "list"));
+        dto.setCoverImage(appendThumb(merchant.getLogo(), "detail"));
         dto.setAddress(merchant.getAddress());
         dto.setPhone(merchant.getPhone());
         dto.setBusinessHours(merchant.getBusinessHours());
@@ -249,7 +249,7 @@ public class WxMerchantController {
                 dto.setBusinessHours(store.getBusinessHours());
             }
             if (store.getAvatar() != null) {
-                dto.setAvatar(store.getAvatar());
+                dto.setAvatar(appendThumb(store.getAvatar(), "list"));
             }
 
             if (userLat != null && userLng != null
@@ -301,12 +301,12 @@ public class WxMerchantController {
         Set<String> seen = new HashSet<>();
         List<String> albumList = new ArrayList<>();
 
-        addIfNotBlank(albumList, seen, merchant.getLogo());
-        addIfNotBlank(albumList, seen, merchant.getAvatar());
+        addIfNotBlank(albumList, seen, appendThumb(merchant.getLogo(), "detail"));
+        addIfNotBlank(albumList, seen, appendThumb(merchant.getAvatar(), "detail"));
 
         if (stores != null) {
             for (MerchantStore store : stores) {
-                addIfNotBlank(albumList, seen, store.getAvatar());
+                addIfNotBlank(albumList, seen, appendThumb(store.getAvatar(), "detail"));
             }
         }
 
@@ -315,11 +315,11 @@ public class WxMerchantController {
         query.setStatus(1);
         List<Product> products = productService.selectProductList(query);
         for (Product product : products) {
-            addIfNotBlank(albumList, seen, product.getCoverImage());
-            addIfNotBlank(albumList, seen, product.getMainImage());
+            addIfNotBlank(albumList, seen, appendThumb(product.getCoverImage(), "detail"));
+            addIfNotBlank(albumList, seen, appendThumb(product.getMainImage(), "detail"));
             if (product.getImages() != null && !product.getImages().isEmpty()) {
                 for (String img : product.getImages().split("[,;]")) {
-                    addIfNotBlank(albumList, seen, img.trim());
+                    addIfNotBlank(albumList, seen, appendThumb(img.trim(), "detail"));
                 }
             }
         }
@@ -335,7 +335,7 @@ public class WxMerchantController {
         dto.setSubtitle(product.getDescription());
         dto.setMerchantId(product.getMerchantId());
         dto.setMerchantName(merchantName);
-        dto.setImage(product.getCoverImage());
+        dto.setImage(appendThumb(product.getCoverImage(), "list"));
         dto.setPrice(toFen(product.getPrice()));
         dto.setOriginalPrice(toFen(product.getOriginalPrice()));
         dto.setSales(product.getSales());
@@ -368,6 +368,16 @@ public class WxMerchantController {
         if (url != null && !url.isEmpty() && seen.add(url)) {
             list.add(url);
         }
+    }
+
+    private String appendThumb(String imageUrl, String thumb) {
+        if (imageUrl == null || imageUrl.trim().isEmpty()
+                || (!imageUrl.contains("/profile/merchant_images/") && !imageUrl.contains("/profile/merchant-goods/"))
+                || imageUrl.contains("?thumb=")
+                || imageUrl.contains("&thumb=")) {
+            return imageUrl;
+        }
+        return imageUrl + (imageUrl.contains("?") ? "&" : "?") + "thumb=" + thumb;
     }
 
     private long toFen(BigDecimal amount) {

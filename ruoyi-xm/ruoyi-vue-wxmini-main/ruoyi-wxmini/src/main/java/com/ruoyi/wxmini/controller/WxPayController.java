@@ -30,6 +30,8 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,6 +44,10 @@ public class WxPayController {
 
     @Value("${wx.pay.stub-enabled:false}")
     private boolean stubEnabled;
+    @Value("${wx.pay.private-key-path:}")
+    private String privateKeyPath;
+    @Value("${wx.pay.private-cert-path:}")
+    private String privateCertPath;
 
     @Resource
     private IMallOrderService mallOrderService;
@@ -125,6 +131,7 @@ public class WxPayController {
             result.put("orderNo", payParam.getOrderNo());
             return AjaxResult.success(result);
         } catch (Exception e) {
+            log.error("微信支付创建失败: orderNo={}, userId={}", orderNo, userId, e);
             return AjaxResult.error("支付创建失败: " + e.getMessage());
         }
     }
@@ -207,6 +214,10 @@ public class WxPayController {
     }
 
     private AjaxResult checkMerchantPayReady(Long merchantId) {
+        AjaxResult platformPayCheck = checkPlatformPayReady();
+        if (platformPayCheck != null) {
+            return platformPayCheck;
+        }
         Merchant merchant = merchantService.selectMerchantById(merchantId);
         if (merchant == null) {
             return AjaxResult.error("商户不存在");
@@ -216,6 +227,42 @@ public class WxPayController {
             return AjaxResult.error("商户支付配置不完整: " + blockReason);
         }
         return null;
+    }
+
+    private AjaxResult checkPlatformPayReady() {
+        if (stubEnabled) {
+            return null;
+        }
+        if (wxPayService == null || wxPayService.getConfig() == null
+                || StringUtils.isBlank(wxPayService.getConfig().getMchId())) {
+            log.warn("微信支付服务商配置未完成: wxPayService/config/mchId missing");
+            return AjaxResult.error("平台微信支付配置未完成，请联系平台处理");
+        }
+        if (!isReadablePayFile(privateKeyPath) || !isReadablePayFile(privateCertPath)) {
+            log.warn("微信支付服务商证书文件缺失或为空: privateKeyPath={}, privateCertPath={}",
+                    maskPath(privateKeyPath), maskPath(privateCertPath));
+            return AjaxResult.error("平台微信支付证书未配置，请联系平台处理");
+        }
+        return null;
+    }
+
+    private boolean isReadablePayFile(String path) {
+        if (StringUtils.isBlank(path) || path.startsWith("classpath:")) {
+            return false;
+        }
+        try {
+            return Files.isRegularFile(Paths.get(path)) && Files.size(Paths.get(path)) > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private String maskPath(String path) {
+        if (StringUtils.isBlank(path)) {
+            return "<empty>";
+        }
+        int slashIndex = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+        return slashIndex >= 0 ? "..." + path.substring(slashIndex) : path;
     }
 
     private AjaxResult checkOrderTenant(MallOrder order) {

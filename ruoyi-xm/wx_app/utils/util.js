@@ -292,7 +292,7 @@ const requestSubscribeMessage = () => {
 const requestPayment = (payParams) => {
   return new Promise((resolve, reject) => {
     if (!payParams || !payParams.timeStamp) {
-      resolve(true)
+      reject(new Error('支付参数缺失，请稍后重试'))
       return
     }
     wx.requestPayment({
@@ -306,7 +306,8 @@ const requestPayment = (payParams) => {
         if (err.errMsg && err.errMsg.includes('cancel')) {
           reject(new Error('用户取消支付'))
         } else {
-          reject(new Error('支付失败'))
+          console.warn('requestPayment failed', err)
+          reject(new Error('微信支付拉起失败，请稍后重试'))
         }
       }
     })

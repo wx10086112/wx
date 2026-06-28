@@ -40,6 +40,7 @@ const isRuntimeFileUrl = (url = '') => /^(wxfile|cloud|file):\/\//i.test(url)
 const isInlineUrl = (url = '') => /^(data|blob):/i.test(url)
 const isLocalAssetUrl = (url = '') => url.startsWith('/assets/') || url.startsWith('assets/')
 const isServerImageUrl = (url = '') => url.startsWith('/profile/') || url.startsWith('profile/')
+const isMerchantImageUrl = (url = '') => /(^|\/)profile\/(merchant_images|merchant-goods)\//i.test(url)
 
 const normalizeImageUrl = (url = '') => {
   if (typeof url !== 'string') {
@@ -77,6 +78,22 @@ const toStorageImageUrl = (url = '') => {
     return trimmed.substring(baseUrl.length)
   }
   return trimmed
+}
+
+const toListThumbnailUrl = (url = '') => {
+  const normalized = normalizeImageUrl(url)
+  if (typeof normalized !== 'string' || !normalized || !isMerchantImageUrl(normalized) || /[?&]thumb=/.test(normalized)) {
+    return normalized
+  }
+  return `${normalized}${normalized.includes('?') ? '&' : '?'}thumb=list`
+}
+
+const toDetailThumbnailUrl = (url = '') => {
+  const normalized = normalizeImageUrl(url)
+  if (typeof normalized !== 'string' || !normalized || !isMerchantImageUrl(normalized) || /[?&]thumb=/.test(normalized)) {
+    return normalized
+  }
+  return `${normalized}${normalized.includes('?') ? '&' : '?'}thumb=detail`
 }
 
 const normalizeJsonImageArray = (value = '') => {
@@ -121,5 +138,7 @@ const normalizeImageFields = (data) => {
 module.exports = {
   normalizeImageUrl,
   normalizeImageFields,
-  toStorageImageUrl
+  toStorageImageUrl,
+  toListThumbnailUrl,
+  toDetailThumbnailUrl
 }

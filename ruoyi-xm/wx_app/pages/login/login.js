@@ -8,6 +8,17 @@ const merchantEntry = require('../../utils/merchant-entry')
 const DEFAULT_BRAND_NAME = '湘缘餐厅'
 const DEFAULT_BRAND_LOGO = '/assets/images/merchant-logo-xiangyuan.png'
 const DEFAULT_BRAND_SUBTITLE = '生活有点苦，今天团点甜'
+const DEFAULT_USER_NAME = '微信用户'
+const DEFAULT_AVATAR_URL = '/assets/images/avatar.svg'
+
+const normalizeReturnUrl = (value = '') => {
+  if (!value) return ''
+  const decoded = decodeURIComponent(value)
+  if (!/^\/pages\//.test(decoded) || /:\/\//.test(decoded)) {
+    return ''
+  }
+  return decoded
+}
 
 const parseMerchantIdFromOptions = (options = {}) => {
   const directMerchantId = Number(options.merchantId || 0)
@@ -22,13 +33,28 @@ const normalizeLoginUser = (info = {}) => {
   return {
     userId: info.userId || '',
     openId: info.openId || '',
-    nickName: info.userName || '微信用户',
-    avatarUrl: info.avatarUrl || '/assets/images/avatar.svg',
+    nickName: info.userName || DEFAULT_USER_NAME,
+    avatarUrl: info.avatarUrl || DEFAULT_AVATAR_URL,
     phone: info.phone || '',
     merchantId: info.merchantId || null,
     merchantName: info.merchantName || '',
     appId: info.appId || app.globalData.appId || ''
   }
+}
+
+const isProfileComplete = (userInfo = {}) => {
+  const nickName = String(userInfo.nickName || '').trim()
+  const avatarUrl = String(userInfo.avatarUrl || '').trim()
+  const phone = String(userInfo.phone || '').trim()
+  return /^1\d{10}$/.test(phone)
+    && nickName
+    && nickName !== DEFAULT_USER_NAME
+    && avatarUrl
+    && avatarUrl !== DEFAULT_AVATAR_URL
+}
+
+const getLoginErrorMessage = (err) => {
+  return (err && err.message) || '登录失败，请重试'
 }
 
 Page({
@@ -39,6 +65,7 @@ Page({
     brandSubtitle: DEFAULT_BRAND_SUBTITLE,
     agreementAccepted: false,
     showAgreementModal: false,
+    returnUrl: '',
     submitting: false
   },
 
@@ -48,8 +75,11 @@ Page({
     }
     this.initBrand()
     this.syncAgreementState()
+    this.setData({
+      returnUrl: normalizeReturnUrl(options.returnUrl)
+    })
     if (app.globalData.isLoggedIn) {
-      this.goMine()
+      this.goNextAfterLogin(app.globalData.userInfo)
     }
   },
 
@@ -147,7 +177,7 @@ Page({
         userApi
           .login(app.globalData.appId, loginRes.code)
           .then((res) => this.applyLoginResult(res))
-          .catch(() => this.handleLoginFail('登录失败，请重试'))
+          .catch((err) => this.handleLoginFail(getLoginErrorMessage(err)))
       },
       fail: () => this.handleLoginFail('登录失败，请重试')
     })
@@ -166,7 +196,7 @@ Page({
     util.hideLoading()
     this.setData({ submitting: false })
     util.showToast('登录成功', 'success')
-    setTimeout(() => this.goMine(), 350)
+    setTimeout(() => this.goNextAfterLogin(app.globalData.userInfo), 350)
   },
 
   handleLoginFail(message) {
@@ -177,6 +207,22 @@ Page({
 
   goMine() {
     wx.switchTab({ url: '/pages/mine/mine' })
+  },
+
+  goNextAfterLogin(userInfo = {}) {
+    const returnUrl = this.data.returnUrl || ''
+    if (isProfileComplete(userInfo)) {
+      if (returnUrl) {
+        wx.redirectTo({ url: returnUrl })
+        return
+      }
+      this.goMine()
+      return
+    }
+    const query = returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : ''
+    wx.redirectTo({
+      url: `/pages/profile-edit/profile-edit?from=login${query}`
+    })
   },
 
   goHome() {

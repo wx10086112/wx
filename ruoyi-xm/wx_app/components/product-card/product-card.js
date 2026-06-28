@@ -26,6 +26,11 @@ Component({
     },
 
     onBuy() {
+      const product = this.properties.product || {}
+      if (product.soldOut || Number(product.stock || 0) <= 0) {
+        util.showToast('当前商品已售罄')
+        return
+      }
       this.triggerEvent('buy', { product: this.properties.product })
     }
   }
