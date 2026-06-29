@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Date;
 import java.util.List;
@@ -154,10 +156,24 @@ public class MallOrderServiceImpl implements IMallOrderService {
 
         // 退款审批通过（status=2）只触发微信退款，订单/结算等最终状态等待微信退款成功回调。
         if (status != null && status == 2 && refundRecord.getOrderNo() != null) {
-            applicationContext.publishEvent(new RefundApprovedEvent(this, refundRecord.getOrderNo(), id, operator));
+            publishRefundApprovedAfterCommit(refundRecord.getOrderNo(), id, operator);
         }
 
         return result;
+    }
+
+    private void publishRefundApprovedAfterCommit(String orderNo, Long refundRecordId, String operator) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    applicationContext.publishEvent(new RefundApprovedEvent(
+                            MallOrderServiceImpl.this, orderNo, refundRecordId, operator));
+                }
+            });
+            return;
+        }
+        applicationContext.publishEvent(new RefundApprovedEvent(this, orderNo, refundRecordId, operator));
     }
 
     @Override

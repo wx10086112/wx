@@ -220,7 +220,7 @@
         set status = 4,
             refund_time = #{refundTime}
         where order_no = #{orderNo}
-          and status = 1
+          and status in (1, 5)
           and del_flag = '0'
     </update>
 

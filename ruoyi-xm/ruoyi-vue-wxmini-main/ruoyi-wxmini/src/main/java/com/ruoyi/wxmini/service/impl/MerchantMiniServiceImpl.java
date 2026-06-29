@@ -35,6 +35,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -762,15 +764,20 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         if (order.getStatus() != ORDER_STATUS_PENDING && order.getStatus() != ORDER_STATUS_PAID) {
             throw new IllegalArgumentException("当前订单状态不可拒单");
         }
+        if (order.getStatus() == ORDER_STATUS_PAID) {
+            return requestMerchantFullRefund(order, reason, "MERCHANT_REJECT_REFUND", "商家拒单退款");
+        }
         MallOrder update = new MallOrder();
         update.setId(order.getId());
         update.setStatus(ORDER_STATUS_CANCELLED);
+        update.setCancelTime(new Date());
         int rows = mallOrderMapper.updateMallOrder(update);
         if (rows > 0) {
             recordMerchantOrderHistory(order, order.getStatus(), ORDER_STATUS_CANCELLED,
                     "MERCHANT_REJECT", reason);
         }
         order.setStatus(ORDER_STATUS_CANCELLED);
+        order.setCancelTime(update.getCancelTime());
         return convertOrderToDto(order);
     }
 
@@ -782,15 +789,20 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         if (order.getStatus() != ORDER_STATUS_PENDING && order.getStatus() != ORDER_STATUS_PAID) {
             throw new IllegalArgumentException("当前订单状态不可取消");
         }
+        if (order.getStatus() == ORDER_STATUS_PAID) {
+            return requestMerchantFullRefund(order, reason, "MERCHANT_CANCEL_REFUND", "商家取消订单退款");
+        }
         MallOrder update = new MallOrder();
         update.setId(order.getId());
         update.setStatus(ORDER_STATUS_CANCELLED);
+        update.setCancelTime(new Date());
         int rows = mallOrderMapper.updateMallOrder(update);
         if (rows > 0) {
             recordMerchantOrderHistory(order, order.getStatus(), ORDER_STATUS_CANCELLED,
                     "MERCHANT_CANCEL", reason);
         }
         order.setStatus(ORDER_STATUS_CANCELLED);
+        order.setCancelTime(update.getCancelTime());
         return convertOrderToDto(order);
     }
 
@@ -816,7 +828,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         }
         recordMerchantOrderHistory(order, order.getStatus(), order.getStatus(),
                 "REFUND_APPROVE", null);
-        applicationContext.publishEvent(new RefundApprovedEvent(this, orderNo, refundRecord.getId(), currentOperator()));
+        publishRefundApprovedAfterCommit(orderNo, refundRecord.getId(), currentOperator());
         return convertOrderToDto(order);
     }
 
@@ -854,6 +866,106 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
                 "MERCHANT_MINI", operatorId, operatorName, remark);
     }
 
+    private MerchantMiniOrderDto requestMerchantFullRefund(MallOrder order, String reason,
+                                                           String action, String defaultReason) {
+        String refundReason = normalizeMerchantRefundReason(reason, defaultReason);
+        RefundRecord activeRefund = findActiveRefundRecord(order.getOrderNo(), order.getMerchantId());
+        if (activeRefund != null) {
+            if (activeRefund.getStatus() != null && activeRefund.getStatus() == RefundRecord.STATUS_PENDING) {
+                approveExistingRefundRecord(activeRefund, order, action, refundReason);
+            }
+            return convertOrderToDto(order);
+        }
+
+        Date now = new Date();
+        MallOrder update = new MallOrder();
+        update.setId(order.getId());
+        update.setCancelTime(now);
+        mallOrderMapper.updateMallOrder(update);
+        order.setCancelTime(now);
+
+        String operator = currentOperator();
+        RefundRecord refundRecord = new RefundRecord();
+        refundRecord.setOrderNo(order.getOrderNo());
+        refundRecord.setRefundNo(generateRefundNo());
+        refundRecord.setMerchantId(order.getMerchantId());
+        refundRecord.setUserId(order.getUserId());
+        refundRecord.setRefundAmount(order.getPayAmount());
+        refundRecord.setRefundReason(refundReason);
+        refundRecord.setRefundType(2);
+        refundRecord.setStatus(RefundRecord.STATUS_APPROVED);
+        refundRecord.setOperator(operator);
+        refundRecord.setAuditTime(now);
+        refundRecordMapper.insertRefundRecord(refundRecord);
+
+        recordMerchantOrderHistory(order, order.getStatus(), order.getStatus(), action, refundReason);
+        publishRefundApprovedAfterCommit(order.getOrderNo(), refundRecord.getId(), operator);
+        return convertOrderToDto(order);
+    }
+
+    private void approveExistingRefundRecord(RefundRecord refundRecord, MallOrder order,
+                                             String action, String refundReason) {
+        String operator = currentOperator();
+        refundRecord.setStatus(RefundRecord.STATUS_APPROVED);
+        refundRecord.setRefundReason(refundReason);
+        refundRecord.setOperator(operator);
+        refundRecord.setAuditTime(new Date());
+        if (refundRecord.getParams() == null) {
+            refundRecord.setParams(new HashMap<>());
+        }
+        refundRecord.getParams().put("oldStatus", RefundRecord.STATUS_PENDING);
+        int rows = refundRecordMapper.updateRefundRecord(refundRecord);
+        if (rows == 0) {
+            throw new IllegalArgumentException("退款记录状态已变更，请刷新后重试");
+        }
+        recordMerchantOrderHistory(order, order.getStatus(), order.getStatus(), action, refundReason);
+        publishRefundApprovedAfterCommit(order.getOrderNo(), refundRecord.getId(), operator);
+    }
+
+    private RefundRecord findActiveRefundRecord(String orderNo, Long merchantId) {
+        RefundRecord query = new RefundRecord();
+        query.setOrderNo(orderNo);
+        query.setMerchantId(merchantId);
+        List<RefundRecord> records = refundRecordMapper.selectRefundRecordList(query);
+        if (records != null) {
+            for (RefundRecord record : records) {
+                if (orderNo.equals(record.getOrderNo())
+                        && merchantId.equals(record.getMerchantId())
+                        && record.getStatus() != null
+                        && (record.getStatus() == RefundRecord.STATUS_PENDING
+                        || record.getStatus() == RefundRecord.STATUS_APPROVED)) {
+                    return record;
+                }
+            }
+        }
+        return null;
+    }
+
+    private String normalizeMerchantRefundReason(String reason, String defaultReason) {
+        String normalized = StringUtils.isNotBlank(reason) ? reason.trim() : defaultReason;
+        return normalized.length() > 200 ? normalized.substring(0, 200) : normalized;
+    }
+
+    private String generateRefundNo() {
+        return "RF" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date())
+                + UUID.randomUUID().toString().replace("-", "")
+                .substring(0, 6).toUpperCase(Locale.ROOT);
+    }
+
+    private void publishRefundApprovedAfterCommit(String orderNo, Long refundRecordId, String operator) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    applicationContext.publishEvent(new RefundApprovedEvent(
+                            MerchantMiniServiceImpl.this, orderNo, refundRecordId, operator));
+                }
+            });
+            return;
+        }
+        applicationContext.publishEvent(new RefundApprovedEvent(this, orderNo, refundRecordId, operator));
+    }
+
     private RefundRecord findPendingRefundRecord(String orderNo, Long merchantId) {
         RefundRecord query = new RefundRecord();
         query.setOrderNo(orderNo);
@@ -882,7 +994,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
     }
 
     private MallOrder getOrderAndCheckMerchant(String orderNo, Long merchantId) {
-        MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(orderNo);
+        MallOrder order = mallOrderMapper.selectMallOrderByOrderNoForUpdate(orderNo);
         if (order == null || !order.getMerchantId().equals(merchantId)) {
             throw new IllegalArgumentException("订单不存在");
         }
