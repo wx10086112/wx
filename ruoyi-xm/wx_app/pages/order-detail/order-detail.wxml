@@ -18,7 +18,11 @@
         <view class="status-badge status-paid">待使用</view>
       </view>
       <view class="code-display flex flex-center mt-32">
-        <text class="code-text">{{order.writeOffCode}}</text>
+        <text
+          wx:for="{{order.writeOffCodeGroups}}"
+          wx:key="*this"
+          class="code-group"
+        >{{item}}</text>
       </view>
       <view class="code-info flex flex-center mt-24">
         <text class="text-muted fs-24">有效期至：{{order.writeOffDeadlineText}}</text>

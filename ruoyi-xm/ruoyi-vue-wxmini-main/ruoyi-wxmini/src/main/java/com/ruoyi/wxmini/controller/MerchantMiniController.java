@@ -6,7 +6,6 @@ import com.ruoyi.mall.finance.domain.MerchantSettlementRecord;
 import com.ruoyi.mall.finance.service.IMerchantSettlementRecordService;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
-import com.ruoyi.mall.order.service.IWriteOffService;
 import com.ruoyi.wxmini.dto.merchant.*;
 import com.ruoyi.wxmini.service.IMerchantMiniService;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
@@ -53,8 +52,6 @@ public class MerchantMiniController {
     private IMerchantMiniService merchantMiniService;
     @Resource
     private IMerchantService merchantService;
-    @Resource
-    private IWriteOffService writeOffService;
     @Resource
     private IMerchantSettlementRecordService settlementService;
 
@@ -171,9 +168,7 @@ public class MerchantMiniController {
             return accessDenied;
         }
         try {
-            Long merchantId = WxMiniUserContext.getCurrentMerchantId();
-            Long operatorId = WxMiniUserContext.getCurrentStaffId();
-            return AjaxResult.success("核销成功", writeOffService.writeOff(code, merchantId, operatorId, ""));
+            return AjaxResult.success("核销成功", merchantMiniService.writeOff(code, WxMiniUserContext.getCurrentUserId()));
         } catch (Exception e) {
             return AjaxResult.error(e.getMessage());
         }

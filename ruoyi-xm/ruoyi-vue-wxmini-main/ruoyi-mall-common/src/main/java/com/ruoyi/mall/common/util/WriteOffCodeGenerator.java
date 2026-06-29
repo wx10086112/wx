@@ -1,8 +1,12 @@
 package com.ruoyi.mall.common.util;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +22,8 @@ public class WriteOffCodeGenerator
     private static final int RANDOM_LENGTH = 8;
     private static final Pattern CODE_PATTERN =
             Pattern.compile("^" + CODE_PREFIX + "\\d{8}[" + RANDOM_CHARS + "]{" + RANDOM_LENGTH + "}$");
+    private static final Pattern CODE_EXTRACT_PATTERN =
+            Pattern.compile(CODE_PREFIX + "\\d{8}[" + RANDOM_CHARS + "]{" + RANDOM_LENGTH + "}");
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -49,6 +55,45 @@ public class WriteOffCodeGenerator
      */
     public boolean isValid(String code)
     {
-        return code != null && CODE_PATTERN.matcher(code).matches();
+        String normalizedCode = normalize(code);
+        return normalizedCode != null && CODE_PATTERN.matcher(normalizedCode).matches();
+    }
+
+    public String normalize(String code)
+    {
+        if (code == null)
+        {
+            return null;
+        }
+        String decoded = decodeRepeatedly(code.trim());
+        String compact = decoded.replaceAll("\\s+", "").toUpperCase(Locale.ROOT);
+        Matcher matcher = CODE_EXTRACT_PATTERN.matcher(compact);
+        if (matcher.find())
+        {
+            return matcher.group();
+        }
+        return compact;
+    }
+
+    private String decodeRepeatedly(String value)
+    {
+        String result = value;
+        for (int i = 0; i < 2; i++)
+        {
+            try
+            {
+                String decoded = URLDecoder.decode(result, StandardCharsets.UTF_8.name());
+                if (decoded.equals(result))
+                {
+                    break;
+                }
+                result = decoded;
+            }
+            catch (Exception ignored)
+            {
+                break;
+            }
+        }
+        return result;
     }
 }

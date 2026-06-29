@@ -47,6 +47,7 @@ Page({
     const meta = util.getOrderStatusMeta(order.status)
     const priceAmount = order.orderAmount || order.price || 0
     const payAmount = order.payAmount || order.price || 0
+    const writeOffCode = String(order.writeOffCode || '').trim().toUpperCase()
     const sourceItems = Array.isArray(order.items) && order.items.length
       ? order.items
       : [order]
@@ -69,6 +70,8 @@ Page({
       writeOffTimeText: order.writeOffTime ? util.formatDate(order.writeOffTime, 'YYYY-MM-DD HH:mm') : '',
       refundTimeText: order.refundTime ? util.formatDate(order.refundTime, 'YYYY-MM-DD HH:mm') : '',
       writeOffDeadlineText: order.writeOffDeadline ? util.formatDate(order.writeOffDeadline, 'YYYY-MM-DD HH:mm') : '',
+      writeOffCode,
+      writeOffCodeGroups: this.groupWriteOffCode(writeOffCode),
       priceAmountText: (priceAmount / 100).toFixed(2),
       couponAmountText: ((order.couponAmount || 0) / 100).toFixed(2),
       payAmountText: (payAmount / 100).toFixed(2),
@@ -76,6 +79,16 @@ Page({
       title: displayTitle || order.title || order.productName || order.name || '',
       historyList: util.formatOrderHistory(order.history)
     }
+  },
+
+  groupWriteOffCode(code = '') {
+    const value = String(code || '').replace(/\s+/g, '').toUpperCase()
+    if (!value) return []
+    const groups = []
+    for (let i = 0; i < value.length; i += 4) {
+      groups.push(value.slice(i, i + 4))
+    }
+    return groups
   },
 
   loadOrderDetail() {

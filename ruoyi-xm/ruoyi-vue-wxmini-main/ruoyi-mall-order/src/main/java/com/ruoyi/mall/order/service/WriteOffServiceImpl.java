@@ -38,11 +38,12 @@ public class WriteOffServiceImpl implements IWriteOffService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public WriteOffResultVO writeOff(String code, Long merchantId, Long operatorId, String operatorName) {
-        if (!writeOffCodeGenerator.isValid(code)) {
+        String normalizedCode = writeOffCodeGenerator.normalize(code);
+        if (!writeOffCodeGenerator.isValid(normalizedCode)) {
             throw new ServiceException("核销码格式不正确");
         }
 
-        MallOrder order = mallOrderMapper.selectOrderByWriteOffCode(code);
+        MallOrder order = mallOrderMapper.selectOrderByWriteOffCode(normalizedCode);
         if (order == null) {
             throw new ServiceException("核销码不存在");
         }
@@ -78,7 +79,7 @@ public class WriteOffServiceImpl implements IWriteOffService {
         WriteOffRecord record = new WriteOffRecord();
         record.setOrderId(order.getId());
         record.setOrderNo(order.getOrderNo());
-        record.setWriteOffCode(code);
+        record.setWriteOffCode(normalizedCode);
         record.setMerchantId(merchantId);
         record.setStoreId(order.getStoreId());
         record.setOperatorId(operatorId);

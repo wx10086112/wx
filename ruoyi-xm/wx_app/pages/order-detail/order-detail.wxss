@@ -77,17 +77,25 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
   margin-top: 32rpx;
-  padding: 30rpx;
+  padding: 30rpx 22rpx;
   background: linear-gradient(135deg, #1677ff 0%, #59a8ff 100%);
   border-radius: 18rpx;
+  min-height: 104rpx;
+  box-sizing: border-box;
 }
 
-.code-text {
-  font-size: 62rpx;
+.code-group {
+  min-width: 118rpx;
+  margin: 7rpx 9rpx;
+  text-align: center;
+  font-size: 42rpx;
+  line-height: 1.25;
   font-weight: 700;
   color: #fff;
-  letter-spacing: 12rpx;
+  letter-spacing: 2rpx;
+  font-family: DIN Alternate, SFMono-Regular, Consolas, monospace;
 }
 
 .qr-section {

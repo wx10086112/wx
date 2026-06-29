@@ -60,7 +60,7 @@ Page({
     if (!app.needPermission(['verify.scan'])) return
     wx.scanCode({
       success: (res) => {
-        this.processVerifyCode((res.result || '').trim())
+        this.processVerifyCode(res.result || '')
       },
       fail: () => {
         util.showToast('未完成扫码，请改用手动输入')
@@ -74,11 +74,15 @@ Page({
       util.showToast('请输入核销码')
       return
     }
-    this.processVerifyCode(String(this.data.manualCode || '').trim().toUpperCase())
+    this.processVerifyCode(this.data.manualCode)
   },
 
   processVerifyCode(code) {
-    const normalizedCode = String(code || '').trim().toUpperCase()
+    const normalizedCode = this.normalizeVerifyInput(code)
+    if (!normalizedCode) {
+      util.showToast('未识别到有效核销码')
+      return
+    }
     api
         .writeOffByCode(normalizedCode)
       .then((response) => {
@@ -99,6 +103,69 @@ Page({
         this.loadRecentRecords()
       })
     },
+
+  normalizeVerifyInput(rawValue) {
+    let value = String(rawValue || '').trim()
+    if (!value) return ''
+
+    value = this.safeDecode(value)
+    const jsonValue = this.extractFromJson(value)
+    if (jsonValue) value = jsonValue
+
+    const queryValue = this.extractFromQuery(value)
+    if (queryValue) value = queryValue
+
+    value = this.safeDecode(value)
+    const compact = String(value || '').replace(/\s+/g, '').toUpperCase()
+    const codeMatch = compact.match(/LY\d{8}[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{8}/)
+    if (codeMatch) return codeMatch[0]
+    const orderMatch = compact.match(/(?:ORD|M)\d{8,24}/)
+    if (orderMatch) return orderMatch[0]
+    return compact
+  },
+
+  safeDecode(value) {
+    let result = String(value || '').trim()
+    for (let i = 0; i < 2; i += 1) {
+      try {
+        const decoded = decodeURIComponent(result)
+        if (decoded === result) break
+        result = decoded
+      } catch (e) {
+        break
+      }
+    }
+    return result
+  },
+
+  extractFromJson(value) {
+    const text = String(value || '').trim()
+    if (!text || (text[0] !== '{' && text[0] !== '[')) return ''
+    try {
+      const parsed = JSON.parse(text)
+      const source = Array.isArray(parsed) ? parsed[0] : parsed
+      return (source && (source.writeOffCode || source.verifyCode || source.code || source.orderNo || source.scene)) || ''
+    } catch (e) {
+      return ''
+    }
+  },
+
+  extractFromQuery(value) {
+    const text = String(value || '')
+    const queryText = text.includes('?') ? text.split('?').slice(1).join('?') : text
+    const pairs = queryText.split(/[&?#]/)
+    const keys = ['writeOffCode', 'verifyCode', 'code', 'orderNo', 'scene']
+    for (const pair of pairs) {
+      const index = pair.indexOf('=')
+      if (index <= 0) continue
+      const key = pair.slice(0, index)
+      const val = pair.slice(index + 1)
+      if (keys.some((item) => item.toLowerCase() === key.toLowerCase())) {
+        return this.safeDecode(val)
+      }
+    }
+    return ''
+  },
 
   goVerifyRecords() {
     if (!app.needPermission(['verify.record', 'verify.scan', 'verify.manual'])) return

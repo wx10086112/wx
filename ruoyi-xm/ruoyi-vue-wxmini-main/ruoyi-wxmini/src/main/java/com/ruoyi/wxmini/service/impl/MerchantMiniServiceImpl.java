@@ -4,6 +4,7 @@ import com.ruoyi.common.utils.DesensitizedUtil;
 import com.ruoyi.mall.common.bo.WxMiniAuthContext;
 import com.ruoyi.mall.common.event.RefundApprovedEvent;
 import com.ruoyi.mall.common.service.IWxMiniJwtService;
+import com.ruoyi.mall.common.util.WriteOffCodeGenerator;
 import com.ruoyi.mall.finance.domain.TransactionRecord;
 import com.ruoyi.mall.finance.domain.WithdrawRecord;
 import com.ruoyi.mall.finance.mapper.TransactionRecordMapper;
@@ -41,11 +42,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 商家端小程序 - 真实数据库实现
@@ -93,6 +98,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
 
     private static final int MERCHANT_RATE = 90;
     private static final int PLATFORM_RATE = 10;
+    private static final Pattern ORDER_NO_EXTRACT_PATTERN = Pattern.compile("(?:ORD|M)\\d{8,24}");
 
     @Resource
     private IWxMiniJwtService jwtService;
@@ -120,6 +126,8 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
     private IMallOrderService mallOrderService;
     @Resource
     private IWriteOffService writeOffService;
+    @Resource
+    private WriteOffCodeGenerator writeOffCodeGenerator;
     @Resource
     private ApplicationContext applicationContext;
 
@@ -248,7 +256,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
     @Transactional(rollbackFor = Exception.class)
     public MerchantMiniOrderDto writeOff(String code, String currentUserId) {
         Long merchantId = getMerchantIdFromStaffId(currentUserId);
-        String normalizedCode = StringUtils.upperCase(StringUtils.trimToEmpty(code));
+        String normalizedCode = normalizeVerifyInput(code);
 
         if (StringUtils.isBlank(normalizedCode)) {
             throw new IllegalArgumentException("请输入核销码或订单号");
@@ -272,6 +280,40 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
             throw new IllegalArgumentException("核销成功，但订单读取失败");
         }
         return convertOrderToDto(latestOrder);
+    }
+
+    private String normalizeVerifyInput(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        String decoded = decodeRepeatedly(StringUtils.trimToEmpty(code));
+        String normalizedWriteOffCode = writeOffCodeGenerator.normalize(decoded);
+        if (writeOffCodeGenerator.isValid(normalizedWriteOffCode)) {
+            return normalizedWriteOffCode;
+        }
+
+        String compact = decoded.replaceAll("\\s+", "").toUpperCase(Locale.ROOT);
+        Matcher orderNoMatcher = ORDER_NO_EXTRACT_PATTERN.matcher(compact);
+        if (orderNoMatcher.find()) {
+            return orderNoMatcher.group();
+        }
+        return compact;
+    }
+
+    private String decodeRepeatedly(String value) {
+        String result = StringUtils.defaultString(value);
+        for (int i = 0; i < 2; i++) {
+            try {
+                String decoded = URLDecoder.decode(result, StandardCharsets.UTF_8.name());
+                if (decoded.equals(result)) {
+                    break;
+                }
+                result = decoded;
+            } catch (Exception ignored) {
+                break;
+            }
+        }
+        return result;
     }
 
     // ==================== 核销记录 ====================
