@@ -390,9 +390,13 @@ function placeFormatInfo(matrix, size, maskIdx) {
 
 // --- 主函数 ---
 function generateQRCode(text) {
+  const qrText = String(text || '').replace(/\s+/g, '').toUpperCase()
+  if (!qrText) return null
+
   // Try alphanumeric mode
   const ALPHA = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:'
-  const canAlpha = [...text].every(ch => ALPHA.includes(ch))
+  const canAlpha = [...qrText].every(ch => ALPHA.includes(ch))
+  if (!canAlpha) return null
 
   // Calculate required version
   let version = 1
@@ -401,8 +405,8 @@ function generateQRCode(text) {
     const capacity = ec.group1Data * ec.group1Blocks + (ec.group2Data || 0) * (ec.group2Blocks || 0)
     // Alphanumeric: 11 bits per 2 chars + 13 bits overhead
     const needed = canAlpha
-      ? Math.ceil(13 + 9 + (Math.floor(text.length / 2) * 11 + (text.length % 2) * 6) / 8)
-      : text.length + 3
+      ? Math.ceil(13 + 9 + (Math.floor(qrText.length / 2) * 11 + (qrText.length % 2) * 6) / 8)
+      : qrText.length + 3
     if (capacity >= needed) {
       version = v
       break
@@ -415,7 +419,7 @@ function generateQRCode(text) {
   const size = version * 4 + 17
 
   // Encode data
-  const dataBytes = encodeData(text, version)
+  const dataBytes = encodeData(qrText, version)
   const codewords = generateCodewords(dataBytes, version)
 
   // Build matrix

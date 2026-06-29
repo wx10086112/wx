@@ -48,6 +48,7 @@ Page({
     const priceAmount = order.orderAmount || order.price || 0
     const payAmount = order.payAmount || order.price || 0
     const writeOffCode = String(order.writeOffCode || '').trim().toUpperCase()
+    const writeOffQrText = this.buildWriteOffQrText(writeOffCode, order.orderNo)
     const sourceItems = Array.isArray(order.items) && order.items.length
       ? order.items
       : [order]
@@ -71,6 +72,7 @@ Page({
       refundTimeText: order.refundTime ? util.formatDate(order.refundTime, 'YYYY-MM-DD HH:mm') : '',
       writeOffDeadlineText: order.writeOffDeadline ? util.formatDate(order.writeOffDeadline, 'YYYY-MM-DD HH:mm') : '',
       writeOffCode,
+      writeOffQrText,
       writeOffCodeGroups: this.groupWriteOffCode(writeOffCode),
       priceAmountText: (priceAmount / 100).toFixed(2),
       couponAmountText: ((order.couponAmount || 0) / 100).toFixed(2),
@@ -79,6 +81,18 @@ Page({
       title: displayTitle || order.title || order.productName || order.name || '',
       historyList: util.formatOrderHistory(order.history)
     }
+  },
+
+  buildWriteOffQrText(writeOffCode = '', orderNo = '') {
+    const code = String(writeOffCode || '').replace(/\s+/g, '').toUpperCase()
+    if (/^LY\d{8}[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{8}$/.test(code)) {
+      return code
+    }
+    const normalizedOrderNo = String(orderNo || '').replace(/\s+/g, '').toUpperCase()
+    if (/^(?:ORD|M)\d{8,24}$/.test(normalizedOrderNo)) {
+      return normalizedOrderNo
+    }
+    return ''
   },
 
   groupWriteOffCode(code = '') {

@@ -27,8 +27,8 @@
       <view class="code-info flex flex-center mt-24">
         <text class="text-muted fs-24">有效期至：{{order.writeOffDeadlineText}}</text>
       </view>
-      <view class="qr-section mt-32 flex flex-center">
-        <qrcode text="{{order.writeOffCode}}" size="{{240}}" />
+      <view wx:if="{{order.writeOffQrText}}" class="qr-section mt-32 flex flex-center">
+        <qrcode text="{{order.writeOffQrText}}" size="{{240}}" />
       </view>
     </view>
 

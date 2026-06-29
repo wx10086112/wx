@@ -29,13 +29,17 @@ Component({
 
   methods: {
     drawQRCode(text) {
-      const qr = generateQRCode(text)
+      const qrText = String(text || '').replace(/\s+/g, '').toUpperCase()
+      const qr = generateQRCode(qrText)
       if (!qr) return
 
       const { matrix, size: qrSize } = qr
       const canvasSize = this.data.size
-      const cellSize = canvasSize / (qrSize + 8) // 4 modules quiet zone on each side
-      const offset = cellSize * 4
+      const quietZone = 4
+      const totalModules = qrSize + quietZone * 2
+      const cellSize = Math.max(1, Math.floor(canvasSize / totalModules))
+      const qrPixelSize = cellSize * totalModules
+      const offset = Math.floor((canvasSize - qrPixelSize) / 2) + cellSize * quietZone
 
       const query = wx.createSelectorQuery().in(this)
       query.select('#qr-canvas')
@@ -49,19 +53,18 @@ Component({
           canvas.width = canvasSize * dpr
           canvas.height = canvasSize * dpr
           ctx.scale(dpr, dpr)
+          ctx.imageSmoothingEnabled = false
 
-          // White background
           ctx.fillStyle = '#ffffff'
           ctx.fillRect(0, 0, canvasSize, canvasSize)
 
-          // Draw modules
           ctx.fillStyle = '#000000'
           for (let r = 0; r < qrSize; r++) {
             for (let c = 0; c < qrSize; c++) {
               if (matrix[r][c] === 1) {
                 const x = offset + c * cellSize
                 const y = offset + r * cellSize
-                ctx.fillRect(x, y, cellSize + 0.5, cellSize + 0.5)
+                ctx.fillRect(x, y, cellSize, cellSize)
               }
             }
           }
