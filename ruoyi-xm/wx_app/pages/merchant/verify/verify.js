@@ -86,11 +86,12 @@ Page({
     api
         .writeOffByCode(normalizedCode)
       .then((response) => {
+        const result = response.data || response || {}
         this.setData({
           verifyResult: {
-            ...response,
-            payAmountText: util.formatPrice(response.payAmount),
-            verifyTimeText: util.formatDate(response.verifyTime)
+            ...result,
+            payAmountText: util.formatPrice(result.payAmount),
+            verifyTimeText: util.formatDate(result.verifyTime)
           },
           manualCode: ''
         })
