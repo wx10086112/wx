@@ -5,7 +5,7 @@ const userApi = require('../../api/user')
 const templateService = require('../../services/template')
 const merchantEntry = require('../../utils/merchant-entry')
 
-const DEFAULT_BRAND_NAME = '湘缘餐厅'
+const DEFAULT_BRAND_NAME = '湘缘食尚餐厅(梨园路店)'
 const DEFAULT_BRAND_LOGO = '/assets/images/merchant-logo-xiangyuan.png'
 const DEFAULT_BRAND_SUBTITLE = '生活有点苦，今天团点甜'
 const DEFAULT_USER_NAME = '微信用户'

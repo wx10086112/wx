@@ -1,6 +1,6 @@
 {
   "navigationStyle": "custom",
-  "navigationBarTitleText": "湘缘餐厅",
+  "navigationBarTitleText": "湘缘食尚餐厅(梨园路店)",
   "usingComponents": {
     "agreement-consent": "/components/agreement-consent/agreement-consent"
   }
