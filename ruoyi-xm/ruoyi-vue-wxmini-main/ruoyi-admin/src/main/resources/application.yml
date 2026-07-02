@@ -179,8 +179,8 @@ mall:
     # 默认按扣除微信手续费后的净额分账；手续费按分向上保留，避免超分。
     use-net-after-wechat-fee: ${MALL_SPLIT_USE_NET_AFTER_WECHAT_FEE:true}
     wechat-fee-rate: ${MALL_WECHAT_FEE_RATE:0.6}
-    # 默认关闭商家单独比例覆盖，平台只维护一套全局比例；确需特殊商家时再打开。
-    merchant-override-enabled: ${MALL_MERCHANT_SPLIT_OVERRIDE_ENABLED:false}
+    # 默认启用商家单独比例覆盖；每个商户可按合同版本配置商家/平台/分销比例。
+    merchant-override-enabled: ${MALL_MERCHANT_SPLIT_OVERRIDE_ENABLED:true}
     merchant-with-distributor: ${MALL_SPLIT_MERCHANT_WITH_DISTRIBUTOR:85}
     platform-with-distributor: ${MALL_SPLIT_PLATFORM_WITH_DISTRIBUTOR:10}
     distributor: ${MALL_SPLIT_DISTRIBUTOR:5}

@@ -31,6 +31,19 @@ public class WxGrouponController {
     @Resource
     private IMerchantService merchantService;
 
+    @GetMapping("/version")
+    public AjaxResult version(@RequestParam(required = false) Long merchantId) {
+        Long currentMerchantId = WxMiniUserContext.getCurrentMerchantId();
+        if (currentMerchantId == null) {
+            currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
+        }
+        Long targetMerchantId = currentMerchantId != null ? currentMerchantId : merchantId;
+        Map<String, Object> data = new HashMap<>();
+        data.put("merchantId", targetMerchantId);
+        data.put("version", productService.selectProductVersion(targetMerchantId));
+        return AjaxResult.success(data);
+    }
+
     @GetMapping("/list")
     public AjaxResult list(
             @RequestParam(required = false) Long merchantId,

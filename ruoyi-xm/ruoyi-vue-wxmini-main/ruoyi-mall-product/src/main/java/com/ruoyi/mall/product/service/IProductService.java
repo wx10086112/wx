@@ -19,6 +19,8 @@ public interface IProductService {
 
     int countProductByMerchantId(Long merchantId);
 
+    Long selectProductVersion(Long merchantId);
+
     boolean isMerchantAccessibleByDistributor(Long merchantId, Long distributorId);
 
     boolean isProductAccessibleByDistributor(Long productId, Long distributorId);

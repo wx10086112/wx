@@ -7,6 +7,7 @@ const cartStore = require('../../utils/cart')
 const { toListThumbnailUrl } = require('../../utils/image-url')
 
 const DEFAULT_PRODUCT_IMAGE = '/assets/images/merchant-logo-xiangyuan.png'
+const PRODUCT_VERSION_POLL_INTERVAL = 30000
 
 const normalizeText = (value, fallback) => {
   return value === undefined || value === null || value === '' ? fallback : value
@@ -23,6 +24,7 @@ Page({
     merchantList: [],
     grouponList: [],
     displayGrouponList: [],
+    productVersion: 0,
     loading: true
   },
 
@@ -34,6 +36,18 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 })
     }
+    this.startProductVersionPolling()
+    if (!this.data.loading && this.data.productVersion) {
+      this.refreshProductsIfChanged()
+    }
+  },
+
+  onHide() {
+    this.stopProductVersionPolling()
+  },
+
+  onUnload() {
+    this.stopProductVersionPolling()
   },
 
   onPullDownRefresh() {
@@ -42,11 +56,15 @@ Page({
     })
   },
 
-  loadData() {
-    this.setData({
-      loading: true,
-      currentLocation: '定位中...'
-    })
+  loadData(options = {}) {
+    const showLoading = options.showLoading !== false
+    const preserveOnError = options.preserveOnError === true
+    if (showLoading) {
+      this.setData({
+        loading: true,
+        currentLocation: '定位中...'
+      })
+    }
 
     return this.getUserLocation()
       .then((userLocation) => {
@@ -60,10 +78,12 @@ Page({
 
         return Promise.all([
           merchantApi.getMerchantList(merchantParams),
-          productApi.getGrouponList()
+          productApi.getGrouponList(),
+          productApi.getGrouponVersion()
         ]).then((results) => {
           const merchantRes = results[0]
           const grouponRes = results[1]
+          const versionRes = results[2]
           const merchantPayload = merchantRes.data || merchantRes || []
           const merchantList = (Array.isArray(merchantPayload) ? merchantPayload : []).map((m) => this.normalizeMerchant(m))
           const grouponList = (grouponRes.data || grouponRes || []).map((item) => ({
@@ -76,6 +96,7 @@ Page({
 
           const currentMerchant = merchantList[0] || this.buildEmptyMerchant()
           const hasMerchantData = !!currentMerchant.id
+          const productVersion = this.normalizeProductVersion(versionRes)
 
           const filteredData = this.buildFilteredLists({ merchantList, grouponList })
           this.setData({
@@ -88,11 +109,18 @@ Page({
             merchantList,
             grouponList,
             displayGrouponList: filteredData.displayGrouponList,
+            productVersion,
             loading: false
           })
         })
       })
       .catch(() => {
+        if (preserveOnError) {
+          this.setData({
+            loading: false
+          })
+          return
+        }
         this.setData({
           currentLocation: '暂未获取门店信息',
           hasMerchantData: false,
@@ -100,9 +128,42 @@ Page({
           merchantList: [],
           grouponList: [],
           displayGrouponList: [],
+          productVersion: 0,
           loading: false
         })
       })
+  },
+
+  normalizeProductVersion(res = {}) {
+    const payload = res.data || res || {}
+    return Number(payload.version || 0)
+  },
+
+  refreshProductsIfChanged() {
+    return productApi.getGrouponVersion()
+      .then((res) => {
+        const nextVersion = this.normalizeProductVersion(res)
+        const currentVersion = Number(this.data.productVersion || 0)
+        if (!currentVersion || nextVersion !== currentVersion) {
+          return this.loadData({ showLoading: false, preserveOnError: true })
+        }
+        return null
+      })
+      .catch(() => null)
+  },
+
+  startProductVersionPolling() {
+    this.stopProductVersionPolling()
+    this.productVersionTimer = setInterval(() => {
+      this.refreshProductsIfChanged()
+    }, PRODUCT_VERSION_POLL_INTERVAL)
+  },
+
+  stopProductVersionPolling() {
+    if (this.productVersionTimer) {
+      clearInterval(this.productVersionTimer)
+      this.productVersionTimer = null
+    }
   },
 
   getUserLocation() {

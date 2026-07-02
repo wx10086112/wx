@@ -410,6 +410,7 @@ public class MallMerchantController extends BaseController {
         map.put("merchantShareRate", merchant.getMerchantShareRate());
         map.put("platformShareRate", merchant.getPlatformShareRate());
         map.put("distributorShareRate", merchant.getDistributorShareRate());
+        map.put("profitSharingContractVersion", merchant.getProfitSharingContractVersion());
         map.put("settlementCycle", merchant.getSettlementCycle());
         map.put("effectiveMerchantWxMchId", merchant.getEffectiveMerchantWxMchId());
         map.put("canOperate", merchant.canOperate());

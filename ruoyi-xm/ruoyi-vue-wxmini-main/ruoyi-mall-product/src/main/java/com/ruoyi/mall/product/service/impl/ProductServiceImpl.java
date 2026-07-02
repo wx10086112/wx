@@ -55,6 +55,12 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
+    public Long selectProductVersion(Long merchantId) {
+        Long version = productMapper.selectProductVersion(merchantId);
+        return version == null ? 0L : version;
+    }
+
+    @Override
     public boolean isMerchantAccessibleByDistributor(Long merchantId, Long distributorId) {
         if (merchantId == null || distributorId == null) {
             return false;

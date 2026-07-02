@@ -63,6 +63,7 @@ public class Merchant extends BaseEntity {
     private BigDecimal merchantShareRate;
     private BigDecimal platformShareRate;
     private BigDecimal distributorShareRate;
+    private String profitSharingContractVersion;
     private String settlementCycle;
 
     /** 删除标志（0代表存在 2代表删除） */
@@ -174,6 +175,8 @@ public class Merchant extends BaseEntity {
     public void setPlatformShareRate(BigDecimal platformShareRate) { this.platformShareRate = platformShareRate; }
     public BigDecimal getDistributorShareRate() { return distributorShareRate; }
     public void setDistributorShareRate(BigDecimal distributorShareRate) { this.distributorShareRate = distributorShareRate; }
+    public String getProfitSharingContractVersion() { return profitSharingContractVersion; }
+    public void setProfitSharingContractVersion(String profitSharingContractVersion) { this.profitSharingContractVersion = profitSharingContractVersion; }
     public String getSettlementCycle() { return settlementCycle; }
     public void setSettlementCycle(String settlementCycle) { this.settlementCycle = settlementCycle; }
 

@@ -606,6 +606,7 @@ CREATE TABLE `merchant` (
   `merchant_share_rate` DECIMAL(5,2) DEFAULT 100.00 COMMENT '商家留存比例，单位百分比',
   `platform_share_rate` DECIMAL(5,2) DEFAULT 0.00 COMMENT '平台分账比例，单位百分比',
   `distributor_share_rate` DECIMAL(5,2) DEFAULT 0.00 COMMENT '分销商分账比例，单位百分比',
+  `profit_sharing_contract_version` VARCHAR(128) DEFAULT NULL COMMENT '分账合同版本',
   `settlement_cycle` VARCHAR(16) DEFAULT 'T1' COMMENT '到账周期，默认T1',
   `create_by` VARCHAR(64) DEFAULT '' COMMENT '创建者',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
