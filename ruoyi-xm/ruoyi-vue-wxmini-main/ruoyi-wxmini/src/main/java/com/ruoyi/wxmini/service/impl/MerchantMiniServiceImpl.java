@@ -1332,8 +1332,7 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
                 merchantId, Arrays.asList(ORDER_STATUS_PAID, ORDER_STATUS_USED));
         Long completedCount = mallOrderMapper.countByMerchantIdAndStatusIn(
                 merchantId, Collections.singletonList(ORDER_STATUS_COMPLETED));
-        Long refundingCount = mallOrderMapper.countByMerchantIdAndStatusIn(
-                merchantId, Collections.singletonList(ORDER_STATUS_REFUNDED));
+        Long refundingCount = refundRecordMapper.countActiveRefundByMerchantId(merchantId);
 
         // 今日销售额：已支付/已使用订单（按创建时间）+ 已完成订单（按完成时间）
         BigDecimal todaySalesSql = mallOrderMapper.sumTodaySalesByMerchantId(merchantId);

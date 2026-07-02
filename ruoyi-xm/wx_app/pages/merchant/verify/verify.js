@@ -2,6 +2,21 @@ const util = require('../../../utils/merchant-util')
 const api = require('../../../api/merchant-mini/index')
 
 const app = getApp()
+const QUERY_CODE_KEYS = ['writeOffCode', 'verifyCode', 'code', 'orderNo', 'scene']
+
+const copyPlainObject = (source) => {
+  const target = {}
+  if (!source) return target
+  Object.keys(source).forEach((key) => {
+    target[key] = source[key]
+  })
+  return target
+}
+
+const getDatasetValue = (event, key) => {
+  const dataset = event && event.currentTarget ? event.currentTarget.dataset || {} : {}
+  return dataset[key] || ''
+}
 
 Page({
   data: {
@@ -29,8 +44,9 @@ Page({
     api
       .getVerifyRecordList()
       .then((response) => {
+        const recordList = Array.isArray(response) ? response : []
         this.setData({
-          recentRecordList: (response || []).slice(0, 5).map(this.buildRecentRecordDisplay)
+          recentRecordList: recordList.slice(0, 5).map(this.buildRecentRecordDisplay)
         })
       })
       .catch(() => {
@@ -39,15 +55,15 @@ Page({
   },
 
   buildRecentRecordDisplay(item) {
-    const rawCode = item.writeOffCode || item.inputCode
-    const displayCode = item.status === 'FAILED' && !item.orderNo ? '' : util.maskWriteOffCode(rawCode)
-    return {
-      ...item,
-      displayCode,
-      verifyTimeText: util.formatDate(item.verifyTime),
-      payAmountText: util.formatPrice(item.payAmount),
-      amountLabel: item.status === 'FAILED' ? '失败' : `¥${util.formatPrice(item.payAmount)}`
-    }
+    const source = item || {}
+    const rawCode = source.writeOffCode || source.inputCode
+    const displayCode = source.status === 'FAILED' && !source.orderNo ? '' : util.maskWriteOffCode(rawCode)
+    const result = copyPlainObject(source)
+    result.displayCode = displayCode
+    result.verifyTimeText = util.formatDate(source.verifyTime)
+    result.payAmountText = util.formatPrice(source.payAmount)
+    result.amountLabel = source.status === 'FAILED' ? '失败' : '¥' + util.formatPrice(source.payAmount)
+    return result
   },
 
   handleCodeInput(e) {
@@ -84,26 +100,26 @@ Page({
       return
     }
     api
-        .writeOffByCode(normalizedCode)
+      .writeOffByCode(normalizedCode)
       .then((response) => {
         const result = response.data || response || {}
+        const verifyResult = copyPlainObject(result)
+        verifyResult.payAmountText = util.formatPrice(result.payAmount)
+        verifyResult.verifyTimeText = util.formatDate(result.verifyTime)
         this.setData({
-          verifyResult: {
-            ...result,
-            payAmountText: util.formatPrice(result.payAmount),
-            verifyTimeText: util.formatDate(result.verifyTime)
-          },
+          verifyResult,
           manualCode: ''
         })
         util.showToast('核销成功', 'success')
         this.loadRecentRecords()
       })
-      .catch((err = {}) => {
+      .catch((err) => {
+        const error = err || {}
         this.setData({ verifyResult: null })
-        util.showToast(err.message || '核销失败，请重试')
+        util.showToast(error.message || '核销失败，请重试')
         this.loadRecentRecords()
       })
-    },
+  },
 
   normalizeVerifyInput(rawValue) {
     let value = String(rawValue || '').trim()
@@ -155,17 +171,25 @@ Page({
     const text = String(value || '')
     const queryText = text.includes('?') ? text.split('?').slice(1).join('?') : text
     const pairs = queryText.split(/[&?#]/)
-    const keys = ['writeOffCode', 'verifyCode', 'code', 'orderNo', 'scene']
-    for (const pair of pairs) {
+    for (let i = 0; i < pairs.length; i += 1) {
+      const pair = pairs[i]
       const index = pair.indexOf('=')
       if (index <= 0) continue
       const key = pair.slice(0, index)
       const val = pair.slice(index + 1)
-      if (keys.some((item) => item.toLowerCase() === key.toLowerCase())) {
+      if (this.isVerifyQueryKey(key)) {
         return this.safeDecode(val)
       }
     }
     return ''
+  },
+
+  isVerifyQueryKey(key) {
+    const normalizedKey = String(key || '').toLowerCase()
+    for (let i = 0; i < QUERY_CODE_KEYS.length; i += 1) {
+      if (QUERY_CODE_KEYS[i].toLowerCase() === normalizedKey) return true
+    }
+    return false
   },
 
   goVerifyRecords() {
@@ -174,7 +198,7 @@ Page({
   },
 
   goMerchantTab(e) {
-    const { url } = e.currentTarget.dataset
+    const url = getDatasetValue(e, 'url')
     if (url) {
       util.openMerchantMainPage(url)
     }

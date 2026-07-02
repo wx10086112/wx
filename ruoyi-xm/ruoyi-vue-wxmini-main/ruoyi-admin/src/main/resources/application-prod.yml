@@ -74,3 +74,14 @@ wx:
 wxmini:
   jwt:
     expire-time-minutes: ${WXMINI_JWT_EXPIRE_MINUTES:5256000}
+
+mall:
+  split-rate:
+    use-net-after-wechat-fee: ${MALL_SPLIT_USE_NET_AFTER_WECHAT_FEE:true}
+    wechat-fee-rate: ${MALL_WECHAT_FEE_RATE:0.6}
+    merchant-override-enabled: ${MALL_MERCHANT_SPLIT_OVERRIDE_ENABLED:false}
+    merchant-with-distributor: ${MALL_SPLIT_MERCHANT_WITH_DISTRIBUTOR:85}
+    platform-with-distributor: ${MALL_SPLIT_PLATFORM_WITH_DISTRIBUTOR:10}
+    distributor: ${MALL_SPLIT_DISTRIBUTOR:5}
+    merchant-no-distributor: ${MALL_SPLIT_MERCHANT_NO_DISTRIBUTOR:90}
+    platform-no-distributor: ${MALL_SPLIT_PLATFORM_NO_DISTRIBUTOR:10}

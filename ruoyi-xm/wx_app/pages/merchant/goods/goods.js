@@ -56,7 +56,8 @@ Page({
 
   renderGoods(sourceList = []) {
     const selectedIdSet = new Set(this.data.selectedIds)
-    const goodsList = [...sourceList]
+    const goodsList = sourceList
+      .slice()
       .sort((a, b) => (a.sort || 0) - (b.sort || 0))
       .map((item) => ({
         ...item,
@@ -126,7 +127,7 @@ Page({
 
   toggleSelectGoods(e) {
     const goodsId = Number(e.currentTarget.dataset.id)
-    let selectedIds = [...this.data.selectedIds]
+    let selectedIds = this.data.selectedIds.slice()
     const index = selectedIds.indexOf(goodsId)
     const nextSelected = index === -1
     if (index > -1) {

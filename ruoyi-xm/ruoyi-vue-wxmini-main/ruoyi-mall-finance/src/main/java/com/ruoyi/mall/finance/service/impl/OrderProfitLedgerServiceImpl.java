@@ -35,6 +35,12 @@ public class OrderProfitLedgerServiceImpl implements IOrderProfitLedgerService {
     private int merchantRateNoDist;
     @Value("${mall.split-rate.platform-no-distributor:10}")
     private int platformRateNoDist;
+    @Value("${mall.split-rate.wechat-fee-rate:0.6}")
+    private BigDecimal wechatFeeRate;
+    @Value("${mall.split-rate.use-net-after-wechat-fee:true}")
+    private boolean useNetAfterWechatFee;
+    @Value("${mall.split-rate.merchant-override-enabled:false}")
+    private boolean merchantOverrideEnabled;
 
     @Resource
     private OrderProfitLedgerMapper ledgerMapper;
@@ -65,16 +71,23 @@ public class OrderProfitLedgerServiceImpl implements IOrderProfitLedgerService {
             return;
         }
 
+        BigDecimal orderAmount = safeAmount(payAmount);
+        BigDecimal wechatFeeAmount = calcWechatFee(orderAmount);
+        BigDecimal splitBaseAmount = orderAmount.subtract(wechatFeeAmount);
+        if (splitBaseAmount.compareTo(BigDecimal.ZERO) < 0) {
+            splitBaseAmount = BigDecimal.ZERO;
+        }
+
         RateConfig rates = resolveRates(merchantId, distributorId);
-        BigDecimal merchantAmount = payAmount.multiply(rates.merchantRate).divide(HUNDRED, 2, RoundingMode.DOWN);
-        BigDecimal distributorAmount = payAmount.multiply(rates.distributorRate).divide(HUNDRED, 2, RoundingMode.DOWN);
-        BigDecimal platformAmount = payAmount.subtract(merchantAmount).subtract(distributorAmount);
+        BigDecimal merchantAmount = splitBaseAmount.multiply(rates.merchantRate).divide(HUNDRED, 2, RoundingMode.DOWN);
+        BigDecimal distributorAmount = splitBaseAmount.multiply(rates.distributorRate).divide(HUNDRED, 2, RoundingMode.DOWN);
+        BigDecimal platformAmount = splitBaseAmount.subtract(merchantAmount).subtract(distributorAmount);
 
         OrderProfitLedger ledger = new OrderProfitLedger();
         ledger.setOrderNo(orderNo);
         ledger.setMerchantId(merchantId);
         ledger.setDistributorId(distributorId);
-        ledger.setPayAmount(payAmount);
+        ledger.setPayAmount(orderAmount);
         ledger.setMerchantAmount(merchantAmount);
         ledger.setPlatformAmount(platformAmount);
         ledger.setDistributorAmount(distributorAmount);
@@ -84,13 +97,14 @@ public class OrderProfitLedgerServiceImpl implements IOrderProfitLedgerService {
         ledger.setStatus("WAITING_SETTLEMENT");
         ledger.setFinishTime(new Date());
         ledgerMapper.insert(ledger);
-        log.info("created order profit ledger: orderNo={}, merchant={}, platform={}, distributor={}",
-                orderNo, ledger.getMerchantAmount(), ledger.getPlatformAmount(), ledger.getDistributorAmount());
+        log.info("created order profit ledger: orderNo={}, orderAmount={}, wechatFee={}, splitBase={}, merchant={}, platform={}, distributor={}",
+                orderNo, orderAmount, wechatFeeAmount, splitBaseAmount,
+                ledger.getMerchantAmount(), ledger.getPlatformAmount(), ledger.getDistributorAmount());
     }
 
     private RateConfig resolveRates(Long merchantId, Long distributorId) {
         Merchant merchant = merchantService.selectMerchantById(merchantId);
-        if (merchant != null && hasMerchantRates(merchant)) {
+        if (merchantOverrideEnabled && merchant != null && hasMerchantRates(merchant)) {
             BigDecimal merchantRate = merchant.getMerchantShareRate();
             BigDecimal platformRate = merchant.getPlatformShareRate();
             BigDecimal distributorRate = merchant.getDistributorShareRate();
@@ -109,6 +123,21 @@ public class OrderProfitLedgerServiceImpl implements IOrderProfitLedgerService {
         }
         return new RateConfig(new BigDecimal(merchantRateNoDist),
                 new BigDecimal(platformRateNoDist), BigDecimal.ZERO);
+    }
+
+    private BigDecimal calcWechatFee(BigDecimal orderAmount) {
+        if (!useNetAfterWechatFee || orderAmount == null || orderAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.UNNECESSARY);
+        }
+        BigDecimal rate = wechatFeeRate != null ? wechatFeeRate : BigDecimal.ZERO;
+        if (rate.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.UNNECESSARY);
+        }
+        return orderAmount.multiply(rate).divide(HUNDRED, 2, RoundingMode.UP);
+    }
+
+    private BigDecimal safeAmount(BigDecimal amount) {
+        return amount == null ? BigDecimal.ZERO : amount.setScale(2, RoundingMode.DOWN);
     }
 
     private boolean hasMerchantRates(Merchant merchant) {

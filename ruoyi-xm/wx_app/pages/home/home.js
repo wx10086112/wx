@@ -61,7 +61,9 @@ Page({
         return Promise.all([
           merchantApi.getMerchantList(merchantParams),
           productApi.getGrouponList()
-        ]).then(([merchantRes, grouponRes]) => {
+        ]).then((results) => {
+          const merchantRes = results[0]
+          const grouponRes = results[1]
           const merchantPayload = merchantRes.data || merchantRes || []
           const merchantList = (Array.isArray(merchantPayload) ? merchantPayload : []).map((m) => this.normalizeMerchant(m))
           const grouponList = (grouponRes.data || grouponRes || []).map((item) => ({

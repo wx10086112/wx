@@ -76,6 +76,14 @@
           and del_flag = '0'
     </select>
 
+    <select id="countActiveRefundByMerchantId" resultType="Long">
+        select count(*)
+        from refund_record
+        where merchant_id = #{merchantId}
+          and status in (1, 2)
+          and del_flag = '0'
+    </select>
+
     <insert id="insertRefundRecord" parameterType="com.ruoyi.mall.order.domain.RefundRecord" useGeneratedKeys="true" keyProperty="id">
         insert into refund_record
         <trim prefix="(" suffix=")" suffixOverrides=",">

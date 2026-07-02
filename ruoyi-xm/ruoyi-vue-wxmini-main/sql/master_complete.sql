@@ -1116,7 +1116,7 @@ CREATE TABLE `payment_record` (
   `out_trade_no` VARCHAR(64) DEFAULT '' COMMENT '商户订单号',
   `pay_status` TINYINT DEFAULT 0 COMMENT '支付状态(0待支付 1成功 2失败 3已关闭)',
   `pay_time` DATETIME DEFAULT NULL COMMENT '支付完成时间',
-  `notify_result` VARCHAR(50) DEFAULT '' COMMENT '回调结果(success/fail)',
+  `notify_result` TEXT DEFAULT NULL COMMENT '支付/退款回调结果摘要或原始报文',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',

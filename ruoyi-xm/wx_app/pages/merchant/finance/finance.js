@@ -40,7 +40,9 @@ Page({
       api.getSettlementOverview(),
       api.getDailyFlow(this.data.currentDailyRange)
     ])
-      .then(([overview = {}, dailyFlow = {}]) => {
+      .then((results) => {
+        const overview = results[0] || {}
+        const dailyFlow = results[1] || {}
         this.renderSettlement(overview)
         this.renderDailyFlow(dailyFlow || this.buildDailyFlowFromOverview(overview))
       })

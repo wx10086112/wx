@@ -26,6 +26,8 @@ public interface RefundRecordMapper {
 
     int countActiveRefundByOrderNo(@Param("orderNo") String orderNo);
 
+    Long countActiveRefundByMerchantId(@Param("merchantId") Long merchantId);
+
     int markRefundSucceeded(@Param("id") Long id, @Param("refundTime") Date refundTime);
 
     int markRefundAbnormal(@Param("id") Long id);

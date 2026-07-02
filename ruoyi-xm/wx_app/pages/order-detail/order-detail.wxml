@@ -14,21 +14,24 @@
 
     <view wx:if="{{order.status === 'PAID_UNUSED'}}" class="write-off-card">
       <view class="card-header flex flex-between flex-align-center">
-        <text class="card-title fs-32 text-bold">待使用码</text>
+        <text class="card-title fs-32 text-bold">到店核销码</text>
         <view class="status-badge status-paid">待使用</view>
       </view>
-      <view class="code-display flex flex-center mt-32">
+
+      <view wx:if="{{order.writeOffQrText}}" class="qr-section">
+        <qrcode text="{{order.writeOffQrText}}" size="{{260}}" />
+      </view>
+
+      <view class="code-display">
         <text
           wx:for="{{order.writeOffCodeGroups}}"
           wx:key="*this"
           class="code-group"
         >{{item}}</text>
       </view>
-      <view class="code-info flex flex-center mt-24">
-        <text class="text-muted fs-24">有效期至：{{order.writeOffDeadlineText}}</text>
-      </view>
-      <view wx:if="{{order.writeOffQrText}}" class="qr-section mt-32 flex flex-center">
-        <qrcode text="{{order.writeOffQrText}}" size="{{240}}" />
+
+      <view class="code-info">
+        <text>有效期至 {{order.writeOffDeadlineText}}</text>
       </view>
     </view>
 

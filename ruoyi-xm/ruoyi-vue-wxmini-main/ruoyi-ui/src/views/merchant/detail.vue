@@ -132,9 +132,9 @@
               <el-descriptions-item label="接入方式">{{ wxPaymentAccessTypeText(merchant.wxPaymentAccessType) }}</el-descriptions-item>
               <el-descriptions-item label="商家商户号">{{ configText(merchant.effectiveMerchantWxMchId || merchant.merchantWxMchId, '资料未填写') }}</el-descriptions-item>
               <el-descriptions-item label="商户名称">{{ configText(merchant.merchantWxMchName) }}</el-descriptions-item>
-              <el-descriptions-item label="商家到账比例">{{ percentText(merchant.merchantShareRate) }}</el-descriptions-item>
-              <el-descriptions-item label="平台留存比例">{{ percentText(merchant.platformShareRate) }}</el-descriptions-item>
-              <el-descriptions-item label="分销商到账比例">{{ percentText(merchant.distributorShareRate) }}</el-descriptions-item>
+              <el-descriptions-item label="商家覆盖比例">{{ percentText(merchant.merchantShareRate) }}</el-descriptions-item>
+              <el-descriptions-item label="平台覆盖比例">{{ percentText(merchant.platformShareRate) }}</el-descriptions-item>
+              <el-descriptions-item label="分销商覆盖比例">{{ percentText(merchant.distributorShareRate) }}</el-descriptions-item>
               <el-descriptions-item label="运营准入" :span="2">
                 <el-tag :type="merchant.canOperate ? 'success' : 'warning'" size="small">{{ merchant.canOperate ? '可运营' : (merchant.operateBlockReason || '配置未完成') }}</el-tag>
               </el-descriptions-item>
@@ -529,7 +529,13 @@
           :closable="false"
           style="margin-bottom: 16px;"
         />
-        <el-divider content-position="left">结算比例配置</el-divider>
+        <el-divider content-position="left">特殊商家覆盖比例</el-divider>
+        <el-alert
+          title="日常分账按平台全局比例执行，本区域仅预留特殊商家单独覆盖；后台未开启覆盖开关时，此处比例不会参与实际计算。"
+          type="warning"
+          :closable="false"
+          style="margin-bottom: 16px;"
+        />
         <el-form-item label="商家到账比例">
           <el-input-number v-model="wxApplymentForm.merchantShareRate" :min="0" :max="100" :precision="2" :controls="false" style="width: 100%;" />
         </el-form-item>
@@ -538,7 +544,7 @@
         </el-form-item>
         <el-form-item label="分销商到账比例">
           <el-input-number v-model="wxApplymentForm.distributorShareRate" :min="0" :max="100" :precision="2" :controls="false" style="width: 100%;" />
-          <div style="font-size: 12px; color: #909399; margin-top: 4px;">三方比例合计必须等于100%。商家收款按微信支付商户号结算，平台比例用于平台留存统计。</div>
+          <div style="font-size: 12px; color: #909399; margin-top: 4px;">三方比例合计必须等于100%。实际分账默认先扣除微信手续费，再按平台全局比例结算。</div>
         </el-form-item>
       </el-form>
       <div slot="footer">

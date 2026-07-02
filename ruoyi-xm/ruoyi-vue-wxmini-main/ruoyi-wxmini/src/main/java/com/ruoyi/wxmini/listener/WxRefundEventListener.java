@@ -5,24 +5,30 @@ import com.github.binarywang.wxpay.bean.request.WxPayRefundV3Request;
 import com.github.binarywang.wxpay.bean.result.WxPayRefundV3Result;
 import com.github.binarywang.wxpay.service.WxPayService;
 import com.ruoyi.mall.common.event.RefundApprovedEvent;
+import com.ruoyi.mall.common.event.RefundSucceededEvent;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.RefundRecord;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.order.mapper.RefundRecordMapper;
+import com.ruoyi.mall.pay.service.IPaymentRecordService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.net.URI;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Date;
+import java.util.List;
 
 @Component
 public class WxRefundEventListener {
@@ -40,20 +46,54 @@ public class WxRefundEventListener {
     private MallOrderMapper mallOrderMapper;
     @Resource
     private IMerchantService merchantService;
+    @Resource
+    private IPaymentRecordService paymentRecordService;
+    @Resource
+    private ApplicationContext applicationContext;
+
     @EventListener
     @Async
     public void onRefundApproved(RefundApprovedEvent event) {
+        requestWxRefund(event.getOrderNo(), event.getRefundRecordId(), false);
+    }
+
+    @Scheduled(initialDelayString = "${wx.pay.refund-retry-initial-delay-ms:120000}",
+            fixedDelayString = "${wx.pay.refund-retry-fixed-delay-ms:300000}")
+    public void retryApprovedRefunds() {
         if (wxPayService == null) {
-            log.info("WxPayService未配置，跳过微信退款，orderNo={}", event.getOrderNo());
             return;
         }
+        RefundRecord query = new RefundRecord();
+        query.setStatus(RefundRecord.STATUS_APPROVED);
+        List<RefundRecord> pendingRefunds = refundRecordMapper.selectRefundRecordList(query);
+        if (pendingRefunds == null || pendingRefunds.isEmpty()) {
+            return;
+        }
+        int handled = 0;
+        for (RefundRecord refundRecord : pendingRefunds) {
+            if (refundRecord == null || refundRecord.getId() == null
+                    || StringUtils.isBlank(refundRecord.getOrderNo())) {
+                continue;
+            }
+            requestWxRefund(refundRecord.getOrderNo(), refundRecord.getId(), true);
+            handled++;
+            if (handled >= 20) {
+                break;
+            }
+        }
+    }
 
-        String orderNo = event.getOrderNo();
-        Long refundRecordId = event.getRefundRecordId();
-        log.info("收到退款审核通过事件，准备调用微信退款API: orderNo={}, refundId={}", orderNo, refundRecordId);
+    private void requestWxRefund(String orderNo, Long refundRecordId, boolean retry) {
+        if (wxPayService == null) {
+            log.info("WxPayService未配置，跳过微信退款，orderNo={}", orderNo);
+            return;
+        }
+        log.info("{}微信退款API: orderNo={}, refundId={}",
+                retry ? "补偿重试" : "收到退款审核通过事件，准备调用", orderNo, refundRecordId);
 
+        RefundRecord refundRecord = null;
         try {
-            RefundRecord refundRecord = refundRecordMapper.selectRefundRecordById(refundRecordId);
+            refundRecord = refundRecordMapper.selectRefundRecordById(refundRecordId);
             if (refundRecord == null) {
                 log.error("退款记录不存在: refundId={}", refundRecordId);
                 return;
@@ -101,20 +141,49 @@ public class WxRefundEventListener {
             validateNotifyUrl(refundNotifyUrl, "退款回调地址");
             request.setNotifyUrl(refundNotifyUrl);
 
+            log.info("调用微信退款API: orderNo={}, outRefundNo={}, subMchid={}, totalFen={}, refundFen={}",
+                    orderNo, request.getOutRefundNo(), request.getSubMchid(), totalAmountFen, refundAmountFen);
             WxPayRefundV3Result result = wxPayService.refundV3(request);
             log.info("微信退款API调用成功: orderNo={}, refundNo={}, status={}",
                     orderNo, result.getOutRefundNo(), result.getStatus());
 
-            if (result.getRefundId() != null) {
+            if (StringUtils.isNotBlank(result.getOutRefundNo())) {
                 refundRecord.setRefundNo(result.getOutRefundNo());
                 refundRecordMapper.updateRefundRecord(refundRecord);
             }
-            if ("ABNORMAL".equals(result.getStatus()) || "CLOSED".equals(result.getStatus())) {
+            if ("SUCCESS".equals(result.getStatus())) {
+                completeRefund(order, refundRecord, result.getOutRefundNo());
+            } else if ("ABNORMAL".equals(result.getStatus()) || "CLOSED".equals(result.getStatus())) {
                 markRefundAbnormal(refundRecord);
             }
         } catch (Exception e) {
             log.error("微信退款API调用失败: orderNo={}, error={}", orderNo, e.getMessage(), e);
+            if (refundRecord != null && refundRecord.getStatus() != null
+                    && refundRecord.getStatus() == RefundRecord.STATUS_APPROVED) {
+                markRefundAbnormal(refundRecord);
+            }
         }
+    }
+
+    private void completeRefund(MallOrder order, RefundRecord refundRecord, String outRefundNo) {
+        Date refundTime = new Date();
+        int affectedRows = refundRecordMapper.markRefundSucceeded(refundRecord.getId(), refundTime);
+        if (affectedRows <= 0) {
+            log.info("退款记录已完成或状态不可迁移，跳过本地重复收口: orderNo={}, refundId={}, refundNo={}",
+                    order.getOrderNo(), refundRecord.getId(), outRefundNo);
+            return;
+        }
+
+        mallOrderMapper.markOrderRefunded(order.getOrderNo(), refundTime);
+        paymentRecordService.markRefunded(order.getOrderNo(), buildRefundNotifyResult("SUCCESS"));
+        applicationContext.publishEvent(new RefundSucceededEvent(
+                this, order.getOrderNo(), refundRecord.getId(), outRefundNo));
+        log.info("微信退款查询已确认成功，本地退款状态已完成: orderNo={}, refundId={}, refundNo={}",
+                order.getOrderNo(), refundRecord.getId(), outRefundNo);
+    }
+
+    private String buildRefundNotifyResult(String refundStatus) {
+        return "REFUND:" + StringUtils.defaultIfBlank(refundStatus, "UNKNOWN");
     }
 
     private int toFen(BigDecimal amount) {

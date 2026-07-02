@@ -89,7 +89,8 @@ public class WxPayNotifyController {
             if (MallOrderStatus.isPaidState(order.getStatus())) {
                 if ("SUCCESS".equals(tradeState)) {
                     paymentRecordService.markPaySuccess(outTradeNo, order.getMerchantId(), order.getUserId(),
-                            order.getPayAmount(), transactionId, body, spMchId, subMchId, subAppId, payerOpenid);
+                            order.getPayAmount(), transactionId, buildPayNotifyResult(tradeState),
+                            spMchId, subMchId, subAppId, payerOpenid);
                 }
                 log.info("订单{}已处于支付完成链路，跳过重复处理", outTradeNo);
                 return buildSuccessResponse();
@@ -99,7 +100,8 @@ public class WxPayNotifyController {
                 Date payTime = new Date();
                 boolean markedPaid = mallOrderService.markOrderPaid(outTradeNo, payTime);
                 paymentRecordService.markPaySuccess(outTradeNo, order.getMerchantId(), order.getUserId(),
-                        order.getPayAmount(), transactionId, body, spMchId, subMchId, subAppId, payerOpenid);
+                        order.getPayAmount(), transactionId, buildPayNotifyResult(tradeState),
+                        spMchId, subMchId, subAppId, payerOpenid);
                 if (markedPaid) {
                     log.info("订单{}支付成功，transactionId={}", outTradeNo, transactionId);
                 } else {
@@ -166,7 +168,7 @@ public class WxPayNotifyController {
                 if (affectedRows > 0) {
                     refundRecord.setRefundTime(refundTime);
                     boolean orderMarkedRefunded = mallOrderService.markOrderRefunded(order.getOrderNo(), refundRecord.getRefundTime());
-                    paymentRecordService.markRefunded(order.getOrderNo(), body);
+                    paymentRecordService.markRefunded(order.getOrderNo(), buildRefundNotifyResult(refundStatus));
                     applicationContext.publishEvent(new RefundSucceededEvent(
                             this, order.getOrderNo(), refundRecord.getId(), outRefundNo));
                     if (orderMarkedRefunded) {
@@ -250,5 +252,13 @@ public class WxPayNotifyController {
 
     private String buildErrorResponse(String msg) {
         return "{\"code\":\"FAIL\",\"message\":\"" + msg + "\"}";
+    }
+
+    private String buildPayNotifyResult(String tradeState) {
+        return "PAY:" + StringUtils.defaultIfBlank(tradeState, "UNKNOWN");
+    }
+
+    private String buildRefundNotifyResult(String refundStatus) {
+        return "REFUND:" + StringUtils.defaultIfBlank(refundStatus, "UNKNOWN");
     }
 }
