@@ -7,7 +7,6 @@ import com.github.binarywang.wxpay.bean.profitsharing.result.ProfitSharingUnfree
 import com.github.binarywang.wxpay.bean.profitsharing.result.ProfitSharingV3Result;
 import com.github.binarywang.wxpay.exception.WxPayException;
 import com.github.binarywang.wxpay.service.WxPayService;
-import com.ruoyi.mall.common.config.WxPayServiceConfiguration;
 import com.ruoyi.mall.finance.domain.OrderProfitLedger;
 import com.ruoyi.mall.finance.mapper.OrderProfitLedgerMapper;
 import com.ruoyi.mall.finance.service.IWechatProfitSharingService;
@@ -173,13 +172,8 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
         }
 
         ProfitSharingContext context = new ProfitSharingContext();
-        if (wxPayService == null || wxPayService.getConfig() == null) {
-            throw new IllegalStateException("wechat service provider pay config incomplete");
-        }
+        context.spAppId = wxPayService.getConfig().getAppId();
         context.spMchId = wxPayService.getConfig().getMchId();
-        String configuredAppId = wxPayService.getConfig().getAppId();
-        context.spAppId = WxPayServiceConfiguration.isSyntheticServiceProviderAppId(configuredAppId, context.spMchId)
-                ? null : configuredAppId;
         context.subMchId = firstNotBlank(paymentRecord.getSubMchId(), merchant.getEffectiveMerchantWxMchId());
         context.subAppId = firstNotBlank(paymentRecord.getSubAppId(), merchant.getCMiniAppId());
         context.transactionId = paymentRecord.getTransactionId();

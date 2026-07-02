@@ -1,7 +1,6 @@
 package com.ruoyi.mall.finance.service.impl;
 
 import com.github.binarywang.wxpay.bean.notify.WxPayTransferBatchesNotifyV3Result;
-import com.ruoyi.mall.common.config.WxPayServiceConfiguration;
 import com.ruoyi.mall.finance.domain.DistributorSettlementRecord;
 import com.ruoyi.mall.finance.domain.MerchantSettlementRecord;
 import com.ruoyi.mall.finance.domain.PlatformTransferRecord;
@@ -393,12 +392,6 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
     private void doRealWxTransfer(PlatformTransferRecord record) {
         if (wxPayService == null) {
             throw new RuntimeException("WxPayService未配置，请检查微信支付配置或启用 stub 模式");
-        }
-        if (wxPayService.getConfig() == null
-                || StringUtils.isBlank(wxPayService.getConfig().getAppId())
-                || WxPayServiceConfiguration.isSyntheticServiceProviderAppId(
-                wxPayService.getConfig().getAppId(), wxPayService.getConfig().getMchId())) {
-            throw new RuntimeException("WeChat transfer requires a real wx.pay.appId; current service-provider payment mode has no platform AppID.");
         }
         try {
             com.github.binarywang.wxpay.bean.merchanttransfer.TransferCreateRequest request =
