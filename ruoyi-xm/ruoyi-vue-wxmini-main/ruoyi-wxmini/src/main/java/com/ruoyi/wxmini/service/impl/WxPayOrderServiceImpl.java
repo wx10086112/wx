@@ -101,7 +101,8 @@ public class WxPayOrderServiceImpl extends AbsWxPayBaseService<WxPayOrderVo> imp
         param.setAmount(toFenExact(order.getPayAmount()));
         param.setAppId(merchant.getCMiniAppId());
         param.setOpenId(payVo.getOpenId());
-        param.setSpMchId(getWxPayService().getConfig().getMchId());
+        param.setSpMchId(getWxPayService() != null && getWxPayService().getConfig() != null
+                ? getWxPayService().getConfig().getMchId() : null);
         param.setSubAppId(merchant.getCMiniAppId());
         param.setSubMchId(merchant.getEffectiveMerchantWxMchId());
         param.setSubOpenId(payVo.getOpenId());

@@ -14,16 +14,21 @@ import org.springframework.core.env.Environment;
 public class WxPayServiceConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(WxPayServiceConfiguration.class);
+    private static final String SERVICE_PROVIDER_APP_ID_PLACEHOLDER_PREFIX = "SP_MCH_";
 
     @Bean
     public WxPayService wxPayService(Environment env) {
         WxPayServiceImpl wxPayService = new WxPayServiceImpl();
         String appId = trim(env.getProperty("wx.pay.appId"));
         String mchId = trim(env.getProperty("wx.pay.mchId"));
-        if (StringUtils.isBlank(appId) || StringUtils.isBlank(mchId)) {
-            log.warn("微信支付配置未完成，跳过WxPayService初始化: wx.pay.appId={}, wx.pay.mchId={}",
-                    mask(appId), mask(mchId));
+        if (StringUtils.isBlank(mchId)) {
+            log.warn("WeChat Pay service provider mchId is blank; WxPayService is not configured.");
             return wxPayService;
+        }
+        if (StringUtils.isBlank(appId)) {
+            appId = syntheticServiceProviderAppId(mchId);
+            log.warn("wx.pay.appId is blank; using an internal placeholder for WxPayService. "
+                    + "It will not be sent as sp_appid. wx.pay.mchId={}", mask(mchId));
         }
 
         WxPayConfig payConfig = new WxPayConfig();
@@ -45,6 +50,15 @@ public class WxPayServiceConfiguration {
 
         wxPayService.setConfig(payConfig);
         return wxPayService;
+    }
+
+    public static String syntheticServiceProviderAppId(String mchId) {
+        return SERVICE_PROVIDER_APP_ID_PLACEHOLDER_PREFIX + StringUtils.trimToEmpty(mchId);
+    }
+
+    public static boolean isSyntheticServiceProviderAppId(String appId, String mchId) {
+        return StringUtils.isNotBlank(mchId)
+                && StringUtils.equals(appId, syntheticServiceProviderAppId(mchId));
     }
 
     private String trim(String value) {

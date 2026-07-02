@@ -60,7 +60,7 @@ public class WxRefundEventListener {
     @Scheduled(initialDelayString = "${wx.pay.refund-retry-initial-delay-ms:120000}",
             fixedDelayString = "${wx.pay.refund-retry-fixed-delay-ms:300000}")
     public void retryApprovedRefunds() {
-        if (wxPayService == null) {
+        if (!isWxPayConfigured()) {
             return;
         }
         RefundRecord query = new RefundRecord();
@@ -84,7 +84,7 @@ public class WxRefundEventListener {
     }
 
     private void requestWxRefund(String orderNo, Long refundRecordId, boolean retry) {
-        if (wxPayService == null) {
+        if (!isWxPayConfigured()) {
             log.info("WxPayService未配置，跳过微信退款，orderNo={}", orderNo);
             return;
         }
@@ -158,10 +158,6 @@ public class WxRefundEventListener {
             }
         } catch (Exception e) {
             log.error("微信退款API调用失败: orderNo={}, error={}", orderNo, e.getMessage(), e);
-            if (refundRecord != null && refundRecord.getStatus() != null
-                    && refundRecord.getStatus() == RefundRecord.STATUS_APPROVED) {
-                markRefundAbnormal(refundRecord);
-            }
         }
     }
 
@@ -196,6 +192,12 @@ public class WxRefundEventListener {
     private void markRefundAbnormal(RefundRecord refundRecord) {
         refundRecord.setStatus(RefundRecord.STATUS_ABNORMAL);
         refundRecordMapper.updateRefundRecord(refundRecord);
+    }
+
+    private boolean isWxPayConfigured() {
+        return wxPayService != null
+                && wxPayService.getConfig() != null
+                && StringUtils.isNotBlank(wxPayService.getConfig().getMchId());
     }
 
     private void validateNotifyUrl(String notifyUrl, String label) {

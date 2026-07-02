@@ -111,13 +111,18 @@ public abstract class AbsWxPayBaseService<P> {
         return wxPayService;
     }
 
+    private String configMchId() {
+        return wxPayService != null && wxPayService.getConfig() != null
+                ? wxPayService.getConfig().getMchId() : null;
+    }
+
     private WxPayUnifiedOrderV3Result.JsapiResult createOrder(WxPayCreateOrderParam orderParam) throws WxPayException {
         validateOrderParam(orderParam);
 
         String subAppId = StringUtils.defaultIfBlank(orderParam.getSubAppId(), orderParam.getAppId());
         String subOpenId = StringUtils.defaultIfBlank(orderParam.getSubOpenId(), orderParam.getOpenId());
-        String spMchId = StringUtils.defaultIfBlank(orderParam.getSpMchId(), wxPayService.getConfig().getMchId());
-        String spAppId = StringUtils.defaultIfBlank(orderParam.getSpAppId(), wxPayService.getConfig().getAppId());
+        String spMchId = StringUtils.defaultIfBlank(orderParam.getSpMchId(), configMchId());
+        String spAppId = StringUtils.trimToNull(orderParam.getSpAppId());
 
         HashMap<String, Object> request = new HashMap<>();
         if (StringUtils.isNotBlank(spAppId)) {
@@ -145,7 +150,7 @@ public abstract class AbsWxPayBaseService<P> {
         payer.put("sub_openid", subOpenId);
         request.put("payer", payer);
 
-        String url = wxPayService.getPayBaseUrl() + "/v3/pay/partner/transactions/jsapi";
+        String url = wxPayService.getPayBaseUrl() + "/v3/pay/partner/transactions/miniprogram";
         String response = wxPayService.postV3(url, JSON.toJSONString(request));
         JSONObject responseObject = JSON.parseObject(response);
         String prepayId = responseObject != null ? responseObject.getString("prepay_id") : null;
@@ -162,6 +167,10 @@ public abstract class AbsWxPayBaseService<P> {
         if (orderParam == null) {
             throw new IllegalArgumentException("支付参数不能为空");
         }
+        if (wxPayService == null || wxPayService.getConfig() == null
+                || StringUtils.isBlank(wxPayService.getConfig().getMchId())) {
+            throw new IllegalStateException("微信支付服务商商户号未配置");
+        }
         if (StringUtils.isBlank(orderParam.getOrderNo())) {
             throw new IllegalArgumentException("商户订单号不能为空");
         }
@@ -175,11 +184,8 @@ public abstract class AbsWxPayBaseService<P> {
                 || StringUtils.isBlank(wxPayService.getConfig().getMchId())) {
             throw new IllegalStateException("微信支付配置不完整");
         }
-        if (StringUtils.isBlank(StringUtils.defaultIfBlank(orderParam.getSpMchId(), wxPayService.getConfig().getMchId()))) {
+        if (StringUtils.isBlank(StringUtils.defaultIfBlank(orderParam.getSpMchId(), configMchId()))) {
             throw new IllegalArgumentException("sp_mchid is required for WeChat Pay service provider mode");
-        }
-        if (StringUtils.isBlank(StringUtils.defaultIfBlank(orderParam.getSpAppId(), wxPayService.getConfig().getAppId()))) {
-            throw new IllegalArgumentException("sp_appid is required for WeChat Pay service provider JSAPI mode");
         }
         if (StringUtils.isBlank(orderParam.getSubMchId())) {
             throw new IllegalArgumentException("sub_mchid is required for WeChat Pay service provider mode");
