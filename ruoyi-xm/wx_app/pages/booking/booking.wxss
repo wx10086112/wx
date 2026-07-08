@@ -1,0 +1,584 @@
+.booking-page {
+  min-height: 100vh;
+  padding: 28rpx 24rpx 150rpx;
+  background:
+    radial-gradient(circle at 18% 6%, rgba(45, 143, 232, 0.12), transparent 30%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.96) 0%, rgba(231, 244, 255, 0.92) 44%, rgba(245, 249, 253, 0.98) 100%),
+    #eef5fb;
+}
+
+.page-hero {
+  padding: 12rpx 8rpx 4rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.eyebrow {
+  display: block;
+  color: #237bc7;
+  font-size: 23rpx;
+  font-weight: 720;
+  letter-spacing: 4rpx;
+}
+
+.page-title {
+  display: block;
+  margin-top: 8rpx;
+  color: #111827;
+  font-size: 44rpx;
+  font-weight: 820;
+  line-height: 1.18;
+}
+
+.hero-badge {
+  height: 56rpx;
+  padding: 0 22rpx;
+  border-radius: 999rpx;
+  color: #237bc7;
+  background: rgba(231, 244, 255, 0.92);
+  border: 1rpx solid rgba(45, 143, 232, 0.18);
+  font-size: 24rpx;
+  font-weight: 680;
+  line-height: 56rpx;
+}
+
+.status-tabs {
+  margin-top: 24rpx;
+  white-space: nowrap;
+}
+
+.status-tabs-inner {
+  display: inline-flex;
+  gap: 12rpx;
+  min-width: 100%;
+}
+
+.status-tab {
+  height: 66rpx;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  color: #667085;
+  background: rgba(211, 229, 244, 0.72);
+  font-size: 25rpx;
+  font-weight: 650;
+  line-height: 66rpx;
+}
+
+.status-tab.active {
+  color: #111827;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10rpx 24rpx rgba(34, 73, 116, 0.11);
+}
+
+.overview-card {
+  margin-top: 20rpx;
+  padding: 12rpx;
+  border-radius: 34rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.74);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.76)),
+    rgba(255, 255, 255, 0.86);
+  box-shadow: 0 16rpx 44rpx rgba(34, 73, 116, 0.08);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8rpx;
+}
+
+.overview-item {
+  min-width: 0;
+  min-height: 92rpx;
+  border-radius: 24rpx;
+  background: #f1f7fd;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.overview-item.active {
+  background: #e7f4ff;
+}
+
+.overview-value {
+  color: #111827;
+  font-size: 30rpx;
+  font-weight: 820;
+  line-height: 1;
+}
+
+.overview-label {
+  margin-top: 8rpx;
+  color: #667085;
+  font-size: 20rpx;
+  line-height: 1.2;
+}
+
+.overview-item.active .overview-value,
+.overview-item.active .overview-label {
+  color: #237bc7;
+}
+
+.section-head {
+  margin-top: 28rpx;
+  padding: 0 4rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.product-head {
+  margin-top: 34rpx;
+}
+
+.section-title {
+  color: #111827;
+  font-size: 31rpx;
+  font-weight: 780;
+}
+
+.section-subtitle {
+  color: #667085;
+  font-size: 24rpx;
+}
+
+.booking-list,
+.product-list {
+  padding-top: 18rpx;
+}
+
+.booking-card,
+.product-card,
+.empty-card,
+.loading-card {
+  border-radius: 36rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.74);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 16rpx 44rpx rgba(34, 73, 116, 0.08);
+}
+
+.booking-card {
+  padding: 18rpx;
+  display: flex;
+  margin-bottom: 18rpx;
+}
+
+.booking-image {
+  width: 150rpx;
+  height: 150rpx;
+  border-radius: 28rpx;
+  background: #dbeefa;
+  flex-shrink: 0;
+}
+
+.booking-info {
+  flex: 1;
+  min-width: 0;
+  margin-left: 18rpx;
+}
+
+.booking-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+}
+
+.booking-title {
+  flex: 1;
+  min-width: 0;
+  color: #111827;
+  font-size: 29rpx;
+  font-weight: 760;
+  line-height: 1.32;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.status-pill {
+  height: 46rpx;
+  padding: 0 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 720;
+  line-height: 46rpx;
+  flex-shrink: 0;
+}
+
+.status-pill.pending {
+  color: #237bc7;
+  background: #e7f4ff;
+}
+
+.status-pill.confirmed {
+  color: #16764f;
+  background: #e8f8f0;
+}
+
+.status-pill.completed {
+  color: #344054;
+  background: #edf2f7;
+}
+
+.status-pill.cancelled,
+.status-pill.expired,
+.status-pill.default {
+  color: #667085;
+  background: #f2f4f7;
+}
+
+.booking-time {
+  display: block;
+  margin-top: 12rpx;
+  color: #237bc7;
+  font-size: 25rpx;
+  font-weight: 650;
+}
+
+.booking-meta,
+.booking-no {
+  display: block;
+  margin-top: 8rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.35;
+}
+
+.booking-remark {
+  margin-top: 12rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 18rpx;
+  color: #475467;
+  background: #f6fbff;
+  font-size: 23rpx;
+  line-height: 1.4;
+}
+
+.booking-bottom {
+  margin-top: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.cancel-btn {
+  height: 54rpx;
+  padding: 0 22rpx;
+  border-radius: 999rpx;
+  color: #237bc7;
+  background: #e7f4ff;
+  border: 1rpx solid rgba(45, 143, 232, 0.18);
+  font-size: 24rpx;
+  font-weight: 680;
+  line-height: 54rpx;
+  flex-shrink: 0;
+}
+
+.product-card {
+  padding: 18rpx;
+  margin-bottom: 18rpx;
+  display: flex;
+}
+
+.product-image {
+  width: 174rpx;
+  height: 174rpx;
+  border-radius: 30rpx;
+  background: #dbeefa;
+  flex-shrink: 0;
+}
+
+.product-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 20rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-title {
+  color: #111827;
+  font-size: 30rpx;
+  font-weight: 780;
+  line-height: 1.32;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.product-subtitle {
+  margin-top: 8rpx;
+  color: #667085;
+  font-size: 24rpx;
+  line-height: 1.35;
+}
+
+.product-footer {
+  margin-top: auto;
+  padding-top: 18rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.price-line {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.price-symbol {
+  color: #237bc7;
+  font-size: 23rpx;
+  font-weight: 760;
+}
+
+.price {
+  color: #237bc7;
+  font-size: 38rpx;
+  font-weight: 860;
+  line-height: 1;
+}
+
+.origin-price {
+  margin-left: 10rpx;
+  color: #98a2b3;
+  font-size: 22rpx;
+  text-decoration: line-through;
+}
+
+.product-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10rpx;
+  flex-shrink: 0;
+}
+
+.product-sales {
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1;
+}
+
+.book-btn,
+.submit-btn {
+  border-radius: 999rpx;
+  color: #ffffff;
+  background: linear-gradient(135deg, #2d8fe8, #237bc7);
+  box-shadow: 0 12rpx 28rpx rgba(45, 143, 232, 0.22);
+  font-weight: 760;
+  text-align: center;
+}
+
+.book-btn {
+  min-width: 132rpx;
+  height: 62rpx;
+  padding: 0 26rpx;
+  font-size: 26rpx;
+  line-height: 62rpx;
+  flex-shrink: 0;
+}
+
+.book-btn.disabled,
+.submit-btn.disabled {
+  opacity: 0.48;
+}
+
+.empty-card,
+.loading-card {
+  margin-top: 18rpx;
+  min-height: 240rpx;
+  padding: 38rpx 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.loading-card.compact {
+  min-height: 170rpx;
+}
+
+.empty-badge {
+  min-width: 88rpx;
+  height: 52rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  color: #237bc7;
+  background: #e7f4ff;
+  font-size: 24rpx;
+  font-weight: 720;
+  line-height: 52rpx;
+}
+
+.empty-title {
+  margin-top: 18rpx;
+  color: #111827;
+  font-size: 31rpx;
+  font-weight: 760;
+}
+
+.empty-desc,
+.loading-text {
+  margin-top: 12rpx;
+  color: #667085;
+  font-size: 25rpx;
+  line-height: 1.45;
+}
+
+.loading-dot {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  border: 5rpx solid rgba(45, 143, 232, 0.16);
+  border-top-color: #2d8fe8;
+}
+
+.sheet-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 20;
+  background: rgba(15, 23, 42, 0.34);
+  display: flex;
+  align-items: flex-end;
+}
+
+.booking-sheet {
+  width: 100%;
+  max-height: 86vh;
+  padding: 18rpx 24rpx calc(30rpx + env(safe-area-inset-bottom));
+  border-radius: 42rpx 42rpx 0 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(238, 245, 251, 0.98)),
+    #ffffff;
+  box-shadow: 0 -24rpx 60rpx rgba(15, 23, 42, 0.14);
+}
+
+.sheet-handle {
+  width: 84rpx;
+  height: 8rpx;
+  margin: 0 auto 20rpx;
+  border-radius: 999rpx;
+  background: #d0d5dd;
+}
+
+.sheet-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sheet-title {
+  color: #111827;
+  font-size: 34rpx;
+  font-weight: 820;
+}
+
+.sheet-close {
+  width: 58rpx;
+  height: 58rpx;
+  border-radius: 50%;
+  color: #667085;
+  background: #eef5fb;
+  font-size: 44rpx;
+  line-height: 54rpx;
+  text-align: center;
+}
+
+.sheet-product {
+  margin-top: 20rpx;
+  padding: 16rpx;
+  border-radius: 30rpx;
+  background: rgba(255, 255, 255, 0.86);
+  display: flex;
+}
+
+.sheet-product-image {
+  width: 116rpx;
+  height: 116rpx;
+  border-radius: 24rpx;
+  background: #dbeefa;
+  flex-shrink: 0;
+}
+
+.sheet-product-info {
+  flex: 1;
+  min-width: 0;
+  margin-left: 18rpx;
+}
+
+.sheet-product-title {
+  color: #111827;
+  font-size: 28rpx;
+  font-weight: 760;
+  line-height: 1.35;
+}
+
+.sheet-product-price {
+  display: block;
+  margin-top: 12rpx;
+  color: #237bc7;
+  font-size: 30rpx;
+  font-weight: 820;
+}
+
+.form-card {
+  margin-top: 18rpx;
+  padding: 8rpx 18rpx 18rpx;
+  border-radius: 30rpx;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.form-row {
+  min-height: 92rpx;
+  border-bottom: 1rpx solid rgba(213, 226, 238, 0.72);
+  display: flex;
+  align-items: center;
+}
+
+.form-label {
+  width: 152rpx;
+  color: #344054;
+  font-size: 26rpx;
+  font-weight: 650;
+  flex-shrink: 0;
+}
+
+.form-value,
+.form-input {
+  flex: 1;
+  min-width: 0;
+  color: #111827;
+  font-size: 27rpx;
+  text-align: right;
+}
+
+.remark-input {
+  width: 100%;
+  min-height: 126rpx;
+  box-sizing: border-box;
+  margin-top: 18rpx;
+  padding: 18rpx;
+  border-radius: 22rpx;
+  color: #111827;
+  background: #f6fbff;
+  font-size: 26rpx;
+}
+
+.submit-btn {
+  height: 78rpx;
+  margin-top: 22rpx;
+  font-size: 29rpx;
+  line-height: 78rpx;
+}

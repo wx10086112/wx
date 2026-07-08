@@ -93,7 +93,7 @@ public class WxGrouponController {
     @GetMapping("/detail/{id}")
     public AjaxResult detail(@PathVariable Long id) {
         Product product = productService.selectProductById(id);
-        if (product == null) {
+        if (product == null || product.getStatus() == null || product.getStatus() != 1) {
             return AjaxResult.error("商品不存在");
         }
         // 校验商品属于当前商家
@@ -124,6 +124,7 @@ public class WxGrouponController {
         dto.setPrice(toFen(product.getPrice()));
         dto.setOriginalPrice(toFen(product.getOriginalPrice()));
         dto.setSales(product.getSales());
+        dto.setTotalSales(product.getSales());
         dto.setStock(product.getStock());
         dto.setValidDays(product.getValidDays());
         dto.setSort(product.getSort());

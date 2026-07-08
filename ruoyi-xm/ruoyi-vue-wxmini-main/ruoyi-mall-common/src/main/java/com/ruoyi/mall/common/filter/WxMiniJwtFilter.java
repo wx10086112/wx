@@ -292,6 +292,7 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
                 || path.startsWith("/wxmini/merchant/detail/")
                 || path.startsWith("/wxmini/merchant/album/")
                 || path.equals("/wxmini/groupon/list")
+                || path.equals("/wxmini/groupon/version")
                 || path.startsWith("/wxmini/groupon/detail/");
     }
 

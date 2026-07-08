@@ -33,6 +33,8 @@ Page({
       title: product.title || product.name || '',
       image: toDetailThumbnailUrl(product.image || product.coverImage || product.mainImage || DEFAULT_PRODUCT_IMAGE),
       soldOut: Number(product.stock || 0) <= 0,
+      totalSales: Number(product.totalSales || product.sales || 0),
+      sales: Number(product.totalSales || product.sales || 0),
       priceText: (price / 100).toFixed(2),
       originalPriceText: (originalPrice / 100).toFixed(2),
       savingAmountText: ((Math.max(originalPrice - price, 0)) / 100).toFixed(0),
@@ -67,7 +69,7 @@ Page({
           serviceHighlightList: rawProduct.tags || [],
           decisionList: [
             `原价 ¥${((rawProduct.originalPrice || 0) / 100).toFixed(2)}，优惠价 ¥${((rawProduct.price || 0) / 100).toFixed(2)}`,
-            `已售 ${rawProduct.sales || 0}，库存 ${rawProduct.stock || 0}，有效期 ${rawProduct.validDays || 0} 天`
+            `已售 ${rawProduct.totalSales || rawProduct.sales || 0}，库存 ${rawProduct.stock || 0}，有效期 ${rawProduct.validDays || 0} 天`
           ],
           ruleList: [
             `有效期：${rawProduct.validPeriod || '购买后有效'}`,

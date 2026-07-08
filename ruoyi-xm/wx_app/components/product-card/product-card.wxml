@@ -13,7 +13,10 @@
         <text class="currency">¥</text>{{product.price / 100}}
         <text wx:if="{{product.originalPrice > product.price}}" class="original-price">¥{{product.originalPrice / 100}}</text>
       </view>
-      <view class="btn-buy {{product.soldOut ? 'is-disabled' : ''}}" catchtap="onBuy">{{product.soldOut ? '售罄' : '加购'}}</view>
+      <view class="service-action">
+        <text class="service-sales">已售 {{product.totalSales || product.sales || 0}}</text>
+        <view class="btn-buy {{product.soldOut ? 'is-disabled' : ''}}" catchtap="onBuy">{{product.soldOut ? '售罄' : '加购'}}</view>
+      </view>
     </view>
   </view>
 </view>

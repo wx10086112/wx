@@ -79,7 +79,7 @@ Page({
         return Promise.all([
           merchantApi.getMerchantList(merchantParams),
           productApi.getGrouponList(),
-          productApi.getGrouponVersion()
+          productApi.getGrouponVersion().catch(() => ({ data: { version: 0 } }))
         ]).then((results) => {
           const merchantRes = results[0]
           const grouponRes = results[1]
@@ -91,6 +91,7 @@ Page({
             title: normalizeText(item.title || item.name || item.productName, '精选服务'),
             image: toListThumbnailUrl(item.image || item.coverImage || item.productImage || DEFAULT_PRODUCT_IMAGE),
             soldOut: Number(item.stock || 0) <= 0,
+            totalSales: Number(item.totalSales || item.sales || 0),
             tags: item.tags || []
           }))
 

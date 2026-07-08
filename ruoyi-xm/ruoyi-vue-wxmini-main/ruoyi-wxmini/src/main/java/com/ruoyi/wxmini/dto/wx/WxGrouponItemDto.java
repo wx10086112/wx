@@ -14,6 +14,7 @@ public class WxGrouponItemDto {
     private Long originalPrice;
     private Long price;
     private Integer sales;
+    private Integer totalSales;
     private Integer stock;
     private Integer validDays;
     private String validPeriod;
@@ -50,6 +51,8 @@ public class WxGrouponItemDto {
     public void setPrice(Long price) { this.price = price; }
     public Integer getSales() { return sales; }
     public void setSales(Integer sales) { this.sales = sales; }
+    public Integer getTotalSales() { return totalSales; }
+    public void setTotalSales(Integer totalSales) { this.totalSales = totalSales; }
     public Integer getStock() { return stock; }
     public void setStock(Integer stock) { this.stock = stock; }
     public Integer getValidDays() { return validDays; }

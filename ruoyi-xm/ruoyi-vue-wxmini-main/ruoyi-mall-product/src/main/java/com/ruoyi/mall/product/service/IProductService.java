@@ -28,4 +28,6 @@ public interface IProductService {
     boolean deductStock(Long productId, Integer quantity);
 
     boolean restoreStock(Long productId, Integer quantity);
+
+    boolean increaseSales(Long productId, Integer quantity);
 }

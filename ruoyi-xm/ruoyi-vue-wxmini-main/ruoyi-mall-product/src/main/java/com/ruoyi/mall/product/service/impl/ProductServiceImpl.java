@@ -93,4 +93,13 @@ public class ProductServiceImpl implements IProductService {
         }
         return productMapper.restoreStock(productId, quantity) > 0;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean increaseSales(Long productId, Integer quantity) {
+        if (productId == null || quantity == null || quantity <= 0) {
+            return false;
+        }
+        return productMapper.increaseSales(productId, quantity) > 0;
+    }
 }

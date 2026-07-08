@@ -6,6 +6,7 @@ const merchantEntry = require('../../utils/merchant-entry')
 
 const MENU_LIST = [
   { label: '个人资料', type: 'profile', icon: 'profile' },
+  { label: '我的预约', type: 'booking', icon: 'booking' },
   { label: '在线客服', type: 'contact', icon: 'service' },
   { label: '设置', type: 'settings', icon: 'settings' },
   { label: '商家入口', type: 'merchant', icon: 'merchant' }
@@ -24,7 +25,7 @@ Page({
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 2 })
+      this.getTabBar().setData({ selected: 3 })
     }
     this.checkLoginStatus()
     if (!this.data.isLoggedIn) {
@@ -56,6 +57,12 @@ Page({
   goOrder() {
     wx.switchTab({
       url: '/pages/order/order'
+    })
+  },
+
+  goBooking() {
+    wx.switchTab({
+      url: '/pages/booking/booking'
     })
   },
 
@@ -103,6 +110,10 @@ Page({
     }
     if (type === 'profile') {
       this.goProfileEdit()
+      return
+    }
+    if (type === 'booking') {
+      this.goBooking()
       return
     }
     if (type === 'contact') {

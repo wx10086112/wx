@@ -190,14 +190,26 @@ public class MallOrderServiceImpl implements IMallOrderService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean markOrderPaid(String orderNo, Date payTime) {
         MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(orderNo);
         int affectedRows = mallOrderMapper.markOrderPaid(orderNo, payTime);
         if (affectedRows > 0) {
+            increaseProductSales(orderNo);
             recordOrderStatusHistory(order, order != null ? order.getStatus() : null, MallOrderStatus.PAID,
                     "PAY_SUCCESS", "WECHAT_PAY", null, null, null);
         }
         return affectedRows > 0;
+    }
+
+    private void increaseProductSales(String orderNo) {
+        List<OrderItem> orderItems = orderItemMapper.selectOrderItemByOrderNo(orderNo);
+        if (orderItems == null) {
+            return;
+        }
+        for (OrderItem orderItem : orderItems) {
+            productService.increaseSales(orderItem.getProductId(), orderItem.getQuantity());
+        }
     }
 
     @Override
