@@ -1,6 +1,7 @@
 package com.ruoyi.wxmini.service;
 
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniFinanceOverviewDto;
+import com.ruoyi.wxmini.dto.merchant.MerchantMiniBookingDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniLoginResponseDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniGoodsDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniOrderDto;
@@ -25,6 +26,14 @@ public interface IMerchantMiniService {
     MerchantMiniOverviewDto getWorkbenchOverview(String currentUserId);
 
     List<MerchantMiniOrderDto> listOrders(String status);
+
+    List<MerchantMiniBookingDto> listBookings(String status);
+
+    MerchantMiniBookingDto confirmBooking(String bookingNo);
+
+    MerchantMiniBookingDto completeBooking(String bookingNo);
+
+    MerchantMiniBookingDto cancelBooking(String bookingNo);
 
     MerchantMiniOrderDto getOrderDetail(String orderNo);
 

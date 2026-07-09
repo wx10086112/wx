@@ -100,6 +100,15 @@ Page({
         filter: 'REFUNDING'
       },
       {
+        label: '待处理预约',
+        value: stats.pendingBookingCount || 0,
+        highlight: (stats.pendingBookingCount || 0) > 0,
+        tone: 'blue',
+        icon: '◇',
+        url: '/pages/merchant/booking/booking?status=PENDING',
+        isTab: false
+      },
+      {
         label: '在售套餐',
         value: stats.onShelfCount || 0,
         icon: '□',
@@ -147,6 +156,7 @@ Page({
   buildQuickActions() {
     return [
       { label: '待核销', icon: '▤', url: '/pages/merchant/order/order', permissionCodes: ['order.manage'], isTab: true, filter: 'PENDING_VERIFY', tone: 'gold' },
+      { label: '预约管理', icon: '◇', url: '/pages/merchant/booking/booking', permissionCodes: ['order.manage'], isTab: false, tone: 'gold' },
       { label: '扫码核销', icon: '⌗', url: '/pages/merchant/verify/verify', permissionCodes: ['verify.scan', 'verify.manual'], isTab: true, tone: 'dark' },
       { label: '核销记录', icon: '☷', url: '/pages/merchant/verify-records/verify-records', permissionCodes: ['verify.record', 'verify.scan', 'verify.manual'], isTab: false, tone: 'dark' },
       { label: '商品管理', icon: '□', url: '/pages/merchant/goods/goods', permissionCodes: ['goods.manage'], isTab: true, tone: 'gold' },

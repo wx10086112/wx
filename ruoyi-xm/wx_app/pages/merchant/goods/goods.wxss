@@ -45,10 +45,21 @@
 
 .goods-toolbar {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.goods-toolbar__hint {
+  flex: 1;
+  min-width: 0;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.45;
 }
 
 .goods-toolbar__actions {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 12rpx;

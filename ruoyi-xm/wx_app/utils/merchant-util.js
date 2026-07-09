@@ -16,6 +16,14 @@ const orderStatusMap = {
   CANCELLED: { text: '已取消', className: 'gray' }
 }
 
+const bookingStatusMap = {
+  PENDING: { text: '待处理', className: 'blue' },
+  CONFIRMED: { text: '已确认', className: 'green' },
+  COMPLETED: { text: '已完成', className: 'green' },
+  CANCELLED: { text: '已取消', className: 'gray' },
+  EXPIRED: { text: '已过期', className: 'orange' }
+}
+
 const clone = (data) => JSON.parse(JSON.stringify(data))
 
 const formatDate = (date, fmt = 'YYYY-MM-DD HH:mm') => {
@@ -157,6 +165,7 @@ const getMerchantNavList = (currentKey = '') => {
 }
 
 const getOrderStatusMeta = (status) => orderStatusMap[status] || { text: '未知', className: 'gray' }
+const getBookingStatusMeta = (status) => bookingStatusMap[status] || { text: '未知', className: 'gray' }
 
 const orderHistoryActionMap = {
   CREATE: '创建订单',
@@ -265,6 +274,7 @@ module.exports = {
   switchTab,
   getMerchantNavList,
   getOrderStatusMeta,
+  getBookingStatusMeta,
   formatOrderHistory,
   isGrouponOrder,
   normalizeGrouponOrders,

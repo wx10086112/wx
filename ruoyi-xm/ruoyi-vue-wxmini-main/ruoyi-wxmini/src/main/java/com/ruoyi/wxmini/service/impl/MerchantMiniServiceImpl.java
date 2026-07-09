@@ -15,10 +15,13 @@ import com.ruoyi.mall.merchant.domain.MerchantUser;
 import com.ruoyi.mall.merchant.mapper.MerchantMapper;
 import com.ruoyi.mall.merchant.mapper.MerchantStoreMapper;
 import com.ruoyi.mall.merchant.mapper.MerchantUserMapper;
+import com.ruoyi.mall.order.constant.BookingStatus;
+import com.ruoyi.mall.order.domain.BookingRecord;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.MallOrderStatusHistory;
 import com.ruoyi.mall.order.domain.OrderItem;
 import com.ruoyi.mall.order.domain.RefundRecord;
+import com.ruoyi.mall.order.mapper.BookingRecordMapper;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.order.mapper.OrderItemMapper;
 import com.ruoyi.mall.order.mapper.RefundRecordMapper;
@@ -112,6 +115,8 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
     private MerchantStoreMapper merchantStoreMapper;
     @Resource
     private MallOrderMapper mallOrderMapper;
+    @Resource
+    private BookingRecordMapper bookingRecordMapper;
     @Resource
     private OrderItemMapper orderItemMapper;
     @Resource
@@ -242,6 +247,62 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         // 按创建时间倒序
         result.sort((a, b) -> Long.compare(b.getCreateTime(), a.getCreateTime()));
         return result;
+    }
+
+    @Override
+    public List<MerchantMiniBookingDto> listBookings(String status) {
+        Long merchantId = getMerchantIdFromContext();
+        bookingRecordMapper.markExpiredPending(new Date());
+
+        BookingRecord query = new BookingRecord();
+        query.setMerchantId(merchantId);
+        if (StringUtils.isNotBlank(status) && !"ALL".equalsIgnoreCase(status)) {
+            query.setStatus(status);
+        }
+        List<BookingRecord> bookings = bookingRecordMapper.selectBookingRecordList(query);
+        List<MerchantMiniBookingDto> result = new ArrayList<>();
+        if (bookings != null) {
+            for (BookingRecord booking : bookings) {
+                result.add(convertBookingToDto(booking));
+            }
+        }
+        result.sort((a, b) -> Long.compare(safeLong(b.getBookingTime()), safeLong(a.getBookingTime())));
+        return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public MerchantMiniBookingDto confirmBooking(String bookingNo) {
+        return updateBookingStatus(bookingNo, BookingStatus.CONFIRMED, BookingStatus.PENDING);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public MerchantMiniBookingDto completeBooking(String bookingNo) {
+        return updateBookingStatus(bookingNo, BookingStatus.COMPLETED, BookingStatus.CONFIRMED);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public MerchantMiniBookingDto cancelBooking(String bookingNo) {
+        return updateBookingStatus(bookingNo, BookingStatus.CANCELLED, BookingStatus.PENDING, BookingStatus.CONFIRMED);
+    }
+
+    private MerchantMiniBookingDto updateBookingStatus(String bookingNo, String targetStatus, String... allowedStatuses) {
+        if (StringUtils.isBlank(bookingNo)) {
+            throw new IllegalArgumentException("预约单号不能为空");
+        }
+        Long merchantId = getMerchantIdFromContext();
+        bookingRecordMapper.markExpiredPending(new Date());
+        BookingRecord booking = bookingRecordMapper.selectBookingRecordByBookingNo(bookingNo);
+        if (booking == null || !merchantId.equals(booking.getMerchantId())) {
+            throw new IllegalArgumentException("预约记录不存在");
+        }
+        if (!Arrays.asList(allowedStatuses).contains(booking.getStatus())) {
+            throw new IllegalArgumentException("当前预约状态不可操作");
+        }
+        bookingRecordMapper.updateBookingStatus(bookingNo, targetStatus, new Date());
+        return convertBookingToDto(bookingRecordMapper.selectBookingRecordByBookingNo(bookingNo));
     }
 
     @Override
@@ -1338,15 +1399,25 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         BigDecimal todaySalesSql = mallOrderMapper.sumTodaySalesByMerchantId(merchantId);
         long todaySalesAmount = todaySalesSql.longValue();
 
-        int onShelfCount = productMapper.countProductByMerchantId(merchantId);
+        int onShelfCount = productMapper.countOnShelfProductByMerchantId(merchantId);
 
         statsDto.setPendingAcceptCount(0);
         statsDto.setPendingVerifyCount(pendingVerifyCount != null ? pendingVerifyCount.intValue() : 0);
         statsDto.setCompletedCount(completedCount != null ? completedCount.intValue() : 0);
         statsDto.setRefundingCount(refundingCount != null ? refundingCount.intValue() : 0);
         statsDto.setOnShelfCount(onShelfCount);
+        statsDto.setPendingBookingCount(countPendingBookings(merchantId));
         statsDto.setTodaySalesAmount(todaySalesAmount);
         return statsDto;
+    }
+
+    private int countPendingBookings(Long merchantId) {
+        bookingRecordMapper.markExpiredPending(new Date());
+        BookingRecord query = new BookingRecord();
+        query.setMerchantId(merchantId);
+        query.setStatus(BookingStatus.PENDING);
+        List<BookingRecord> bookings = bookingRecordMapper.selectBookingRecordList(query);
+        return bookings == null ? 0 : bookings.size();
     }
 
     private List<MerchantMiniOrderDto> buildPendingOrderList(Long merchantId) {
@@ -1360,6 +1431,38 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         // 按创建时间正序（最先创建的排前面）
         result.sort((a, b) -> Long.compare(a.getCreateTime(), b.getCreateTime()));
         return result;
+    }
+
+    private MerchantMiniBookingDto convertBookingToDto(BookingRecord booking) {
+        MerchantMiniBookingDto dto = new MerchantMiniBookingDto();
+        dto.setId(booking.getId());
+        dto.setBookingNo(booking.getBookingNo());
+        dto.setGoodsId(booking.getProductId());
+        dto.setTitle(booking.getProductName());
+        dto.setImage(appendListThumb(booking.getProductImage()));
+        dto.setPrice(booking.getProductPrice() != null
+                ? booking.getProductPrice().movePointRight(2).setScale(0, RoundingMode.HALF_UP).longValue()
+                : 0L);
+        dto.setCustomerName(StringUtils.defaultIfBlank(booking.getContactName(), booking.getUserName()));
+        dto.setCustomerPhone(booking.getContactPhone());
+        dto.setPeopleCount(booking.getPeopleCount());
+        dto.setStatus(booking.getStatus());
+        dto.setBookingTime(toMillis(booking.getBookingTime()));
+        dto.setCreateTime(toMillis(booking.getCreateTime()));
+        dto.setConfirmTime(toMillis(booking.getConfirmTime()));
+        dto.setCompleteTime(toMillis(booking.getCompleteTime()));
+        dto.setCancelTime(toMillis(booking.getCancelTime()));
+        dto.setExpireTime(toMillis(booking.getExpireTime()));
+        dto.setRemark(booking.getRemark());
+        return dto;
+    }
+
+    private Long toMillis(Date date) {
+        return date == null ? null : date.getTime();
+    }
+
+    private long safeLong(Long value) {
+        return value == null ? 0L : value;
     }
 
     private MerchantMiniVerifyRecordDto buildVerifyRecordFromOrder(long recordId, MallOrder order) {

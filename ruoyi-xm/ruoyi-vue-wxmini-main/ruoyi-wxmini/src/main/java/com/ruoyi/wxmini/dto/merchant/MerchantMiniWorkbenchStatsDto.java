@@ -12,6 +12,8 @@ public class MerchantMiniWorkbenchStatsDto {
 
     private Integer onShelfCount;
 
+    private Integer pendingBookingCount;
+
     private Long todaySalesAmount;
 
     public Integer getPendingAcceptCount() {
@@ -52,6 +54,14 @@ public class MerchantMiniWorkbenchStatsDto {
 
     public void setOnShelfCount(Integer onShelfCount) {
         this.onShelfCount = onShelfCount;
+    }
+
+    public Integer getPendingBookingCount() {
+        return pendingBookingCount;
+    }
+
+    public void setPendingBookingCount(Integer pendingBookingCount) {
+        this.pendingBookingCount = pendingBookingCount;
     }
 
     public Long getTodaySalesAmount() {

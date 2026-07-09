@@ -154,6 +154,10 @@
         select count(*) from product where merchant_id = #{merchantId} AND del_flag = '0'
     </select>
 
+    <select id="countOnShelfProductByMerchantId" parameterType="Long" resultType="int">
+        select count(*) from product where merchant_id = #{merchantId} AND status = 1 AND del_flag = '0'
+    </select>
+
     <select id="selectProductVersion" resultType="long">
         select coalesce(unix_timestamp(max(coalesce(update_time, create_time))), 0)
         from product

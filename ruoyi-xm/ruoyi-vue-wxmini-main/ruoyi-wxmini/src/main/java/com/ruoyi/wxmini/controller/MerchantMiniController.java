@@ -161,6 +161,54 @@ public class MerchantMiniController {
         }
     }
 
+    @GetMapping("/booking/list")
+    public AjaxResult listBookings(@RequestParam(required = false) String status) {
+        AjaxResult accessDenied = checkAccess(PERMISSION_ORDER_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        return AjaxResult.success(merchantMiniService.listBookings(status));
+    }
+
+    @PostMapping("/booking/confirm/{bookingNo}")
+    public AjaxResult confirmBooking(@PathVariable String bookingNo) {
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_ORDER_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        try {
+            return AjaxResult.success(merchantMiniService.confirmBooking(bookingNo));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    @PostMapping("/booking/complete/{bookingNo}")
+    public AjaxResult completeBooking(@PathVariable String bookingNo) {
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_ORDER_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        try {
+            return AjaxResult.success(merchantMiniService.completeBooking(bookingNo));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    @PostMapping("/booking/cancel/{bookingNo}")
+    public AjaxResult cancelBooking(@PathVariable String bookingNo) {
+        AjaxResult accessDenied = checkStaffAccess(PERMISSION_ORDER_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        try {
+            return AjaxResult.success(merchantMiniService.cancelBooking(bookingNo));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
     @PostMapping("/order/write-off/{code}")
     public AjaxResult writeOff(@PathVariable String code) {
         AjaxResult accessDenied = checkStaffAccess(PERMISSION_VERIFY_SCAN, PERMISSION_VERIFY_MANUAL);

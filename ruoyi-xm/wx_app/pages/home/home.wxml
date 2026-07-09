@@ -14,9 +14,7 @@
           </view>
           <view class="store-subline">
             <text class="status-pill {{currentMerchant.businessStatus ? 'open' : 'closed'}}">{{currentMerchant.businessStatusText}}</text>
-            <text>月售 {{currentMerchant.sales}}</text>
             <block wx:if="{{currentMerchant.distance}}">
-              <text class="dot">·</text>
               <text>{{currentMerchant.distance}}</text>
             </block>
           </view>

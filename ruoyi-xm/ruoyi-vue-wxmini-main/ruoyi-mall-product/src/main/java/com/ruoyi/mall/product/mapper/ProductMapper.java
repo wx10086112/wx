@@ -24,6 +24,8 @@ public interface ProductMapper {
 
     int countProductByMerchantId(Long merchantId);
 
+    int countOnShelfProductByMerchantId(Long merchantId);
+
     Long selectProductVersion(@Param("merchantId") Long merchantId);
 
     @Select("SELECT COUNT(1) FROM merchant WHERE id = #{merchantId} AND distributor_id = #{distributorId} AND del_flag = '0'")

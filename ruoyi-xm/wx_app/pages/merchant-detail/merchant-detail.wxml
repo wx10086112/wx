@@ -28,7 +28,6 @@
             <text class="hero-title">{{merchant.name || '暂无商家名称'}}</text>
             <view class="hero-meta-row">
               <text class="hero-status {{merchant.businessStatus ? 'open' : 'closed'}}">{{merchant.businessStatusText}}</text>
-              <text class="hero-meta-text">月售 {{merchant.sales || 0}}</text>
               <text wx:if="{{merchant.distance}}" class="hero-meta-text">距您 {{merchant.distance}}</text>
             </view>
           </view>

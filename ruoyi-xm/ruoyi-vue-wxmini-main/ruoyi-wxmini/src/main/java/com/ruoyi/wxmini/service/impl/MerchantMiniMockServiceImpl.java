@@ -3,6 +3,7 @@ package com.ruoyi.wxmini.service.impl;
 import com.ruoyi.mall.common.bo.WxMiniAuthContext;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniFinanceLedgerDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniFinanceOverviewDto;
+import com.ruoyi.wxmini.dto.merchant.MerchantMiniBookingDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniGoodsDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniLoginResponseDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniOrderDto;
@@ -48,6 +49,9 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniService {
     private static final String STATUS_PENDING_VERIFY = "PENDING_VERIFY";
     private static final String STATUS_COMPLETED = "COMPLETED";
     private static final String STATUS_REFUNDING = "REFUNDING";
+    private static final String BOOKING_STATUS_PENDING = "PENDING";
+    private static final String BOOKING_STATUS_CONFIRMED = "CONFIRMED";
+    private static final String BOOKING_STATUS_CANCELLED = "CANCELLED";
     private static final String VERIFY_STATUS_SUCCESS = "SUCCESS";
     private static final String VERIFY_STATUS_FAILED = "FAILED";
     private static final String LEDGER_STATUS_PENDING = "PENDING";
@@ -70,6 +74,8 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniService {
     private final List<MerchantMiniGoodsDto> goodsList = initGoodsList();
 
     private final List<MerchantMiniOrderDto> orderList = initOrderList();
+
+    private final List<MerchantMiniBookingDto> bookingList = initBookingList();
 
     private final List<MerchantMiniVerifyRecordDto> verifyRecordList = initVerifyRecordList();
 
@@ -105,6 +111,34 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniService {
             result.add(cloneOrder(orderDto));
         }
         return result;
+    }
+
+    @Override
+    public synchronized List<MerchantMiniBookingDto> listBookings(String status) {
+        List<MerchantMiniBookingDto> result = new ArrayList<>();
+        for (MerchantMiniBookingDto bookingDto : bookingList) {
+            if (StringUtils.isNotBlank(status) && !"ALL".equals(status) && !status.equals(bookingDto.getStatus())) {
+                continue;
+            }
+            result.add(cloneBooking(bookingDto));
+        }
+        result.sort((a, b) -> Long.compare(defaultLong(b.getBookingTime()), defaultLong(a.getBookingTime())));
+        return result;
+    }
+
+    @Override
+    public synchronized MerchantMiniBookingDto confirmBooking(String bookingNo) {
+        return updateBookingStatus(bookingNo, BOOKING_STATUS_CONFIRMED, BOOKING_STATUS_PENDING);
+    }
+
+    @Override
+    public synchronized MerchantMiniBookingDto completeBooking(String bookingNo) {
+        return updateBookingStatus(bookingNo, STATUS_COMPLETED, BOOKING_STATUS_CONFIRMED);
+    }
+
+    @Override
+    public synchronized MerchantMiniBookingDto cancelBooking(String bookingNo) {
+        return updateBookingStatus(bookingNo, BOOKING_STATUS_CANCELLED, BOOKING_STATUS_PENDING, BOOKING_STATUS_CONFIRMED);
     }
 
     @Override
@@ -528,6 +562,7 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniService {
         statsDto.setCompletedCount(completedCount);
         statsDto.setRefundingCount(refundingCount);
         statsDto.setOnShelfCount((int) goodsList.stream().filter((item) -> GOODS_STATUS_ON_SHELF.equals(item.getStatus())).count());
+        statsDto.setPendingBookingCount((int) bookingList.stream().filter((item) -> BOOKING_STATUS_PENDING.equals(item.getStatus())).count());
         statsDto.setTodaySalesAmount(todaySalesAmount);
         return statsDto;
     }
@@ -558,6 +593,35 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniService {
             }
         }
         return null;
+    }
+
+    private MerchantMiniBookingDto findBooking(String bookingNo) {
+        for (MerchantMiniBookingDto bookingDto : bookingList) {
+            if (bookingDto.getBookingNo().equals(bookingNo)) {
+                return bookingDto;
+            }
+        }
+        return null;
+    }
+
+    private MerchantMiniBookingDto updateBookingStatus(String bookingNo, String targetStatus, String... allowedStatuses) {
+        MerchantMiniBookingDto bookingDto = findBooking(bookingNo);
+        if (bookingDto == null) {
+            throw new IllegalArgumentException("预约记录不存在");
+        }
+        if (!Arrays.asList(allowedStatuses).contains(bookingDto.getStatus())) {
+            throw new IllegalArgumentException("当前预约状态不可操作");
+        }
+        long now = System.currentTimeMillis();
+        bookingDto.setStatus(targetStatus);
+        if (BOOKING_STATUS_CONFIRMED.equals(targetStatus)) {
+            bookingDto.setConfirmTime(now);
+        } else if (STATUS_COMPLETED.equals(targetStatus)) {
+            bookingDto.setCompleteTime(now);
+        } else if (BOOKING_STATUS_CANCELLED.equals(targetStatus)) {
+            bookingDto.setCancelTime(now);
+        }
+        return cloneBooking(bookingDto);
     }
 
     private MerchantMiniStaffUserDto resolveStaffUserByRoleKey(String roleKey) {
@@ -720,6 +784,44 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniService {
         return dto;
     }
 
+    private List<MerchantMiniBookingDto> initBookingList() {
+        List<MerchantMiniBookingDto> result = new ArrayList<>();
+        result.add(buildBooking(1L, "B202607090001", 101L, "芳香舒压 SPA 90 分钟", 19800L,
+                "王女士", "13800002201", 2, BOOKING_STATUS_PENDING,
+                System.currentTimeMillis() + 2L * 60L * 60L * 1000L, System.currentTimeMillis() - 30L * 60L * 1000L,
+                "想预约靠窗房间"));
+        result.add(buildBooking(2L, "B202607090002", 102L, "肩颈理疗放松套餐 60 分钟", 13800L,
+                "赵先生", "13900003202", 1, BOOKING_STATUS_CONFIRMED,
+                System.currentTimeMillis() + DAY_MILLIS, System.currentTimeMillis() - 3L * 60L * 60L * 1000L,
+                "下班后到店"));
+        result.add(buildBooking(3L, "B202607080003", 101L, "芳香舒压 SPA 90 分钟", 19800L,
+                "孙女士", "13600001103", 1, STATUS_COMPLETED,
+                System.currentTimeMillis() - DAY_MILLIS, System.currentTimeMillis() - 2L * DAY_MILLIS,
+                ""));
+        return result;
+    }
+
+    private MerchantMiniBookingDto buildBooking(Long id, String bookingNo, Long goodsId, String title, Long price,
+                                                String customerName, String customerPhone, Integer peopleCount,
+                                                String status, Long bookingTime, Long createTime, String remark) {
+        MerchantMiniBookingDto dto = new MerchantMiniBookingDto();
+        dto.setId(id);
+        dto.setBookingNo(bookingNo);
+        dto.setGoodsId(goodsId);
+        dto.setTitle(title);
+        dto.setImage("");
+        dto.setPrice(price);
+        dto.setCustomerName(customerName);
+        dto.setCustomerPhone(customerPhone);
+        dto.setPeopleCount(peopleCount);
+        dto.setStatus(status);
+        dto.setBookingTime(bookingTime);
+        dto.setCreateTime(createTime);
+        dto.setExpireTime(createTime + 30L * DAY_MILLIS);
+        dto.setRemark(remark);
+        return dto;
+    }
+
     private MerchantMiniStaffUserDto cloneStaffUser(MerchantMiniStaffUserDto source) {
         MerchantMiniStaffUserDto dto = new MerchantMiniStaffUserDto();
         dto.setUserId(source.getUserId());
@@ -772,6 +874,28 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniService {
         dto.setVerifyTime(source.getVerifyTime());
         dto.setVerifyStaffName(source.getVerifyStaffName());
         dto.setRefundReason(source.getRefundReason());
+        return dto;
+    }
+
+    private MerchantMiniBookingDto cloneBooking(MerchantMiniBookingDto source) {
+        MerchantMiniBookingDto dto = new MerchantMiniBookingDto();
+        dto.setId(source.getId());
+        dto.setBookingNo(source.getBookingNo());
+        dto.setGoodsId(source.getGoodsId());
+        dto.setTitle(source.getTitle());
+        dto.setImage(source.getImage());
+        dto.setPrice(source.getPrice());
+        dto.setCustomerName(source.getCustomerName());
+        dto.setCustomerPhone(source.getCustomerPhone());
+        dto.setPeopleCount(source.getPeopleCount());
+        dto.setStatus(source.getStatus());
+        dto.setBookingTime(source.getBookingTime());
+        dto.setCreateTime(source.getCreateTime());
+        dto.setConfirmTime(source.getConfirmTime());
+        dto.setCompleteTime(source.getCompleteTime());
+        dto.setCancelTime(source.getCancelTime());
+        dto.setExpireTime(source.getExpireTime());
+        dto.setRemark(source.getRemark());
         return dto;
     }
 

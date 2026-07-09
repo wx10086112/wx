@@ -27,6 +27,7 @@
     "pages/merchant/store/store",
     "pages/merchant/staff/staff",
     "pages/merchant/verify-records/verify-records",
+    "pages/merchant/booking/booking",
     "pages/merchant/finance/finance"
   ],
   "window": {

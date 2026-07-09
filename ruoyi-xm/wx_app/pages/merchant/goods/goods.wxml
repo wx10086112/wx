@@ -13,6 +13,7 @@
 
   <view wx:if="{{canManageGoods}}" class="goods-content">
     <view class="goods-toolbar">
+      <view class="goods-toolbar__hint">上架中的套餐会自动出现在用户预约页，无需单独配置预约商品。</view>
       <view class="goods-toolbar__actions">
         <view class="goods-tool goods-tool--light" bindtap="toggleBatchMode">
           {{batchMode ? '退出批量' : '批量管理'}}
