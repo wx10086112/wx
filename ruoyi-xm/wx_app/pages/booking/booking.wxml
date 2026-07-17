@@ -1,63 +1,36 @@
 <view class="booking-page">
   <view class="page-hero">
     <view>
-      <text class="eyebrow">到店服务</text>
-      <text class="page-title">预约</text>
-    </view>
-    <view class="hero-badge">团购套餐可预约</view>
-  </view>
-
-  <scroll-view class="status-tabs" scroll-x enhanced show-scrollbar="{{false}}">
-    <view class="status-tabs-inner">
-      <view
-        wx:for="{{tabs}}"
-        wx:key="value"
-        class="status-tab {{currentTab === item.value ? 'active' : ''}}"
-        bindtap="switchTab"
-        data-tab="{{item.value}}"
-      >
-        {{item.label}}
-      </view>
-    </view>
-  </scroll-view>
-
-  <view class="overview-card">
-    <view
-      wx:for="{{bookingStats}}"
-      wx:key="value"
-      class="overview-item {{currentTab === item.value ? 'active' : ''}}"
-      bindtap="switchTab"
-      data-tab="{{item.value}}"
-    >
-      <text class="overview-value">{{item.count}}</text>
-      <text class="overview-label">{{item.label}}</text>
+      <text class="eyebrow">门店服务</text>
+      <text class="page-title">预约到店</text>
     </view>
   </view>
 
-  <view class="section-head">
-    <text class="section-title">我的预约</text>
-    <text class="section-subtitle">{{bookingList.length}} 条</text>
+  <view class="intro-card">
+    <text class="intro-title">选择预约服务</text>
+    <text class="intro-desc">选择需要的服务项目，填写到店时间和联系方式，门店确认后即可按时到店。</text>
   </view>
 
   <view wx:if="{{loading}}" class="loading-card">
     <view class="loading-dot"></view>
-    <text class="loading-text">正在加载预约</text>
+    <text class="loading-text">正在加载服务</text>
   </view>
 
-  <view wx:elif="{{bookingList.length}}" class="booking-list">
-    <view wx:for="{{bookingList}}" wx:key="bookingNo" class="booking-card">
-      <image class="booking-image" src="{{item.image}}" mode="aspectFill"></image>
-      <view class="booking-info">
-        <view class="booking-title-row">
-          <text class="booking-title">{{item.title}}</text>
-          <text class="status-pill {{item.statusClass}}">{{item.statusText}}</text>
-        </view>
-        <text class="booking-time">预约时间：{{item.bookingTimeText}}</text>
-        <text class="booking-meta">人数 {{item.peopleCount || 1}} · 电话 {{item.contactPhone || '未填写'}}</text>
-        <view wx:if="{{item.remark}}" class="booking-remark">{{item.remark}}</view>
-        <view class="booking-bottom">
-          <text class="booking-no">单号 {{item.bookingNo}}</text>
-          <view wx:if="{{item.canCancel}}" class="cancel-btn" bindtap="cancelBooking" data-no="{{item.bookingNo}}">取消预约</view>
+  <view wx:elif="{{serviceList.length}}" class="service-list">
+    <view wx:for="{{serviceList}}" wx:key="serviceId" class="service-card">
+      <image class="service-image" src="{{item.image}}" mode="aspectFill"></image>
+      <view class="service-main">
+        <text class="service-title">{{item.title}}</text>
+        <text class="service-subtitle">{{item.subtitle}}</text>
+        <view class="service-footer">
+          <text wx:if="{{item.priceText}}" class="service-price">参考价 ¥{{item.priceText}}</text>
+          <view
+            class="book-btn {{item.unavailable ? 'disabled' : ''}}"
+            bindtap="openBookingSheet"
+            data-index="{{index}}"
+          >
+            {{item.unavailable ? '暂不可约' : '预约'}}
+          </view>
         </view>
       </view>
     </view>
@@ -65,51 +38,8 @@
 
   <view wx:else class="empty-card">
     <view class="empty-badge">预约</view>
-    <text class="empty-title">暂无相关预约</text>
-    <text class="empty-desc">下方选择团购套餐，提交后会进入待处理</text>
-  </view>
-
-  <view class="section-head product-head">
-    <text class="section-title">可预约团购套餐</text>
-    <text class="section-subtitle">{{productList.length}} 项</text>
-  </view>
-
-  <view wx:if="{{productLoading}}" class="loading-card compact">
-    <view class="loading-dot"></view>
-    <text class="loading-text">正在加载套餐</text>
-  </view>
-
-  <view wx:elif="{{productList.length}}" class="product-list">
-    <view wx:for="{{productList}}" wx:key="id" class="product-card">
-      <image class="product-image" src="{{item.image}}" mode="aspectFill"></image>
-      <view class="product-main">
-        <text class="product-title">{{item.title}}</text>
-        <text class="product-subtitle">{{item.subtitle || '到店使用，提交预约后等待确认'}}</text>
-        <view class="product-footer">
-          <view class="price-line">
-            <text class="price-symbol">¥</text>
-            <text class="price">{{item.priceText}}</text>
-            <text wx:if="{{item.originalPriceText}}" class="origin-price">¥{{item.originalPriceText}}</text>
-          </view>
-          <view class="product-action">
-            <text class="product-sales">已售 {{item.totalSales || item.sales || 0}}</text>
-            <view
-              class="book-btn {{item.soldOut ? 'disabled' : ''}}"
-              bindtap="openBookingSheet"
-              data-index="{{index}}"
-            >
-              {{item.soldOut ? '已售罄' : '预约'}}
-            </view>
-          </view>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <view wx:else class="empty-card">
-    <view class="empty-badge">套餐</view>
-    <text class="empty-title">暂无可预约套餐</text>
-    <text class="empty-desc">请先在后台上架团购套餐</text>
+    <text class="empty-title">暂无可预约服务</text>
+    <text class="empty-desc">门店上架服务后，会展示在这里</text>
   </view>
 
   <view wx:if="{{showBookingSheet}}" class="sheet-mask" catchtap="closeBookingSheet">
@@ -120,10 +50,10 @@
         <text class="sheet-close" bindtap="closeBookingSheet">×</text>
       </view>
       <view class="sheet-product">
-        <image class="sheet-product-image" src="{{selectedProduct.image}}" mode="aspectFill"></image>
+        <image class="sheet-product-image" src="{{selectedService.image}}" mode="aspectFill"></image>
         <view class="sheet-product-info">
-          <text class="sheet-product-title">{{selectedProduct.title}}</text>
-          <text class="sheet-product-price">¥{{selectedProduct.priceText}}</text>
+          <text class="sheet-product-title">{{selectedService.title}}</text>
+          <text class="sheet-product-price">等待门店确认</text>
         </view>
       </view>
 

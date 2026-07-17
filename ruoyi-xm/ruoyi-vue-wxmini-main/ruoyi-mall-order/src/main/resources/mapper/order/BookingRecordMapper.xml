@@ -13,6 +13,7 @@
         <result property="storeId" column="store_id"/>
         <result property="userId" column="user_id"/>
         <result property="userName" column="user_name"/>
+        <result property="bookingServiceId" column="booking_service_id"/>
         <result property="productId" column="product_id"/>
         <result property="productName" column="product_name"/>
         <result property="productImage" column="product_image"/>
@@ -34,7 +35,7 @@
 
     <sql id="selectBookingRecordVo">
         select b.id, b.booking_no, b.merchant_id, m.distributor_id, m.name as merchant_name,
-               b.store_id, b.user_id, u.user_name, b.product_id, b.product_name,
+               b.store_id, b.user_id, u.user_name, b.booking_service_id, b.product_id, b.product_name,
                b.product_image, b.product_price, b.booking_time, b.contact_name, b.contact_phone,
                b.people_count, b.status, b.confirm_time, b.complete_time, b.cancel_time, b.expire_time,
                b.create_time, b.update_time, b.remark, b.del_flag
@@ -69,6 +70,7 @@
             <if test="userId != null">and b.user_id = #{userId}</if>
             <if test="userName != null and userName != ''">and u.user_name like concat('%', #{userName}, '%')</if>
             <if test="contactPhone != null and contactPhone != ''">and b.contact_phone like concat('%', #{contactPhone}, '%')</if>
+            <if test="bookingServiceId != null">and b.booking_service_id = #{bookingServiceId}</if>
             <if test="productId != null">and b.product_id = #{productId}</if>
             <if test="productName != null and productName != ''">and b.product_name like concat('%', #{productName}, '%')</if>
             <if test="status != null and status != ''">and b.status = #{status}</if>
@@ -86,6 +88,7 @@
             <if test="merchantId != null">merchant_id,</if>
             <if test="storeId != null">store_id,</if>
             <if test="userId != null">user_id,</if>
+            <if test="bookingServiceId != null">booking_service_id,</if>
             <if test="productId != null">product_id,</if>
             <if test="productName != null">product_name,</if>
             <if test="productImage != null">product_image,</if>
@@ -109,6 +112,7 @@
             <if test="merchantId != null">#{merchantId},</if>
             <if test="storeId != null">#{storeId},</if>
             <if test="userId != null">#{userId},</if>
+            <if test="bookingServiceId != null">#{bookingServiceId},</if>
             <if test="productId != null">#{productId},</if>
             <if test="productName != null">#{productName},</if>
             <if test="productImage != null">#{productImage},</if>
@@ -135,6 +139,7 @@
             <if test="merchantId != null">merchant_id = #{merchantId},</if>
             <if test="storeId != null">store_id = #{storeId},</if>
             <if test="userId != null">user_id = #{userId},</if>
+            <if test="bookingServiceId != null">booking_service_id = #{bookingServiceId},</if>
             <if test="productId != null">product_id = #{productId},</if>
             <if test="productName != null">product_name = #{productName},</if>
             <if test="productImage != null">product_image = #{productImage},</if>
@@ -168,22 +173,32 @@
 
     <update id="markExpiredPendingByUser">
         update mall_booking
-        set status = 'EXPIRED',
-            expire_time = coalesce(expire_time, date_add(booking_time, interval 1 month)),
-            update_time = #{expireTime}
+        set status = 'CANCELLED',
+            cancel_time = #{expireTime},
+            update_time = #{expireTime},
+            remark = case
+                when remark is null or remark = '' then '超过预约时间1小时未到店，系统自动取消'
+                when remark like '%系统自动取消%' then remark
+                else concat(remark, '；超过预约时间1小时未到店，系统自动取消')
+            end
         where user_id = #{userId}
-          and status = 'PENDING'
-          and coalesce(expire_time, date_add(booking_time, interval 1 month)) &lt; #{expireTime}
+          and status in ('PENDING', 'CONFIRMED')
+          and date_add(booking_time, interval 1 hour) &lt; #{expireTime}
           and del_flag = '0'
     </update>
 
     <update id="markExpiredPending">
         update mall_booking
-        set status = 'EXPIRED',
-            expire_time = coalesce(expire_time, date_add(booking_time, interval 1 month)),
-            update_time = #{expireTime}
-        where status = 'PENDING'
-          and coalesce(expire_time, date_add(booking_time, interval 1 month)) &lt; #{expireTime}
+        set status = 'CANCELLED',
+            cancel_time = #{expireTime},
+            update_time = #{expireTime},
+            remark = case
+                when remark is null or remark = '' then '超过预约时间1小时未到店，系统自动取消'
+                when remark like '%系统自动取消%' then remark
+                else concat(remark, '；超过预约时间1小时未到店，系统自动取消')
+            end
+        where status in ('PENDING', 'CONFIRMED')
+          and date_add(booking_time, interval 1 hour) &lt; #{expireTime}
           and del_flag = '0'
     </update>
 </mapper>

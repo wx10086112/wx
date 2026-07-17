@@ -61,9 +61,7 @@ Page({
   },
 
   goBooking() {
-    wx.switchTab({
-      url: '/pages/booking/booking'
-    })
+    util.navigateTo('/pages/my-booking/my-booking')
   },
 
   goContact() {

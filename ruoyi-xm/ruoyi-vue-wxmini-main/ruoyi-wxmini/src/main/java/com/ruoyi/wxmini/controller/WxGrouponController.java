@@ -4,6 +4,8 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
 import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
+import com.ruoyi.mall.order.domain.BookingService;
+import com.ruoyi.mall.order.mapper.BookingServiceMapper;
 import com.ruoyi.mall.product.domain.Product;
 import com.ruoyi.mall.product.service.IProductService;
 import com.ruoyi.wxmini.dto.wx.WxGrouponItemDto;
@@ -30,6 +32,8 @@ public class WxGrouponController {
     private IProductService productService;
     @Resource
     private IMerchantService merchantService;
+    @Resource
+    private BookingServiceMapper bookingServiceMapper;
 
     @GetMapping("/version")
     public AjaxResult version(@RequestParam(required = false) Long merchantId) {
@@ -38,9 +42,11 @@ public class WxGrouponController {
             currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
         }
         Long targetMerchantId = currentMerchantId != null ? currentMerchantId : merchantId;
+        Long productVersion = productService.selectProductVersion(targetMerchantId);
         Map<String, Object> data = new HashMap<>();
         data.put("merchantId", targetMerchantId);
-        data.put("version", productService.selectProductVersion(targetMerchantId));
+        data.put("version", Math.max(selectBookingServiceVersionSafely(targetMerchantId),
+                productVersion != null ? productVersion : 0L));
         return AjaxResult.success(data);
     }
 
@@ -57,6 +63,23 @@ public class WxGrouponController {
         Product query = new Product();
         query.setMerchantId(currentMerchantId != null ? currentMerchantId : merchantId);
         query.setStatus(1);
+
+        List<BookingService> services = selectBookingServicesSafely(query.getMerchantId(), keyword);
+        if (!services.isEmpty()) {
+            List<WxGrouponItemDto> result = new ArrayList<>();
+            Map<Long, String> merchantNameCache = new HashMap<>();
+            for (BookingService service : services) {
+                if (currentMerchantId == null) {
+                    Merchant merchant = merchantService.selectMerchantById(service.getMerchantId());
+                    if (merchant == null || !merchant.canOperate()) {
+                        continue;
+                    }
+                }
+                result.add(convertServiceToDto(service, merchantNameCache, true));
+            }
+            return AjaxResult.success(result);
+        }
+
         List<Product> products = productService.selectProductList(query);
 
         // 过滤未满足运营准入条件的商户商品
@@ -92,6 +115,23 @@ public class WxGrouponController {
 
     @GetMapping("/detail/{id}")
     public AjaxResult detail(@PathVariable Long id) {
+        BookingService service = selectBookingServiceByEntryIdSafely(id);
+        if (service != null && service.getStatus() != null && service.getStatus() == 1) {
+            Long currentMerchantId = WxMiniUserContext.getCurrentMerchantId();
+            if (currentMerchantId == null) {
+                currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
+            }
+            if (currentMerchantId != null && !currentMerchantId.equals(service.getMerchantId())) {
+                return AjaxResult.error("服务不存在");
+            }
+            Merchant merchant = merchantService.selectMerchantById(service.getMerchantId());
+            if (merchant == null || !merchant.canOperate()) {
+                return AjaxResult.error("服务不存在");
+            }
+            Map<Long, String> merchantNameCache = new HashMap<>();
+            return AjaxResult.success(convertServiceToDto(service, merchantNameCache, false));
+        }
+
         Product product = productService.selectProductById(id);
         if (product == null || product.getStatus() == null || product.getStatus() != 1) {
             return AjaxResult.error("商品不存在");
@@ -111,6 +151,79 @@ public class WxGrouponController {
         }
         Map<Long, String> merchantNameCache = new HashMap<>();
         return AjaxResult.success(convertToDto(product, merchantNameCache, false));
+    }
+
+    private List<BookingService> selectBookingServicesSafely(Long merchantId, String keyword) {
+        try {
+            List<BookingService> services = bookingServiceMapper.selectActiveBookingServiceList(merchantId, keyword);
+            return services != null ? services : new ArrayList<>();
+        } catch (Exception ignored) {
+            return new ArrayList<>();
+        }
+    }
+
+    private BookingService selectBookingServiceByEntryIdSafely(Long id) {
+        if (id == null) {
+            return null;
+        }
+        try {
+            BookingService service = bookingServiceMapper.selectBookingServiceById(id);
+            if (service != null) {
+                return service;
+            }
+            return bookingServiceMapper.selectBookingServiceByProductId(id);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private Long selectBookingServiceVersionSafely(Long merchantId) {
+        try {
+            Long version = bookingServiceMapper.selectBookingServiceVersion(merchantId);
+            return version != null ? version : 0L;
+        } catch (Exception ignored) {
+            return 0L;
+        }
+    }
+
+    private WxGrouponItemDto convertServiceToDto(BookingService service, Map<Long, String> merchantNameCache, boolean listThumb) {
+        WxGrouponItemDto dto = new WxGrouponItemDto();
+        Long entryId = service.getId();
+        dto.setId(entryId);
+        dto.setGoodsId(entryId);
+        dto.setTitle(service.getServiceName());
+        dto.setSubtitle(service.getDescription());
+        dto.setDescription(service.getDescription());
+        dto.setMerchantId(service.getMerchantId());
+        dto.setImage(appendThumb(service.getServiceImage(), listThumb ? "list" : "detail"));
+        dto.setPrice(toFen(service.getServicePrice()));
+        dto.setOriginalPrice(toFen(service.getServicePrice()));
+        dto.setSales(0);
+        dto.setTotalSales(0);
+        dto.setStock(service.getStock() != null ? service.getStock() : 999999);
+        dto.setSort(service.getSort());
+        dto.setStatus(service.getStatus() != null && service.getStatus() == 1 ? "ON_SHELF" : "OFF_SHELF");
+
+        String merchantName = merchantNameCache.get(service.getMerchantId());
+        if (merchantName == null && service.getMerchantId() != null) {
+            Merchant merchant = merchantService.selectMerchantById(service.getMerchantId());
+            if (merchant != null) {
+                merchantName = merchant.getName();
+                merchantNameCache.put(service.getMerchantId(), merchantName);
+            }
+        }
+        dto.setMerchantName(merchantName);
+
+        List<String> tags = new ArrayList<>();
+        tags.add("到店服务");
+        tags.add("可预约");
+        dto.setTags(tags);
+        dto.setContentDetail(new ArrayList<>());
+        dto.setBookingRequired(true);
+        dto.setBookingRule("提交预约后等待门店确认");
+        dto.setRefundRule("");
+        dto.setLimitRule("");
+        return dto;
     }
 
     private WxGrouponItemDto convertToDto(Product product, Map<Long, String> merchantNameCache, boolean listThumb) {

@@ -2,6 +2,8 @@ package com.ruoyi.wxmini.controller;
 
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
+import com.ruoyi.mall.order.domain.BookingService;
+import com.ruoyi.mall.order.mapper.BookingServiceMapper;
 import com.ruoyi.mall.order.constant.BookingStatus;
 import com.ruoyi.mall.order.domain.BookingRecord;
 import com.ruoyi.mall.order.service.IBookingRecordService;
@@ -37,6 +39,8 @@ public class WxBookingController {
 
     @Resource
     private IBookingRecordService bookingRecordService;
+    @Resource
+    private BookingServiceMapper bookingServiceMapper;
     @Resource
     private IProductService productService;
     @Resource
@@ -75,17 +79,29 @@ public class WxBookingController {
             return AjaxResult.error("用户信息不存在");
         }
 
-        Product product = productService.selectProductById(requestDto.getProductId());
-        if (product == null || product.getStatus() == null || product.getStatus() != 1) {
-            return AjaxResult.error("套餐不存在或已下架");
+        BookingService bookingService = selectBookingServiceByEntryIdSafely(requestDto.getProductId());
+        if (bookingService != null && (bookingService.getStatus() == null || bookingService.getStatus() != 1)) {
+            return AjaxResult.error("服务不存在或已下架");
+        }
+
+        Product product = null;
+        if (bookingService != null && bookingService.getProductId() != null) {
+            product = productService.selectProductById(bookingService.getProductId());
+        }
+        if (product == null) {
+            product = productService.selectProductById(requestDto.getProductId());
+        }
+        if (bookingService == null && (product == null || product.getStatus() == null || product.getStatus() != 1)) {
+            return AjaxResult.error("服务不存在或已下架");
         }
 
         Long currentMerchantId = WxMiniUserContext.getCurrentMerchantId();
         if (currentMerchantId == null) {
             currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
         }
-        if (currentMerchantId != null && !currentMerchantId.equals(product.getMerchantId())) {
-            return AjaxResult.error("套餐不属于当前商家");
+        Long serviceMerchantId = bookingService != null ? bookingService.getMerchantId() : product.getMerchantId();
+        if (currentMerchantId != null && !currentMerchantId.equals(serviceMerchantId)) {
+            return AjaxResult.error("服务不属于当前商家");
         }
 
         Date bookingTime = new Date(requestDto.getBookingTime());
@@ -95,12 +111,13 @@ public class WxBookingController {
 
         BookingRecord record = new BookingRecord();
         record.setBookingNo(generateBookingNo());
-        record.setMerchantId(product.getMerchantId());
+        record.setMerchantId(serviceMerchantId);
         record.setUserId(currentUserPk);
-        record.setProductId(product.getId());
-        record.setProductName(product.getName());
-        record.setProductImage(product.getCoverImage());
-        record.setProductPrice(product.getPrice());
+        record.setBookingServiceId(bookingService != null ? bookingService.getId() : null);
+        record.setProductId(resolveBookingProductId(requestDto.getProductId(), bookingService, product));
+        record.setProductName(resolveBookingServiceName(bookingService, product));
+        record.setProductImage(resolveBookingServiceImage(bookingService, product));
+        record.setProductPrice(resolveBookingServicePrice(bookingService, product));
         record.setBookingTime(bookingTime);
         record.setContactName(StringUtils.trimToEmpty(requestDto.getContactName()));
         record.setContactPhone(StringUtils.trimToEmpty(requestDto.getContactPhone()));
@@ -112,6 +129,52 @@ public class WxBookingController {
         bookingRecordService.insertBookingRecord(record);
 
         return AjaxResult.success(convertToDto(record));
+    }
+
+    private BookingService selectBookingServiceByEntryIdSafely(Long id) {
+        if (id == null) {
+            return null;
+        }
+        try {
+            BookingService bookingService = bookingServiceMapper.selectBookingServiceById(id);
+            if (bookingService != null) {
+                return bookingService;
+            }
+            return bookingServiceMapper.selectBookingServiceByProductId(id);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private Long resolveBookingProductId(Long requestId, BookingService bookingService, Product product) {
+        if (bookingService != null && bookingService.getProductId() != null) {
+            return bookingService.getProductId();
+        }
+        if (product != null) {
+            return product.getId();
+        }
+        return bookingService == null ? requestId : null;
+    }
+
+    private String resolveBookingServiceName(BookingService bookingService, Product product) {
+        if (bookingService != null && StringUtils.isNotBlank(bookingService.getServiceName())) {
+            return bookingService.getServiceName();
+        }
+        return product != null ? product.getName() : "预约服务";
+    }
+
+    private String resolveBookingServiceImage(BookingService bookingService, Product product) {
+        if (bookingService != null && StringUtils.isNotBlank(bookingService.getServiceImage())) {
+            return bookingService.getServiceImage();
+        }
+        return product != null ? product.getCoverImage() : "";
+    }
+
+    private BigDecimal resolveBookingServicePrice(BookingService bookingService, Product product) {
+        if (bookingService != null && bookingService.getServicePrice() != null) {
+            return bookingService.getServicePrice();
+        }
+        return product != null ? product.getPrice() : BigDecimal.ZERO;
     }
 
     @PostMapping("/cancel/{bookingNo}")

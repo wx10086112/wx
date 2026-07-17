@@ -4,6 +4,7 @@
     "pages/order/order",
     "pages/booking/booking",
     "pages/mine/mine",
+    "pages/my-booking/my-booking",
     "pages/login/login",
     "pages/merchant-detail/merchant-detail",
     "pages/product-detail/product-detail",

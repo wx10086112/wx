@@ -49,7 +49,7 @@
     </view>
 
     <view class="section-head">
-      <text class="section-title">团购优惠</text>
+      <text class="section-title">优惠服务</text>
       <view class="section-actions">
         <text class="section-count">{{displayGrouponList.length}} 项</text>
         <text class="cart-link" bindtap="goCart">购物车</text>
