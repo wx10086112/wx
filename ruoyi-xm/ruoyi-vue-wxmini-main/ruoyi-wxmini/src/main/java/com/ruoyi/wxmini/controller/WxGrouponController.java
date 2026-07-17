@@ -64,6 +64,7 @@ public class WxGrouponController {
         query.setMerchantId(currentMerchantId != null ? currentMerchantId : merchantId);
         query.setStatus(1);
 
+        syncActiveProductBookingServicesSafely(query.getMerchantId());
         List<BookingService> services = selectBookingServicesSafely(query.getMerchantId(), keyword);
         if (!services.isEmpty()) {
             List<WxGrouponItemDto> result = new ArrayList<>();
@@ -116,7 +117,10 @@ public class WxGrouponController {
     @GetMapping("/detail/{id}")
     public AjaxResult detail(@PathVariable Long id) {
         BookingService service = selectBookingServiceByEntryIdSafely(id);
-        if (service != null && service.getStatus() != null && service.getStatus() == 1) {
+        if (service != null) {
+            if (!isActiveBookingService(service)) {
+                return AjaxResult.error("鏈嶅姟涓嶅瓨鍦?");
+            }
             Long currentMerchantId = WxMiniUserContext.getCurrentMerchantId();
             if (currentMerchantId == null) {
                 currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
@@ -153,6 +157,13 @@ public class WxGrouponController {
         return AjaxResult.success(convertToDto(product, merchantNameCache, false));
     }
 
+    private void syncActiveProductBookingServicesSafely(Long merchantId) {
+        try {
+            bookingServiceMapper.syncActiveProductBookingServices(merchantId);
+        } catch (Exception ignored) {
+        }
+    }
+
     private List<BookingService> selectBookingServicesSafely(Long merchantId, String keyword) {
         try {
             List<BookingService> services = bookingServiceMapper.selectActiveBookingServiceList(merchantId, keyword);
@@ -175,6 +186,21 @@ public class WxGrouponController {
         } catch (Exception ignored) {
             return null;
         }
+    }
+
+    private boolean isActiveBookingService(BookingService service) {
+        return service != null
+                && service.getStatus() != null
+                && service.getStatus() == 1
+                && isLinkedProductAvailable(service);
+    }
+
+    private boolean isLinkedProductAvailable(BookingService service) {
+        if (service == null || service.getProductId() == null) {
+            return true;
+        }
+        Product product = productService.selectProductById(service.getProductId());
+        return product != null && product.getStatus() != null && product.getStatus() == 1;
     }
 
     private Long selectBookingServiceVersionSafely(Long merchantId) {

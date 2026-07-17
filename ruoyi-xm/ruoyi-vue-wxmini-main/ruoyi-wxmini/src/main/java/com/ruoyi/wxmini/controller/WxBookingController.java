@@ -80,7 +80,7 @@ public class WxBookingController {
         }
 
         BookingService bookingService = selectBookingServiceByEntryIdSafely(requestDto.getProductId());
-        if (bookingService != null && (bookingService.getStatus() == null || bookingService.getStatus() != 1)) {
+        if (bookingService != null && !isActiveBookingService(bookingService)) {
             return AjaxResult.error("服务不存在或已下架");
         }
 
@@ -144,6 +144,21 @@ public class WxBookingController {
         } catch (Exception ignored) {
             return null;
         }
+    }
+
+    private boolean isActiveBookingService(BookingService bookingService) {
+        return bookingService != null
+                && bookingService.getStatus() != null
+                && bookingService.getStatus() == 1
+                && isLinkedProductAvailable(bookingService);
+    }
+
+    private boolean isLinkedProductAvailable(BookingService bookingService) {
+        if (bookingService == null || bookingService.getProductId() == null) {
+            return true;
+        }
+        Product product = productService.selectProductById(bookingService.getProductId());
+        return product != null && product.getStatus() != null && product.getStatus() == 1;
     }
 
     private Long resolveBookingProductId(Long requestId, BookingService bookingService, Product product) {

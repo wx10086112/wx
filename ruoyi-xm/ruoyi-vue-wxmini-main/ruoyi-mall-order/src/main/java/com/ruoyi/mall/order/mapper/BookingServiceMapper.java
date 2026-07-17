@@ -14,5 +14,7 @@ public interface BookingServiceMapper {
     List<BookingService> selectActiveBookingServiceList(@Param("merchantId") Long merchantId,
                                                         @Param("keyword") String keyword);
 
+    int syncActiveProductBookingServices(@Param("merchantId") Long merchantId);
+
     Long selectBookingServiceVersion(@Param("merchantId") Long merchantId);
 }

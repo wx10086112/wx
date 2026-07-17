@@ -44,11 +44,40 @@
         <where>
             and del_flag = '0'
             and status = 1
+            and (
+                product_id is null
+                or exists (
+                    select 1
+                    from product p
+                    where p.id = mall_booking_service.product_id
+                      and p.status = 1
+                      and p.del_flag = '0'
+                )
+            )
             <if test="merchantId != null">and merchant_id = #{merchantId}</if>
             <if test="keyword != null and keyword != ''">and service_name like concat('%', #{keyword}, '%')</if>
         </where>
         order by sort asc, id asc
     </select>
+
+    <insert id="syncActiveProductBookingServices">
+        insert into mall_booking_service (
+            merchant_id, product_id, service_name, service_image, service_price,
+            description, stock, status, sort, create_time, update_time, remark, del_flag
+        )
+        select p.merchant_id, p.id, p.name, p.cover_image, p.price,
+               p.description, p.stock, 1, p.sort, now(), now(), '由上架商品自动生成预约服务', '0'
+        from product p
+        where p.status = 1
+          and p.del_flag = '0'
+          <if test="merchantId != null">and p.merchant_id = #{merchantId}</if>
+          and not exists (
+              select 1
+              from mall_booking_service s
+              where s.product_id = p.id
+                and s.del_flag = '0'
+          )
+    </insert>
 
     <select id="selectBookingServiceVersion" resultType="long">
         select coalesce(unix_timestamp(max(coalesce(update_time, create_time))), 0)
