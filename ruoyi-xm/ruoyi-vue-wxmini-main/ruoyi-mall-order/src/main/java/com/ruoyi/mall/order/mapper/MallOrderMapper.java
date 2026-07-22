@@ -287,6 +287,8 @@ public interface MallOrderMapper {
     Long countByMerchantIdAndStatusIn(@Param("merchantId") Long merchantId,
                                       @Param("statuses") List<Integer> statuses);
 
+    Long countTodayPaidOrdersByMerchantId(@Param("merchantId") Long merchantId);
+
     BigDecimal sumTodaySalesByMerchantId(@Param("merchantId") Long merchantId);
 
     // ---- 数据分析：商家排行 ----

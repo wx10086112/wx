@@ -318,14 +318,20 @@
         </foreach>
     </select>
 
+    <select id="countTodayPaidOrdersByMerchantId" parameterType="Long" resultType="Long">
+        SELECT COUNT(*) FROM mall_order
+        WHERE merchant_id = #{merchantId} AND del_flag = '0'
+          AND status IN (1, 2, 3)
+          AND pay_time >= CURDATE()
+          AND pay_time &lt; DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+    </select>
+
     <select id="sumTodaySalesByMerchantId" parameterType="Long" resultType="java.math.BigDecimal">
         SELECT IFNULL(SUM(pay_amount), 0) FROM mall_order
         WHERE merchant_id = #{merchantId} AND del_flag = '0'
-          AND (
-            (status IN (1, 2) AND DATE(create_time) = CURDATE())
-            OR
-            (status = 3 AND DATE(COALESCE(complete_time, use_time)) = CURDATE())
-          )
+          AND status IN (1, 2, 3)
+          AND pay_time >= CURDATE()
+          AND pay_time &lt; DATE_ADD(CURDATE(), INTERVAL 1 DAY)
     </select>
 
     <!-- 数据分析：商家排行 -->

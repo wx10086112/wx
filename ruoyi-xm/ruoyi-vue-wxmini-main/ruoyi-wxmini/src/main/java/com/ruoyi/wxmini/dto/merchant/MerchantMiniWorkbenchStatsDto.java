@@ -14,6 +14,8 @@ public class MerchantMiniWorkbenchStatsDto {
 
     private Integer pendingBookingCount;
 
+    private Integer todayOrderCount;
+
     private Long todaySalesAmount;
 
     public Integer getPendingAcceptCount() {
@@ -62,6 +64,14 @@ public class MerchantMiniWorkbenchStatsDto {
 
     public void setPendingBookingCount(Integer pendingBookingCount) {
         this.pendingBookingCount = pendingBookingCount;
+    }
+
+    public Integer getTodayOrderCount() {
+        return todayOrderCount;
+    }
+
+    public void setTodayOrderCount(Integer todayOrderCount) {
+        this.todayOrderCount = todayOrderCount;
     }
 
     public Long getTodaySalesAmount() {

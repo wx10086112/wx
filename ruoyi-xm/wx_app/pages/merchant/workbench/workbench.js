@@ -2,6 +2,7 @@ const util = require('../../../utils/merchant-util')
 const api = require('../../../api/merchant-mini/index')
 
 const app = getApp()
+const WORKBENCH_REFRESH_INTERVAL = 15000
 
 Page({
   data: {
@@ -19,10 +20,40 @@ Page({
   onShow() {
     if (!app.needMerchantLogin()) return
     this.loadData()
+    this.startAutoRefresh()
   },
 
-  loadData() {
-    api
+  onHide() {
+    this.stopAutoRefresh()
+  },
+
+  onUnload() {
+    this.stopAutoRefresh()
+  },
+
+  onPullDownRefresh() {
+    this.loadData()
+      .finally(() => wx.stopPullDownRefresh())
+  },
+
+  startAutoRefresh() {
+    this.stopAutoRefresh()
+    this._refreshTimer = setInterval(() => {
+      if (app.needMerchantLogin()) {
+        this.loadData(true)
+      }
+    }, WORKBENCH_REFRESH_INTERVAL)
+  },
+
+  stopAutoRefresh() {
+    if (this._refreshTimer) {
+      clearInterval(this._refreshTimer)
+      this._refreshTimer = null
+    }
+  },
+
+  loadData(silent = false) {
+    return api
       .getMerchantWorkbenchOverview()
       .then((response = {}) => {
         const stats = response.stats || {}
@@ -38,7 +69,9 @@ Page({
         })
       })
       .catch((err) => {
-        this.handleLoadFailure(err)
+        if (!silent) {
+          this.handleLoadFailure(err)
+        }
       })
   },
 

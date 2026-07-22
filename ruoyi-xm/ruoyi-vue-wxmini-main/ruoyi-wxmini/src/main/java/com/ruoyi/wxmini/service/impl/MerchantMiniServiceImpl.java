@@ -1395,9 +1395,10 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
                 merchantId, Collections.singletonList(ORDER_STATUS_COMPLETED));
         Long refundingCount = refundRecordMapper.countActiveRefundByMerchantId(merchantId);
 
-        // 今日销售额：已支付/已使用订单（按创建时间）+ 已完成订单（按完成时间）
+        // 今日流水按支付成功时间统计，不能按下单或核销时间计算。
+        Long todayOrderCount = mallOrderMapper.countTodayPaidOrdersByMerchantId(merchantId);
         BigDecimal todaySalesSql = mallOrderMapper.sumTodaySalesByMerchantId(merchantId);
-        long todaySalesAmount = todaySalesSql.longValue();
+        long todaySalesAmount = yuanToCent(todaySalesSql);
 
         int onShelfCount = productMapper.countOnShelfProductByMerchantId(merchantId);
 
@@ -1407,8 +1408,18 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         statsDto.setRefundingCount(refundingCount != null ? refundingCount.intValue() : 0);
         statsDto.setOnShelfCount(onShelfCount);
         statsDto.setPendingBookingCount(countPendingBookings(merchantId));
+        statsDto.setTodayOrderCount(todayOrderCount != null ? todayOrderCount.intValue() : 0);
         statsDto.setTodaySalesAmount(todaySalesAmount);
         return statsDto;
+    }
+
+    private long yuanToCent(BigDecimal yuan) {
+        if (yuan == null) {
+            return 0L;
+        }
+        return yuan.movePointRight(2)
+                .setScale(0, RoundingMode.UNNECESSARY)
+                .longValueExact();
     }
 
     private int countPendingBookings(Long merchantId) {
