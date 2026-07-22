@@ -102,6 +102,26 @@
         where m.id = #{id} AND m.del_flag = '0'
     </select>
 
+    <select id="selectMerchantLiveStats" resultType="java.util.LinkedHashMap">
+        SELECT
+            (SELECT COUNT(*)
+             FROM product p
+             WHERE p.merchant_id = #{merchantId}
+               AND p.del_flag = '0') AS productCount,
+            (SELECT IFNULL(SUM(o.pay_amount), 0)
+             FROM mall_order o
+             WHERE o.merchant_id = #{merchantId}
+               AND o.del_flag = '0'
+               AND o.status IN (1, 2, 3)) AS totalIncome,
+            (SELECT IFNULL(SUM(o.pay_amount), 0)
+             FROM mall_order o
+             WHERE o.merchant_id = #{merchantId}
+               AND o.del_flag = '0'
+               AND o.status IN (1, 2, 3)
+               AND o.pay_time >= CURDATE()
+               AND o.pay_time &lt; DATE_ADD(CURDATE(), INTERVAL 1 DAY)) AS todayIncome
+    </select>
+
     <select id="selectMerchantByIdAnyStatus" parameterType="Long" resultMap="MerchantResult">
         <include refid="selectMerchantVo"/>
         where m.id = #{id} AND m.del_flag = '0'

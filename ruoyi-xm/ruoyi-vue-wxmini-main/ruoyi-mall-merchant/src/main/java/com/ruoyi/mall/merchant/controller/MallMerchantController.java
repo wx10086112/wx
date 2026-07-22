@@ -82,7 +82,26 @@ public class MallMerchantController extends BaseController {
         if (effDistributorId != null && !effDistributorId.equals(merchant.getDistributorId())) {
             return AjaxResult.error("无权限查看该商家");
         }
-        return AjaxResult.success(toSafeMap(merchant));
+        Map<String, Object> data = toSafeMap(merchant);
+        Map<String, Object> liveStats = merchantService.selectMerchantLiveStats(id);
+        if (liveStats != null) {
+            data.putAll(liveStats);
+        }
+        return AjaxResult.success(data);
+    }
+
+    @PreAuthorize("@ss.hasPermi('mall:merchant:query')")
+    @GetMapping("/{id}/live-stats")
+    public AjaxResult getLiveStats(@PathVariable Long id) {
+        Merchant merchant = merchantService.selectMerchantById(id);
+        if (merchant == null) {
+            return AjaxResult.error("商家不存在");
+        }
+        Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effDistributorId != null && !effDistributorId.equals(merchant.getDistributorId())) {
+            return AjaxResult.error("无权限查看该商家");
+        }
+        return AjaxResult.success(merchantService.selectMerchantLiveStats(id));
     }
 
     @PreAuthorize("@ss.hasPermi('mall:merchant:query')")

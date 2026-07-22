@@ -39,7 +39,8 @@
 
     <sql id="selectMallOrderVo">
         select o.id, o.order_no, o.merchant_id, m.distributor_id, m.name as merchant_name,
-               o.user_id, u.nickname as user_name, o.store_id, o.total_amount, o.pay_amount,
+               o.user_id, COALESCE(NULLIF(u.nickname, ''), NULLIF(ui.user_name, ''), '未知用户') as user_name,
+               o.store_id, o.total_amount, o.pay_amount,
                o.commission, o.merchant_income, o.coupon_id, o.coupon_amount, o.groupon_id, o.status,
                o.write_off_code, o.write_off_status, o.write_off_time, o.write_off_user_id,
                o.valid_days, o.pay_time, o.use_time, o.complete_time, o.cancel_time, o.refund_time,
@@ -47,6 +48,7 @@
         from mall_order o
         LEFT JOIN merchant m ON o.merchant_id = m.id
         LEFT JOIN mall_user u ON o.user_id = u.id
+        LEFT JOIN user_info ui ON o.user_id = ui.id
     </sql>
 
     <sql id="dataScopeBizFilter">
@@ -78,7 +80,7 @@
             <if test="merchantId != null">and o.merchant_id = #{merchantId}</if>
             <if test="merchantName != null and merchantName != ''">and m.name like concat('%', #{merchantName}, '%')</if>
             <if test="userId != null">and o.user_id = #{userId}</if>
-            <if test="userName != null and userName != ''">and u.nickname like concat('%', #{userName}, '%')</if>
+            <if test="userName != null and userName != ''">and COALESCE(NULLIF(u.nickname, ''), NULLIF(ui.user_name, '')) like concat('%', #{userName}, '%')</if>
             <if test="storeId != null">and o.store_id = #{storeId}</if>
             <if test="status != null">and o.status = #{status}</if>
             <include refid="dataScopeBizFilter"/>
@@ -226,7 +228,8 @@
 
     <select id="selectCompletedOrdersMissingSettlement" resultMap="MallOrderResult">
         select distinct o.id, o.order_no, o.merchant_id, m.distributor_id, m.name as merchant_name,
-               o.user_id, u.nickname as user_name, o.store_id, o.total_amount, o.pay_amount,
+               o.user_id, COALESCE(NULLIF(u.nickname, ''), NULLIF(ui.user_name, ''), '未知用户') as user_name,
+               o.store_id, o.total_amount, o.pay_amount,
                o.commission, o.merchant_income, o.coupon_id, o.coupon_amount, o.groupon_id, o.status,
                o.write_off_code, o.write_off_status, o.write_off_time, o.write_off_user_id,
                o.valid_days, o.pay_time, o.use_time, o.complete_time, o.cancel_time, o.refund_time,
@@ -234,6 +237,7 @@
         from mall_order o
         left join merchant m on o.merchant_id = m.id
         left join mall_user u on o.user_id = u.id
+        left join user_info ui on o.user_id = ui.id
         left join order_profit_ledger opl on opl.order_no = o.order_no and opl.del_flag = '0'
         left join merchant_settlement_record msr on msr.order_no = o.order_no and msr.del_flag = '0'
         left join platform_income pi on pi.order_no = o.order_no and pi.del_flag = '0'

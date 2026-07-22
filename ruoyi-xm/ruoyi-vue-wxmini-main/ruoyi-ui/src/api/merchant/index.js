@@ -17,6 +17,16 @@ export function getMerchantDetail(id) {
   })
 }
 
+export function getMerchantLiveStats(id) {
+  return request({
+    url: '/mall/merchant/' + id + '/live-stats',
+    method: 'get',
+    headers: {
+      hideErrorMessage: true
+    }
+  })
+}
+
 export function getMerchantEntryQrCode(id) {
   return request({
     url: '/mall/merchant/entry-qrcode/' + id,

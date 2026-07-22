@@ -19,7 +19,7 @@
           <el-descriptions-item label="入驻时间">{{ merchant.createTime }}</el-descriptions-item>
           <el-descriptions-item label="商品数">{{ merchant.productCount || 0 }}</el-descriptions-item>
           <el-descriptions-item label="累计收入">¥{{ Number(merchant.totalIncome || 0).toLocaleString() }}</el-descriptions-item>
-          <el-descriptions-item label="商家ID">{{ merchant.id }}</el-descriptions-item>
+          <el-descriptions-item label="今日收入">¥{{ Number(merchant.todayIncome || 0).toLocaleString() }}</el-descriptions-item>
         </el-descriptions>
 
         <!-- 标签页 -->
@@ -275,7 +275,9 @@
           <el-tab-pane label="订单记录" name="orders">
             <el-table v-loading="orderLoading" :data="orderList" border size="small">
               <el-table-column label="订单号" prop="orderNo" width="180" />
-              <el-table-column label="用户" prop="userId" width="100" />
+              <el-table-column label="用户" min-width="120">
+                <template slot-scope="scope">{{ scope.row.userName || '未知用户' }}</template>
+              </el-table-column>
               <el-table-column label="金额" width="100">
                 <template slot-scope="scope">¥{{ moneyText(scope.row.payAmount) }}</template>
               </el-table-column>
@@ -869,9 +871,11 @@
 </template>
 
 <script>
-import { getMerchantDetail, getMerchantEntryQrCode, getProductList, getProductCategoryList, addProductCategory, addProduct, updateProduct, deleteProduct, getMerchantOrders, getMerchantFlowList, orderStatusMap, getMerchantUserList, addMerchantUser, resetMerchantUserPwd, changeMerchantUserStatus, updateMerchant } from '@/api/merchant'
+import { getMerchantDetail, getMerchantLiveStats, getMerchantEntryQrCode, getProductList, getProductCategoryList, addProductCategory, addProduct, updateProduct, deleteProduct, getMerchantOrders, getMerchantFlowList, orderStatusMap, getMerchantUserList, addMerchantUser, resetMerchantUserPwd, changeMerchantUserStatus, updateMerchant } from '@/api/merchant'
 import { listGroupon, getGroupon, addGroupon, updateGroupon, deleteGroupon, changeGrouponStatus, listGrouponItem, addGrouponItem, updateGrouponItem, deleteGrouponItem, changeGrouponItemStatus } from '@/api/marketing/groupon'
 import { getToken } from '@/utils/auth'
+
+const MERCHANT_DETAIL_REFRESH_INTERVAL = 15000
 
 export default {
   name: 'MerchantDetail',
@@ -1055,6 +1059,17 @@ export default {
     this.fetchDetail()
     this.loadProductCategories()
     this.loadProducts()
+    this.startLiveStatsRefresh()
+  },
+  activated() {
+    this.startLiveStatsRefresh()
+    this.refreshLiveStats()
+  },
+  deactivated() {
+    this.stopLiveStatsRefresh()
+  },
+  beforeDestroy() {
+    this.stopLiveStatsRefresh()
   },
   methods: {
     // ========== 图片上传 ==========
@@ -1121,6 +1136,7 @@ export default {
         ...merchant,
         productCount: Number(merchant.productCount || 0),
         totalIncome: Number(merchant.totalIncome || 0),
+        todayIncome: Number(merchant.todayIncome || 0),
         wxProfitSharingEnabled: Number(merchant.wxProfitSharingEnabled || 0),
         merchantShareRate: merchant.merchantShareRate === null || merchant.merchantShareRate === undefined ? 100 : Number(merchant.merchantShareRate),
         platformShareRate: merchant.platformShareRate === null || merchant.platformShareRate === undefined ? 0 : Number(merchant.platformShareRate),
@@ -1129,9 +1145,35 @@ export default {
         settlementCycle: merchant.settlementCycle || 'T1'
       }
     },
+    startLiveStatsRefresh() {
+      this.stopLiveStatsRefresh()
+      this._liveStatsRefreshTimer = setInterval(() => this.refreshLiveStats(), MERCHANT_DETAIL_REFRESH_INTERVAL)
+    },
+    stopLiveStatsRefresh() {
+      if (this._liveStatsRefreshTimer) {
+        clearInterval(this._liveStatsRefreshTimer)
+        this._liveStatsRefreshTimer = null
+      }
+    },
+    async refreshLiveStats() {
+      if (!this.merchantId) return
+      try {
+        const res = await getMerchantLiveStats(this.merchantId)
+        const stats = res.data || {}
+        this.merchant = {
+          ...this.merchant,
+          productCount: Number(stats.productCount || 0),
+          totalIncome: Number(stats.totalIncome || 0),
+          todayIncome: Number(stats.todayIncome || 0)
+        }
+      } catch (e) {
+        // Polling failures must not interrupt merchant detail operations.
+      }
+    },
     applySavedMerchant(res) {
       if (res && res.data) {
-        this.merchant = this.normalizeMerchantDetail(res.data)
+        this.merchant = this.normalizeMerchantDetail({ ...this.merchant, ...res.data })
+        this.refreshLiveStats()
         return true
       }
       return false
@@ -1273,7 +1315,8 @@ export default {
           this.$message.success('新增成功')
         }
         this.productDialogVisible = false
-        this.loadProducts()
+        await this.loadProducts()
+        await this.refreshLiveStats()
       })
     },
     handleToggleStatus(row) {
@@ -1282,14 +1325,16 @@ export default {
       this.$confirm(`确认${text}该商品？`, '提示', { type: 'warning' }).then(async() => {
         await updateProduct({ id: row.id, status: newStatus })
         this.$message.success(`${text}成功`)
-        this.loadProducts()
+        await this.loadProducts()
+        await this.refreshLiveStats()
       }).catch(() => {})
     },
     handleDeleteProduct(row) {
       this.$confirm('确认删除该商品？', '提示', { type: 'warning' }).then(async() => {
         await deleteProduct(row.id)
         this.$message.success('删除成功')
-        this.loadProducts()
+        await this.loadProducts()
+        await this.refreshLiveStats()
       }).catch(() => {})
     },
 

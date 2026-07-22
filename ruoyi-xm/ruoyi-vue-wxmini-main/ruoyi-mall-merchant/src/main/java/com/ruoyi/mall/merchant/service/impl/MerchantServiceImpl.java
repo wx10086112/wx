@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class MerchantServiceImpl implements IMerchantService {
@@ -25,6 +26,11 @@ public class MerchantServiceImpl implements IMerchantService {
     @Override
     public Merchant selectMerchantById(Long id) {
         return merchantMapper.selectMerchantById(id);
+    }
+
+    @Override
+    public Map<String, Object> selectMerchantLiveStats(Long merchantId) {
+        return merchantMapper.selectMerchantLiveStats(merchantId);
     }
 
     @Override

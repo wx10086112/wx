@@ -8,6 +8,7 @@ import java.util.Map;
 
 public interface MerchantMapper {
     Merchant selectMerchantById(Long id);
+    Map<String, Object> selectMerchantLiveStats(@Param("merchantId") Long merchantId);
     Merchant selectMerchantByIdAnyStatus(Long id);
     List<Merchant> selectMerchantList(Merchant merchant);
     int insertMerchant(Merchant merchant);

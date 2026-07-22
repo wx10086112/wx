@@ -2,10 +2,13 @@ package com.ruoyi.mall.merchant.service;
 
 import com.ruoyi.mall.merchant.domain.Merchant;
 import java.util.List;
+import java.util.Map;
 
 public interface IMerchantService {
 
     Merchant selectMerchantById(Long id);
+
+    Map<String, Object> selectMerchantLiveStats(Long merchantId);
 
     Merchant selectMerchantByIdAnyStatus(Long id);
 
