@@ -29,6 +29,14 @@ public class RefundRecord extends BaseEntity {
     private Date refundTime;
     private String rejectReason;
     private String operator;
+    /** Number of failed WeChat refund attempts. */
+    private Integer retryCount;
+    /** Time of the latest failed WeChat refund attempt. */
+    private Date lastRetryTime;
+    /** Earliest time that the compensating task may retry this refund. */
+    private Date nextRetryTime;
+    /** Latest retry failure retained for operations review. */
+    private String lastRetryReason;
     /** 删除标志（0代表存在 2代表删除） */
     private String delFlag = "0";
 
@@ -83,6 +91,18 @@ public class RefundRecord extends BaseEntity {
 
     public String getOperator() { return operator; }
     public void setOperator(String operator) { this.operator = operator; }
+
+    public Integer getRetryCount() { return retryCount; }
+    public void setRetryCount(Integer retryCount) { this.retryCount = retryCount; }
+
+    public Date getLastRetryTime() { return lastRetryTime; }
+    public void setLastRetryTime(Date lastRetryTime) { this.lastRetryTime = lastRetryTime; }
+
+    public Date getNextRetryTime() { return nextRetryTime; }
+    public void setNextRetryTime(Date nextRetryTime) { this.nextRetryTime = nextRetryTime; }
+
+    public String getLastRetryReason() { return lastRetryReason; }
+    public void setLastRetryReason(String lastRetryReason) { this.lastRetryReason = lastRetryReason; }
 
     public String getDelFlag() { return delFlag; }
     public void setDelFlag(String delFlag) { this.delFlag = delFlag; }

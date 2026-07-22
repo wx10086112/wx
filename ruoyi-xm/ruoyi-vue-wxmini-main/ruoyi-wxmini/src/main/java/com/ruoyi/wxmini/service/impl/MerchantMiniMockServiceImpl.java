@@ -607,10 +607,10 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniService {
     private MerchantMiniBookingDto updateBookingStatus(String bookingNo, String targetStatus, String... allowedStatuses) {
         MerchantMiniBookingDto bookingDto = findBooking(bookingNo);
         if (bookingDto == null) {
-            throw new IllegalArgumentException("预约记录不存在");
+            throw new IllegalArgumentException("预点单记录不存在");
         }
         if (!Arrays.asList(allowedStatuses).contains(bookingDto.getStatus())) {
-            throw new IllegalArgumentException("当前预约状态不可操作");
+            throw new IllegalArgumentException("当前预点单状态不可操作");
         }
         long now = System.currentTimeMillis();
         bookingDto.setStatus(targetStatus);
@@ -717,7 +717,7 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniService {
                 "", 13800L, 26800L, 126, 1942, "2026-05-01 至 2026-07-15", "高峰期建议提前电话确认",
                 GOODS_STATUS_ON_SHELF, 2));
         result.add(buildGoods(103L, "都市焕肤护理 75 分钟", "清洁补水 + 舒缓修护", "面部护理",
-                "", 16800L, 32800L, 72, 1129, "2026-05-01 至 2026-06-20", "建议提前 1 天预约",
+                "", 16800L, 32800L, 72, 1129, "2026-05-01 至 2026-06-20", "建议提前 1 天预点单",
                 GOODS_STATUS_OFF_SHELF, 3));
         result.add(buildGoods(104L, "过期测试团购券", "用于验证过期核销拦截", "系统测试",
                 "", 9900L, 19800L, 10, 12, "2026-04-01 至 2026-04-30", "过期后不可核销",
@@ -789,7 +789,7 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniService {
         result.add(buildBooking(1L, "B202607090001", 101L, "芳香舒压 SPA 90 分钟", 19800L,
                 "王女士", "13800002201", 2, BOOKING_STATUS_PENDING,
                 System.currentTimeMillis() + 2L * 60L * 60L * 1000L, System.currentTimeMillis() - 30L * 60L * 1000L,
-                "想预约靠窗房间"));
+                "想预点单靠窗房间"));
         result.add(buildBooking(2L, "B202607090002", 102L, "肩颈理疗放松套餐 60 分钟", 13800L,
                 "赵先生", "13900003202", 1, BOOKING_STATUS_CONFIRMED,
                 System.currentTimeMillis() + DAY_MILLIS, System.currentTimeMillis() - 3L * 60L * 60L * 1000L,

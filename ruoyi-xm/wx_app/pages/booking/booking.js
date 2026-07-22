@@ -1,24 +1,16 @@
-const app = getApp()
 const util = require('../../utils/util')
+const templateService = require('../../services/template')
+const merchantApi = require('../../api/merchant')
 const productApi = require('../../api/product')
-const bookingApi = require('../../api/booking')
+const cartStore = require('../../utils/cart')
 const { toListThumbnailUrl } = require('../../utils/image-url')
 
-const DEFAULT_SERVICE_IMAGE = '/assets/images/merchant-logo-xiangyuan.png'
+const DEFAULT_PRODUCT_IMAGE = '/assets/images/merchant-logo-xiangyuan.png'
+const PEOPLE_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10+']
+const TABLE_OPTIONS = ['1号桌', '2号桌', '3号桌', '4号桌', '5号桌', '6号桌', '7号桌', '8号桌', '包间A', '包间B']
 
-const pad = (value) => String(value).padStart(2, '0')
-
-const formatPickerDate = (date) => {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-}
-
-const cleanServiceText = (value = '', fallback = '') => {
-  const text = String(value || fallback || '')
-    .replace(/\u56e2\u8d2d/g, '')
-    .replace(/\u5957\u9910/g, '服务')
-    .replace(/\u6838\u9500/g, '到店确认')
-    .trim()
-  return text || fallback
+const normalizeText = (value, fallback) => {
+  return value === undefined || value === null || value === '' ? fallback : value
 }
 
 const extractList = (res = {}) => {
@@ -30,149 +22,225 @@ const extractList = (res = {}) => {
   return []
 }
 
-const normalizeService = (item = {}) => ({
-  ...item,
-  serviceId: item.id || item.goodsId,
-  title: cleanServiceText(item.title || item.name || item.productName, '门店预约服务'),
-  subtitle: cleanServiceText(item.subtitle || item.description, '选择到店时间，提交后等待门店确认'),
-  image: toListThumbnailUrl(item.image || item.coverImage || item.productImage || DEFAULT_SERVICE_IMAGE),
-  priceText: item.price ? util.formatPrice(item.price) : '',
-  unavailable: Number(item.stock || 0) <= 0
+const normalizeMerchant = (merchant = {}) => ({
+  ...merchant,
+  id: merchant.id || merchant.merchantId || '',
+  name: normalizeText(merchant.name || merchant.storeName || merchant.merchantName, '门店信息待完善'),
+  address: normalizeText(merchant.address, '门店地址待完善'),
+  businessStatus: merchant.businessStatus !== false,
+  businessStatusText: merchant.businessStatus === false ? '休息中' : '营业中'
 })
+
+const normalizeProduct = (item = {}, merchant = {}) => {
+  const price = Number(item.price || 0)
+  return {
+    ...item,
+    id: item.id || item.goodsId || item.productId,
+    productId: item.productId || item.id || item.goodsId,
+    merchantId: item.merchantId || merchant.id,
+    merchantName: item.merchantName || merchant.name,
+    title: normalizeText(item.title || item.name || item.productName, '精选服务'),
+    subtitle: normalizeText(item.subtitle || item.description || item.remark, '到店使用，按门店规则确认'),
+    categoryName: normalizeText(item.categoryName || item.category || item.typeName, '优惠服务'),
+    image: toListThumbnailUrl(item.image || item.coverImage || item.productImage || DEFAULT_PRODUCT_IMAGE),
+    price,
+    priceText: util.formatPrice(price),
+    totalSales: Number(item.totalSales || item.sales || 0),
+    stock: Number(item.stock || 0),
+    soldOut: Number(item.stock || 0) <= 0
+  }
+}
+
+const buildCategories = (products = []) => {
+  const names = []
+  products.forEach((product) => {
+    const name = product.categoryName || '优惠服务'
+    if (!names.includes(name)) names.push(name)
+  })
+  return ['全部', ...names]
+}
 
 Page({
   data: {
-    serviceList: [],
     loading: true,
-    showBookingSheet: false,
-    selectedService: null,
-    minBookingDate: formatPickerDate(new Date()),
-    form: {
-      bookingDate: formatPickerDate(new Date(Date.now() + 24 * 60 * 60 * 1000)),
-      bookingClock: '12:00',
-      contactName: '',
-      contactPhone: '',
-      peopleCount: 1,
-      remark: ''
-    },
-    submitting: false
+    statusBarHeight: 0,
+    merchant: {},
+    brandName: '预点单',
+    categories: ['全部'],
+    activeCategoryIndex: 0,
+    productList: [],
+    displayProductList: [],
+    peopleOptions: PEOPLE_OPTIONS,
+    selectedPeople: '1',
+    showPeopleDialog: true,
+    tableOptions: TABLE_OPTIONS,
+    tableIndex: 1,
+    tableNo: TABLE_OPTIONS[1],
+    cartCount: 0,
+    cartAmountText: '0.00'
   },
 
   onLoad() {
-    this.loadServices()
+    this.initNavigation()
+    this.loadData()
+  },
+
+  initNavigation() {
+    try {
+      const systemInfo = wx.getSystemInfoSync ? wx.getSystemInfoSync() : {}
+      this.setData({ statusBarHeight: systemInfo.statusBarHeight || 0 })
+    } catch (e) {
+      this.setData({ statusBarHeight: 0 })
+    }
   },
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 2 })
     }
+    if (!this.data.loading) {
+      this.loadData()
+    }
+    this.syncCartSummary()
   },
 
   onPullDownRefresh() {
-    this.loadServices().finally(() => {
+    this.loadData().finally(() => {
       wx.stopPullDownRefresh()
     })
   },
 
-  loadServices() {
+  loadData() {
     this.setData({ loading: true })
-    return productApi.getProductList()
-      .then((res) => {
-        this.setData({
-          serviceList: extractList(res).map(normalizeService),
-          loading: false
-        })
+    const templateConfig = templateService.getTemplateConfig()
+    return Promise.all([
+      merchantApi.getMerchantList().catch(() => []),
+      productApi.getGrouponList().catch(() => [])
+    ]).then(([merchantRes, productRes]) => {
+      const merchant = normalizeMerchant(extractList(merchantRes)[0] || {})
+      const productList = extractList(productRes).map((item) => normalizeProduct(item, merchant))
+      const categories = buildCategories(productList)
+      this.setData({
+        brandName: (templateConfig.brandInfo && templateConfig.brandInfo.name) || merchant.name || '预点单',
+        merchant,
+        categories,
+        productList,
+        displayProductList: this.filterProducts(productList, categories[0]),
+        activeCategoryIndex: 0,
+        loading: false
       })
-      .catch(() => {
-        this.setData({
-          serviceList: [],
-          loading: false
-        })
+      this.syncCartSummary()
+    }).catch(() => {
+      this.setData({
+        loading: false,
+        merchant: normalizeMerchant({}),
+        categories: ['全部'],
+        productList: [],
+        displayProductList: []
       })
+      this.syncCartSummary()
+    })
   },
 
-  openBookingSheet(e) {
-    const service = this.data.serviceList[e.currentTarget.dataset.index]
-    if (!app.needLogin()) return
-    if (!service || service.unavailable) {
-      util.showToast('当前服务暂不可预约')
+  filterProducts(productList = this.data.productList, categoryName = this.data.categories[this.data.activeCategoryIndex]) {
+    if (!categoryName || categoryName === '全部') return productList
+    return productList.filter((product) => product.categoryName === categoryName)
+  },
+
+  syncCartSummary() {
+    const summary = cartStore.buildSummary()
+    this.setData({
+      cartCount: summary.totalQuantity,
+      cartAmountText: summary.totalAmountText
+    })
+  },
+
+  goHome() {
+    wx.switchTab({ url: '/pages/home/home' })
+  },
+
+  goMerchantDetail() {
+    if (!this.data.merchant.id) {
+      util.showToast('暂无门店详情')
       return
     }
-    const userInfo = app.globalData.userInfo || {}
+    util.navigateTo(`/pages/merchant-detail/merchant-detail?id=${this.data.merchant.id}`)
+  },
+
+  onCategoryTap(e) {
+    const index = Number(e.currentTarget.dataset.index || 0)
+    const categoryName = this.data.categories[index]
     this.setData({
-      selectedService: service,
-      showBookingSheet: true,
-      form: {
-        ...this.data.form,
-        contactName: userInfo.nickName || userInfo.nickname || this.data.form.contactName,
-        contactPhone: userInfo.phone || userInfo.phoneNumber || this.data.form.contactPhone
-      }
+      activeCategoryIndex: index,
+      displayProductList: this.filterProducts(this.data.productList, categoryName)
     })
   },
 
-  closeBookingSheet() {
-    if (this.data.submitting) return
-    this.setData({
-      showBookingSheet: false,
-      selectedService: null
-    })
+  onProductTap(e) {
+    const product = this.data.displayProductList[Number(e.currentTarget.dataset.index || 0)]
+    if (!product || !product.id) return
+    util.navigateTo(`/pages/product-detail/product-detail?id=${product.id}`)
+  },
+
+  addToCart(e) {
+    const product = this.data.displayProductList[Number(e.currentTarget.dataset.index || 0)]
+    if (!product) return
+    if (product.soldOut) {
+      util.showToast('当前商品已售罄')
+      return
+    }
+    const result = cartStore.addItem(product)
+    if (result.conflict) {
+      util.showModal('更换门店商品', '购物车已有其他门店商品，是否清空后加入当前商品？').then((confirm) => {
+        if (!confirm) return
+        cartStore.replaceWithItem(result.nextItem)
+        this.syncCartSummary()
+        util.showToast('已加入购物车', 'success')
+      })
+      return
+    }
+    this.syncCartSummary()
+    util.showToast(result.ok ? '已加入购物车' : result.message, result.ok ? 'success' : 'none')
+  },
+
+  openPeopleDialog() {
+    this.setData({ showPeopleDialog: true })
+  },
+
+  closePeopleDialog() {
+    this.setData({ showPeopleDialog: false })
   },
 
   noop() {},
 
-  onDateChange(e) {
-    this.setData({ 'form.bookingDate': e.detail.value })
+  selectPeople(e) {
+    this.setData({ selectedPeople: String(e.currentTarget.dataset.value || '1') })
   },
 
-  onTimeChange(e) {
-    this.setData({ 'form.bookingClock': e.detail.value })
-  },
-
-  onInputChange(e) {
-    const field = e.currentTarget.dataset.field
+  onTableChange(e) {
+    const tableIndex = Number(e.detail.value || 0)
     this.setData({
-      [`form.${field}`]: e.detail.value
+      tableIndex,
+      tableNo: this.data.tableOptions[tableIndex]
     })
   },
 
-  submitBooking() {
-    if (this.data.submitting) return
-    const service = this.data.selectedService
-    const form = this.data.form
-    if (!service) return
+  confirmPeopleDialog() {
+    this.setData({ showPeopleDialog: false })
+  },
 
-    const bookingTime = new Date(`${form.bookingDate.replace(/-/g, '/')} ${form.bookingClock}:00`).getTime()
-    if (!bookingTime || bookingTime <= Date.now()) {
-      util.showToast('请选择未来的预约时间')
+  goCheckout() {
+    if (!this.data.cartCount) {
+      this.goHome()
       return
     }
-    if (!form.contactPhone) {
-      util.showToast('请填写联系电话')
-      return
-    }
+    util.navigateTo('/pages/cart/cart')
+  },
 
-    this.setData({ submitting: true })
-    bookingApi.createBooking({
-      productId: service.serviceId,
-      bookingTime,
-      contactName: form.contactName,
-      contactPhone: form.contactPhone,
-      peopleCount: Number(form.peopleCount || 1),
-      remark: form.remark
-    }).then(() => {
-      util.showToast('预约已提交', 'success')
-      this.setData({
-        submitting: false,
-        showBookingSheet: false,
-        selectedService: null,
-        form: {
-          ...form,
-          remark: ''
-        }
-      })
-    }).catch((err) => {
-      this.setData({ submitting: false })
-      util.showToast(err && err.msg ? err.msg : '预约提交失败')
-    })
+  onShareAppMessage() {
+    return {
+      title: `${this.data.brandName || '门店'}预点单`,
+      path: '/pages/booking/booking'
+    }
   }
 })

@@ -6,6 +6,7 @@ public class WxGrouponItemDto {
 
     private Long id;
     private Long goodsId;
+    private Long productId;
     private String title;
     private String subtitle;
     private Long merchantId;
@@ -35,6 +36,8 @@ public class WxGrouponItemDto {
     public void setId(Long id) { this.id = id; }
     public Long getGoodsId() { return goodsId; }
     public void setGoodsId(Long goodsId) { this.goodsId = goodsId; }
+    public Long getProductId() { return productId; }
+    public void setProductId(Long productId) { this.productId = productId; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public String getSubtitle() { return subtitle; }

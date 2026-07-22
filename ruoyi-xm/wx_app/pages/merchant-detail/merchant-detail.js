@@ -16,7 +16,7 @@ const normalizeMerchantDetail = (merchant = {}) => {
     facilityTags,
     displayTags: tags.filter((tag) => !['营业中', '休息中'].includes(tag)).slice(0, 3),
     businessStatusText: merchant.businessStatus ? '营业中' : '休息中',
-    bookingText: merchant.supportBooking === false ? '到店即用' : '可预约'
+    bookingText: merchant.supportBooking === false ? '到店即用' : '可预点单'
   }
 }
 

@@ -21,6 +21,10 @@
         <result property="refundTime" column="refund_time"/>
         <result property="rejectReason" column="reject_reason"/>
         <result property="operator" column="operator"/>
+        <result property="retryCount" column="retry_count"/>
+        <result property="lastRetryTime" column="last_retry_time"/>
+        <result property="nextRetryTime" column="next_retry_time"/>
+        <result property="lastRetryReason" column="last_retry_reason"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
         <result property="delFlag" column="del_flag"/>
@@ -30,7 +34,8 @@
         select r.id, r.order_no, r.refund_no, r.merchant_id, m.name as merchant_name,
                r.user_id, u.nickname as user_name, r.payment_record_id,
                r.refund_amount, r.refund_reason, r.refund_type, r.status, r.audit_time,
-               r.refund_time, r.reject_reason, r.operator, r.create_time, r.update_time
+               r.refund_time, r.reject_reason, r.operator, r.retry_count, r.last_retry_time,
+               r.next_retry_time, r.last_retry_reason, r.create_time, r.update_time
         from refund_record r
         LEFT JOIN merchant m ON r.merchant_id = m.id
         LEFT JOIN mall_user u ON r.user_id = u.id
@@ -100,6 +105,10 @@
             <if test="refundTime != null">refund_time,</if>
             <if test="rejectReason != null">reject_reason,</if>
             <if test="operator != null">operator,</if>
+            <if test="retryCount != null">retry_count,</if>
+            <if test="lastRetryTime != null">last_retry_time,</if>
+            <if test="nextRetryTime != null">next_retry_time,</if>
+            <if test="lastRetryReason != null">last_retry_reason,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="orderNo != null">#{orderNo},</if>
@@ -115,6 +124,10 @@
             <if test="refundTime != null">#{refundTime},</if>
             <if test="rejectReason != null">#{rejectReason},</if>
             <if test="operator != null">#{operator},</if>
+            <if test="retryCount != null">#{retryCount},</if>
+            <if test="lastRetryTime != null">#{lastRetryTime},</if>
+            <if test="nextRetryTime != null">#{nextRetryTime},</if>
+            <if test="lastRetryReason != null">#{lastRetryReason},</if>
         </trim>
     </insert>
 
@@ -134,6 +147,10 @@
             <if test="refundTime != null">refund_time = #{refundTime},</if>
             <if test="rejectReason != null">reject_reason = #{rejectReason},</if>
             <if test="operator != null">operator = #{operator},</if>
+            <if test="retryCount != null">retry_count = #{retryCount},</if>
+            <if test="lastRetryTime != null">last_retry_time = #{lastRetryTime},</if>
+            <if test="nextRetryTime != null">next_retry_time = #{nextRetryTime},</if>
+            <if test="lastRetryReason != null">last_retry_reason = #{lastRetryReason},</if>
         </trim>
         where id = #{id}
         <if test="params != null and params.oldStatus != null">
@@ -144,18 +161,67 @@
     <update id="markRefundSucceeded">
         update refund_record
         set status = 4,
-            refund_time = #{refundTime}
+            refund_time = #{refundTime},
+            next_retry_time = null
         where id = #{id}
-          and status &lt; 4
+          and status in (2, 5)
           and del_flag = '0'
     </update>
 
-    <update id="markRefundAbnormal">
+    <update id="markRefundAbnormalWithReason">
         update refund_record
-        set status = 5
+        set status = 5,
+            next_retry_time = null,
+            last_retry_time = now(),
+            last_retry_reason = #{reason}
         where id = #{id}
-          and status &lt;&gt; 5
+          and status = 2
           and del_flag = '0'
+    </update>
+
+    <select id="selectRetryableApprovedRefunds" resultMap="RefundRecordResult">
+        <include refid="selectRefundRecordVo"/>
+        where r.status = 2
+          and r.del_flag = '0'
+          and (r.next_retry_time is null or r.next_retry_time &lt;= now())
+        order by coalesce(r.next_retry_time, r.audit_time, r.create_time) asc, r.id asc
+        limit #{limit}
+    </select>
+
+    <update id="claimApprovedRefundAttempt">
+        update refund_record
+        set next_retry_time = #{leaseUntil}
+        where id = #{id}
+          and status = 2
+          and del_flag = '0'
+          and (next_retry_time is null or next_retry_time &lt;= now())
+    </update>
+
+    <update id="updateRefundNoForApproved">
+        update refund_record
+        set refund_no = #{refundNo}
+        where id = #{id}
+          and status = 2
+          and del_flag = '0'
+    </update>
+
+    <update id="scheduleRefundRetry">
+        update refund_record
+        set last_retry_time = now(),
+            last_retry_reason = #{reason},
+            next_retry_time = case
+                when coalesce(retry_count, 0) + 1 &gt;= #{maxRetryAttempts} then null
+                else #{nextRetryTime}
+            end,
+            status = case
+                when coalesce(retry_count, 0) + 1 &gt;= #{maxRetryAttempts} then 5
+                else 2
+            end,
+            retry_count = coalesce(retry_count, 0) + 1
+        where id = #{id}
+          and status = 2
+          and del_flag = '0'
+          and next_retry_time is not null
     </update>
 
     <update id="deleteRefundRecordById" parameterType="Long">

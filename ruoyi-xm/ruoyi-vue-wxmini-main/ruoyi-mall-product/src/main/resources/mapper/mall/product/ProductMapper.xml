@@ -159,7 +159,9 @@
     </select>
 
     <select id="selectProductVersion" resultType="long">
-        select coalesce(unix_timestamp(max(coalesce(update_time, create_time))), 0)
+        select coalesce(bit_xor(crc32(concat_ws('|', id, merchant_id, name, cover_image, images, main_image,
+            price, original_price, stock, status, valid_days, verify_notice, description, store_ids, sort,
+            del_flag, coalesce(update_time, create_time)))), 0)
         from product
         <where>
             <if test="merchantId != null">and merchant_id = #{merchantId}</if>

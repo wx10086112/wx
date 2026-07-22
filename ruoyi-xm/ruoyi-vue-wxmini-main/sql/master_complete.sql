@@ -576,7 +576,7 @@ CREATE TABLE `merchant` (
   `description` VARCHAR(500) DEFAULT '' COMMENT '商家简介',
   `business_hours` VARCHAR(100) DEFAULT '' COMMENT '营业时间(如 09:00-22:00)',
   `support_refund` TINYINT DEFAULT 1 COMMENT '是否支持退款(0否 1是)',
-  `support_booking` TINYINT DEFAULT 1 COMMENT '是否支持预约(0否 1是)',
+  `support_booking` TINYINT DEFAULT 1 COMMENT '是否支持预点单(0否 1是)',
   `product_count` INT DEFAULT 0 COMMENT '商品数量',
   `store_count` INT DEFAULT 0 COMMENT '门店数量',
   `c_mini_app_id` VARCHAR(64) DEFAULT NULL COMMENT 'C端小程序AppID',
@@ -977,7 +977,7 @@ CREATE TABLE `platform_income` (
   `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   PRIMARY KEY (`id`),
   KEY `idx_merchant_id` (`merchant_id`),
-  KEY `idx_order_no` (`order_no`)
+  UNIQUE KEY `uk_active_order_no` (`order_no`, `del_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='平台收益表';
 
 -- 4.18 商家賬單表
@@ -1141,11 +1141,15 @@ CREATE TABLE `refund_record` (
   `refund_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT '退款金额',
   `refund_reason` VARCHAR(255) DEFAULT '' COMMENT '退款原因',
   `refund_type` TINYINT DEFAULT 1 COMMENT '退款类型(1用户申请 2平台操作 3超时自动)',
-  `status` TINYINT DEFAULT 0 COMMENT '状态(0待审核 1通过 2退款中 3已退款 4拒绝)',
+  `status` TINYINT NOT NULL DEFAULT 1 COMMENT '1待审核 2已通过待微信退款 3已拒绝 4已退款 5退款异常',
   `audit_time` DATETIME DEFAULT NULL COMMENT '审核时间',
   `refund_time` DATETIME DEFAULT NULL COMMENT '退款完成时间',
   `reject_reason` VARCHAR(255) DEFAULT '' COMMENT '拒绝原因',
   `operator` VARCHAR(64) DEFAULT '' COMMENT '操作人',
+  `retry_count` INT NOT NULL DEFAULT 0 COMMENT '微信退款重试次数',
+  `last_retry_time` DATETIME DEFAULT NULL COMMENT '最近一次退款重试时间',
+  `next_retry_time` DATETIME DEFAULT NULL COMMENT '下次允许退款重试时间',
+  `last_retry_reason` VARCHAR(500) DEFAULT NULL COMMENT '最近一次退款重试失败原因',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '申请时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
@@ -1154,7 +1158,8 @@ CREATE TABLE `refund_record` (
   KEY `idx_order_no` (`order_no`),
   KEY `idx_merchant_id` (`merchant_id`),
   KEY `idx_user_id` (`user_id`),
-  KEY `idx_status` (`status`)
+  KEY `idx_status` (`status`),
+  KEY `idx_refund_retry` (`status`, `next_retry_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='退款记录表';
 
 -- 4.26 核銷記錄表
@@ -1271,7 +1276,7 @@ CREATE TABLE `merchant_settlement_record` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_settlement_no` (`settlement_no`),
   KEY `idx_merchant_status` (`merchant_id`, `status`),
-  KEY `idx_order_no` (`order_no`),
+  UNIQUE KEY `uk_active_order_no` (`order_no`, `del_flag`),
   KEY `idx_expected_transfer_time` (`expected_transfer_time`),
   KEY `idx_distributor_id` (`distributor_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商家结算记录表';
@@ -1327,7 +1332,7 @@ CREATE TABLE `distributor_settlement_record` (
   UNIQUE KEY `uk_settlement_no` (`settlement_no`),
   KEY `idx_distributor_id` (`distributor_id`),
   KEY `idx_merchant_id` (`merchant_id`),
-  KEY `idx_order_no` (`order_no`),
+  UNIQUE KEY `uk_active_order_distributor` (`order_no`, `distributor_id`, `del_flag`),
   KEY `idx_status` (`status`),
   KEY `idx_expected_transfer_time` (`expected_transfer_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='分销商佣金结算记录表';
@@ -1337,21 +1342,36 @@ DROP TABLE IF EXISTS `platform_transfer_record`;
 CREATE TABLE `platform_transfer_record` (
   `id`                        BIGINT       NOT NULL AUTO_INCREMENT,
   `transfer_no`               VARCHAR(64)  NOT NULL COMMENT '平台转账单号',
-  `settlement_record_type`    VARCHAR(64)  NOT NULL COMMENT '关联结算类型：MERCHANT/DISTRIBUTOR',
-  `settlement_record_id`      BIGINT       NOT NULL COMMENT '关联结算记录ID',
+  `settlement_no`             VARCHAR(64)  NOT NULL COMMENT '关联结算单号',
+  `target_type`               VARCHAR(16)  NOT NULL COMMENT '收款对象类型：MERCHANT/DISTRIBUTOR',
+  `target_id`                 BIGINT       NOT NULL COMMENT '收款对象ID',
   `merchant_id`               BIGINT       DEFAULT NULL COMMENT '商家ID（收款方是商家时）',
   `distributor_id`            BIGINT       DEFAULT NULL COMMENT '分销商ID（收款方是分销商时）',
+  `order_no`                  VARCHAR(64)  DEFAULT NULL COMMENT '关联订单号',
   `amount`                    DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '转账金额，单位元',
-  `status`                    VARCHAR(32)  NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING/SUCCESS/FAILED',
+  `receiver_openid`           VARCHAR(128) DEFAULT NULL COMMENT '收款人openid',
+  `receiver_name`             VARCHAR(128) DEFAULT NULL COMMENT '收款人姓名',
+  `receiver_account_type`     VARCHAR(32)  DEFAULT 'WECHAT_BALANCE' COMMENT 'WECHAT_BALANCE/BANK_CARD',
+  `wechat_batch_no`           VARCHAR(128) DEFAULT NULL COMMENT '微信批次号',
+  `wechat_detail_no`          VARCHAR(128) DEFAULT NULL COMMENT '微信明细单号',
+  `status`                    VARCHAR(32)  NOT NULL DEFAULT 'WAITING' COMMENT 'WAITING/TRANSFERRING/ARRIVED/FAILED/CANCELLED',
   `transfer_time`             DATETIME     DEFAULT NULL COMMENT '发起转账时间',
   `arrive_time`               DATETIME     DEFAULT NULL COMMENT '到账时间',
   `fail_reason`               VARCHAR(500) DEFAULT NULL COMMENT '失败原因',
+  `apply_time`                DATETIME     DEFAULT NULL COMMENT '申请转账时间',
+  `notify_time`               DATETIME     DEFAULT NULL COMMENT '微信回调时间',
+  `notify_result`             TEXT         DEFAULT NULL COMMENT '微信回调原始结果摘要',
+  `operator_id`               VARCHAR(64)  DEFAULT NULL COMMENT '操作人ID',
+  `remark`                    VARCHAR(500) DEFAULT NULL COMMENT '备注',
+  `del_flag`                  CHAR(1)      DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   `create_time`               DATETIME     DEFAULT CURRENT_TIMESTAMP,
   `update_time`               DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_transfer_no` (`transfer_no`),
-  KEY `idx_settlement_record` (`settlement_record_type`, `settlement_record_id`),
-  KEY `idx_status` (`status`)
+  KEY `idx_settlement_no` (`settlement_no`),
+  KEY `idx_target` (`target_type`, `target_id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_wechat_batch_no` (`wechat_batch_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='平台转账记录表';
 
 -- ================================================================

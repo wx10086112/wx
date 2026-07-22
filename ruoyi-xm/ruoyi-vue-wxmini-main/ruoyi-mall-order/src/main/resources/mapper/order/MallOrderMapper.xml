@@ -220,9 +220,35 @@
         set status = 4,
             refund_time = #{refundTime}
         where order_no = #{orderNo}
-          and status in (1, 5)
+          and status = 1
           and del_flag = '0'
     </update>
+
+    <select id="selectCompletedOrdersMissingSettlement" resultMap="MallOrderResult">
+        select distinct o.id, o.order_no, o.merchant_id, m.distributor_id, m.name as merchant_name,
+               o.user_id, u.nickname as user_name, o.store_id, o.total_amount, o.pay_amount,
+               o.commission, o.merchant_income, o.coupon_id, o.coupon_amount, o.groupon_id, o.status,
+               o.write_off_code, o.write_off_status, o.write_off_time, o.write_off_user_id,
+               o.valid_days, o.pay_time, o.use_time, o.complete_time, o.cancel_time, o.refund_time,
+               o.create_time, o.update_time, o.remark
+        from mall_order o
+        left join merchant m on o.merchant_id = m.id
+        left join mall_user u on o.user_id = u.id
+        left join order_profit_ledger opl on opl.order_no = o.order_no and opl.del_flag = '0'
+        left join merchant_settlement_record msr on msr.order_no = o.order_no and msr.del_flag = '0'
+        left join platform_income pi on pi.order_no = o.order_no and pi.del_flag = '0'
+        left join distributor_settlement_record dsr on dsr.order_no = o.order_no and dsr.del_flag = '0'
+        where o.status = 3
+          and o.del_flag = '0'
+          and (
+              opl.id is null
+              or msr.id is null
+              or (opl.platform_amount &gt; 0 and pi.id is null)
+              or (opl.distributor_id is not null and opl.distributor_amount &gt; 0 and dsr.id is null)
+          )
+        order by o.complete_time asc, o.id asc
+        limit #{limit}
+    </select>
 
     <update id="deleteMallOrderById" parameterType="Long">
         update mall_order set del_flag = '2' where id = #{id}

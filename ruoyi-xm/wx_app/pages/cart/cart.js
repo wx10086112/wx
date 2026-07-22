@@ -1,5 +1,6 @@
 const util = require('../../utils/util')
 const cartStore = require('../../utils/cart')
+const cartSync = require('../../utils/cart-sync')
 
 Page({
   data: {
@@ -13,7 +14,13 @@ Page({
   },
 
   onShow() {
-    this.syncCart()
+    this.refreshCart()
+  },
+
+  refreshCart() {
+    return cartSync.refreshCart()
+      .catch(() => cartStore.getCart())
+      .then(() => this.syncCart())
   },
 
   syncCart() {

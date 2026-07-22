@@ -180,7 +180,8 @@ public class WxPayNotifyController {
                     }
                 }
             } else if ("ABNORMAL".equals(refundStatus) || "CLOSED".equals(refundStatus)) {
-                refundRecordMapper.markRefundAbnormal(refundRecord.getId());
+                refundRecordMapper.markRefundAbnormalWithReason(refundRecord.getId(),
+                        "WeChat refund status: " + refundStatus);
             }
 
             return buildSuccessResponse();

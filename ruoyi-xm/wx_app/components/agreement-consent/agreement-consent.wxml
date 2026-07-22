@@ -60,7 +60,7 @@
         <text wx:if="{{privacyInfo.operatorName}}" class="agreement-doc__p">当前配置的个人信息处理者：{{privacyInfo.operatorName}}</text>
         <text wx:if="{{privacyContactLine}}" class="agreement-doc__p">联系方式：{{privacyContactLine}}</text>
         <text class="agreement-doc__section">一、商家端处理的信息</text>
-        <text class="agreement-doc__p">1. 商家资料：包括门店名称、联系人、联系电话、地址、简介、营业状态、退款支持、预约支持、小程序接入参数、结算配置和资质相关信息，用于门店展示、后台管理和系统接入。</text>
+        <text class="agreement-doc__p">1. 商家资料：包括门店名称、联系人、联系电话、地址、简介、营业状态、退款支持、预点单支持、小程序接入参数、结算配置和资质相关信息，用于门店展示、后台管理和系统接入。</text>
         <text class="agreement-doc__p">2. 员工资料：包括员工账号、姓名、手机号、角色权限、登录状态和操作记录，用于身份识别、权限控制、履约管理和安全审计。</text>
         <text class="agreement-doc__p">3. 订单资料：包括订单号、商品名称、金额、状态、退款信息、核销状态、用户昵称或联系人、脱敏手机号、备注和必要的售后记录，用于订单履约、核销、退款和争议处理。</text>
         <text class="agreement-doc__p">4. 商品与门店图片：当商家上传商品图、门店图或资质图时，小程序会调用相册或相机能力处理你主动选择或拍摄的图片，用于商品展示、门店配置和资质公示。</text>
@@ -90,7 +90,7 @@
         <text class="agreement-doc__p">你可以在“个人信息—账号管理—注销账号”中申请注销。注销后，头像、昵称、手机号等账号资料将删除或匿名化，当前登录状态会立即失效；历史订单、支付、退款、售后和财务记录会按法律法规、交易履约、税务审计和争议处理要求保留必要信息。</text>
         <text class="agreement-doc__p">为防止反复注销、注册滥用新用户权益、优惠、售后或风控规则，注销成功后 7 天内，同一微信身份暂不能在同一小程序重新注册。冷静期结束后，你可以重新通过微信登录注册新账号，新账号默认不继承已注销账号的历史订单和权益。</text>
         <text class="agreement-doc__section">四、订单、支付与核销</text>
-        <text class="agreement-doc__p">商品名称、价格、库存、有效期、预约规则、退款规则、营业时间、门店地址等以小程序页面和订单详情展示为准。支付成功后系统生成订单和到店核销码，你应在有效期内按规则使用。</text>
+        <text class="agreement-doc__p">商品名称、价格、库存、有效期、预点单规则、退款规则、营业时间、门店地址等以小程序页面和订单详情展示为准。支付成功后系统生成订单和到店核销码，你应在有效期内按规则使用。</text>
         <text class="agreement-doc__section">五、退款与售后</text>
         <text class="agreement-doc__p">你可以在订单页发起取消订单、申请退款或联系商户。退款审核、退款金额、到账时间以订单状态、商户规则、微信支付和银行处理结果为准。已核销、已使用或不符合退款规则的订单，商户可按页面规则拒绝退款。</text>
         <text class="agreement-doc__section">六、用户行为规范</text>

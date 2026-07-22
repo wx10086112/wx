@@ -104,7 +104,7 @@ const goodsList = [
     stock: 72,
     sales: 1129,
     validPeriod: '2026-05-01 至 2026-06-20',
-    verifyNotice: '建议提前 1 天预约',
+    verifyNotice: '建议提前 1 天预点单',
     status: 'ON_SHELF',
     sort: 3
   },

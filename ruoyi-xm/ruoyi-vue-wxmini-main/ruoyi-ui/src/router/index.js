@@ -126,7 +126,7 @@ export const dynamicRoutes = [
     alwaysShow: true,
     children: [
       { path: 'all', component: () => import('@/views/order/all'), name: 'OrderAll', meta: { title: '全部订单' } },
-      { path: 'booking', component: () => import('@/views/booking/index'), name: 'BookingManage', meta: { title: '预约管理' } },
+      { path: 'booking', component: () => import('@/views/booking/index'), name: 'BookingManage', meta: { title: '预点单管理' } },
       { path: 'detail/:id', component: () => import('@/views/order/detail'), name: 'OrderDetail', meta: { title: '订单详情', activeMenu: '/finance/all' }, hidden: true },
       { path: 'after-sale', component: () => import('@/views/order/after-sale'), name: 'OrderAfterSale', meta: { title: '售后订单' } },
       { path: 'abnormal', component: () => import('@/views/order/abnormal'), name: 'OrderAbnormal', meta: { title: '异常订单' } },

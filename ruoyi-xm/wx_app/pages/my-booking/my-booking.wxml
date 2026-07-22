@@ -1,10 +1,10 @@
 <view class="my-booking-page">
   <view class="page-hero">
     <view>
-      <text class="eyebrow">预约记录</text>
-      <text class="page-title">我的预约</text>
+      <text class="eyebrow">预点单记录</text>
+      <text class="page-title">我的预点单</text>
     </view>
-    <view class="hero-badge" bindtap="goBooking">去预约</view>
+    <view class="hero-badge" bindtap="goBooking">去预点单</view>
   </view>
 
   <scroll-view class="status-tabs" scroll-x enhanced show-scrollbar="{{false}}">
@@ -23,7 +23,7 @@
 
   <view wx:if="{{loading}}" class="loading-card">
     <view class="loading-dot"></view>
-    <text class="loading-text">正在加载预约</text>
+    <text class="loading-text">正在加载预点单</text>
   </view>
 
   <view wx:elif="{{bookingList.length}}" class="booking-list">
@@ -34,20 +34,20 @@
           <text class="booking-title">{{item.title}}</text>
           <text class="status-pill {{item.statusClass}}">{{item.statusText}}</text>
         </view>
-        <text class="booking-time">预约时间：{{item.bookingTimeText}}</text>
+        <text class="booking-time">预点单时间：{{item.bookingTimeText}}</text>
         <text class="booking-meta">人数 {{item.peopleCount || 1}} · 电话 {{item.contactPhone || '未填写'}}</text>
         <view wx:if="{{item.remark}}" class="booking-remark">{{item.remark}}</view>
         <view class="booking-bottom">
           <text class="booking-no">单号 {{item.bookingNo}}</text>
-          <view wx:if="{{item.canCancel}}" class="cancel-btn" bindtap="cancelBooking" data-no="{{item.bookingNo}}">取消预约</view>
+          <view wx:if="{{item.canCancel}}" class="cancel-btn" bindtap="cancelBooking" data-no="{{item.bookingNo}}">取消预点单</view>
         </view>
       </view>
     </view>
   </view>
 
   <view wx:else class="empty-card">
-    <view class="empty-badge">预约</view>
-    <text class="empty-title">暂无相关预约</text>
-    <text class="empty-desc">提交预约后，会在这里查看处理进度</text>
+    <view class="empty-badge">预点单</view>
+    <text class="empty-title">暂无相关预点单</text>
+    <text class="empty-desc">提交预点单后，会在这里查看处理进度</text>
   </view>
 </view>

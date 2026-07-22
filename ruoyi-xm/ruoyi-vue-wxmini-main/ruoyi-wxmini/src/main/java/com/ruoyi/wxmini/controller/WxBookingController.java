@@ -106,7 +106,7 @@ public class WxBookingController {
 
         Date bookingTime = new Date(requestDto.getBookingTime());
         if (bookingTime.before(new Date())) {
-            return AjaxResult.error("预约时间不能早于当前时间");
+            return AjaxResult.error("预点单时间不能早于当前时间");
         }
 
         BookingRecord record = new BookingRecord();
@@ -158,7 +158,11 @@ public class WxBookingController {
             return true;
         }
         Product product = productService.selectProductById(bookingService.getProductId());
-        return product != null && product.getStatus() != null && product.getStatus() == 1;
+        return product != null
+                && bookingService.getMerchantId() != null
+                && bookingService.getMerchantId().equals(product.getMerchantId())
+                && product.getStatus() != null
+                && product.getStatus() == 1;
     }
 
     private Long resolveBookingProductId(Long requestId, BookingService bookingService, Product product) {
@@ -175,7 +179,7 @@ public class WxBookingController {
         if (bookingService != null && StringUtils.isNotBlank(bookingService.getServiceName())) {
             return bookingService.getServiceName();
         }
-        return product != null ? product.getName() : "预约服务";
+        return product != null ? product.getName() : "预点单服务";
     }
 
     private String resolveBookingServiceImage(BookingService bookingService, Product product) {
@@ -186,6 +190,9 @@ public class WxBookingController {
     }
 
     private BigDecimal resolveBookingServicePrice(BookingService bookingService, Product product) {
+        if (bookingService != null && bookingService.getProductId() != null && product != null) {
+            return product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO;
+        }
         if (bookingService != null && bookingService.getServicePrice() != null) {
             return bookingService.getServicePrice();
         }
@@ -202,10 +209,10 @@ public class WxBookingController {
 
         BookingRecord record = bookingRecordService.selectBookingRecordByBookingNo(bookingNo);
         if (record == null || record.getUserId() == null || !record.getUserId().equals(currentUserPk)) {
-            return AjaxResult.error("预约记录不存在");
+            return AjaxResult.error("预点单记录不存在");
         }
         if (!BookingStatus.PENDING.equals(record.getStatus()) && !BookingStatus.CONFIRMED.equals(record.getStatus())) {
-            return AjaxResult.error("当前预约状态不可取消");
+            return AjaxResult.error("当前预点单状态不可取消");
         }
 
         bookingRecordService.updateBookingStatus(bookingNo, BookingStatus.CANCELLED);

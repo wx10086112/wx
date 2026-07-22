@@ -45,8 +45,9 @@ public class WxGrouponController {
         Long productVersion = productService.selectProductVersion(targetMerchantId);
         Map<String, Object> data = new HashMap<>();
         data.put("merchantId", targetMerchantId);
-        data.put("version", Math.max(selectBookingServiceVersionSafely(targetMerchantId),
-                productVersion != null ? productVersion : 0L));
+        long productVersionValue = productVersion != null ? productVersion : 0L;
+        long bookingServiceVersion = selectBookingServiceVersionSafely(targetMerchantId);
+        data.put("version", productVersionValue * 1_000_003L + bookingServiceVersion);
         return AjaxResult.success(data);
     }
 
@@ -200,7 +201,11 @@ public class WxGrouponController {
             return true;
         }
         Product product = productService.selectProductById(service.getProductId());
-        return product != null && product.getStatus() != null && product.getStatus() == 1;
+        return product != null
+                && service.getMerchantId() != null
+                && service.getMerchantId().equals(product.getMerchantId())
+                && product.getStatus() != null
+                && product.getStatus() == 1;
     }
 
     private Long selectBookingServiceVersionSafely(Long merchantId) {
@@ -217,13 +222,14 @@ public class WxGrouponController {
         Long entryId = service.getId();
         dto.setId(entryId);
         dto.setGoodsId(entryId);
+        dto.setProductId(service.getProductId() != null ? service.getProductId() : entryId);
         dto.setTitle(service.getServiceName());
         dto.setSubtitle(service.getDescription());
         dto.setDescription(service.getDescription());
         dto.setMerchantId(service.getMerchantId());
         dto.setImage(appendThumb(service.getServiceImage(), listThumb ? "list" : "detail"));
         dto.setPrice(toFen(service.getServicePrice()));
-        dto.setOriginalPrice(toFen(service.getServicePrice()));
+        dto.setOriginalPrice(toFen(service.getOriginalPrice()));
         dto.setSales(0);
         dto.setTotalSales(0);
         dto.setStock(service.getStock() != null ? service.getStock() : 999999);
@@ -242,11 +248,11 @@ public class WxGrouponController {
 
         List<String> tags = new ArrayList<>();
         tags.add("到店服务");
-        tags.add("可预约");
+        tags.add("可预点单");
         dto.setTags(tags);
         dto.setContentDetail(new ArrayList<>());
         dto.setBookingRequired(true);
-        dto.setBookingRule("提交预约后等待门店确认");
+        dto.setBookingRule("提交预点单后等待门店确认");
         dto.setRefundRule("");
         dto.setLimitRule("");
         return dto;
@@ -256,6 +262,7 @@ public class WxGrouponController {
         WxGrouponItemDto dto = new WxGrouponItemDto();
         dto.setId(product.getId());
         dto.setGoodsId(product.getId());
+        dto.setProductId(product.getId());
         dto.setTitle(product.getName());
         dto.setSubtitle(product.getDescription());
         dto.setMerchantId(product.getMerchantId());

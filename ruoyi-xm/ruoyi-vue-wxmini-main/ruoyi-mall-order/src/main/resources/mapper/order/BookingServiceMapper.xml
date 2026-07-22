@@ -11,6 +11,7 @@
         <result property="serviceName" column="service_name"/>
         <result property="serviceImage" column="service_image"/>
         <result property="servicePrice" column="service_price"/>
+        <result property="originalPrice" column="original_price"/>
         <result property="description" column="description"/>
         <result property="stock" column="stock"/>
         <result property="status" column="status"/>
@@ -22,42 +23,41 @@
     </resultMap>
 
     <sql id="selectBookingServiceVo">
-        select id, merchant_id, product_id, service_name, service_image, service_price,
-               description, stock, status, sort, create_time, update_time, remark, del_flag
-        from mall_booking_service
+        select s.id, s.merchant_id, s.product_id, s.service_name, s.service_image,
+               case when s.product_id is not null then p.price else s.service_price end as service_price,
+               case when s.product_id is not null then p.original_price else s.service_price end as original_price,
+               s.description,
+               case when s.product_id is not null then p.stock else s.stock end as stock,
+               s.status, s.sort, s.create_time, s.update_time, s.remark, s.del_flag
+        from mall_booking_service s
+        left join product p on p.id = s.product_id and p.merchant_id = s.merchant_id
     </sql>
 
     <select id="selectBookingServiceById" parameterType="Long" resultMap="BookingServiceResult">
         <include refid="selectBookingServiceVo"/>
-        where id = #{id} and del_flag = '0'
+        where s.id = #{id} and s.del_flag = '0'
     </select>
 
     <select id="selectBookingServiceByProductId" parameterType="Long" resultMap="BookingServiceResult">
         <include refid="selectBookingServiceVo"/>
-        where product_id = #{productId} and del_flag = '0'
-        order by status desc, sort asc, id asc
+        where s.product_id = #{productId} and s.del_flag = '0'
+        order by s.status desc, s.sort asc, s.id asc
         limit 1
     </select>
 
     <select id="selectActiveBookingServiceList" resultMap="BookingServiceResult">
         <include refid="selectBookingServiceVo"/>
         <where>
-            and del_flag = '0'
-            and status = 1
+            and s.del_flag = '0'
+            and s.status = 1
             and (
-                product_id is null
-                or exists (
-                    select 1
-                    from product p
-                    where p.id = mall_booking_service.product_id
-                      and p.status = 1
-                      and p.del_flag = '0'
-                )
+                s.product_id is null
+                or (p.status = 1 and p.del_flag = '0')
             )
-            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
-            <if test="keyword != null and keyword != ''">and service_name like concat('%', #{keyword}, '%')</if>
+            <if test="merchantId != null">and s.merchant_id = #{merchantId}</if>
+            <if test="keyword != null and keyword != ''">and s.service_name like concat('%', #{keyword}, '%')</if>
         </where>
-        order by sort asc, id asc
+        order by s.sort asc, s.id asc
     </select>
 
     <insert id="syncActiveProductBookingServices">
@@ -66,7 +66,7 @@
             description, stock, status, sort, create_time, update_time, remark, del_flag
         )
         select p.merchant_id, p.id, p.name, p.cover_image, p.price,
-               p.description, p.stock, 1, p.sort, now(), now(), '由上架商品自动生成预约服务', '0'
+               p.description, p.stock, 1, p.sort, now(), now(), '由上架商品自动生成预点单服务', '0'
         from product p
         where p.status = 1
           and p.del_flag = '0'
@@ -80,11 +80,13 @@
     </insert>
 
     <select id="selectBookingServiceVersion" resultType="long">
-        select coalesce(unix_timestamp(max(coalesce(update_time, create_time))), 0)
-        from mall_booking_service
+        select coalesce(bit_xor(crc32(concat_ws('|', id, merchant_id, product_id, service_name,
+            service_image, service_price, description, stock, status, sort, remark, del_flag,
+            coalesce(update_time, create_time)))), 0)
+        from mall_booking_service s
         <where>
-            and del_flag = '0'
-            <if test="merchantId != null">and merchant_id = #{merchantId}</if>
+            and s.del_flag = '0'
+            <if test="merchantId != null">and s.merchant_id = #{merchantId}</if>
         </where>
     </select>
 </mapper>

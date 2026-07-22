@@ -290,16 +290,16 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
 
     private MerchantMiniBookingDto updateBookingStatus(String bookingNo, String targetStatus, String... allowedStatuses) {
         if (StringUtils.isBlank(bookingNo)) {
-            throw new IllegalArgumentException("预约单号不能为空");
+            throw new IllegalArgumentException("预点单号不能为空");
         }
         Long merchantId = getMerchantIdFromContext();
         bookingRecordMapper.markExpiredPending(new Date());
         BookingRecord booking = bookingRecordMapper.selectBookingRecordByBookingNo(bookingNo);
         if (booking == null || !merchantId.equals(booking.getMerchantId())) {
-            throw new IllegalArgumentException("预约记录不存在");
+            throw new IllegalArgumentException("预点单记录不存在");
         }
         if (!Arrays.asList(allowedStatuses).contains(booking.getStatus())) {
-            throw new IllegalArgumentException("当前预约状态不可操作");
+            throw new IllegalArgumentException("当前预点单状态不可操作");
         }
         bookingRecordMapper.updateBookingStatus(bookingNo, targetStatus, new Date());
         return convertBookingToDto(bookingRecordMapper.selectBookingRecordByBookingNo(bookingNo));

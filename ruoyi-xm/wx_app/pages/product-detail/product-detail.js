@@ -22,7 +22,18 @@ Page({
 
   onLoad(options) {
     this.setData({ productId: parseInt(options.id, 10) })
+    this.skipNextShowRefresh = true
     this.loadProductDetail()
+  },
+
+  onShow() {
+    if (this.skipNextShowRefresh) {
+      this.skipNextShowRefresh = false
+      return
+    }
+    if (this.data.productId) {
+      this.loadProductDetail()
+    }
   },
 
   formatProduct(product = {}, productConfig = {}) {
@@ -74,8 +85,8 @@ Page({
           ruleList: [
             `有效期：${rawProduct.validPeriod || '购买后有效'}`,
             productConfig.timeRangeRuleText,
-            `是否预约：${product.bookingRequiredText}`,
-            `预约说明：${rawProduct.bookingRule || '无需预约'}`,
+            `是否预点单：${product.bookingRequiredText}`,
+            `预点单说明：${rawProduct.bookingRule || '无需预点单'}`,
             `核销说明：${rawProduct.verifyNotice || '到店出示核销码即可使用'}`,
             `限购说明：${rawProduct.limitRule || '不限购'}`,
             `退款规则：${rawProduct.refundRule || '过期自动退款'}`

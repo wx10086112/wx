@@ -194,8 +194,8 @@ public class WxTemplateController {
         productDetail.put("stockLabel", "库存");
         productDetail.put("validDaysLabel", "有效期");
         productDetail.put("timeRangeRuleText", "购买后有效期内可使用");
-        productDetail.put("bookingYesText", "需要预约");
-        productDetail.put("bookingNoText", "无需预约");
+        productDetail.put("bookingYesText", "需要预点单");
+        productDetail.put("bookingNoText", "无需预点单");
         productDetail.put("collectText", "收藏");
         productDetail.put("collectedText", "已收藏");
         productDetail.put("shareText", "分享");

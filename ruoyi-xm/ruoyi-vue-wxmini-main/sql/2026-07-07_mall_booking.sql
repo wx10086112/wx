@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS `mall_booking` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '预约ID',
-  `booking_no` varchar(64) NOT NULL COMMENT '预约单号',
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '预点单ID',
+  `booking_no` varchar(64) NOT NULL COMMENT '预点单号',
   `merchant_id` bigint(20) NOT NULL COMMENT '商家ID',
   `store_id` bigint(20) DEFAULT NULL COMMENT '门店ID',
   `user_id` bigint(20) NOT NULL COMMENT '用户ID',
@@ -8,11 +8,11 @@ CREATE TABLE IF NOT EXISTS `mall_booking` (
   `product_name` varchar(200) NOT NULL COMMENT '套餐名称',
   `product_image` varchar(500) DEFAULT NULL COMMENT '套餐图片',
   `product_price` decimal(10,2) DEFAULT NULL COMMENT '套餐价格',
-  `booking_time` datetime NOT NULL COMMENT '预约到店时间',
+  `booking_time` datetime NOT NULL COMMENT '预点单到店时间',
   `contact_name` varchar(80) DEFAULT NULL COMMENT '联系人',
   `contact_phone` varchar(32) DEFAULT NULL COMMENT '联系电话',
-  `people_count` int(11) DEFAULT 1 COMMENT '预约人数',
-  `status` varchar(32) NOT NULL DEFAULT 'PENDING' COMMENT '预约状态 PENDING待处理 CONFIRMED已确认 COMPLETED已完成 CANCELLED已取消 EXPIRED已过期',
+  `people_count` int(11) DEFAULT 1 COMMENT '预点单人数',
+  `status` varchar(32) NOT NULL DEFAULT 'PENDING' COMMENT '预点单状态 PENDING待处理 CONFIRMED已确认 COMPLETED已完成 CANCELLED已取消 EXPIRED已过期',
   `confirm_time` datetime DEFAULT NULL COMMENT '确认时间',
   `complete_time` datetime DEFAULT NULL COMMENT '完成时间',
   `cancel_time` datetime DEFAULT NULL COMMENT '取消时间',
@@ -26,4 +26,4 @@ CREATE TABLE IF NOT EXISTS `mall_booking` (
   KEY `idx_mall_booking_user_status` (`user_id`, `status`, `create_time`),
   KEY `idx_mall_booking_merchant_status` (`merchant_id`, `status`, `booking_time`),
   KEY `idx_mall_booking_product` (`product_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='套餐预约记录表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='套餐预点单记录表';

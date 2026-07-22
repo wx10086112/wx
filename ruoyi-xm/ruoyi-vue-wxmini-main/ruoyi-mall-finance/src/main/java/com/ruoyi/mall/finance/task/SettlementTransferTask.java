@@ -2,6 +2,7 @@ package com.ruoyi.mall.finance.task;
 
 import com.ruoyi.mall.finance.domain.MerchantSettlementRecord;
 import com.ruoyi.mall.finance.domain.DistributorSettlementRecord;
+import com.ruoyi.mall.finance.config.WechatTransferSafetyGuard;
 import com.ruoyi.mall.finance.service.IDistributorSettlementRecordService;
 import com.ruoyi.mall.finance.service.IMerchantSettlementRecordService;
 import com.ruoyi.mall.finance.service.IPlatformTransferService;
@@ -29,6 +30,8 @@ public class SettlementTransferTask {
     private IDistributorSettlementRecordService distributorSettlementService;
     @Resource
     private IPlatformTransferService platformTransferService;
+    @Resource
+    private WechatTransferSafetyGuard transferSafetyGuard;
     @Value("${wx.pay.transfer-task-enabled:false}")
     private boolean transferTaskEnabled;
 
@@ -40,6 +43,7 @@ public class SettlementTransferTask {
         if (!transferTaskEnabled) {
             return;
         }
+        transferSafetyGuard.ensureTransferAllowed();
         log.info("T+1 自动打款任务开始执行");
         try {
             List<MerchantSettlementRecord> waitingList = settlementService.selectWaitingTransfer(50);

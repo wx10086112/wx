@@ -44,7 +44,7 @@ Page({
       })
       .catch((err = {}) => {
         this.setData({ bookingList: [] })
-        util.showToast(err.message || '预约列表加载失败')
+        util.showToast(err.message || '预点单列表加载失败')
       })
       .finally(() => {
         this.setData({ loading: false })
@@ -79,22 +79,22 @@ Page({
   },
 
   confirmBooking(e) {
-    this.updateBooking(e.currentTarget.dataset.no, api.confirmMerchantBooking, '预约已确认')
+    this.updateBooking(e.currentTarget.dataset.no, api.confirmMerchantBooking, '预点单已确认')
   },
 
   completeBooking(e) {
-    this.updateBooking(e.currentTarget.dataset.no, api.completeMerchantBooking, '预约已完成')
+    this.updateBooking(e.currentTarget.dataset.no, api.completeMerchantBooking, '预点单已完成')
   },
 
   cancelBooking(e) {
     const bookingNo = e.currentTarget.dataset.no
     wx.showModal({
-      title: '取消预约',
-      content: '确认取消这条预约吗？',
+      title: '取消预点单',
+      content: '确认取消这条预点单吗？',
       confirmText: '确认取消',
       success: (res) => {
         if (!res.confirm) return
-        this.updateBooking(bookingNo, api.cancelMerchantBooking, '预约已取消')
+        this.updateBooking(bookingNo, api.cancelMerchantBooking, '预点单已取消')
       }
     })
   },
@@ -107,7 +107,7 @@ Page({
         this.loadData()
       })
       .catch((err = {}) => {
-        util.showToast(err.message || '预约操作失败，请重试')
+        util.showToast(err.message || '预点单操作失败，请重试')
       })
   },
 

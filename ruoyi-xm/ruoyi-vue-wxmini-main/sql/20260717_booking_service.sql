@@ -1,13 +1,13 @@
--- 独立预约服务表：前端接口保持 /wxmini/groupon/list 不变，后端优先从本表返回预约服务。
+-- 独立预点单服务表：前端接口保持 /wxmini/groupon/list 不变，后端优先从本表返回预点单服务。
 CREATE TABLE IF NOT EXISTS `mall_booking_service` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '预约服务ID',
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '预点单服务ID',
   `merchant_id` BIGINT NOT NULL COMMENT '商家ID',
   `product_id` BIGINT DEFAULT NULL COMMENT '关联商品ID，兼容现有前端productId',
   `service_name` VARCHAR(120) NOT NULL COMMENT '服务名称',
   `service_image` VARCHAR(500) DEFAULT NULL COMMENT '服务图片',
   `service_price` DECIMAL(10,2) DEFAULT 0.00 COMMENT '参考价格',
   `description` VARCHAR(500) DEFAULT NULL COMMENT '服务描述',
-  `stock` INT DEFAULT 999999 COMMENT '可预约余量',
+  `stock` INT DEFAULT 999999 COMMENT '可预点单余量',
   `status` TINYINT DEFAULT 1 COMMENT '状态 1启用 0停用',
   `sort` INT DEFAULT 0 COMMENT '排序',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS `mall_booking_service` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_booking_service_product` (`product_id`),
   KEY `idx_booking_service_merchant_status` (`merchant_id`, `status`, `del_flag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='预约服务表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='预点单服务表';
 
 SET @has_booking_service_id := (
   SELECT COUNT(*)
@@ -28,7 +28,7 @@ SET @has_booking_service_id := (
 );
 SET @ddl := IF(
   @has_booking_service_id = 0,
-  'ALTER TABLE mall_booking ADD COLUMN booking_service_id BIGINT DEFAULT NULL COMMENT ''预约服务ID'' AFTER user_id',
+  'ALTER TABLE mall_booking ADD COLUMN booking_service_id BIGINT DEFAULT NULL COMMENT ''预点单服务ID'' AFTER user_id',
   'SELECT 1'
 );
 PREPARE stmt FROM @ddl;
@@ -51,7 +51,7 @@ PREPARE stmt FROM @ddl;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
--- 用现有上架商品初始化预约服务，名称会去掉审核敏感的团购语义。
+-- 用现有上架商品初始化预点单服务，名称会去掉审核敏感的团购语义。
 INSERT INTO mall_booking_service (
   merchant_id,
   product_id,
@@ -94,7 +94,7 @@ ON DUPLICATE KEY UPDATE
   update_time = NOW(),
   del_flag = '0';
 
--- 回填历史预约记录的服务关联；只按 product_id 能唯一命中的数据回填，不覆盖已有 booking_service_id。
+-- 回填历史预点单记录的服务关联；只按 product_id 能唯一命中的数据回填，不覆盖已有 booking_service_id。
 UPDATE mall_booking b
 JOIN mall_booking_service s
   ON s.product_id = b.product_id

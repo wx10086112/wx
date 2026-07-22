@@ -4,6 +4,7 @@ import com.github.binarywang.wxpay.bean.notify.WxPayTransferBatchesNotifyV3Resul
 import com.ruoyi.mall.finance.domain.DistributorSettlementRecord;
 import com.ruoyi.mall.finance.domain.MerchantSettlementRecord;
 import com.ruoyi.mall.finance.domain.PlatformTransferRecord;
+import com.ruoyi.mall.finance.config.WechatTransferSafetyGuard;
 import com.ruoyi.mall.finance.mapper.PlatformTransferRecordMapper;
 import com.ruoyi.mall.finance.service.IDistributorSettlementRecordService;
 import com.ruoyi.mall.finance.service.IMerchantSettlementRecordService;
@@ -37,8 +38,8 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
 
     @Value("${wx.pay.stub-enabled:false}")
     private boolean stubEnabled;
-    @Value("${wx.pay.transfer-enabled:false}")
-    private boolean transferEnabled;
+    @Autowired
+    private WechatTransferSafetyGuard transferSafetyGuard;
 
     @Autowired
     private PlatformTransferRecordMapper transferMapper;
@@ -537,9 +538,7 @@ public class PlatformTransferServiceImpl implements IPlatformTransferService {
     }
 
     private void ensureTransferEnabled() {
-        if (!transferEnabled) {
-            throw new IllegalStateException("微信转账功能未开启，请配置 wx.pay.transfer-enabled=true 后再发起转账");
-        }
+        transferSafetyGuard.ensureTransferAllowed();
     }
 
     /**

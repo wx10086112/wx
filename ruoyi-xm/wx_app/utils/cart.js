@@ -49,8 +49,10 @@ const normalizeCart = (cart = {}) => {
 const normalizeItem = (item = {}) => {
   const price = Number(item.price || 0)
   const quantity = Math.max(1, Number(item.quantity || 1))
+  const entryId = item.entryId || item.id || item.goodsId || item.productId
   return {
-    productId: item.productId || item.id || item.goodsId,
+    entryId,
+    productId: item.productId || entryId,
     merchantId: item.merchantId || null,
     merchantName: item.merchantName || '',
     title: item.title || item.name || item.productName || '商品',
@@ -93,7 +95,10 @@ const addItem = (product = {}, quantity = 1, options = {}) => {
   nextCart.merchantName = item.merchantName || cart.merchantName
   const existing = nextCart.items.find((cartItem) => cartItem.productId === item.productId)
   if (existing) {
-    existing.quantity = Math.min(existing.quantity + item.quantity, existing.stock || existing.quantity + item.quantity)
+    const quantity = existing.quantity + item.quantity
+    Object.assign(existing, item, {
+      quantity: item.stock > 0 ? Math.min(quantity, item.stock) : quantity
+    })
     existing.subtotalText = ((existing.price * existing.quantity) / 100).toFixed(2)
   } else {
     nextCart.items.push(item)

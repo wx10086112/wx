@@ -6,7 +6,7 @@ public class WxBookingCreateRequestDto {
 
     @NotNull(message = "商品不能为空")
     private Long productId;
-    @NotNull(message = "预约时间不能为空")
+    @NotNull(message = "预点单时间不能为空")
     private Long bookingTime;
     private String contactName;
     private String contactPhone;

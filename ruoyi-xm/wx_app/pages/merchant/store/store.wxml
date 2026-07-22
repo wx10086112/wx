@@ -34,7 +34,7 @@
       <switch checked="{{form.supportRefund}}" color="#2D8FE8" bindchange="handleSwitchChange" data-key="supportRefund" />
     </view>
     <view class="switch-row">
-      <text class="field-label">支持预约</text>
+      <text class="field-label">支持预点单</text>
       <switch checked="{{form.supportBooking}}" color="#2D8FE8" bindchange="handleSwitchChange" data-key="supportBooking" />
     </view>
     <button class="primary-btn save-btn" bindtap="saveStore">保存门店信息</button>

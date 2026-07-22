@@ -177,9 +177,9 @@
             cancel_time = #{expireTime},
             update_time = #{expireTime},
             remark = case
-                when remark is null or remark = '' then '超过预约时间1小时未到店，系统自动取消'
+                when remark is null or remark = '' then '超过预点单时间1小时未到店，系统自动取消'
                 when remark like '%系统自动取消%' then remark
-                else concat(remark, '；超过预约时间1小时未到店，系统自动取消')
+                else concat(remark, '；超过预点单时间1小时未到店，系统自动取消')
             end
         where user_id = #{userId}
           and status in ('PENDING', 'CONFIRMED')
@@ -193,9 +193,9 @@
             cancel_time = #{expireTime},
             update_time = #{expireTime},
             remark = case
-                when remark is null or remark = '' then '超过预约时间1小时未到店，系统自动取消'
+                when remark is null or remark = '' then '超过预点单时间1小时未到店，系统自动取消'
                 when remark like '%系统自动取消%' then remark
-                else concat(remark, '；超过预约时间1小时未到店，系统自动取消')
+                else concat(remark, '；超过预点单时间1小时未到店，系统自动取消')
             end
         where status in ('PENDING', 'CONFIRMED')
           and date_add(booking_time, interval 1 hour) &lt; #{expireTime}

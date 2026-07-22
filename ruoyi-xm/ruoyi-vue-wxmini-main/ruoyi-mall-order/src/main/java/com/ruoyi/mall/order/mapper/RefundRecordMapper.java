@@ -30,7 +30,18 @@ public interface RefundRecordMapper {
 
     int markRefundSucceeded(@Param("id") Long id, @Param("refundTime") Date refundTime);
 
-    int markRefundAbnormal(@Param("id") Long id);
+    int markRefundAbnormalWithReason(@Param("id") Long id, @Param("reason") String reason);
+
+    List<RefundRecord> selectRetryableApprovedRefunds(@Param("limit") int limit);
+
+    int claimApprovedRefundAttempt(@Param("id") Long id, @Param("leaseUntil") Date leaseUntil);
+
+    int updateRefundNoForApproved(@Param("id") Long id, @Param("refundNo") String refundNo);
+
+    int scheduleRefundRetry(@Param("id") Long id,
+                            @Param("nextRetryTime") Date nextRetryTime,
+                            @Param("reason") String reason,
+                            @Param("maxRetryAttempts") int maxRetryAttempts);
 
     @Select("SELECT IFNULL(SUM(refund_amount), 0) FROM refund_record WHERE status = 2")
     BigDecimal sumRefundTotal();

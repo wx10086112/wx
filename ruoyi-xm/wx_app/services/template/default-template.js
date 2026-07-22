@@ -86,8 +86,8 @@ const defaultTemplateConfig = {
     stockLabel: '库存',
     validDaysLabel: '有效期',
     timeRangeRuleText: '使用时间段：以门店营业时间为准',
-    bookingYesText: '需要预约',
-    bookingNoText: '无需预约',
+    bookingYesText: '需要预点单',
+    bookingNoText: '无需预点单',
     shareText: '分享',
     buyButtonText: '立即抢购'
   },

@@ -60,6 +60,11 @@ wx:
     profit-sharing-platform-mch-id: ${WX_PAY_PROFIT_SHARING_PLATFORM_MCH_ID:}
     transfer-enabled: ${WX_PAY_TRANSFER_ENABLED:false}
     transfer-task-enabled: ${WX_PAY_TRANSFER_TASK_ENABLED:false}
+    transfer-live-confirmation: ${WX_PAY_TRANSFER_LIVE_CONFIRMATION:}
+    refund-retry-max-attempts: ${WX_PAY_REFUND_RETRY_MAX_ATTEMPTS:6}
+    refund-retry-base-delay-ms: ${WX_PAY_REFUND_RETRY_BASE_DELAY_MS:300000}
+    refund-retry-max-delay-ms: ${WX_PAY_REFUND_RETRY_MAX_DELAY_MS:21600000}
+    refund-retry-attempt-lease-ms: ${WX_PAY_REFUND_RETRY_ATTEMPT_LEASE_MS:900000}
     notify-url: ${WX_PAY_NOTIFY_URL}
     refund-notify-url: ${WX_PAY_REFUND_NOTIFY_URL}
     appId: ${WX_PAY_APP_ID:}

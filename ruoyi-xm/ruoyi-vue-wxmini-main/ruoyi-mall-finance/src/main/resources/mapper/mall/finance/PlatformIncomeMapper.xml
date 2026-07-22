@@ -70,6 +70,7 @@
             <if test="commission != null">#{commission},</if>
             '0',
         </trim>
+        on duplicate key update id = id
     </insert>
 
     <update id="updatePlatformIncome" parameterType="com.ruoyi.mall.finance.domain.PlatformIncome">

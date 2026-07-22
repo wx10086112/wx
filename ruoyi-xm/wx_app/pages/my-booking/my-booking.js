@@ -114,11 +114,11 @@ Page({
 
   cancelBooking(e) {
     const bookingNo = e.currentTarget.dataset.no
-    util.showModal('取消预约', '确认取消这条预约记录吗？').then((confirm) => {
+    util.showModal('取消预点单', '确认取消这条预点单记录吗？').then((confirm) => {
       if (!confirm) return
       bookingApi.cancelBooking(bookingNo)
         .then(() => {
-          util.showToast('预约已取消', 'success')
+          util.showToast('预点单已取消', 'success')
           this.loadBookings()
         })
         .catch((err) => {

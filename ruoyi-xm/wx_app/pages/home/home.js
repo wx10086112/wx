@@ -207,7 +207,7 @@ Page({
       distance: m.distance || '',
       businessStatus,
       businessStatusText: businessStatus ? '营业中' : '休息中',
-      bookingText: m.supportBooking === false ? '到店即用' : '可预约',
+      bookingText: m.supportBooking === false ? '到店即用' : '可预点单',
       displayTags: tags.filter((tag) => !['营业中', '休息中'].includes(tag)).slice(0, 3)
     }
   },

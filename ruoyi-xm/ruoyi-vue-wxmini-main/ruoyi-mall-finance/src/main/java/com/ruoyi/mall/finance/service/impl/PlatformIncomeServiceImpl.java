@@ -17,8 +17,6 @@ public class PlatformIncomeServiceImpl implements IPlatformIncomeService {
 
     private static final Logger log = LoggerFactory.getLogger(PlatformIncomeServiceImpl.class);
 
-    private static final BigDecimal DEFAULT_COMMISSION_RATE = new BigDecimal("0.10");
-
     @Resource
     private PlatformIncomeMapper platformIncomeMapper;
 
@@ -47,11 +45,20 @@ public class PlatformIncomeServiceImpl implements IPlatformIncomeService {
         income.setMerchantId(merchantId);
         income.setOrderNo(orderNo);
         income.setOrderAmount(orderAmount);
-        income.setCommissionRate(DEFAULT_COMMISSION_RATE);
+        income.setCommissionRate(calculateCommissionRate(orderAmount, commission));
         income.setCommission(commission.setScale(2, RoundingMode.DOWN));
 
         platformIncomeMapper.insertPlatformIncome(income);
         log.info("创建平台收入记录: orderNo={}, merchantId={}, commission={}", orderNo, merchantId, commission);
+    }
+
+    private BigDecimal calculateCommissionRate(BigDecimal orderAmount, BigDecimal commission) {
+        if (orderAmount == null || orderAmount.compareTo(BigDecimal.ZERO) <= 0
+                || commission == null || commission.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.DOWN);
+        }
+        return commission.multiply(new BigDecimal("100"))
+                .divide(orderAmount, 2, RoundingMode.HALF_UP);
     }
 
     @Override

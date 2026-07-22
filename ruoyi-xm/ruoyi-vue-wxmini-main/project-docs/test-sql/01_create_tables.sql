@@ -575,11 +575,15 @@ CREATE TABLE `refund_record` (
   `refund_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT '退款金额',
   `refund_reason` VARCHAR(255) DEFAULT '' COMMENT '退款原因',
   `refund_type` TINYINT DEFAULT 1 COMMENT '退款类型(1用户申请 2平台操作 3超时自动)',
-  `status` TINYINT DEFAULT 0 COMMENT '状态(0待审核 1审核通过 2退款中 3已退款 4拒绝)',
+  `status` TINYINT NOT NULL DEFAULT 1 COMMENT '1待审核 2已通过待微信退款 3已拒绝 4已退款 5退款异常',
   `audit_time` DATETIME DEFAULT NULL COMMENT '审核时间',
   `refund_time` DATETIME DEFAULT NULL COMMENT '退款完成时间',
   `reject_reason` VARCHAR(255) DEFAULT '' COMMENT '拒绝原因',
   `operator` VARCHAR(64) DEFAULT '' COMMENT '操作人',
+  `retry_count` INT NOT NULL DEFAULT 0 COMMENT '微信退款重试次数',
+  `last_retry_time` DATETIME DEFAULT NULL COMMENT '最近一次退款重试时间',
+  `next_retry_time` DATETIME DEFAULT NULL COMMENT '下次允许退款重试时间',
+  `last_retry_reason` VARCHAR(500) DEFAULT NULL COMMENT '最近一次退款重试失败原因',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '申请时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
@@ -588,7 +592,8 @@ CREATE TABLE `refund_record` (
   KEY `idx_order_no` (`order_no`),
   KEY `idx_merchant_id` (`merchant_id`),
   KEY `idx_user_id` (`user_id`),
-  KEY `idx_status` (`status`)
+  KEY `idx_status` (`status`),
+  KEY `idx_refund_retry` (`status`, `next_retry_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='退款记录表';
 
 -- 25. 核销记录表

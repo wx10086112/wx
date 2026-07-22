@@ -15,6 +15,11 @@ wx:
     profit-sharing-platform-mch-id:
     transfer-enabled: false
     transfer-task-enabled: false
+    transfer-live-confirmation:
+    refund-retry-max-attempts: 6
+    refund-retry-base-delay-ms: 300000
+    refund-retry-max-delay-ms: 21600000
+    refund-retry-attempt-lease-ms: 900000
 
 wxmini:
   login:

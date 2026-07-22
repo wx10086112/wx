@@ -67,7 +67,7 @@
       },
       {
         "pagePath": "pages/booking/booking",
-        "text": "预约",
+        "text": "预点单",
         "iconPath": "assets/tabbar/order.png",
         "selectedIconPath": "assets/tabbar/order-active.png"
       },

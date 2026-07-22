@@ -39,6 +39,8 @@ public interface MallOrderMapper {
 
     int markOrderRefunded(@Param("orderNo") String orderNo, @Param("refundTime") Date refundTime);
 
+    List<MallOrder> selectCompletedOrdersMissingSettlement(@Param("limit") int limit);
+
     int deleteMallOrderById(Long id);
 
     int deleteMallOrderByIds(Long[] ids);

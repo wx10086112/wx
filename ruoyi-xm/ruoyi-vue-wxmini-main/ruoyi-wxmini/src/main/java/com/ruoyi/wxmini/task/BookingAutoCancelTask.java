@@ -20,7 +20,7 @@ public class BookingAutoCancelTask {
     public void cancelOverdueBookings() {
         int count = bookingRecordService.markExpiredPending();
         if (count > 0) {
-            log.info("自动取消超时预约 {} 条", count);
+            log.info("自动取消超时预点单 {} 条", count);
         }
     }
 }

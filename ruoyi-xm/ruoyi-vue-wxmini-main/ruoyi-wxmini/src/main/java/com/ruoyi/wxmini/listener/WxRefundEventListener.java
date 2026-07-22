@@ -37,6 +37,17 @@ public class WxRefundEventListener {
 
     @Value("${wx.pay.refund-notify-url}")
     private String refundNotifyUrl;
+    @Value("${wx.pay.refund-retry-max-attempts:6}")
+    private int refundRetryMaxAttempts;
+    @Value("${wx.pay.refund-retry-base-delay-ms:300000}")
+    private long refundRetryBaseDelayMs;
+    @Value("${wx.pay.refund-retry-max-delay-ms:21600000}")
+    private long refundRetryMaxDelayMs;
+    @Value("${wx.pay.refund-retry-attempt-lease-ms:900000}")
+    private long refundRetryAttemptLeaseMs;
+
+    private static final int RETRY_BATCH_SIZE = 20;
+    private static final int MAX_RETRY_REASON_LENGTH = 500;
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private WxPayService wxPayService;
@@ -63,9 +74,7 @@ public class WxRefundEventListener {
         if (wxPayService == null) {
             return;
         }
-        RefundRecord query = new RefundRecord();
-        query.setStatus(RefundRecord.STATUS_APPROVED);
-        List<RefundRecord> pendingRefunds = refundRecordMapper.selectRefundRecordList(query);
+        List<RefundRecord> pendingRefunds = refundRecordMapper.selectRetryableApprovedRefunds(RETRY_BATCH_SIZE);
         if (pendingRefunds == null || pendingRefunds.isEmpty()) {
             return;
         }
@@ -77,7 +86,7 @@ public class WxRefundEventListener {
             }
             requestWxRefund(refundRecord.getOrderNo(), refundRecord.getId(), true);
             handled++;
-            if (handled >= 20) {
+            if (handled >= RETRY_BATCH_SIZE) {
                 break;
             }
         }
@@ -103,17 +112,23 @@ public class WxRefundEventListener {
                         refundRecordId, refundRecord.getStatus());
                 return;
             }
+            Date attemptLeaseUntil = new Date(System.currentTimeMillis() + normalizedAttemptLeaseMillis());
+            if (refundRecordMapper.claimApprovedRefundAttempt(refundRecord.getId(), attemptLeaseUntil) == 0) {
+                log.info("退款已由其他执行方处理，跳过本次尝试: refundId={}", refundRecordId);
+                return;
+            }
 
             MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(orderNo);
             if (order == null) {
                 log.error("原订单不存在: orderNo={}", orderNo);
+                markRefundAbnormal(refundRecord, "Original order not found");
                 return;
             }
 
             Merchant merchant = merchantService.selectMerchantById(order.getMerchantId());
             if (merchant == null || StringUtils.isBlank(merchant.getEffectiveMerchantWxMchId())) {
                 log.error("sub_mchid is missing for refund: orderNo={}, merchantId={}", orderNo, order.getMerchantId());
-                markRefundAbnormal(refundRecord);
+                markRefundAbnormal(refundRecord, "Missing merchant sub_mchid");
                 return;
             }
 
@@ -129,7 +144,7 @@ public class WxRefundEventListener {
             if (refundAmountFen <= 0 || refundAmountFen > totalAmountFen) {
                 log.error("退款金额非法: orderNo={}, totalFen={}, refundFen={}",
                         orderNo, totalAmountFen, refundAmountFen);
-                markRefundAbnormal(refundRecord);
+                markRefundAbnormal(refundRecord, "Refund amount is invalid");
                 return;
             }
 
@@ -148,19 +163,28 @@ public class WxRefundEventListener {
                     orderNo, result.getOutRefundNo(), result.getStatus());
 
             if (StringUtils.isNotBlank(result.getOutRefundNo())) {
-                refundRecord.setRefundNo(result.getOutRefundNo());
-                refundRecordMapper.updateRefundRecord(refundRecord);
+                refundRecordMapper.updateRefundNoForApproved(refundRecord.getId(), result.getOutRefundNo());
             }
             if ("SUCCESS".equals(result.getStatus())) {
                 completeRefund(order, refundRecord, result.getOutRefundNo());
             } else if ("ABNORMAL".equals(result.getStatus()) || "CLOSED".equals(result.getStatus())) {
-                markRefundAbnormal(refundRecord);
+                markRefundAbnormal(refundRecord, "WeChat refund status: " + result.getStatus());
+            } else {
+                scheduleRefundRetry(refundRecord, "WeChat refund status: "
+                        + StringUtils.defaultIfBlank(result.getStatus(), "UNKNOWN"));
             }
-        } catch (Exception e) {
-            log.error("微信退款API调用失败: orderNo={}, error={}", orderNo, e.getMessage(), e);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.error("微信退款请求参数或配置无效: orderNo={}, error={}", orderNo, e.getMessage(), e);
             if (refundRecord != null && refundRecord.getStatus() != null
                     && refundRecord.getStatus() == RefundRecord.STATUS_APPROVED) {
-                markRefundAbnormal(refundRecord);
+                markRefundAbnormal(refundRecord, "Invalid refund request or configuration: " + e.getMessage());
+            }
+        } catch (Exception e) {
+            log.error("微信退款API暂时调用失败，将按退避重试: orderNo={}, error={}",
+                    orderNo, e.getMessage(), e);
+            if (refundRecord != null && refundRecord.getStatus() != null
+                    && refundRecord.getStatus() == RefundRecord.STATUS_APPROVED) {
+                scheduleRefundRetry(refundRecord, "WeChat refund request failed: " + e.getMessage());
             }
         }
     }
@@ -193,9 +217,50 @@ public class WxRefundEventListener {
         return amount.movePointRight(2).setScale(0, RoundingMode.UNNECESSARY).intValueExact();
     }
 
-    private void markRefundAbnormal(RefundRecord refundRecord) {
-        refundRecord.setStatus(RefundRecord.STATUS_ABNORMAL);
-        refundRecordMapper.updateRefundRecord(refundRecord);
+    private void markRefundAbnormal(RefundRecord refundRecord, String reason) {
+        refundRecordMapper.markRefundAbnormalWithReason(refundRecord.getId(), abbreviateReason(reason));
+    }
+
+    private void scheduleRefundRetry(RefundRecord refundRecord, String reason) {
+        int retryCount = refundRecord.getRetryCount() == null ? 0 : refundRecord.getRetryCount();
+        int nextAttempt = retryCount + 1;
+        Date nextRetryTime = nextAttempt >= normalizedMaxRetryAttempts()
+                ? null : new Date(System.currentTimeMillis() + calculateRetryDelayMillis(nextAttempt));
+        int updated = refundRecordMapper.scheduleRefundRetry(refundRecord.getId(), nextRetryTime,
+                abbreviateReason(reason), normalizedMaxRetryAttempts());
+        if (updated > 0) {
+            if (nextRetryTime == null) {
+                log.error("Refund retry limit reached and marked abnormal: refundId={}, attempts={}",
+                        refundRecord.getId(), nextAttempt);
+            } else {
+                log.warn("Refund retry scheduled: refundId={}, attempt={}, nextRetryTime={}",
+                        refundRecord.getId(), nextAttempt, nextRetryTime);
+            }
+        }
+    }
+
+    private int normalizedMaxRetryAttempts() {
+        return Math.max(1, refundRetryMaxAttempts);
+    }
+
+    private long calculateRetryDelayMillis(int attempt) {
+        long baseDelay = Math.max(1000L, refundRetryBaseDelayMs);
+        long maxDelay = Math.max(baseDelay, refundRetryMaxDelayMs);
+        long delay = baseDelay;
+        for (int i = 1; i < attempt && delay < maxDelay; i++) {
+            delay = Math.min(maxDelay, delay > Long.MAX_VALUE / 2 ? maxDelay : delay * 2);
+        }
+        return delay;
+    }
+
+    private long normalizedAttemptLeaseMillis() {
+        return Math.max(1000L, refundRetryAttemptLeaseMs);
+    }
+
+    private String abbreviateReason(String reason) {
+        String normalized = StringUtils.defaultIfBlank(reason, "Unknown refund retry failure").trim();
+        return normalized.length() <= MAX_RETRY_REASON_LENGTH
+                ? normalized : normalized.substring(0, MAX_RETRY_REASON_LENGTH);
     }
 
     private void validateNotifyUrl(String notifyUrl, String label) {

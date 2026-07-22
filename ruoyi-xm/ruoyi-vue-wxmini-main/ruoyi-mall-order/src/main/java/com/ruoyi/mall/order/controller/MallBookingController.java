@@ -78,22 +78,22 @@ public class MallBookingController extends BaseController {
             return denied;
         }
         if (!Arrays.asList(allowedStatuses).contains(record.getStatus())) {
-            return error("当前预约状态不可操作");
+            return error("当前预点单状态不可操作");
         }
         return toAjax(bookingRecordService.updateBookingStatus(record.getBookingNo(), targetStatus));
     }
 
     private AjaxResult checkBookingAccess(BookingRecord record) {
         if (record == null) {
-            return error("预约记录不存在");
+            return error("预点单记录不存在");
         }
         Long effMerchantId = MallDataScopeHelper.currentEffectiveMerchantId();
         if (effMerchantId != null && !effMerchantId.equals(record.getMerchantId())) {
-            return error("无权限查看该预约记录");
+            return error("无权限查看该预点单记录");
         }
         Long effDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
         if (effDistributorId != null && !effDistributorId.equals(record.getDistributorId())) {
-            return error("无权限查看该预约记录");
+            return error("无权限查看该预点单记录");
         }
         return null;
     }

@@ -1,22 +1,23 @@
 package com.ruoyi.mall.finance.listener;
 
 import com.ruoyi.mall.finance.domain.OrderProfitLedger;
-import com.ruoyi.mall.finance.service.IDistributorSettlementRecordService;
-import com.ruoyi.mall.finance.service.IMerchantSettlementRecordService;
-import com.ruoyi.mall.finance.service.IOrderProfitLedgerService;
-import com.ruoyi.mall.finance.service.IPlatformIncomeService;
 import com.ruoyi.mall.finance.service.IWechatProfitSharingService;
-import com.ruoyi.mall.merchant.domain.Merchant;
-import com.ruoyi.mall.merchant.service.IMerchantService;
+import com.ruoyi.mall.finance.service.impl.OrderSettlementServiceImpl;
+import com.ruoyi.mall.order.domain.MallOrder;
+import com.ruoyi.mall.order.domain.OrderItem;
 import com.ruoyi.mall.order.event.OrderCompletedEvent;
+import com.ruoyi.mall.order.mapper.MallOrderMapper;
+import com.ruoyi.mall.order.mapper.OrderItemMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
+import java.util.List;
 
 @Component
 public class SettlementEventListener {
@@ -24,70 +25,55 @@ public class SettlementEventListener {
     private static final Logger log = LoggerFactory.getLogger(SettlementEventListener.class);
 
     @Resource
-    private IMerchantSettlementRecordService settlementService;
-    @Resource
-    private IOrderProfitLedgerService profitLedgerService;
-    @Resource
-    private IDistributorSettlementRecordService distributorSettlementService;
-    @Resource
-    private IMerchantService merchantService;
-    @Resource
-    private IPlatformIncomeService platformIncomeService;
+    private OrderSettlementServiceImpl orderSettlementService;
     @Resource
     private IWechatProfitSharingService wechatProfitSharingService;
+    @Resource
+    private MallOrderMapper mallOrderMapper;
+    @Resource
+    private OrderItemMapper orderItemMapper;
 
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onOrderCompleted(OrderCompletedEvent event) {
-        String orderNo = event.getOrderNo();
-        Long merchantId = event.getMerchantId();
-        Long storeId = event.getStoreId();
-        BigDecimal payAmount = event.getPayAmount();
-        String title = event.getTitle();
+        processSettlement(event, false);
+    }
 
-        try {
-            Long distributorId = event.getDistributorId();
-            if (distributorId == null) {
-                try {
-                    Merchant merchant = merchantService.selectMerchantById(merchantId);
-                    if (merchant != null) {
-                        distributorId = merchant.getDistributorId();
-                    }
-                } catch (Exception e) {
-                    log.warn("查询商家 {} 分销商失败: {}", merchantId, e.getMessage());
-                }
-            }
-
-            profitLedgerService.createLedger(orderNo, merchantId, distributorId, payAmount);
-
-            OrderProfitLedger ledger = profitLedgerService.selectByOrderNo(orderNo);
-            if (ledger != null && ledger.getPlatformAmount() != null
-                    && ledger.getPlatformAmount().compareTo(BigDecimal.ZERO) > 0) {
-                platformIncomeService.createIncome(orderNo, merchantId, payAmount, ledger.getPlatformAmount());
-            }
-
-            if (ledger != null) {
-                settlementService.createSettlementForOrder(orderNo, merchantId, storeId, ledger.getPayAmount(),
-                        ledger.getMerchantAmount(), ledger.getPlatformAmount(), title);
-            } else {
-                BigDecimal merchantAmount = payAmount != null ? payAmount : BigDecimal.ZERO;
-                settlementService.createSettlementForOrder(orderNo, merchantId, storeId, payAmount,
-                        merchantAmount, BigDecimal.ZERO, title);
-            }
-
-            if (distributorId != null && ledger != null
-                    && ledger.getDistributorAmount().compareTo(BigDecimal.ZERO) > 0) {
-                distributorSettlementService.createSettlementForOrder(orderNo, merchantId, distributorId,
-                        ledger.getDistributorAmount(), ledger.getDistributorRate());
-            }
-
-            if (ledger != null) {
-                wechatProfitSharingService.processOrderProfitSharing(orderNo);
-            }
-
-            log.info("订单 {} 三方结算记录生成完成: merchant={}, distributor={}", orderNo, merchantId, distributorId);
-        } catch (Exception e) {
-            log.error("订单 {} 生成结算记录失败: {}", orderNo, e.getMessage(), e);
+    @Scheduled(initialDelayString = "${mall.settlement-retry-initial-delay-ms:180000}",
+            fixedDelayString = "${mall.settlement-retry-fixed-delay-ms:300000}")
+    public void retryIncompleteSettlements() {
+        List<MallOrder> orders = mallOrderMapper.selectCompletedOrdersMissingSettlement(20);
+        if (orders == null || orders.isEmpty()) {
+            return;
         }
+        log.warn("detected {} completed orders with incomplete financial records", orders.size());
+        for (MallOrder order : orders) {
+            if (order == null || order.getOrderNo() == null || order.getMerchantId() == null) {
+                continue;
+            }
+            processSettlement(new OrderCompletedEvent(this, order.getOrderNo(), order.getMerchantId(),
+                    order.getDistributorId(), order.getStoreId(), order.getPayAmount(), resolveTitle(order.getOrderNo())), true);
+        }
+    }
+
+    private void processSettlement(OrderCompletedEvent event, boolean retry) {
+        try {
+            OrderProfitLedger ledger = orderSettlementService.createSettlementRecords(event);
+            if (ledger != null) {
+                wechatProfitSharingService.processOrderProfitSharing(event.getOrderNo());
+            }
+            log.info("order settlement records ready: orderNo={}, retry={}", event.getOrderNo(), retry);
+        } catch (Exception e) {
+            log.error("order settlement record creation failed: orderNo={}, retry={}, error={}",
+                    event.getOrderNo(), retry, e.getMessage(), e);
+        }
+    }
+
+    private String resolveTitle(String orderNo) {
+        List<OrderItem> items = orderItemMapper.selectOrderItemByOrderNo(orderNo);
+        if (items != null && !items.isEmpty() && items.get(0).getProductName() != null) {
+            return items.get(0).getProductName();
+        }
+        return orderNo;
     }
 }

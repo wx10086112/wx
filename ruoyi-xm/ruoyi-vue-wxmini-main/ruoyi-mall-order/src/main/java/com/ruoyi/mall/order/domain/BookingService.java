@@ -13,6 +13,7 @@ public class BookingService extends BaseEntity {
     private String serviceName;
     private String serviceImage;
     private BigDecimal servicePrice;
+    private BigDecimal originalPrice;
     private String description;
     private Integer stock;
     private Integer status;
@@ -31,6 +32,8 @@ public class BookingService extends BaseEntity {
     public void setServiceImage(String serviceImage) { this.serviceImage = serviceImage; }
     public BigDecimal getServicePrice() { return servicePrice; }
     public void setServicePrice(BigDecimal servicePrice) { this.servicePrice = servicePrice; }
+    public BigDecimal getOriginalPrice() { return originalPrice; }
+    public void setOriginalPrice(BigDecimal originalPrice) { this.originalPrice = originalPrice; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public Integer getStock() { return stock; }

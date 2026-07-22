@@ -78,6 +78,7 @@
             #{platformAmount}, #{distributorAmount}, #{merchantRate}, #{platformRate},
             #{distributorRate}, #{status}, #{finishTime}, #{remark}, '0',
         </trim>
+        on duplicate key update id = id
     </insert>
 
     <update id="updateById" parameterType="com.ruoyi.mall.finance.domain.OrderProfitLedger">
