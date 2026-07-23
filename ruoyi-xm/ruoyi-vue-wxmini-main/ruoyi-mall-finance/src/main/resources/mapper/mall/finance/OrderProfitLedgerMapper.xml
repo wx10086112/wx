@@ -17,6 +17,11 @@
         <result property="platformRate" column="platform_rate"/>
         <result property="distributorRate" column="distributor_rate"/>
         <result property="status" column="status"/>
+        <result property="profitSharingAttempts" column="profit_sharing_attempts"/>
+        <result property="profitSharingLastAttemptTime" column="profit_sharing_last_attempt_time"/>
+        <result property="profitSharingNextRetryTime" column="profit_sharing_next_retry_time"/>
+        <result property="profitSharingOutOrderNo" column="profit_sharing_out_order_no"/>
+        <result property="profitSharingOrderId" column="profit_sharing_order_id"/>
         <result property="finishTime" column="finish_time"/>
         <result property="remark" column="remark"/>
         <result property="delFlag" column="del_flag"/>
@@ -28,7 +33,10 @@
         opl.id, opl.order_no, opl.merchant_id, m.name as merchant_name,
         opl.distributor_id, d.name as distributor_name, opl.pay_amount, opl.merchant_amount,
         opl.platform_amount, opl.distributor_amount, opl.merchant_rate, opl.platform_rate,
-        opl.distributor_rate, opl.status, opl.finish_time, opl.remark, opl.del_flag, opl.create_time, opl.update_time
+        opl.distributor_rate, opl.status, opl.profit_sharing_attempts,
+        opl.profit_sharing_last_attempt_time, opl.profit_sharing_next_retry_time,
+        opl.profit_sharing_out_order_no, opl.profit_sharing_order_id,
+        opl.finish_time, opl.remark, opl.del_flag, opl.create_time, opl.update_time
     </sql>
 
     <sql id="dataScopeBizFilter">
@@ -85,10 +93,69 @@
         update order_profit_ledger
         <trim prefix="SET" suffixOverrides=",">
             <if test="status != null">status = #{status},</if>
+            <if test="profitSharingAttempts != null">profit_sharing_attempts = #{profitSharingAttempts},</if>
+            <if test="profitSharingLastAttemptTime != null">profit_sharing_last_attempt_time = #{profitSharingLastAttemptTime},</if>
+            <if test="profitSharingNextRetryTime != null">profit_sharing_next_retry_time = #{profitSharingNextRetryTime},</if>
+            <if test="profitSharingOutOrderNo != null">profit_sharing_out_order_no = #{profitSharingOutOrderNo},</if>
+            <if test="profitSharingOrderId != null">profit_sharing_order_id = #{profitSharingOrderId},</if>
             <if test="remark != null">remark = #{remark},</if>
         </trim>
         where id = #{id}
     </update>
+
+    <update id="claimProfitSharingAttempt">
+        update order_profit_ledger
+        set profit_sharing_attempts = COALESCE(profit_sharing_attempts, 0) + 1,
+            profit_sharing_last_attempt_time = NOW(),
+            profit_sharing_next_retry_time = #{nextRetryTime}
+        where id = #{id}
+          and del_flag = '0'
+          and status in ('WAITING_SETTLEMENT', 'WECHAT_PROFIT_SHARING_FAILED')
+          and COALESCE(profit_sharing_attempts, 0) &lt; #{maxAttempts}
+          and (profit_sharing_next_retry_time is null or profit_sharing_next_retry_time &lt;= NOW())
+    </update>
+
+    <update id="updateProfitSharingRequest">
+        update order_profit_ledger
+        set profit_sharing_out_order_no = #{outOrderNo}
+        where id = #{id} and del_flag = '0'
+    </update>
+
+    <update id="updateProfitSharingState">
+        update order_profit_ledger
+        set status = #{status},
+            remark = #{remark},
+            <if test="orderId != null">profit_sharing_order_id = #{orderId},</if>
+            profit_sharing_next_retry_time =
+            <choose>
+                <when test="clearNextRetry">NULL</when>
+                <otherwise>#{nextRetryTime}</otherwise>
+            </choose>
+        where id = #{id} and del_flag = '0'
+    </update>
+
+    <select id="selectProfitSharingRetryCandidates" resultMap="LedgerResult">
+        select <include refid="selectColumns"/> from order_profit_ledger opl
+        LEFT JOIN merchant m ON opl.merchant_id = m.id
+        LEFT JOIN distributor d ON opl.distributor_id = d.id
+        where opl.del_flag = '0'
+          and opl.status in ('WAITING_SETTLEMENT', 'WECHAT_PROFIT_SHARING_FAILED')
+          and COALESCE(opl.profit_sharing_attempts, 0) &lt; #{maxAttempts}
+          and (opl.profit_sharing_next_retry_time is null or opl.profit_sharing_next_retry_time &lt;= NOW())
+        order by COALESCE(opl.profit_sharing_next_retry_time, opl.update_time, opl.create_time) asc, opl.id asc
+        limit #{limit}
+    </select>
+
+    <select id="selectProcessingProfitSharing" resultMap="LedgerResult">
+        select <include refid="selectColumns"/> from order_profit_ledger opl
+        LEFT JOIN merchant m ON opl.merchant_id = m.id
+        LEFT JOIN distributor d ON opl.distributor_id = d.id
+        where opl.del_flag = '0'
+          and opl.status = 'WECHAT_PROFIT_SHARING_PROCESSING'
+          and opl.profit_sharing_out_order_no is not null
+        order by opl.update_time asc, opl.id asc
+        limit #{limit}
+    </select>
 
     <select id="sumMerchantAmountByMerchantId" resultType="java.math.BigDecimal">
         select COALESCE(SUM(merchant_amount), 0) from order_profit_ledger where merchant_id = #{merchantId} and del_flag = '0'

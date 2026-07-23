@@ -4,5 +4,7 @@ public interface IWechatProfitSharingService {
 
     void processOrderProfitSharing(String orderNo);
 
+    void queryOrderProfitSharing(String orderNo);
+
     void finishOrderProfitSharing(String orderNo);
 }

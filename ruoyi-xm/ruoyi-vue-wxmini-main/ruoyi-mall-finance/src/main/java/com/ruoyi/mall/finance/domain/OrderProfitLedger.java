@@ -21,6 +21,13 @@ public class OrderProfitLedger extends BaseEntity {
     private BigDecimal platformRate;
     private BigDecimal distributorRate;
     private String status;
+    private Integer profitSharingAttempts;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date profitSharingLastAttemptTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date profitSharingNextRetryTime;
+    private String profitSharingOutOrderNo;
+    private String profitSharingOrderId;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date finishTime;
     private String remark;
@@ -61,6 +68,16 @@ public class OrderProfitLedger extends BaseEntity {
     public void setDistributorRate(BigDecimal distributorRate) { this.distributorRate = distributorRate; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public Integer getProfitSharingAttempts() { return profitSharingAttempts; }
+    public void setProfitSharingAttempts(Integer profitSharingAttempts) { this.profitSharingAttempts = profitSharingAttempts; }
+    public Date getProfitSharingLastAttemptTime() { return profitSharingLastAttemptTime; }
+    public void setProfitSharingLastAttemptTime(Date profitSharingLastAttemptTime) { this.profitSharingLastAttemptTime = profitSharingLastAttemptTime; }
+    public Date getProfitSharingNextRetryTime() { return profitSharingNextRetryTime; }
+    public void setProfitSharingNextRetryTime(Date profitSharingNextRetryTime) { this.profitSharingNextRetryTime = profitSharingNextRetryTime; }
+    public String getProfitSharingOutOrderNo() { return profitSharingOutOrderNo; }
+    public void setProfitSharingOutOrderNo(String profitSharingOutOrderNo) { this.profitSharingOutOrderNo = profitSharingOutOrderNo; }
+    public String getProfitSharingOrderId() { return profitSharingOrderId; }
+    public void setProfitSharingOrderId(String profitSharingOrderId) { this.profitSharingOrderId = profitSharingOrderId; }
     public Date getFinishTime() { return finishTime; }
     public void setFinishTime(Date finishTime) { this.finishTime = finishTime; }
     public String getRemark() { return remark; }

@@ -63,6 +63,16 @@ public class OrderProfitLedgerServiceImpl implements IOrderProfitLedgerService {
     }
 
     @Override
+    public List<OrderProfitLedger> selectProfitSharingRetryCandidates(int limit, int maxAttempts) {
+        return ledgerMapper.selectProfitSharingRetryCandidates(limit, maxAttempts);
+    }
+
+    @Override
+    public List<OrderProfitLedger> selectProcessingProfitSharing(int limit) {
+        return ledgerMapper.selectProcessingProfitSharing(limit);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void createLedger(String orderNo, Long merchantId, Long distributorId, BigDecimal payAmount) {
         OrderProfitLedger existing = ledgerMapper.selectByOrderNo(orderNo);

@@ -1,6 +1,7 @@
 package com.ruoyi.mall.finance.listener;
 
 import com.ruoyi.mall.finance.domain.OrderProfitLedger;
+import com.ruoyi.mall.finance.service.IOrderProfitLedgerService;
 import com.ruoyi.mall.finance.service.IWechatProfitSharingService;
 import com.ruoyi.mall.finance.service.impl.OrderSettlementServiceImpl;
 import com.ruoyi.mall.order.domain.MallOrder;
@@ -18,6 +19,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import javax.annotation.Resource;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 
 @Component
 public class SettlementEventListener {
@@ -29,9 +31,15 @@ public class SettlementEventListener {
     @Resource
     private IWechatProfitSharingService wechatProfitSharingService;
     @Resource
+    private IOrderProfitLedgerService profitLedgerService;
+    @Resource
     private MallOrderMapper mallOrderMapper;
     @Resource
     private OrderItemMapper orderItemMapper;
+    @Value("${wx.pay.profit-sharing-retry-max-attempts:5}")
+    private int profitSharingRetryMaxAttempts;
+    @Value("${wx.pay.profit-sharing-retry-batch-size:20}")
+    private int profitSharingRetryBatchSize;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -53,6 +61,36 @@ public class SettlementEventListener {
             }
             processSettlement(new OrderCompletedEvent(this, order.getOrderNo(), order.getMerchantId(),
                     order.getDistributorId(), order.getStoreId(), order.getPayAmount(), resolveTitle(order.getOrderNo())), true);
+        }
+    }
+
+    @Scheduled(initialDelayString = "${wx.pay.profit-sharing-retry-initial-delay-ms:60000}",
+            fixedDelayString = "${wx.pay.profit-sharing-retry-fixed-delay-ms:300000}")
+    public void retryFailedProfitSharing() {
+        List<OrderProfitLedger> ledgers = profitLedgerService.selectProfitSharingRetryCandidates(
+                profitSharingRetryBatchSize, profitSharingRetryMaxAttempts);
+        if (ledgers == null || ledgers.isEmpty()) {
+            return;
+        }
+        log.warn("retrying {} recoverable WeChat profit-sharing records", ledgers.size());
+        for (OrderProfitLedger ledger : ledgers) {
+            if (ledger != null && ledger.getOrderNo() != null) {
+                wechatProfitSharingService.processOrderProfitSharing(ledger.getOrderNo());
+            }
+        }
+    }
+
+    @Scheduled(initialDelayString = "${wx.pay.profit-sharing-query-initial-delay-ms:120000}",
+            fixedDelayString = "${wx.pay.profit-sharing-query-fixed-delay-ms:300000}")
+    public void queryProcessingProfitSharing() {
+        List<OrderProfitLedger> ledgers = profitLedgerService.selectProcessingProfitSharing(profitSharingRetryBatchSize);
+        if (ledgers == null || ledgers.isEmpty()) {
+            return;
+        }
+        for (OrderProfitLedger ledger : ledgers) {
+            if (ledger != null && ledger.getOrderNo() != null) {
+                wechatProfitSharingService.queryOrderProfitSharing(ledger.getOrderNo());
+            }
         }
     }
 

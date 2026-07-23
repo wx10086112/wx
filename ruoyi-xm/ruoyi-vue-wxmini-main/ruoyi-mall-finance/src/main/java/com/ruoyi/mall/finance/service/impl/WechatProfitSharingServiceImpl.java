@@ -14,6 +14,8 @@ import com.ruoyi.mall.merchant.domain.Merchant;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.pay.domain.PaymentRecord;
 import com.ruoyi.mall.pay.service.IPaymentRecordService;
+import com.ruoyi.mall.product.domain.Distributor;
+import com.ruoyi.mall.product.service.IDistributorService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +26,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -38,6 +41,7 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
     private static final String STATUS_SUCCESS = "WECHAT_PROFIT_SHARING_SUCCESS";
     private static final String STATUS_FAILED = "WECHAT_PROFIT_SHARING_FAILED";
     private static final String STATUS_SKIPPED = "WECHAT_PROFIT_SHARING_SKIPPED";
+    private static final String STATUS_WAITING = "WAITING_SETTLEMENT";
 
     @Value("${wx.pay.profit-sharing-enabled:true}")
     private boolean profitSharingEnabled;
@@ -50,6 +54,12 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
 
     @Value("${wx.pay.profit-sharing-platform-mch-id:}")
     private String platformReceiverMchId;
+    @Value("${wx.pay.profit-sharing-platform-receiver-name:}")
+    private String platformReceiverName;
+    @Value("${wx.pay.profit-sharing-retry-max-attempts:5}")
+    private int retryMaxAttempts;
+    @Value("${wx.pay.profit-sharing-retry-delay-ms:300000}")
+    private long retryDelayMs;
 
     @Resource
     private WxPayService wxPayService;
@@ -59,6 +69,8 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
     private IMerchantService merchantService;
     @Resource
     private IPaymentRecordService paymentRecordService;
+    @Resource
+    private IDistributorService distributorService;
 
     @Override
     public void processOrderProfitSharing(String orderNo) {
@@ -67,7 +79,7 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
         }
 
         OrderProfitLedger ledger = ledgerMapper.selectByOrderNo(orderNo);
-        if (!shouldProcess(ledger)) {
+        if (!shouldProcess(ledger) || !claimAttempt(ledger)) {
             return;
         }
 
@@ -75,9 +87,13 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
             ProfitSharingContext context = buildContext(ledger);
             List<ProfitSharingV3Request.Receiver> receivers = buildReceivers(ledger, context);
             if (receivers.isEmpty()) {
-                markLedger(ledger, STATUS_SKIPPED, "no receiver amount");
+                markLedger(ledger, STATUS_SKIPPED, "no receiver amount", null, null, true);
                 return;
             }
+
+            String outOrderNo = firstNotBlank(ledger.getProfitSharingOutOrderNo(),
+                    buildOutOrderNo(orderNo, "PS"));
+            ledgerMapper.updateProfitSharingRequest(ledger.getId(), outOrderNo);
 
             if (addReceiverEnabled) {
                 for (ProfitSharingV3Request.Receiver receiver : receivers) {
@@ -92,7 +108,7 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
             request.setSubAppid(context.subAppId);
             request.setSubMchId(context.subMchId);
             request.setTransactionId(context.transactionId);
-            request.setOutOrderNo(buildOutOrderNo(orderNo, "PS"));
+            request.setOutOrderNo(outOrderNo);
             request.setReceivers(receivers);
             request.setUnfreezeUnsplit(true);
 
@@ -102,15 +118,52 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
             String remark = "wxProfitSharing outOrderNo=" + request.getOutOrderNo()
                     + ", orderId=" + (result != null ? StringUtils.defaultString(result.getOrderId()) : "")
                     + ", state=" + StringUtils.defaultString(state);
-            markLedger(ledger, status, remark);
+            markLedger(ledger, status, remark, result != null ? result.getOrderId() : null, null, true);
             log.info("wechat profit sharing submitted: orderNo={}, outOrderNo={}, state={}",
                     orderNo, request.getOutOrderNo(), state);
         } catch (ProfitSharingSkippedException e) {
-            markLedger(ledger, STATUS_SKIPPED, e.getMessage());
+            markLedger(ledger, STATUS_SKIPPED, e.getMessage(), null, null, true);
             log.info("wechat profit sharing skipped: orderNo={}, reason={}", orderNo, e.getMessage());
         } catch (Exception e) {
-            markLedger(ledger, STATUS_FAILED, truncate("wechat profit sharing failed: " + e.getMessage()));
-            log.error("wechat profit sharing failed: orderNo={}, error={}", orderNo, e.getMessage(), e);
+            String error = describeException(e);
+            markLedger(ledger, STATUS_FAILED, truncate("wechat profit sharing failed: " + error),
+                    null, nextRetryTime(), false);
+            log.error("wechat profit sharing failed: orderNo={}, error={}", orderNo, error, e);
+        }
+    }
+
+    @Override
+    public void queryOrderProfitSharing(String orderNo) {
+        if (!profitSharingEnabled) {
+            return;
+        }
+        OrderProfitLedger ledger = ledgerMapper.selectByOrderNo(orderNo);
+        if (ledger == null || !STATUS_PROCESSING.equals(ledger.getStatus())) {
+            return;
+        }
+
+        String outOrderNo = firstNotBlank(ledger.getProfitSharingOutOrderNo(),
+                buildOutOrderNo(orderNo, "PS"));
+        try {
+            ProfitSharingContext context = buildContext(ledger);
+            ProfitSharingV3Result result = wxPayService.getProfitSharingService()
+                    .profitSharingQueryV3(outOrderNo, context.transactionId, context.subMchId);
+            String state = result != null ? result.getState() : null;
+            String remark = "wxProfitSharing query outOrderNo=" + outOrderNo
+                    + ", orderId=" + (result != null ? StringUtils.defaultString(result.getOrderId()) : "")
+                    + ", state=" + StringUtils.defaultString(state);
+            if (isSuccessState(state)) {
+                markLedger(ledger, STATUS_SUCCESS, remark,
+                        result != null ? result.getOrderId() : null, null, true);
+            } else if (isFailedState(state)) {
+                markLedger(ledger, STATUS_FAILED, remark,
+                        result != null ? result.getOrderId() : null, nextRetryTime(), false);
+            } else {
+                log.info("wechat profit sharing remains processing: orderNo={}, outOrderNo={}, state={}",
+                        orderNo, outOrderNo, state);
+            }
+        } catch (Exception e) {
+            log.error("wechat profit sharing query failed: orderNo={}, error={}", orderNo, describeException(e), e);
         }
     }
 
@@ -134,10 +187,13 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
             ProfitSharingUnfreezeV3Result result = wxPayService.getProfitSharingService().profitSharingUnfreeze(request);
             markLedger(ledger, STATUS_SUCCESS, "wxProfitSharing finish outOrderNo=" + request.getOutOrderNo()
                     + ", orderId=" + (result != null ? StringUtils.defaultString(result.getOrderId()) : "")
-                    + ", state=" + (result != null ? StringUtils.defaultString(result.getState()) : ""));
+                    + ", state=" + (result != null ? StringUtils.defaultString(result.getState()) : ""),
+                    result != null ? result.getOrderId() : null, null, true);
         } catch (Exception e) {
-            markLedger(ledger, STATUS_FAILED, truncate("wechat profit sharing finish failed: " + e.getMessage()));
-            log.error("wechat profit sharing finish failed: orderNo={}, error={}", orderNo, e.getMessage(), e);
+            String error = describeException(e);
+            markLedger(ledger, STATUS_FAILED, truncate("wechat profit sharing finish failed: " + error),
+                    null, nextRetryTime(), false);
+            log.error("wechat profit sharing finish failed: orderNo={}, error={}", orderNo, error, e);
         }
     }
 
@@ -146,9 +202,14 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
             return false;
         }
         String status = ledger.getStatus();
-        return !"REFUND_REVERSED".equals(status)
-                && !STATUS_SUCCESS.equals(status)
-                && !STATUS_PROCESSING.equals(status);
+        return STATUS_WAITING.equals(status) || STATUS_FAILED.equals(status);
+    }
+
+    private boolean claimAttempt(OrderProfitLedger ledger) {
+        if (ledger == null || ledger.getId() == null) {
+            return false;
+        }
+        return ledgerMapper.claimProfitSharingAttempt(ledger.getId(), retryMaxAttempts, nextRetryTime()) > 0;
     }
 
     private ProfitSharingContext buildContext(OrderProfitLedger ledger) {
@@ -178,7 +239,9 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
         context.subAppId = firstNotBlank(paymentRecord.getSubAppId(), merchant.getCMiniAppId());
         context.transactionId = paymentRecord.getTransactionId();
         context.platformReceiverMchId = firstNotBlank(merchant.getPlatformReceiverMchId(), platformReceiverMchId, context.spMchId);
+        context.platformReceiverName = platformReceiverName;
         context.distributorReceiverMchId = merchant.getDistributorReceiverMchId();
+        context.distributorReceiverName = resolveDistributorReceiverName(merchant);
 
         if (StringUtils.isBlank(context.spMchId)) {
             throw new IllegalStateException("wechat service provider pay config incomplete");
@@ -199,7 +262,10 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
             if (StringUtils.isBlank(context.platformReceiverMchId)) {
                 throw new IllegalStateException("platform receiver mch_id is required");
             }
-            receivers.add(buildReceiver(context.platformReceiverMchId, platformAmount,
+            if (StringUtils.isBlank(context.platformReceiverName)) {
+                throw new IllegalStateException("platform receiver merchant name is required");
+            }
+            receivers.add(buildReceiver(context.platformReceiverMchId, context.platformReceiverName, platformAmount,
                     RELATION_TYPE_SERVICE_PROVIDER, "platform share"));
         }
 
@@ -208,17 +274,21 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
             if (StringUtils.isBlank(context.distributorReceiverMchId)) {
                 throw new IllegalStateException("distributor receiver mch_id is required");
             }
-            receivers.add(buildReceiver(context.distributorReceiverMchId, distributorAmount,
+            if (StringUtils.isBlank(context.distributorReceiverName)) {
+                throw new IllegalStateException("distributor receiver merchant name is required");
+            }
+            receivers.add(buildReceiver(context.distributorReceiverMchId, context.distributorReceiverName, distributorAmount,
                     RELATION_TYPE_DISTRIBUTOR, "distributor share"));
         }
         return receivers;
     }
 
-    private ProfitSharingV3Request.Receiver buildReceiver(String account, Integer amount,
+    private ProfitSharingV3Request.Receiver buildReceiver(String account, String name, Integer amount,
                                                           String relationType, String description) {
         ProfitSharingV3Request.Receiver receiver = new ProfitSharingV3Request.Receiver();
         receiver.setType(RECEIVER_TYPE_MERCHANT_ID);
         receiver.setAccount(account);
+        receiver.setName(name);
         receiver.setAmount(amount);
         receiver.setRelationType(relationType);
         receiver.setDescription(description);
@@ -234,6 +304,7 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
         request.setSubMchId(context.subMchId);
         request.setType(receiver.getType());
         request.setAccount(receiver.getAccount());
+        request.setName(receiver.getName());
         request.setRelationType(receiver.getRelationType());
         try {
             wxPayService.getProfitSharingService().addReceiverV3(request);
@@ -268,16 +339,40 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
         return "FINISHED".equals(state) || "SUCCESS".equals(state);
     }
 
+    private boolean isFailedState(String state) {
+        return "CLOSED".equals(state) || "FAILED".equals(state);
+    }
+
     private String buildOutOrderNo(String orderNo, String prefix) {
         String cleanOrderNo = orderNo.replaceAll("[^A-Za-z0-9_-]", "");
         String value = prefix + cleanOrderNo;
         return value.length() <= 64 ? value : value.substring(0, 64);
     }
 
-    private void markLedger(OrderProfitLedger ledger, String status, String remark) {
+    private void markLedger(OrderProfitLedger ledger, String status, String remark,
+                            String orderId, Date nextRetryTime, boolean clearNextRetry) {
+        if (ledger == null || ledger.getId() == null) {
+            return;
+        }
         ledger.setStatus(status);
         ledger.setRemark(truncate(remark));
-        ledgerMapper.updateById(ledger);
+        ledgerMapper.updateProfitSharingState(ledger.getId(), status, ledger.getRemark(), orderId,
+                nextRetryTime, clearNextRetry);
+    }
+
+    private Date nextRetryTime() {
+        return new Date(System.currentTimeMillis() + Math.max(1L, retryDelayMs));
+    }
+
+    private String describeException(Exception e) {
+        if (e instanceof WxPayException) {
+            WxPayException wxPayException = (WxPayException) e;
+            String code = StringUtils.defaultString(wxPayException.getErrCode());
+            String description = StringUtils.defaultString(wxPayException.getErrCodeDes());
+            String message = StringUtils.defaultString(wxPayException.getMessage());
+            return "code=" + code + ", description=" + description + ", message=" + message;
+        }
+        return StringUtils.defaultIfBlank(e.getMessage(), e.getClass().getSimpleName());
     }
 
     private String firstNotBlank(String... values) {
@@ -287,6 +382,14 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
             }
         }
         return null;
+    }
+
+    private String resolveDistributorReceiverName(Merchant merchant) {
+        if (merchant == null || merchant.getDistributorId() == null) {
+            return null;
+        }
+        Distributor distributor = distributorService.selectDistributorById(merchant.getDistributorId());
+        return distributor != null ? StringUtils.trimToNull(distributor.getName()) : null;
     }
 
     private String truncate(String value) {
@@ -303,7 +406,9 @@ public class WechatProfitSharingServiceImpl implements IWechatProfitSharingServi
         private String subAppId;
         private String transactionId;
         private String platformReceiverMchId;
+        private String platformReceiverName;
         private String distributorReceiverMchId;
+        private String distributorReceiverName;
     }
 
     private static class ProfitSharingSkippedException extends RuntimeException {

@@ -13,6 +13,10 @@ public interface IOrderProfitLedgerService {
 
     List<OrderProfitLedger> selectList(OrderProfitLedger query);
 
+    List<OrderProfitLedger> selectProfitSharingRetryCandidates(int limit, int maxAttempts);
+
+    List<OrderProfitLedger> selectProcessingProfitSharing(int limit);
+
     /**
      * 为订单生成分账流水（幂等）
      */

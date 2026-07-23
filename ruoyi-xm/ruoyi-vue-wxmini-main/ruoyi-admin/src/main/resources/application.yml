@@ -151,6 +151,14 @@ wx:
     profit-sharing-auto-submit-enabled: ${WX_PAY_PROFIT_SHARING_AUTO_SUBMIT_ENABLED:true}
     profit-sharing-add-receiver-enabled: ${WX_PAY_PROFIT_SHARING_ADD_RECEIVER_ENABLED:true}
     profit-sharing-platform-mch-id: ${WX_PAY_PROFIT_SHARING_PLATFORM_MCH_ID:}
+    profit-sharing-platform-receiver-name: ${WX_PAY_PROFIT_SHARING_PLATFORM_RECEIVER_NAME:}
+    profit-sharing-retry-max-attempts: ${WX_PAY_PROFIT_SHARING_RETRY_MAX_ATTEMPTS:5}
+    profit-sharing-retry-delay-ms: ${WX_PAY_PROFIT_SHARING_RETRY_DELAY_MS:300000}
+    profit-sharing-retry-initial-delay-ms: ${WX_PAY_PROFIT_SHARING_RETRY_INITIAL_DELAY_MS:60000}
+    profit-sharing-retry-fixed-delay-ms: ${WX_PAY_PROFIT_SHARING_RETRY_FIXED_DELAY_MS:300000}
+    profit-sharing-query-initial-delay-ms: ${WX_PAY_PROFIT_SHARING_QUERY_INITIAL_DELAY_MS:120000}
+    profit-sharing-query-fixed-delay-ms: ${WX_PAY_PROFIT_SHARING_QUERY_FIXED_DELAY_MS:300000}
+    profit-sharing-retry-batch-size: ${WX_PAY_PROFIT_SHARING_RETRY_BATCH_SIZE:20}
     transfer-enabled: ${WX_PAY_TRANSFER_ENABLED:false}
     transfer-task-enabled: ${WX_PAY_TRANSFER_TASK_ENABLED:false}
     transfer-live-confirmation: ${WX_PAY_TRANSFER_LIVE_CONFIRMATION:}
