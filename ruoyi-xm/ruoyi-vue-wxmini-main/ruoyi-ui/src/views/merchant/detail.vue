@@ -33,7 +33,6 @@
               <el-descriptions-item label="联系人">{{ merchant.contact }}</el-descriptions-item>
               <el-descriptions-item label="联系电话">{{ merchant.phone }}</el-descriptions-item>
               <el-descriptions-item label="入驻时间">{{ merchant.createTime }}</el-descriptions-item>
-              <el-descriptions-item label="佣金比例">{{ merchant.commissionRate }}%</el-descriptions-item>
             </el-descriptions>
 
             <div class="section-header">
