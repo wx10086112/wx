@@ -34,6 +34,14 @@ public class MerchantServiceImpl implements IMerchantService {
     }
 
     @Override
+    public List<Map<String, Object>> selectMerchantLiveStatsBatch(List<Long> merchantIds) {
+        if (merchantIds == null || merchantIds.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return merchantMapper.selectMerchantLiveStatsBatch(merchantIds);
+    }
+
+    @Override
     public List<Merchant> selectMerchantList(Merchant merchant) {
         return merchantMapper.selectMerchantList(merchant);
     }

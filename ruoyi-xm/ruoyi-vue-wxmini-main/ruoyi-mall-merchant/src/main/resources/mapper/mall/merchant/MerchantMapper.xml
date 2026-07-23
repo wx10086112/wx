@@ -122,6 +122,49 @@
                AND o.pay_time &lt; DATE_ADD(CURDATE(), INTERVAL 1 DAY)) AS todayIncome
     </select>
 
+    <select id="selectMerchantLiveStatsBatch" resultType="java.util.LinkedHashMap">
+        SELECT
+            m.id AS merchantId,
+            IFNULL(p.productCount, 0) AS productCount,
+            IFNULL(o.totalIncome, 0) AS totalIncome,
+            IFNULL(o.todayIncome, 0) AS todayIncome
+        FROM merchant m
+        LEFT JOIN (
+            SELECT merchant_id, COUNT(*) AS productCount
+            FROM product
+            WHERE del_flag = '0'
+              AND merchant_id IN
+            <foreach item="merchantId" collection="merchantIds" open="(" separator="," close=")">
+                #{merchantId}
+            </foreach>
+            GROUP BY merchant_id
+        ) p ON p.merchant_id = m.id
+        LEFT JOIN (
+            SELECT
+                merchant_id,
+                IFNULL(SUM(CASE WHEN status IN (1, 2, 3) THEN pay_amount ELSE 0 END), 0) AS totalIncome,
+                IFNULL(SUM(CASE
+                    WHEN status IN (1, 2, 3)
+                         AND pay_time &gt;= CURDATE()
+                         AND pay_time &lt; DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+                    THEN pay_amount
+                    ELSE 0
+                END), 0) AS todayIncome
+            FROM mall_order
+            WHERE del_flag = '0'
+              AND merchant_id IN
+            <foreach item="merchantId" collection="merchantIds" open="(" separator="," close=")">
+                #{merchantId}
+            </foreach>
+            GROUP BY merchant_id
+        ) o ON o.merchant_id = m.id
+        WHERE m.del_flag = '0'
+          AND m.id IN
+        <foreach item="merchantId" collection="merchantIds" open="(" separator="," close=")">
+            #{merchantId}
+        </foreach>
+    </select>
+
     <select id="selectMerchantByIdAnyStatus" parameterType="Long" resultMap="MerchantResult">
         <include refid="selectMerchantVo"/>
         where m.id = #{id} AND m.del_flag = '0'

@@ -33,9 +33,23 @@
         <result property="delFlag" column="del_flag"/>
     </resultMap>
 
+    <sql id="resolvedBookingUserNameExpr">
+        COALESCE(
+            CASE
+                WHEN u.user_name IS NOT NULL
+                    AND TRIM(u.user_name) != ''
+                    AND u.user_name != '微信用户'
+                    AND u.user_name NOT REGEXP '^用户[0-9]+$'
+                THEN u.user_name
+            END,
+            NULLIF(b.contact_name, ''),
+            '未知用户'
+        )
+    </sql>
+
     <sql id="selectBookingRecordVo">
         select b.id, b.booking_no, b.merchant_id, m.distributor_id, m.name as merchant_name,
-               b.store_id, b.user_id, u.user_name, b.booking_service_id, b.product_id, b.product_name,
+               b.store_id, b.user_id, <include refid="resolvedBookingUserNameExpr"/> as user_name, b.booking_service_id, b.product_id, b.product_name,
                b.product_image, b.product_price, b.booking_time, b.contact_name, b.contact_phone,
                b.people_count, b.status, b.confirm_time, b.complete_time, b.cancel_time, b.expire_time,
                b.create_time, b.update_time, b.remark, b.del_flag
@@ -68,7 +82,7 @@
             <if test="merchantName != null and merchantName != ''">and m.name like concat('%', #{merchantName}, '%')</if>
             <if test="storeId != null">and b.store_id = #{storeId}</if>
             <if test="userId != null">and b.user_id = #{userId}</if>
-            <if test="userName != null and userName != ''">and u.user_name like concat('%', #{userName}, '%')</if>
+            <if test="userName != null and userName != ''">and <include refid="resolvedBookingUserNameExpr"/> like concat('%', #{userName}, '%')</if>
             <if test="contactPhone != null and contactPhone != ''">and b.contact_phone like concat('%', #{contactPhone}, '%')</if>
             <if test="bookingServiceId != null">and b.booking_service_id = #{bookingServiceId}</if>
             <if test="productId != null">and b.product_id = #{productId}</if>

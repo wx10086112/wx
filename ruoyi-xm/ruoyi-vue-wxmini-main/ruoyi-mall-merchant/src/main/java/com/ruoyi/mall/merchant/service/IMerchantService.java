@@ -10,6 +10,8 @@ public interface IMerchantService {
 
     Map<String, Object> selectMerchantLiveStats(Long merchantId);
 
+    List<Map<String, Object>> selectMerchantLiveStatsBatch(List<Long> merchantIds);
+
     Merchant selectMerchantByIdAnyStatus(Long id);
 
     List<Merchant> selectMerchantList(Merchant merchant);

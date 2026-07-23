@@ -30,15 +30,36 @@
         <result property="delFlag" column="del_flag"/>
     </resultMap>
 
+    <sql id="resolvedRefundUserNameExpr">
+        COALESCE(
+            CASE
+                WHEN ui.user_name IS NOT NULL
+                    AND TRIM(ui.user_name) != ''
+                    AND ui.user_name != '微信用户'
+                    AND ui.user_name NOT REGEXP '^用户[0-9]+$'
+                THEN ui.user_name
+            END,
+            CASE
+                WHEN u.nickname IS NOT NULL
+                    AND TRIM(u.nickname) != ''
+                    AND u.nickname != '微信用户'
+                    AND u.nickname NOT REGEXP '^用户[0-9]+$'
+                THEN u.nickname
+            END,
+            '未知用户'
+        )
+    </sql>
+
     <sql id="selectRefundRecordVo">
         select r.id, r.order_no, r.refund_no, r.merchant_id, m.name as merchant_name,
-               r.user_id, u.nickname as user_name, r.payment_record_id,
+               r.user_id, <include refid="resolvedRefundUserNameExpr"/> as user_name, r.payment_record_id,
                r.refund_amount, r.refund_reason, r.refund_type, r.status, r.audit_time,
                r.refund_time, r.reject_reason, r.operator, r.retry_count, r.last_retry_time,
                r.next_retry_time, r.last_retry_reason, r.create_time, r.update_time
         from refund_record r
         LEFT JOIN merchant m ON r.merchant_id = m.id
         LEFT JOIN mall_user u ON r.user_id = u.id
+        LEFT JOIN user_info ui ON r.user_id = ui.id
     </sql>
 
     <sql id="dataScopeBizFilter">
@@ -65,7 +86,7 @@
             <if test="merchantId != null">and r.merchant_id = #{merchantId}</if>
             <if test="merchantName != null and merchantName != ''">and m.name like concat('%', #{merchantName}, '%')</if>
             <if test="userId != null">and r.user_id = #{userId}</if>
-            <if test="userName != null and userName != ''">and u.nickname like concat('%', #{userName}, '%')</if>
+            <if test="userName != null and userName != ''">and <include refid="resolvedRefundUserNameExpr"/> like concat('%', #{userName}, '%')</if>
             <if test="status != null">and r.status = #{status}</if>
             <if test="refundType != null">and r.refund_type = #{refundType}</if>
             <include refid="dataScopeBizFilter"/>

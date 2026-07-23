@@ -46,6 +46,11 @@
             <span>¥{{ (scope.row.totalIncome || 0).toLocaleString() }}</span>
           </template>
         </el-table-column>
+        <el-table-column prop="todayIncome" label="今日营收" width="110" align="center">
+          <template slot-scope="scope">
+            <span>¥{{ (scope.row.todayIncome || 0).toLocaleString() }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="createTime" label="入驻时间" width="110" align="center" />
         <el-table-column label="操作" width="280" align="center" fixed="right">
           <template slot-scope="scope">
@@ -125,6 +130,8 @@
 import { getMerchantList, auditMerchant, deleteMerchant, updateMerchant, stopMerchant, resumeMerchant } from '@/api/merchant'
 import { listDistributor } from '@/api/distributor'
 
+const MERCHANT_LIST_REFRESH_INTERVAL = 15000
+
 export default {
   name: 'MerchantList',
   data() {
@@ -157,13 +164,24 @@ export default {
   },
   created() {
     this.fetchData()
+    this.startLiveRefresh()
   },
   activated() {
-    this.fetchData()
+    this.fetchData(true)
+    this.startLiveRefresh()
+  },
+  deactivated() {
+    this.stopLiveRefresh()
+  },
+  beforeDestroy() {
+    this.stopLiveRefresh()
   },
   methods: {
-    async fetchData() {
-      this.loading = true
+    async fetchData(silent = false) {
+      if (silent && this.loading) return
+      if (!silent) {
+        this.loading = true
+      }
       try {
         const res = await getMerchantList({
           pageNum: this.pageNum,
@@ -174,9 +192,23 @@ export default {
         this.tableList = res.rows
         this.total = res.total
       } catch (e) {
-        this.$message.error('获取商家列表失败')
+        if (!silent) {
+          this.$message.error('获取商家列表失败')
+        }
       } finally {
-        this.loading = false
+        if (!silent) {
+          this.loading = false
+        }
+      }
+    },
+    startLiveRefresh() {
+      this.stopLiveRefresh()
+      this._liveRefreshTimer = setInterval(() => this.fetchData(true), MERCHANT_LIST_REFRESH_INTERVAL)
+    },
+    stopLiveRefresh() {
+      if (this._liveRefreshTimer) {
+        clearInterval(this._liveRefreshTimer)
+        this._liveRefreshTimer = null
       }
     },
     handleSearch() {

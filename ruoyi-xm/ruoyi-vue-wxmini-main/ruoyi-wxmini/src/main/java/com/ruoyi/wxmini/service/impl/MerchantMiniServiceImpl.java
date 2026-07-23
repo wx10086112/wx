@@ -30,7 +30,9 @@ import com.ruoyi.mall.order.service.IWriteOffService;
 import com.ruoyi.mall.product.domain.Product;
 import com.ruoyi.mall.product.mapper.ProductMapper;
 import com.ruoyi.mall.user.domain.MallUser;
+import com.ruoyi.mall.user.domain.UserInfo;
 import com.ruoyi.mall.user.mapper.MallUserMapper;
+import com.ruoyi.mall.user.mapper.UserInfoMapper;
 import com.ruoyi.wxmini.dto.merchant.*;
 import com.ruoyi.wxmini.service.IMerchantMiniService;
 import org.apache.commons.lang3.StringUtils;
@@ -129,6 +131,8 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
     private WithdrawRecordMapper withdrawRecordMapper;
     @Resource
     private MallUserMapper mallUserMapper;
+    @Resource
+    private UserInfoMapper userInfoMapper;
     @Resource
     private IMallOrderService mallOrderService;
     @Resource
@@ -1210,17 +1214,9 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
             dto.setTitle(firstItem.getProductName());
         }
 
-        // 查用户信息
-        if (order.getUserId() != null) {
-            MallUser mallUser = mallUserMapper.selectMallUserById(order.getUserId());
-            if (mallUser != null) {
-                dto.setCustomerName(mallUser.getNickname());
-                dto.setCustomerPhone(maskPhone(mallUser.getPhone()));
-            } else {
-                dto.setCustomerName("用户" + order.getUserId());
-                dto.setCustomerPhone("");
-            }
-        }
+        CustomerSnapshot customer = resolveCustomerSnapshot(order);
+        dto.setCustomerName(customer.name);
+        dto.setCustomerPhone(maskPhone(customer.phone));
 
         enrichRefundInfo(dto, order);
         dto.setHistory(buildMerchantOrderHistory(order.getOrderNo()));
@@ -1497,17 +1493,52 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         } catch (Exception ignored) {
         }
 
-        // 查用户
-        if (order.getUserId() != null) {
-            MallUser mallUser = mallUserMapper.selectMallUserById(order.getUserId());
-            if (mallUser != null) {
-                dto.setCustomerName(mallUser.getNickname());
-                dto.setCustomerPhone(maskPhone(mallUser.getPhone()));
-            } else {
-                dto.setCustomerName("用户" + order.getUserId());
+        CustomerSnapshot customer = resolveCustomerSnapshot(order);
+        dto.setCustomerName(customer.name);
+        dto.setCustomerPhone(maskPhone(customer.phone));
+        return dto;
+    }
+
+    private CustomerSnapshot resolveCustomerSnapshot(MallOrder order) {
+        CustomerSnapshot snapshot = new CustomerSnapshot();
+        snapshot.name = normalizeRealUserName(order != null ? order.getUserName() : null);
+        snapshot.phone = "";
+        if (order != null && order.getUserId() != null) {
+            UserInfo userInfo = userInfoMapper.selectUserInfoById(order.getUserId());
+            if (userInfo != null) {
+                snapshot.name = firstNonBlank(normalizeRealUserName(userInfo.getUserName()), snapshot.name);
+                snapshot.phone = StringUtils.defaultIfBlank(userInfo.getPhone(), snapshot.phone);
+            }
+            if (StringUtils.isBlank(snapshot.name) || StringUtils.isBlank(snapshot.phone)) {
+                MallUser mallUser = mallUserMapper.selectMallUserById(order.getUserId());
+                if (mallUser != null) {
+                    snapshot.name = firstNonBlank(snapshot.name, normalizeRealUserName(mallUser.getNickname()));
+                    snapshot.phone = StringUtils.defaultIfBlank(snapshot.phone, mallUser.getPhone());
+                }
             }
         }
-        return dto;
+        snapshot.name = StringUtils.defaultIfBlank(snapshot.name, "未知用户");
+        snapshot.phone = StringUtils.defaultIfBlank(snapshot.phone, "");
+        return snapshot;
+    }
+
+    private String normalizeRealUserName(String name) {
+        String normalized = StringUtils.trimToEmpty(name);
+        if (StringUtils.isBlank(normalized)
+                || "微信用户".equals(normalized)
+                || normalized.matches("^用户\\d+$")) {
+            return "";
+        }
+        return normalized;
+    }
+
+    private String firstNonBlank(String first, String second) {
+        return StringUtils.isNotBlank(first) ? first : StringUtils.defaultString(second);
+    }
+
+    private static class CustomerSnapshot {
+        private String name;
+        private String phone;
     }
 
     private MerchantMiniSettlementAccountDto buildSettlementAccount(Long merchantId) {

@@ -19,7 +19,7 @@
           <el-descriptions-item label="入驻时间">{{ merchant.createTime }}</el-descriptions-item>
           <el-descriptions-item label="商品数">{{ merchant.productCount || 0 }}</el-descriptions-item>
           <el-descriptions-item label="累计收入">¥{{ Number(merchant.totalIncome || 0).toLocaleString() }}</el-descriptions-item>
-          <el-descriptions-item label="今日收入">¥{{ Number(merchant.todayIncome || 0).toLocaleString() }}</el-descriptions-item>
+          <el-descriptions-item label="今日营收">¥{{ Number(merchant.todayIncome || 0).toLocaleString() }}</el-descriptions-item>
         </el-descriptions>
 
         <!-- 标签页 -->

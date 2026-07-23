@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,11 +65,14 @@ public class MallMerchantController extends BaseController {
             merchant.setDistributorId(SecurityUtils.getDistributorId());
         }
         List<Merchant> list = merchantService.selectMerchantList(merchant);
+        Map<Long, Map<String, Object>> liveStatsByMerchantId = buildLiveStatsMap(list);
         List<Map<String, Object>> safeList = new ArrayList<>();
         for (Merchant item : list) {
-            safeList.add(toSafeMap(item));
+            safeList.add(toSafeMapWithLiveStats(item, liveStatsByMerchantId.get(item.getId())));
         }
-        return getDataTable(safeList);
+        TableDataInfo table = getDataTable(list);
+        table.setRows(safeList);
+        return table;
     }
 
     @PreAuthorize("@ss.hasPermi('mall:merchant:query')")
@@ -82,12 +86,7 @@ public class MallMerchantController extends BaseController {
         if (effDistributorId != null && !effDistributorId.equals(merchant.getDistributorId())) {
             return AjaxResult.error("无权限查看该商家");
         }
-        Map<String, Object> data = toSafeMap(merchant);
-        Map<String, Object> liveStats = merchantService.selectMerchantLiveStats(id);
-        if (liveStats != null) {
-            data.putAll(liveStats);
-        }
-        return AjaxResult.success(data);
+        return AjaxResult.success(toSafeMapWithLiveStats(merchant));
     }
 
     @PreAuthorize("@ss.hasPermi('mall:merchant:query')")
@@ -213,7 +212,7 @@ public class MallMerchantController extends BaseController {
         }
         Merchant savedMerchant = merchantService.selectMerchantById(existing.getId());
         syncWxMiniServices(existing, savedMerchant);
-        return AjaxResult.success("保存成功", toSafeMap(savedMerchant));
+        return AjaxResult.success("保存成功", toSafeMapWithLiveStats(savedMerchant));
     }
 
     @PreAuthorize("@ss.hasPermi('mall:merchant:remove')")
@@ -374,6 +373,63 @@ public class MallMerchantController extends BaseController {
         target.setDistributorShareRate(request.getDistributorShareRate() != null ? request.getDistributorShareRate() : existing.getDistributorShareRate());
         target.setReceiverOpenid(request.getReceiverOpenid() != null ? request.getReceiverOpenid() : existing.getReceiverOpenid());
         return target;
+    }
+
+    private Map<String, Object> toSafeMapWithLiveStats(Merchant merchant) {
+        Map<String, Object> liveStats = merchant != null && merchant.getId() != null
+                ? merchantService.selectMerchantLiveStats(merchant.getId())
+                : null;
+        return toSafeMapWithLiveStats(merchant, liveStats);
+    }
+
+    private Map<String, Object> toSafeMapWithLiveStats(Merchant merchant, Map<String, Object> liveStats) {
+        Map<String, Object> map = toSafeMap(merchant);
+        if (liveStats != null) {
+            map.putAll(liveStats);
+            map.remove("merchantId");
+        }
+        if (!map.containsKey("todayIncome")) {
+            map.put("todayIncome", BigDecimal.ZERO);
+        }
+        return map;
+    }
+
+    private Map<Long, Map<String, Object>> buildLiveStatsMap(List<Merchant> merchants) {
+        Map<Long, Map<String, Object>> result = new HashMap<>();
+        if (merchants == null || merchants.isEmpty()) {
+            return result;
+        }
+        List<Long> merchantIds = new ArrayList<>();
+        for (Merchant merchant : merchants) {
+            if (merchant != null && merchant.getId() != null) {
+                merchantIds.add(merchant.getId());
+            }
+        }
+        if (merchantIds.isEmpty()) {
+            return result;
+        }
+        List<Map<String, Object>> rows = merchantService.selectMerchantLiveStatsBatch(merchantIds);
+        for (Map<String, Object> row : rows) {
+            Long merchantId = toLong(row.get("merchantId"));
+            if (merchantId != null) {
+                result.put(merchantId, row);
+            }
+        }
+        return result;
+    }
+
+    private Long toLong(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Long.valueOf(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private Map<String, Object> toSafeMap(Merchant merchant) {

@@ -37,9 +37,29 @@
         <result property="delFlag" column="del_flag"/>
     </resultMap>
 
+    <sql id="resolvedUserNameExpr">
+        COALESCE(
+            CASE
+                WHEN ui.user_name IS NOT NULL
+                    AND TRIM(ui.user_name) != ''
+                    AND ui.user_name != '微信用户'
+                    AND ui.user_name NOT REGEXP '^用户[0-9]+$'
+                THEN ui.user_name
+            END,
+            CASE
+                WHEN u.nickname IS NOT NULL
+                    AND TRIM(u.nickname) != ''
+                    AND u.nickname != '微信用户'
+                    AND u.nickname NOT REGEXP '^用户[0-9]+$'
+                THEN u.nickname
+            END,
+            '未知用户'
+        )
+    </sql>
+
     <sql id="selectMallOrderVo">
         select o.id, o.order_no, o.merchant_id, m.distributor_id, m.name as merchant_name,
-               o.user_id, COALESCE(NULLIF(u.nickname, ''), NULLIF(ui.user_name, ''), '未知用户') as user_name,
+               o.user_id, <include refid="resolvedUserNameExpr"/> as user_name,
                o.store_id, o.total_amount, o.pay_amount,
                o.commission, o.merchant_income, o.coupon_id, o.coupon_amount, o.groupon_id, o.status,
                o.write_off_code, o.write_off_status, o.write_off_time, o.write_off_user_id,
@@ -80,7 +100,7 @@
             <if test="merchantId != null">and o.merchant_id = #{merchantId}</if>
             <if test="merchantName != null and merchantName != ''">and m.name like concat('%', #{merchantName}, '%')</if>
             <if test="userId != null">and o.user_id = #{userId}</if>
-            <if test="userName != null and userName != ''">and COALESCE(NULLIF(u.nickname, ''), NULLIF(ui.user_name, '')) like concat('%', #{userName}, '%')</if>
+            <if test="userName != null and userName != ''">and <include refid="resolvedUserNameExpr"/> like concat('%', #{userName}, '%')</if>
             <if test="storeId != null">and o.store_id = #{storeId}</if>
             <if test="status != null">and o.status = #{status}</if>
             <include refid="dataScopeBizFilter"/>
@@ -228,7 +248,7 @@
 
     <select id="selectCompletedOrdersMissingSettlement" resultMap="MallOrderResult">
         select distinct o.id, o.order_no, o.merchant_id, m.distributor_id, m.name as merchant_name,
-               o.user_id, COALESCE(NULLIF(u.nickname, ''), NULLIF(ui.user_name, ''), '未知用户') as user_name,
+               o.user_id, <include refid="resolvedUserNameExpr"/> as user_name,
                o.store_id, o.total_amount, o.pay_amount,
                o.commission, o.merchant_income, o.coupon_id, o.coupon_amount, o.groupon_id, o.status,
                o.write_off_code, o.write_off_status, o.write_off_time, o.write_off_user_id,
