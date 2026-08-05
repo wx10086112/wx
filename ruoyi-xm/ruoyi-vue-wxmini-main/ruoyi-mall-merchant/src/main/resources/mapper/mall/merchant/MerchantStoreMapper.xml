@@ -51,6 +51,12 @@
         order by is_main desc, id asc
     </select>
 
+    <select id="countMerchantStoreByMerchantId" parameterType="Long" resultType="int">
+        select count(1)
+        from merchant_store
+        where merchant_id = #{merchantId} AND del_flag = '0'
+    </select>
+
     <insert id="insertMerchantStore" parameterType="com.ruoyi.mall.merchant.domain.MerchantStore" useGeneratedKeys="true" keyProperty="id">
         insert into merchant_store
         <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -97,6 +103,23 @@
             <if test="isMain != null">is_main = #{isMain},</if>
         </trim>
         where id = #{id}
+    </update>
+
+    <update id="updatePrimaryMerchantStore" parameterType="com.ruoyi.mall.merchant.domain.MerchantStore">
+        update merchant_store
+        set name = #{name},
+            contact = #{contact},
+            phone = #{phone},
+            address = #{address},
+            longitude = #{longitude},
+            latitude = #{latitude},
+            business_hours = #{businessHours},
+            avatar = #{avatar},
+            status = #{status},
+            is_main = 1
+        where id = #{id}
+          and merchant_id = #{merchantId}
+          and del_flag = '0'
     </update>
 
     <update id="deleteMerchantStoreById" parameterType="Long">

@@ -103,6 +103,13 @@
         where m.id = #{id} AND m.del_flag = '0'
     </select>
 
+    <select id="selectMerchantIdForUpdate" parameterType="Long" resultType="Long">
+        select id
+        from merchant
+        where id = #{id} AND del_flag = '0'
+        for update
+    </select>
+
     <select id="selectMerchantLiveStats" resultType="java.util.LinkedHashMap">
         SELECT
             (SELECT COUNT(*)

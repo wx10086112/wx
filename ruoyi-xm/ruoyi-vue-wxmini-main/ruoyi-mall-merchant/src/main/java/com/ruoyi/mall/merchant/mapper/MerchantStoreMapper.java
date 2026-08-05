@@ -7,8 +7,10 @@ public interface MerchantStoreMapper {
     MerchantStore selectMerchantStoreById(Long id);
     List<MerchantStore> selectMerchantStoreList(MerchantStore merchantStore);
     List<MerchantStore> selectMerchantStoreByMerchantId(Long merchantId);
+    int countMerchantStoreByMerchantId(Long merchantId);
     int insertMerchantStore(MerchantStore merchantStore);
     int updateMerchantStore(MerchantStore merchantStore);
+    int updatePrimaryMerchantStore(MerchantStore merchantStore);
     int deleteMerchantStoreById(Long id);
     int deleteMerchantStoreByIds(Long[] ids);
 }

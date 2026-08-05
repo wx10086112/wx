@@ -168,6 +168,60 @@
             </el-descriptions>
           </el-tab-pane>
 
+          <el-tab-pane label="门店信息" name="store">
+            <div class="store-toolbar">
+              <h3 class="section-title">主门店</h3>
+              <el-button
+                v-if="primaryStore"
+                v-hasPermi="['mall:merchant:edit']"
+                type="primary"
+                icon="el-icon-edit"
+                size="small"
+                @click="openStoreDialog"
+              >编辑门店</el-button>
+            </div>
+
+            <div v-loading="storeLoading" class="store-content">
+              <el-empty v-if="!storeLoading && !primaryStore" description="尚未创建主门店">
+                <el-button
+                  v-hasPermi="['mall:merchant:add']"
+                  type="primary"
+                  icon="el-icon-plus"
+                  size="small"
+                  @click="openStoreDialog"
+                >创建主门店</el-button>
+              </el-empty>
+
+              <el-descriptions v-else-if="primaryStore" :column="2" border>
+                <el-descriptions-item label="门店图片">
+                  <el-image
+                    v-if="primaryStore.avatar"
+                    :src="displayImageUrl(primaryStore.avatar)"
+                    :preview-src-list="[displayImageUrl(primaryStore.avatar)]"
+                    fit="cover"
+                    class="store-avatar"
+                  />
+                  <span v-else>-</span>
+                </el-descriptions-item>
+                <el-descriptions-item label="门店状态">
+                  <el-tag :type="primaryStore.status === 1 ? 'success' : 'info'" size="small">
+                    {{ primaryStore.status === 1 ? '营业中' : '已停用' }}
+                  </el-tag>
+                  <el-tag type="primary" size="small" style="margin-left: 8px;">主门店</el-tag>
+                </el-descriptions-item>
+                <el-descriptions-item label="门店名称">{{ primaryStore.name || '-' }}</el-descriptions-item>
+                <el-descriptions-item label="联系人">{{ primaryStore.contact || '-' }}</el-descriptions-item>
+                <el-descriptions-item label="联系电话">{{ primaryStore.phone || '-' }}</el-descriptions-item>
+                <el-descriptions-item label="营业时间">{{ primaryStore.businessHours || '-' }}</el-descriptions-item>
+                <el-descriptions-item label="门店地址" :span="2">{{ primaryStore.address || '-' }}</el-descriptions-item>
+                <el-descriptions-item label="经度">{{ coordinateText(primaryStore.longitude) }}</el-descriptions-item>
+                <el-descriptions-item label="纬度">{{ coordinateText(primaryStore.latitude) }}</el-descriptions-item>
+                <el-descriptions-item label="创建时间">{{ primaryStore.createTime || '-' }}</el-descriptions-item>
+                <el-descriptions-item label="更新时间">{{ primaryStore.updateTime || '-' }}</el-descriptions-item>
+              </el-descriptions>
+            </div>
+          </el-tab-pane>
+
           <!-- Tab 2: 商品列表 -->
           <el-tab-pane label="商品列表" name="products">
             <div class="search-bar">
@@ -385,6 +439,87 @@
         </el-tabs>
       </div>
     </el-card>
+
+    <el-dialog :title="primaryStore ? '编辑主门店' : '创建主门店'" :visible.sync="storeDialogVisible" width="680px" append-to-body>
+      <el-form ref="storeForm" :model="storeForm" :rules="storeRules" label-width="96px">
+        <el-row :gutter="18">
+          <el-col :span="12">
+            <el-form-item label="门店名称" prop="name">
+              <el-input v-model="storeForm.name" maxlength="100" placeholder="请输入门店名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="联系人">
+              <el-input v-model="storeForm.contact" maxlength="50" placeholder="请输入联系人" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="18">
+          <el-col :span="12">
+            <el-form-item label="联系电话" prop="phone">
+              <el-input v-model="storeForm.phone" maxlength="20" placeholder="请输入联系电话" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="营业时间">
+              <el-input v-model="storeForm.businessHours" maxlength="100" placeholder="例如 10:00-22:00" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="门店地址">
+          <el-input v-model="storeForm.address" maxlength="255" placeholder="请输入门店地址" />
+        </el-form-item>
+        <el-row :gutter="18">
+          <el-col :span="12">
+            <el-form-item label="经度">
+              <el-input-number
+                v-model="storeForm.longitude"
+                :min="-180"
+                :max="180"
+                :precision="7"
+                :controls="false"
+                placeholder="例如 108.9530980"
+                class="store-coordinate-input"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="纬度">
+              <el-input-number
+                v-model="storeForm.latitude"
+                :min="-90"
+                :max="90"
+                :precision="7"
+                :controls="false"
+                placeholder="例如 34.2778000"
+                class="store-coordinate-input"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="门店图片">
+          <ImageUpload
+            v-model="storeForm.avatar"
+            :limit="1"
+            :file-size="5"
+            :file-type="['jpg', 'jpeg', 'png', 'webp']"
+          />
+        </el-form-item>
+        <el-form-item label="营业状态">
+          <el-switch
+            v-model="storeForm.status"
+            :active-value="1"
+            :inactive-value="0"
+            active-text="营业中"
+            inactive-text="已停用"
+          />
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="storeDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="storeSaving" @click="submitStoreForm">保存</el-button>
+      </div>
+    </el-dialog>
 
     <!-- 新增/编辑商品弹窗 -->
     <el-dialog :title="productDialogTitle" :visible.sync="productDialogVisible" width="600px" append-to-body>
@@ -894,7 +1029,7 @@
 </template>
 
 <script>
-import { getMerchantDetail, getMerchantLiveStats, getMerchantEntryQrCode, getProductList, getProductCategoryList, addProductCategory, addProduct, updateProduct, deleteProduct, getMerchantOrders, getMerchantFlowList, orderStatusMap, getMerchantUserList, addMerchantUser, resetMerchantUserPwd, changeMerchantUserStatus, updateMerchant } from '@/api/merchant'
+import { getMerchantDetail, getMerchantStore, createMerchantStore, updateMerchantStore, getMerchantLiveStats, getMerchantEntryQrCode, getProductList, getProductCategoryList, addProductCategory, addProduct, updateProduct, deleteProduct, getMerchantOrders, getMerchantFlowList, orderStatusMap, getMerchantUserList, addMerchantUser, resetMerchantUserPwd, changeMerchantUserStatus, updateMerchant } from '@/api/merchant'
 import { listGroupon, getGroupon, addGroupon, updateGroupon, deleteGroupon, changeGrouponStatus, listGrouponItem, addGrouponItem, updateGrouponItem, deleteGrouponItem, changeGrouponItemStatus } from '@/api/marketing/groupon'
 import { getToken } from '@/utils/auth'
 
@@ -910,6 +1045,18 @@ export default {
       merchantId: null,
       carouselSaving: false,
       carouselForm: { id: null, carouselImages: '' },
+      storeLoading: false,
+      storeLoaded: false,
+      primaryStore: null,
+      storeDialogVisible: false,
+      storeSaving: false,
+      storeForm: {
+        name: '', contact: '', phone: '', address: '', businessHours: '',
+        avatar: '', longitude: null, latitude: null, status: 1
+      },
+      storeRules: {
+        name: [{ required: true, message: '请输入门店名称', trigger: 'blur' }]
+      },
       orderStatusMap: orderStatusMap,
       entryQrLoading: false,
       merchantEntry: {
@@ -1224,6 +1371,69 @@ export default {
       } finally {
         this.carouselSaving = false
       }
+    },
+
+    async loadPrimaryStore() {
+      this.storeLoading = true
+      try {
+        const res = await getMerchantStore(this.merchantId)
+        this.primaryStore = res.data || null
+        this.storeLoaded = true
+      } finally {
+        this.storeLoading = false
+      }
+    },
+    coordinateText(value) {
+      if (value === null || value === undefined || value === '') return '-'
+      const coordinate = Number(value)
+      return Number.isFinite(coordinate) ? coordinate.toFixed(7) : '-'
+    },
+    normalizeCoordinate(value) {
+      if (value === null || value === undefined || value === '') return null
+      const coordinate = Number(value)
+      return Number.isFinite(coordinate) ? coordinate : null
+    },
+    openStoreDialog() {
+      const source = this.primaryStore || {}
+      this.storeForm = {
+        name: source.name || this.merchant.name || '',
+        contact: source.contact || this.merchant.contact || '',
+        phone: source.phone || this.merchant.phone || '',
+        address: source.address || this.merchant.address || '',
+        businessHours: source.businessHours || this.merchant.businessHours || '',
+        avatar: source.avatar || this.merchant.avatar || this.merchant.logo || '',
+        longitude: this.normalizeCoordinate(source.longitude),
+        latitude: this.normalizeCoordinate(source.latitude),
+        status: source.status === 0 ? 0 : 1
+      }
+      this.storeDialogVisible = true
+      this.$nextTick(() => {
+        if (this.$refs.storeForm) this.$refs.storeForm.clearValidate()
+      })
+    },
+    submitStoreForm() {
+      this.$refs.storeForm.validate(async valid => {
+        if (!valid) return
+        this.storeSaving = true
+        try {
+          const creating = !this.primaryStore
+          const payload = {
+            ...this.storeForm,
+            longitude: this.normalizeCoordinate(this.storeForm.longitude),
+            latitude: this.normalizeCoordinate(this.storeForm.latitude)
+          }
+          const res = creating
+            ? await createMerchantStore(this.merchantId, payload)
+            : await updateMerchantStore(this.merchantId, payload)
+          this.primaryStore = res.data || payload
+          this.storeLoaded = true
+          this.storeDialogVisible = false
+          this.merchant = { ...this.merchant, storeCount: 1 }
+          this.$message.success(creating ? '主门店已创建' : '门店信息已保存')
+        } finally {
+          this.storeSaving = false
+        }
+      })
     },
 
     async loadMerchantEntryQrCode(silent = false) {
@@ -1882,7 +2092,9 @@ export default {
   },
   watch: {
     activeTab(val) {
-      if (val === 'groupon' && this.grouponList.length === 0) {
+      if (val === 'store' && !this.storeLoaded) {
+        this.loadPrimaryStore()
+      } else if (val === 'groupon' && this.grouponList.length === 0) {
         this.loadGroupons()
       } else if (val === 'orders' && this.orderList.length === 0) {
         this.loadOrders()
@@ -1904,6 +2116,25 @@ export default {
 }
 .detail-tabs {
   margin-top: 20px;
+}
+.store-toolbar {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.store-content {
+  min-height: 240px;
+}
+.store-avatar {
+  width: 96px;
+  height: 72px;
+  border-radius: 4px;
+  overflow: hidden;
+  vertical-align: middle;
+}
+.store-coordinate-input {
+  width: 100%;
 }
 .section-header {
   margin-top: 20px;

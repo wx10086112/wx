@@ -12,6 +12,7 @@ import com.ruoyi.common.utils.MallDataScopeHelper;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.mall.common.config.WxMaServiceManager;
 import com.ruoyi.mall.merchant.domain.Merchant;
+import com.ruoyi.mall.merchant.domain.MerchantStore;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import me.chanjar.weixin.common.error.WxErrorException;
 import org.apache.commons.lang3.StringUtils;
@@ -87,6 +88,41 @@ public class MallMerchantController extends BaseController {
             return AjaxResult.error("无权限查看该商家");
         }
         return AjaxResult.success(toSafeMapWithLiveStats(merchant));
+    }
+
+    @PreAuthorize("@ss.hasPermi('mall:merchant:query')")
+    @GetMapping("/{id}/store")
+    public AjaxResult getPrimaryStore(@PathVariable Long id) {
+        try {
+            requireAccessibleMerchant(id);
+            return AjaxResult.success(merchantService.selectPrimaryStoreByMerchantId(id));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("@ss.hasPermi('mall:merchant:add')")
+    @Log(title = "商户主门店管理", businessType = BusinessType.INSERT)
+    @PostMapping("/{id}/store")
+    public AjaxResult createPrimaryStore(@PathVariable Long id, @RequestBody MerchantStore merchantStore) {
+        try {
+            requireAccessibleMerchant(id);
+            return AjaxResult.success(merchantService.createPrimaryStore(id, merchantStore));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("@ss.hasPermi('mall:merchant:edit')")
+    @Log(title = "商户主门店管理", businessType = BusinessType.UPDATE)
+    @PutMapping("/{id}/store")
+    public AjaxResult updatePrimaryStore(@PathVariable Long id, @RequestBody MerchantStore merchantStore) {
+        try {
+            requireAccessibleMerchant(id);
+            return AjaxResult.success(merchantService.updatePrimaryStore(id, merchantStore));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
     }
 
     @PreAuthorize("@ss.hasPermi('mall:merchant:query')")
@@ -620,6 +656,18 @@ public class MallMerchantController extends BaseController {
             current = current.getCause();
         }
         return false;
+    }
+
+    private Merchant requireAccessibleMerchant(Long merchantId) {
+        Merchant merchant = merchantService.selectMerchantById(merchantId);
+        if (merchant == null) {
+            throw new IllegalArgumentException("商家不存在");
+        }
+        Long effectiveDistributorId = MallDataScopeHelper.currentEffectiveDistributorId();
+        if (effectiveDistributorId != null && !effectiveDistributorId.equals(merchant.getDistributorId())) {
+            throw new IllegalArgumentException("无权限操作该商家");
+        }
+        return merchant;
     }
 
     private String buildFullUrl(HttpServletRequest request, String relativePath) {

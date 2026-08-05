@@ -51,6 +51,9 @@
 | `POST` | `/` | 新增商户 | `mall:merchant:add` |
 | `PUT` | `/` | 修改商户信息 | `mall:merchant:edit` |
 | `DELETE` | `/{ids}` | 批量删除商户 | `mall:merchant:remove` |
+| `GET` | `/{id}/store` | 查询主门店 | `mall:merchant:query` |
+| `POST` | `/{id}/store` | 为历史商家创建第一家主门店 | `mall:merchant:add` |
+| `PUT` | `/{id}/store` | 编辑主门店 | `mall:merchant:edit` |
 
 ### MallMerchantAuditController (`/mall/merchant`)
 

@@ -17,6 +17,29 @@ export function getMerchantDetail(id) {
   })
 }
 
+export function getMerchantStore(id) {
+  return request({
+    url: '/mall/merchant/' + id + '/store',
+    method: 'get'
+  })
+}
+
+export function createMerchantStore(id, data) {
+  return request({
+    url: '/mall/merchant/' + id + '/store',
+    method: 'post',
+    data: data
+  })
+}
+
+export function updateMerchantStore(id, data) {
+  return request({
+    url: '/mall/merchant/' + id + '/store',
+    method: 'put',
+    data: data
+  })
+}
+
 export function getMerchantLiveStats(id) {
   return request({
     url: '/mall/merchant/' + id + '/live-stats',

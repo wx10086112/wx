@@ -1,6 +1,7 @@
 package com.ruoyi.mall.merchant.service;
 
 import com.ruoyi.mall.merchant.domain.Merchant;
+import com.ruoyi.mall.merchant.domain.MerchantStore;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,12 @@ public interface IMerchantService {
     int insertMerchant(Merchant merchant);
 
     int updateMerchant(Merchant merchant);
+
+    MerchantStore selectPrimaryStoreByMerchantId(Long merchantId);
+
+    MerchantStore createPrimaryStore(Long merchantId, MerchantStore merchantStore);
+
+    MerchantStore updatePrimaryStore(Long merchantId, MerchantStore merchantStore);
 
     int deleteMerchantById(Long id);
 
