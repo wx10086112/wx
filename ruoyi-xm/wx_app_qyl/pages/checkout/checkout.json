@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "确认订单",
+  "usingComponents": {
+    "agreement-consent": "/components/agreement-consent/agreement-consent"
+  }
+}

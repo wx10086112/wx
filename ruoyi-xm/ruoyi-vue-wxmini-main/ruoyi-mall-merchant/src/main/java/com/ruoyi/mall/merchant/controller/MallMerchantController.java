@@ -290,14 +290,19 @@ public class MallMerchantController extends BaseController {
             return null;
         }
 
-        Merchant occupiedMerchant = merchantService.selectMerchantByCAppId(appId);
-        if (occupiedMerchant == null) {
-            return null;
+        Merchant cAppMerchant = merchantService.selectMerchantByCAppId(appId);
+        AjaxResult cAppCheck = checkMiniAppOccupied(label, cAppMerchant, currentMerchantId);
+        if (cAppCheck != null) {
+            return cAppCheck;
         }
-        if (currentMerchantId != null && currentMerchantId.equals(occupiedMerchant.getId())) {
-            return null;
-        }
+        Merchant mAppMerchant = merchantService.selectMerchantByMAppId(appId);
+        return checkMiniAppOccupied(label, mAppMerchant, currentMerchantId);
+    }
 
+    private AjaxResult checkMiniAppOccupied(String label, Merchant occupiedMerchant, Long currentMerchantId) {
+        if (occupiedMerchant == null || (currentMerchantId != null && currentMerchantId.equals(occupiedMerchant.getId()))) {
+            return null;
+        }
         String merchantName = StringUtils.defaultIfBlank(occupiedMerchant.getName(), "未命名商家");
         return AjaxResult.error(label + " 已被商家【" + merchantName + "】占用");
     }
@@ -451,6 +456,7 @@ public class MallMerchantController extends BaseController {
         map.put("totalIncome", merchant.getTotalIncome());
         map.put("address", merchant.getAddress());
         map.put("avatar", merchant.getAvatar());
+        map.put("carouselImages", merchant.getCarouselImages());
         map.put("description", merchant.getDescription());
         map.put("businessHours", merchant.getBusinessHours());
         map.put("productCount", merchant.getProductCount());

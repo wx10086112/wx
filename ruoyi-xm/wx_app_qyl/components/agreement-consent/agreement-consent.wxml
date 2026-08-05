@@ -1,0 +1,151 @@
+<view wx:if="{{triggerVisible}}" class="agreement-consent {{checked ? 'is-checked' : ''}} {{theme === 'primary' ? 'agreement-consent--primary' : ''}}">
+  <view class="agreement-main" bindtap="openAgreementPanel">
+    <view class="agreement-check">
+      <text wx:if="{{checked}}">✓</text>
+    </view>
+    <view class="agreement-text">
+      <text>我已阅读并同意</text>
+      <text class="agreement-link" data-key="service" catchtap="openAgreementPanel">《{{serviceTitle}}》</text>
+      <text>和</text>
+      <text class="agreement-link" data-key="privacy" catchtap="openAgreementPanel">《{{privacyTitle}}》</text>
+    </view>
+  </view>
+</view>
+
+<view wx:if="{{showPanel}}" class="agreement-panel" catchtouchmove="preventMove">
+  <view class="agreement-mask" bindtap="closeAgreementPanel"></view>
+  <view class="agreement-sheet">
+    <view class="agreement-sheet__header">
+      <text class="agreement-sheet__title">{{sheetTitle}}</text>
+      <text class="agreement-sheet__close" bindtap="closeAgreementPanel">×</text>
+    </view>
+
+    <view class="agreement-tabs">
+      <view
+        wx:for="{{tabs}}"
+        wx:key="key"
+        class="agreement-tab {{activeTab === item.key ? 'active' : ''}}"
+        data-key="{{item.key}}"
+        bindtap="switchTab"
+      >{{item.title}}</view>
+    </view>
+
+    <scroll-view scroll-y class="agreement-content">
+      <view wx:if="{{audienceType === 'merchant' && activeTab === 'service'}}" class="agreement-doc">
+        <text class="agreement-doc__title">商家服务协议</text>
+        <text class="agreement-doc__meta">更新日期：2026年6月9日　生效日期：2026年6月9日</text>
+        <text class="agreement-doc__p">本协议适用于商家、店长及被授权员工使用商家工作台、订单履约、核销、售后、商品与门店管理等功能。商家应确保经营主体、门店资质、商品内容、价格、库存、有效期、退款规则和履约说明真实、准确、合法。</text>
+        <text class="agreement-doc__section">一、账号与权限</text>
+        <text class="agreement-doc__p">商家账号由平台或店长创建并分配权限。店长和员工应妥善保管账号密码，不得转借、出租、出售或允许无关人员使用。平台会根据角色权限控制订单管理、核销、退款、员工管理、财务查看等操作范围。</text>
+        <text class="agreement-doc__section">二、订单履约与核销</text>
+        <text class="agreement-doc__p">商家应按照小程序页面、订单详情和商品配置展示的内容提供服务。核销订单前应核对订单状态、商品内容、有效期和顾客信息，不得对未到店、未消费、已退款或异常订单进行违规核销。</text>
+        <text class="agreement-doc__section">三、用户联系与手机号使用</text>
+        <text class="agreement-doc__p">商家仅可因订单履约、到店服务、售后沟通、退款处理、异常订单核实等必要目的联系用户。点击拨号或获取完整号并拨打时，即表示你确认该联系行为与当前订单处理相关。</text>
+        <text class="agreement-doc__p">商家查看或拨打用户完整手机号时，应遵守提示：“你将看到用户完整手机号，请勿记录或泄露，此操作将被记录”。商家不得私自记录、复制、截图、传播、导出、售卖或用于营销骚扰等与订单无关的目的。</text>
+        <text class="agreement-doc__section">四、退款与售后</text>
+        <text class="agreement-doc__p">商家应按页面规则和实际履约情况处理退款、售后和争议。拒绝退款、通过退款、联系用户、修改订单状态等操作应基于真实业务原因，不得恶意拖延、虚假处理或规避平台规则。</text>
+        <text class="agreement-doc__section">五、经营内容规范</text>
+        <text class="agreement-doc__p">商家不得发布违法违规、虚假夸大、侵权、诱导交易、误导价格、违规医疗健康承诺等内容，不得利用平台从事刷单、虚假核销、套现、欺诈、侵犯用户权益或扰乱平台秩序的行为。</text>
+        <text class="agreement-doc__section">六、操作记录与责任</text>
+        <text class="agreement-doc__p">平台会记录商家员工的登录、订单查看、核销、退款、拨号、资料修改等必要操作，用于账号安全、订单争议、合规审计和风险控制。因商家或员工违规操作造成损失的，由商家及相关责任人依法承担责任。</text>
+        <text class="agreement-doc__section">七、协议更新</text>
+        <text class="agreement-doc__p">平台可根据业务调整、法律法规、监管要求或微信平台规则更新本协议。涉及商家重要权益或数据处理规则变化时，会在商家端页面展示更新内容或重新要求确认。</text>
+      </view>
+
+      <view wx:elif="{{audienceType === 'merchant' && activeTab === 'privacy'}}" class="agreement-doc">
+        <text class="agreement-doc__title">商家隐私与数据保护指引</text>
+        <text class="agreement-doc__meta">更新日期：2026年6月9日　生效日期：2026年6月9日</text>
+        <text class="agreement-doc__p">本指引说明商家端在经营管理和订单履约过程中涉及的数据处理规则。商家及员工应以最小必要原则使用平台提供的数据，不得超出订单履约和经营管理目的处理用户个人信息。</text>
+        <text class="agreement-doc__p">商家端个人信息处理者为当前小程序认证主体及对应入驻商户，具体主体名称、门店联系方式和经营资质以小程序主体信息、商家资质公示、门店页面及“联系客服”页面展示为准。</text>
+        <text wx:if="{{privacyInfo.operatorName}}" class="agreement-doc__p">当前配置的个人信息处理者：{{privacyInfo.operatorName}}</text>
+        <text wx:if="{{privacyContactLine}}" class="agreement-doc__p">联系方式：{{privacyContactLine}}</text>
+        <text class="agreement-doc__section">一、商家端处理的信息</text>
+        <text class="agreement-doc__p">1. 商家资料：包括门店名称、联系人、联系电话、地址、简介、营业状态、退款支持、预点单支持、小程序接入参数、结算配置和资质相关信息，用于门店展示、后台管理和系统接入。</text>
+        <text class="agreement-doc__p">2. 员工资料：包括员工账号、姓名、手机号、角色权限、登录状态和操作记录，用于身份识别、权限控制、履约管理和安全审计。</text>
+        <text class="agreement-doc__p">3. 订单资料：包括订单号、商品名称、金额、状态、退款信息、核销状态、用户昵称或联系人、脱敏手机号、备注和必要的售后记录，用于订单履约、核销、退款和争议处理。</text>
+        <text class="agreement-doc__p">4. 商品与门店图片：当商家上传商品图、门店图或资质图时，小程序会调用相册或相机能力处理你主动选择或拍摄的图片，用于商品展示、门店配置和资质公示。</text>
+        <text class="agreement-doc__p">5. 扫码核销信息：当商家使用扫码核销时，小程序会处理扫码结果、核销码、订单号、核销员工、核销时间和核销结果，用于订单履约、安全审计和争议处理。</text>
+        <text class="agreement-doc__section">二、用户手机号保护</text>
+        <text class="agreement-doc__p">默认页面仅展示脱敏手机号。确需电话联系用户时，商家员工可通过拨号入口调用微信系统拨号能力。相关操作会记录账号、门店、订单、时间和动作，不记录或展示无关信息。</text>
+        <text class="agreement-doc__p">商家员工在查看或拨打完整手机号前，应明确知悉：“你将看到用户完整手机号，请勿记录或泄露，此操作将被记录”。商家不得将用户手机号用于营销、私域拉新、外部联系人沉淀或其他与订单无关的用途。</text>
+        <text class="agreement-doc__section">三、数据安全义务</text>
+        <text class="agreement-doc__p">商家应限制员工权限，及时停用离职或无关人员账号，不得共享账号，不得批量导出、截屏传播、私自留存用户信息。发现账号异常、数据泄露或疑似违规使用时，应立即通知平台处理。</text>
+        <text class="agreement-doc__section">四、第三方与依法提供</text>
+        <text class="agreement-doc__p">平台不会要求商家将用户个人信息提供给无关第三方。因订单履约、售后、支付退款、监管要求或依法有权机关要求确需处理的，应在必要范围内进行，并保留相应依据。</text>
+        <text class="agreement-doc__section">五、保存期限</text>
+        <text class="agreement-doc__p">商家端操作记录、订单履约记录、退款售后记录和财务相关记录会按照交易履约、审计、税务、争议处理及法律法规要求保存。超过必要期限后，平台会依法删除或匿名化处理。</text>
+        <text class="agreement-doc__section">六、违规处理</text>
+        <text class="agreement-doc__p">若商家或员工违规查看、记录、泄露、倒卖、骚扰用户或超范围使用个人信息，平台可采取限制权限、冻结账号、暂停服务、留存证据、追究违约责任或依法配合监管处理等措施。</text>
+      </view>
+
+      <view wx:elif="{{activeTab === 'service'}}" class="agreement-doc">
+        <text class="agreement-doc__title">用户服务协议</text>
+        <text class="agreement-doc__meta">更新日期：2026年6月9日　生效日期：2026年6月9日</text>
+        <text class="agreement-doc__p">欢迎使用本小程序。平台提供系统、订单、支付、核销和数据等技术能力，具体商品、门店服务、售后履约由该小程序对应商户提供。</text>
+        <text class="agreement-doc__section">一、服务内容</text>
+        <text class="agreement-doc__p">你可以在本小程序中浏览门店及商品信息、购买团购或服务项目、提交订单、完成微信支付、查看订单、申请退款、到店出示核销码、联系门店客服，以及编辑头像昵称等个人资料。</text>
+        <text class="agreement-doc__section">二、账号与资料</text>
+        <text class="agreement-doc__p">C端用户通过微信登录并可授权手机号用于订单履约和售后联系。你应保证提交的手机号、昵称、头像、订单联系人等信息真实、准确、合法、有效，不得冒用他人身份或联系方式。</text>
+        <text class="agreement-doc__section">三、账号注销与再次注册</text>
+        <text class="agreement-doc__p">你可以在“个人信息—账号管理—注销账号”中申请注销。注销后，头像、昵称、手机号等账号资料将删除或匿名化，当前登录状态会立即失效；历史订单、支付、退款、售后和财务记录会按法律法规、交易履约、税务审计和争议处理要求保留必要信息。</text>
+        <text class="agreement-doc__p">为防止反复注销、注册滥用新用户权益、优惠、售后或风控规则，注销成功后 7 天内，同一微信身份暂不能在同一小程序重新注册。冷静期结束后，你可以重新通过微信登录注册新账号，新账号默认不继承已注销账号的历史订单和权益。</text>
+        <text class="agreement-doc__section">四、订单、支付与核销</text>
+        <text class="agreement-doc__p">商品名称、价格、库存、有效期、预点单规则、退款规则、营业时间、门店地址等以小程序页面和订单详情展示为准。支付成功后系统生成订单和到店核销码，你应在有效期内按规则使用。</text>
+        <text class="agreement-doc__section">五、退款与售后</text>
+        <text class="agreement-doc__p">你可以在订单页发起取消订单、申请退款或联系商户。退款审核、退款金额、到账时间以订单状态、商户规则、微信支付和银行处理结果为准。已核销、已使用或不符合退款规则的订单，商户可按页面规则拒绝退款。</text>
+        <text class="agreement-doc__section">六、用户行为规范</text>
+        <text class="agreement-doc__p">你不得利用本服务进行虚假交易、恶意下单、恶意退款、违规核销、刷单、干扰系统运行、绕过权限管理、上传违法内容、冒用他人信息，或实施侵害平台、商户、其他用户及第三方合法权益的行为。</text>
+        <text class="agreement-doc__section">七、服务变更与责任限制</text>
+        <text class="agreement-doc__p">平台和商户可基于业务调整、系统维护、法律法规或监管要求对服务内容进行更新。因微信、支付机构、网络运营商、设备系统、不可抗力或用户自身原因导致的服务中断、失败或损失，将在法律允许范围内按实际责任承担。</text>
+        <text class="agreement-doc__section">八、协议更新</text>
+        <text class="agreement-doc__p">本协议更新后会在小程序内展示。若更新涉及你的重要权益，我们会以弹窗、页面提示等方式再次提醒。你继续使用本小程序，即表示你已阅读并接受更新后的协议。</text>
+      </view>
+
+      <view wx:elif="{{activeTab === 'privacy'}}" class="agreement-doc">
+        <text class="agreement-doc__title">隐私保护指引</text>
+        <text class="agreement-doc__meta">更新日期：2026年6月9日　生效日期：2026年6月9日</text>
+        <text class="agreement-doc__p">本指引依据《中华人民共和国个人信息保护法》等相关法律法规，并结合本项目实际功能制定。我们仅处理实现小程序功能所必要的信息，并在本指引明示的目的内使用。</text>
+        <text class="agreement-doc__p">本小程序个人信息处理者为当前小程序认证主体及对应商户。具体主体名称、经营资质、门店电话、客服入口和联系地址以微信小程序主体信息、商家资质公示、门店页面及“联系客服”页面展示为准。</text>
+        <text wx:if="{{privacyInfo.operatorName}}" class="agreement-doc__p">当前配置的个人信息处理者：{{privacyInfo.operatorName}}</text>
+        <text wx:if="{{privacyContactLine}}" class="agreement-doc__p">联系方式：{{privacyContactLine}}</text>
+        <text class="agreement-doc__section">一、我们处理的信息及用途</text>
+        <text class="agreement-doc__p">1. 微信登录标识：包括 openid、用户ID、登录凭证和登录状态，用于识别账号、保持登录、查询你的订单和保障账号安全。</text>
+        <text class="agreement-doc__p">2. 昵称和头像：当你使用头像选择、昵称输入或编辑资料功能时，我们会处理你的微信头像、昵称或你主动填写的展示名称，用于个人中心和订单中的必要展示。</text>
+        <text class="agreement-doc__p">3. 手机号：当你点击手机号授权或在订单中填写手机号时，我们会处理你的手机号，用于账号绑定、订单创建、到店服务通知、售后沟通、退款处理和门店客服联系。</text>
+        <text class="agreement-doc__p">4. 位置信息：当你同意位置授权后，我们会通过 wx.getLocation 获取当前位置，用于计算你与门店的距离、展示附近门店信息和辅助导航。位置信息可能属于敏感个人信息，我们仅在你主动授权后处理；你拒绝授权不影响浏览基础内容，但距离展示可能不可用。</text>
+        <text class="agreement-doc__p">5. 订单与交易信息：包括商品、数量、订单号、支付金额、支付状态、优惠、退款原因、退款状态、核销码、核销时间、售后记录，用于订单履约、微信支付、退款、到店核销、客服处理、财务对账和争议处理。</text>
+        <text class="agreement-doc__p">6. 订阅消息状态：当你主动订阅订单服务通知时，我们会根据微信返回的订阅结果发送支付成功、核销或售后相关服务通知；你可在微信通知设置中管理订阅消息。</text>
+        <text class="agreement-doc__section">二、微信官方隐私能力对应关系</text>
+        <text class="agreement-doc__p">根据微信官方《小程序用户隐私保护指引内容介绍》，本小程序用户端涉及的微信隐私能力主要包括：通过 chooseAvatar 和 nickname 处理昵称头像；通过 wx.getLocation 处理位置信息；通过 getPhoneNumber 处理手机号；通过 requestSubscribeMessage 处理订阅消息授权状态。商家端还会在商品图片上传和扫码核销时调用相册、相机或扫码能力。实际授权页面以微信小程序后台配置和微信展示为准。</text>
+        <text class="agreement-doc__section">三、第三方服务</text>
+        <text class="agreement-doc__p">为完成支付，本小程序会调用微信支付能力处理订单号、支付金额、支付状态、用户标识等必要交易信息；为完成订单履约和售后，必要订单信息会提供给当前订单对应商户。若后续接入地图、客服、云存储或其他第三方服务，将在相关页面或隐私指引中补充说明。</text>
+        <text class="agreement-doc__section">四、存储期限</text>
+        <text class="agreement-doc__p">账号资料在你使用服务期间保存；订单、支付、退款、核销和财务相关信息会按照交易履约、售后、税务、审计、争议处理及法律法规要求保存。超出必要期限后，我们会删除或匿名化处理，法律法规另有规定的除外。</text>
+        <text class="agreement-doc__section">五、账号注销与个人信息处理</text>
+        <text class="agreement-doc__p">你申请注销账号后，我们会删除或匿名化处理头像、昵称、手机号、微信登录标识等账号资料，并使当前登录状态失效。订单、支付、退款、核销、售后、财务对账和争议处理所需的必要记录，会按照法律法规和交易合规要求继续保存。</text>
+        <text class="agreement-doc__p">为防止注销后立即重新注册导致权益、优惠、售后或风控规则被滥用，我们会保存同一小程序下微信登录标识的哈希值和允许重新注册时间，用于判断 7 天冷静期。该哈希值不直接展示为你的 openid，冷静期届满后仅用于必要的风控留痕。</text>
+        <text class="agreement-doc__section">六、信息使用规则</text>
+        <text class="agreement-doc__p">我们会在本指引明示目的内使用收集的信息。若使用目的、处理方式或处理范围发生重大变化，我们会通过弹窗、协议更新或页面提示重新告知，并在依法需要时再次取得你的明示同意。</text>
+        <text class="agreement-doc__section">七、信息对外提供</text>
+        <text class="agreement-doc__p">我们不会主动出售、出租或非法共享你的个人信息。为完成订单履约、支付、退款、核销、客服、财务结算和监管合规，必要信息可能在平台、当前小程序所属商户、微信支付及依法有权机关之间处理。涉及新增第三方共享时，将按法律法规要求另行告知或取得同意。</text>
+        <text class="agreement-doc__section">八、你的权利</text>
+        <text class="agreement-doc__p">你可以在小程序个人中心查看或编辑头像昵称等资料；可以在微信“小程序设置”中管理定位、手机号等授权；可以通过订单页申请退款或联系商户。关于位置信息，你可在小程序右上角“...” — “设置”中撤回授权；关于手机号等已获取信息，你可在“小程序已获取的信息”中通知开发者删除。</text>
+        <text class="agreement-doc__section">九、未成年人保护</text>
+        <text class="agreement-doc__p">未成年人使用本小程序应取得监护人同意。若监护人认为未成年人个人信息被不当处理，可通过商户客服或平台运营渠道联系我们处理。</text>
+        <text class="agreement-doc__section">十、联系方式</text>
+        <text class="agreement-doc__p">{{privacyRightsText}}</text>
+      </view>
+
+      <view wx:else class="agreement-doc">
+        <text class="agreement-doc__title">微信小程序用户隐私保护指引</text>
+        <text class="agreement-doc__p">微信小程序用户隐私保护指引由微信根据小程序后台配置生成，用于展示开发者声明的个人信息处理类型、处理目的和用户权利。具体内容以微信官方页面展示为准。</text>
+        <button class="wechat-privacy-btn" bindtap="openWechatPrivacy">打开微信隐私保护指引</button>
+      </view>
+    </scroll-view>
+
+    <view class="agreement-sheet__footer">
+      <button class="agreement-secondary-btn" bindtap="closeAgreementPanel">暂不同意</button>
+      <button class="agreement-primary-btn" bindtap="confirmAgreement">同意并继续</button>
+    </view>
+  </view>
+</view>

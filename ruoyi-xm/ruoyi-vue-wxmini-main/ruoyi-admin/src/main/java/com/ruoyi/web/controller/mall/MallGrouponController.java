@@ -209,6 +209,7 @@ public class MallGrouponController extends BaseController {
     /**
      * 团购活动图片上传
      */
+    @PreAuthorize("@ss.hasPermi('mall:groupon:edit')")
     @PostMapping("/image/upload")
     public AjaxResult uploadImage(
             @RequestParam("file") MultipartFile file,

@@ -1,0 +1,86 @@
+<view class="home-page">
+  <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-dot"></view>
+    <text class="loading-text">正在加载门店服务</text>
+  </view>
+
+  <view wx:else class="content">
+    <view wx:if="{{hasMerchantData}}" class="store-shell">
+      <view class="store-visual">
+        <swiper
+          class="store-swiper"
+          current="{{currentCarouselIndex}}"
+          circular="{{currentMerchant.carouselCount > 1}}"
+          autoplay="{{currentMerchant.carouselCount > 1}}"
+          interval="4000"
+          duration="500"
+          bindchange="onCarouselChange"
+        >
+          <swiper-item wx:for="{{currentMerchant.carouselImages}}" wx:key="index">
+            <image
+              class="store-image"
+              src="{{item}}"
+              mode="aspectFill"
+              bindtap="goMerchantDetail"
+            ></image>
+          </swiper-item>
+        </swiper>
+        <view class="carousel-count">
+          <view class="picture-icon"></view>
+          <text>{{currentCarouselIndex + 1}}/{{currentMerchant.carouselCount}}</text>
+        </view>
+      </view>
+
+      <view class="store-summary">
+        <view class="store-title-row">
+          <text class="store-name" bindtap="goMerchantDetail">{{currentMerchant.name}}</text>
+          <view class="switch-store" catchtap="chooseMerchant">
+            <text class="switch-mark">⇄</text>
+            <text>切换 (共{{merchantList.length}}店)</text>
+          </view>
+        </view>
+
+        <view class="store-divider"></view>
+
+        <view class="store-location-row">
+          <view class="store-address" bindtap="goMerchantDetail">
+            <text class="store-address-text">{{currentMerchant.address}}</text>
+            <view class="store-meta">
+              <text class="status-text {{currentMerchant.businessStatus ? 'open' : 'closed'}}">{{currentMerchant.businessStatusText}}</text>
+              <text wx:if="{{currentMerchant.distance}}" class="distance-text">{{currentMerchant.distance}}</text>
+            </view>
+          </view>
+          <view class="navigation-action" catchtap="openMerchantMap">
+            <view class="navigation-icon"></view>
+            <text>导航</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else class="store-empty-card">
+      <text class="store-empty-title">暂未获取门店信息</text>
+      <text class="store-empty-desc">请先完成商户配置，或稍后刷新重试</text>
+    </view>
+
+    <view class="section-head">
+      <text class="section-title">团购({{displayGrouponList.length}})</text>
+      <text class="cart-link" bindtap="goCart">购物车</text>
+    </view>
+
+    <view wx:if="{{displayGrouponList.length}}" class="service-list">
+      <product-card
+        wx:for="{{displayGrouponList}}"
+        wx:key="id"
+        product="{{item}}"
+        bind:click="onProductTap"
+        bind:buy="onProductBuy"
+      ></product-card>
+    </view>
+
+    <view wx:else class="empty-card">
+      <text class="empty-title">暂无上架服务</text>
+      <text class="empty-desc">门店服务正在整理中，请稍后再来看看</text>
+    </view>
+  </view>
+</view>

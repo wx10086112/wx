@@ -51,6 +51,12 @@ public class WxMiniJwtFilter extends OncePerRequestFilter {
 
             resolveCAppIdMerchantContext(request);
             if (isWxMiniPublicBrowseUri(path)) {
+                if (WxMiniUserContext.getAppIdMerchantId() == null) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"code\":403,\"msg\":\"小程序AppID未配置或无效\"}");
+                    return;
+                }
                 filterChain.doFilter(request, response);
                 return;
             }

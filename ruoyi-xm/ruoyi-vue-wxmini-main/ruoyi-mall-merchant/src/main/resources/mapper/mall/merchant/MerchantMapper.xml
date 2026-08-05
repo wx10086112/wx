@@ -18,6 +18,7 @@
         <result property="totalIncome" column="total_income"/>
         <result property="address" column="address"/>
         <result property="avatar" column="avatar"/>
+        <result property="carouselImages" column="carousel_images"/>
         <result property="description" column="description"/>
         <result property="businessHours" column="business_hours"/>
         <result property="supportRefund" column="support_refund"/>
@@ -61,7 +62,7 @@
 
     <sql id="selectMerchantVo">
         select m.id, m.distributor_id, m.name, m.logo, m.contact, m.phone, m.commission_rate, m.status, m.balance,
-               m.total_income, m.address, m.avatar, m.description, m.business_hours,
+               m.total_income, m.address, m.avatar, m.carousel_images, m.description, m.business_hours,
                m.support_refund, m.support_booking,
                m.product_count, m.store_count, m.c_mini_app_id, m.c_mini_app_secret,
                m.m_mini_app_id, m.m_mini_app_secret, m.wx_pay_mch_id, m.wx_pay_api_key,
@@ -184,6 +185,7 @@
             <if test="totalIncome != null">total_income,</if>
             <if test="address != null">address,</if>
             <if test="avatar != null">avatar,</if>
+            <if test="carouselImages != null">carousel_images,</if>
             <if test="description != null">description,</if>
             <if test="businessHours != null">business_hours,</if>
             <if test="supportRefund != null">support_refund,</if>
@@ -233,6 +235,7 @@
             <if test="totalIncome != null">#{totalIncome},</if>
             <if test="address != null">#{address},</if>
             <if test="avatar != null">#{avatar},</if>
+            <if test="carouselImages != null">#{carouselImages},</if>
             <if test="description != null">#{description},</if>
             <if test="businessHours != null">#{businessHours},</if>
             <if test="supportRefund != null">#{supportRefund},</if>
@@ -286,6 +289,7 @@
             <if test="totalIncome != null">total_income = #{totalIncome},</if>
             <if test="address != null">address = #{address},</if>
             <if test="avatar != null">avatar = #{avatar},</if>
+            <if test="carouselImages != null">carousel_images = #{carouselImages},</if>
             <if test="description != null">description = #{description},</if>
             <if test="businessHours != null">business_hours = #{businessHours},</if>
             <if test="supportRefund != null">support_refund = #{supportRefund},</if>

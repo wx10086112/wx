@@ -56,6 +56,11 @@ public class WxBookingController {
 
         BookingRecord query = new BookingRecord();
         query.setUserId(currentUserPk);
+        Long currentMerchantId = getCurrentMerchantId();
+        if (currentMerchantId == null) {
+            return AjaxResult.error("当前小程序登录态缺少商户信息");
+        }
+        query.setMerchantId(currentMerchantId);
         if (StringUtils.isNotBlank(status) && !"ALL".equalsIgnoreCase(status)) {
             query.setStatus(status);
         }
@@ -95,12 +100,9 @@ public class WxBookingController {
             return AjaxResult.error("服务不存在或已下架");
         }
 
-        Long currentMerchantId = WxMiniUserContext.getCurrentMerchantId();
-        if (currentMerchantId == null) {
-            currentMerchantId = WxMiniUserContext.getAppIdMerchantId();
-        }
+        Long currentMerchantId = getCurrentMerchantId();
         Long serviceMerchantId = bookingService != null ? bookingService.getMerchantId() : product.getMerchantId();
-        if (currentMerchantId != null && !currentMerchantId.equals(serviceMerchantId)) {
+        if (currentMerchantId == null || !currentMerchantId.equals(serviceMerchantId)) {
             return AjaxResult.error("服务不属于当前商家");
         }
 
@@ -208,7 +210,8 @@ public class WxBookingController {
         }
 
         BookingRecord record = bookingRecordService.selectBookingRecordByBookingNo(bookingNo);
-        if (record == null || record.getUserId() == null || !record.getUserId().equals(currentUserPk)) {
+        if (record == null || record.getUserId() == null || !record.getUserId().equals(currentUserPk)
+                || !isCurrentMerchantBooking(record)) {
             return AjaxResult.error("预点单记录不存在");
         }
         if (!BookingStatus.PENDING.equals(record.getStatus()) && !BookingStatus.CONFIRMED.equals(record.getStatus())) {
@@ -225,6 +228,17 @@ public class WxBookingController {
         }
         UserInfo userInfo = userInfoService.selectUserInfoByUserId(currentUserId);
         return userInfo != null ? userInfo.getId() : null;
+    }
+
+    private boolean isCurrentMerchantBooking(BookingRecord bookingRecord) {
+        Long merchantId = getCurrentMerchantId();
+        return merchantId != null && bookingRecord.getMerchantId() != null
+                && merchantId.equals(bookingRecord.getMerchantId());
+    }
+
+    private Long getCurrentMerchantId() {
+        Long merchantId = WxMiniUserContext.getCurrentMerchantId();
+        return merchantId != null ? merchantId : WxMiniUserContext.getAppIdMerchantId();
     }
 
     private int normalizePeopleCount(Integer peopleCount) {

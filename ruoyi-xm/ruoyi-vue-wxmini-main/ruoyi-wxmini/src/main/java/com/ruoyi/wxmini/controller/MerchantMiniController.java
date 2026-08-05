@@ -122,6 +122,7 @@ public class MerchantMiniController {
         MerchantMiniEntryInfoDto entryInfo = new MerchantMiniEntryInfoDto();
         entryInfo.setMerchantId(merchant.getId());
         entryInfo.setMerchantName(merchant.getName());
+        entryInfo.setMerchantImage(StringUtils.defaultIfBlank(merchant.getLogo(), merchant.getAvatar()));
         entryInfo.setContact(merchant.getContact());
         entryInfo.setPhone(merchant.getPhone());
         entryInfo.setLoginPage("/pages/merchant/login/login?merchantId=" + merchant.getId());

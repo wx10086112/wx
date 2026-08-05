@@ -1,0 +1,600 @@
+.page-shell {
+  min-height: 100vh;
+  padding: 28rpx 28rpx 72rpx;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.94) 0%, rgba(231, 244, 255, 0.9) 42%, rgba(245, 249, 253, 0.98) 100%),
+    #eef5fb;
+}
+
+.panel {
+  border-radius: 38rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.74);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.76)),
+    rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18rpx 54rpx rgba(34, 73, 116, 0.09);
+}
+
+.interactive-card {
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.card-pressed {
+  opacity: 0.86;
+  transform: scale(0.985);
+}
+
+.settlement-hero {
+  min-height: 190rpx;
+  padding: 26rpx 30rpx 24rpx;
+  border-radius: 34rpx;
+  border: 1rpx solid rgba(45, 143, 232, 0.18);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(232, 244, 255, 0.78)),
+    #eef7ff;
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.82), 0 14rpx 32rpx rgba(34, 73, 116, 0.07);
+  overflow: hidden;
+  position: relative;
+}
+
+.settlement-hero::after {
+  content: "";
+  position: absolute;
+  right: -58rpx;
+  top: -74rpx;
+  width: 174rpx;
+  height: 174rpx;
+  border-radius: 50%;
+  background: rgba(45, 143, 232, 0.045);
+}
+
+.hero-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-badge {
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  color: #237bc7;
+  background: rgba(255, 255, 255, 0.66);
+  font-size: 20rpx;
+  line-height: 1;
+}
+
+.hero-content {
+  margin-top: 22rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-kicker,
+.hero-label {
+  display: block;
+  color: #667085;
+}
+
+.hero-kicker {
+  color: #237bc7;
+  font-size: 22rpx;
+  font-weight: 720;
+  letter-spacing: 0;
+}
+
+.hero-label {
+  color: #667085;
+  font-size: 24rpx;
+}
+
+.hero-amount {
+  display: block;
+  margin-top: 8rpx;
+  color: #111827;
+  font-size: 56rpx;
+  font-weight: 820;
+  line-height: 1.04;
+  letter-spacing: 0;
+}
+
+.stats-summary {
+  margin-top: 20rpx;
+  padding: 18rpx 14rpx;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8rpx;
+}
+
+.stats-card {
+  min-height: 104rpx;
+  padding: 12rpx 6rpx;
+  border-radius: 24rpx;
+  background: rgba(244, 249, 255, 0.72);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.stats-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7rpx;
+}
+
+.stats-dot {
+  width: 11rpx;
+  height: 11rpx;
+  border-radius: 50%;
+  background: #98a2b3;
+  flex-shrink: 0;
+}
+
+.stats-dot.arrived {
+  background: #16a36a;
+}
+
+.stats-dot.processing {
+  background: #e58a19;
+}
+
+.stats-dot.waiting {
+  background: #98a2b3;
+}
+
+.stats-dot.neutral {
+  background: #2d8fe8;
+}
+
+.stats-value {
+  display: block;
+  width: 100%;
+  margin-top: 14rpx;
+  color: #111827;
+  font-family: "DIN Alternate", "Roboto Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 26rpx;
+  font-weight: 820;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-label {
+  min-width: 0;
+  color: #667085;
+  font-size: 20rpx;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.section-panel {
+  margin-top: 28rpx;
+  padding: 30rpx;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.section-title {
+  display: block;
+  color: #111827;
+  font-size: 32rpx;
+  font-weight: 820;
+  line-height: 1.25;
+}
+
+.filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  justify-content: flex-end;
+  flex: 1;
+}
+
+.filter-tab {
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  color: #667085;
+  background: #f1f7fd;
+  font-size: 22rpx;
+}
+
+.filter-tab.active {
+  color: #237bc7;
+  background: #ffffff;
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.84), 0 8rpx 18rpx rgba(34, 73, 116, 0.08);
+}
+
+.flow-head {
+  align-items: flex-start;
+}
+
+.range-tabs {
+  display: flex;
+  gap: 8rpx;
+  padding: 6rpx;
+  border-radius: 999rpx;
+  background: rgba(241, 247, 253, 0.92);
+}
+
+.range-tab {
+  min-width: 76rpx;
+  padding: 10rpx 12rpx;
+  border-radius: 999rpx;
+  color: #667085;
+  font-size: 21rpx;
+  line-height: 1;
+  text-align: center;
+}
+
+.range-tab.active {
+  color: #237bc7;
+  background: #ffffff;
+  box-shadow: 0 8rpx 18rpx rgba(34, 73, 116, 0.08);
+}
+
+.daily-hero {
+  margin-top: 24rpx;
+  padding: 28rpx;
+  border-radius: 30rpx;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(237, 246, 255, 0.92)),
+    #edf6ff;
+  border: 1rpx solid rgba(45, 143, 232, 0.14);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24rpx;
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.92), 0 14rpx 34rpx rgba(34, 73, 116, 0.08);
+}
+
+.daily-label,
+.daily-side-label {
+  display: block;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.2;
+}
+
+.daily-amount {
+  margin-top: 14rpx;
+  display: flex;
+  align-items: baseline;
+  color: #237bc7;
+  font-family: "DIN Alternate", "Roboto Mono", "SFMono-Regular", Consolas, monospace;
+}
+
+.daily-currency {
+  font-size: 30rpx;
+  font-weight: 760;
+}
+
+.daily-value {
+  margin-left: 4rpx;
+  font-size: 54rpx;
+  font-weight: 860;
+  line-height: 1;
+}
+
+.daily-side {
+  min-width: 160rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.72);
+  text-align: right;
+}
+
+.daily-side-value {
+  display: block;
+  margin-top: 10rpx;
+  color: #111827;
+  font-size: 30rpx;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.daily-stats {
+  margin-top: 16rpx;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10rpx;
+}
+
+.daily-stat {
+  min-height: 96rpx;
+  padding: 14rpx 8rpx;
+  border-radius: 24rpx;
+  background: #f4f9ff;
+  text-align: center;
+}
+
+.daily-stat.blue {
+  background: #edf6ff;
+}
+
+.daily-stat.green {
+  background: #edf9f3;
+}
+
+.daily-stat.orange {
+  background: #fff5e8;
+}
+
+.daily-stat.neutral {
+  background: #f5f7fb;
+}
+
+.daily-stat-label {
+  display: block;
+  color: #667085;
+  font-size: 20rpx;
+  line-height: 1;
+}
+
+.daily-stat-value {
+  display: block;
+  margin-top: 14rpx;
+  color: #111827;
+  font-family: "DIN Alternate", "Roboto Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 25rpx;
+  font-weight: 820;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subsection-head {
+  margin-top: 28rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid rgba(20, 54, 91, 0.08);
+}
+
+.subsection-title {
+  color: #111827;
+  font-size: 27rpx;
+  font-weight: 780;
+  line-height: 1.2;
+}
+
+.flow-record-row {
+  padding: 20rpx 0;
+  border-top: 1rpx solid rgba(20, 54, 91, 0.06);
+  display: flex;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.flow-record-row:first-child {
+  border-top: 0;
+}
+
+.flow-record-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.flow-record-title {
+  display: block;
+  color: #111827;
+  font-size: 27rpx;
+  font-weight: 720;
+  line-height: 1.3;
+}
+
+.flow-record-meta {
+  display: block;
+  margin-top: 8rpx;
+  color: #98a2b3;
+  font-size: 22rpx;
+  line-height: 1.35;
+}
+
+.flow-record-side {
+  min-width: 176rpx;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.flow-record-amount {
+  display: block;
+  color: #111827;
+  font-family: "DIN Alternate", "Roboto Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 29rpx;
+  font-weight: 820;
+  line-height: 1.15;
+}
+
+.flow-record-amount.income {
+  color: #168257;
+}
+
+.flow-record-amount.refund {
+  color: #c76f12;
+}
+
+.flow-record-status {
+  display: block;
+  margin-top: 8rpx;
+  color: #667085;
+  font-size: 21rpx;
+  line-height: 1.2;
+}
+
+.record-head {
+  margin-top: 26rpx;
+}
+
+.compact-empty {
+  padding: 36rpx 0 8rpx;
+}
+
+.record-card,
+.flow-card {
+  margin-top: 22rpx;
+  padding: 26rpx 0;
+  border-top: 1rpx solid rgba(20, 54, 91, 0.08);
+}
+
+.record-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.record-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.record-title {
+  display: block;
+  color: #111827;
+  font-size: 28rpx;
+  font-weight: 720;
+  line-height: 1.35;
+}
+
+.record-meta {
+  display: block;
+  margin-top: 8rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.45;
+}
+
+.record-side {
+  min-width: 156rpx;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.record-amount {
+  display: block;
+  color: #111827;
+  font-size: 30rpx;
+  font-weight: 820;
+  line-height: 1.2;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 21rpx;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.status-pill.arrived {
+  color: #168257;
+  background: #e9f8f1;
+}
+
+.status-pill.processing {
+  color: #c76f12;
+  background: #fff5e8;
+}
+
+.status-pill.waiting {
+  color: #667085;
+  background: #edf2f7;
+}
+
+.status-pill.failed {
+  color: #d94b4b;
+  background: #fff0f0;
+}
+
+.flow-title-row {
+  align-items: flex-start;
+}
+
+.flow-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin-top: 16rpx;
+}
+
+.flow-card .flow-row:first-child {
+  margin-top: 0;
+}
+
+.flow-label {
+  flex-shrink: 0;
+  color: #98a2b3;
+  font-size: 23rpx;
+  line-height: 1.45;
+}
+
+.flow-value {
+  color: #344054;
+  font-size: 24rpx;
+  line-height: 1.45;
+  text-align: right;
+  word-break: break-all;
+}
+
+.flow-title {
+  color: #111827;
+  font-size: 28rpx;
+  font-weight: 720;
+}
+
+.flow-divider {
+  height: 1rpx;
+  margin: 20rpx 0 4rpx;
+  background: rgba(20, 54, 91, 0.08);
+}
+
+.flow-summary {
+  margin-top: 22rpx;
+  padding-top: 22rpx;
+  border-top: 1rpx solid rgba(20, 54, 91, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20rpx;
+}
+
+.flow-money {
+  display: block;
+  margin-top: 6rpx;
+  color: #111827;
+  font-size: 34rpx;
+  font-weight: 820;
+}
+
+.flow-summary-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10rpx;
+}
+
+.empty-inline {
+  padding: 64rpx 0 22rpx;
+  text-align: center;
+}
+
+.empty-text {
+  color: #667085;
+  font-size: 25rpx;
+}

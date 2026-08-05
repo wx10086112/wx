@@ -24,6 +24,7 @@ public class Merchant extends BaseEntity {
     private BigDecimal totalIncome;
     private String address;
     private String avatar;
+    private String carouselImages;
     private String description;
     private String businessHours;
     private Integer supportRefund;
@@ -97,6 +98,8 @@ public class Merchant extends BaseEntity {
     public void setAddress(String address) { this.address = address; }
     public String getAvatar() { return avatar; }
     public void setAvatar(String avatar) { this.avatar = avatar; }
+    public String getCarouselImages() { return carouselImages; }
+    public void setCarouselImages(String carouselImages) { this.carouselImages = carouselImages; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public String getBusinessHours() { return businessHours; }

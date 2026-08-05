@@ -1,0 +1,254 @@
+.login-page {
+  min-height: 100vh;
+  padding: 112rpx 48rpx 58rpx;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.94) 0%, rgba(231, 244, 255, 0.9) 45%, rgba(245, 249, 253, 0.98) 100%),
+    #eef5fb;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-hero {
+  flex: 1;
+  min-height: 620rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.brand-mark {
+  width: 148rpx;
+  height: 148rpx;
+  border-radius: 50%;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.58)),
+    #ffffff;
+  border: 1rpx solid rgba(255, 255, 255, 0.74);
+  box-shadow: 0 20rpx 46rpx rgba(45, 143, 232, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.brand-mark__image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: block;
+}
+
+.brand-mark__text {
+  color: #2d8fe8;
+  font-size: 64rpx;
+  font-weight: 820;
+  line-height: 1;
+}
+
+.brand-title {
+  display: block;
+  max-width: 620rpx;
+  margin-top: 54rpx;
+  color: #111827;
+  font-size: 48rpx;
+  line-height: 1.2;
+  font-weight: 820;
+}
+
+.brand-subtitle {
+  display: block;
+  max-width: 560rpx;
+  margin-top: 24rpx;
+  color: #667085;
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+.login-actions {
+  width: 100%;
+}
+
+.wechat-login-btn {
+  width: 100%;
+  height: 92rpx;
+  margin: 0;
+  padding: 0;
+  border-radius: 999rpx;
+  border: 1rpx solid rgba(45, 143, 232, 0.18);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(241, 247, 253, 0.9)),
+    rgba(255, 255, 255, 0.82);
+  color: #111827;
+  font-size: 30rpx;
+  font-weight: 680;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.78);
+}
+
+.wechat-login-btn:active {
+  transform: translateY(1rpx) scale(0.985);
+  opacity: 0.9;
+}
+
+.wechat-login-btn::after,
+.modal-btn::after {
+  border: none;
+}
+
+.wechat-icon {
+  width: 56rpx;
+  height: 46rpx;
+  margin-right: 16rpx;
+}
+
+.agreement-line {
+  min-height: 56rpx;
+  margin-top: 32rpx;
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 0 16rpx;
+}
+
+.agreement-check {
+  width: 32rpx;
+  height: 32rpx;
+  margin-top: 4rpx;
+  border-radius: 50%;
+  border: 1rpx solid #98a2b3;
+  color: #ffffff;
+  font-size: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.agreement-check.checked {
+  border-color: #2d8fe8;
+  background: #2d8fe8;
+}
+
+.agreement-copy {
+  flex: 1;
+  min-width: 0;
+  color: #667085;
+  font-size: 24rpx;
+  line-height: 1.65;
+}
+
+.agreement-link {
+  color: #237bc7;
+  font-weight: 680;
+}
+
+.login-footer {
+  height: 72rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 18rpx;
+  color: #667085;
+  font-size: 26rpx;
+}
+
+.login-footer__link {
+  line-height: 1.5;
+}
+
+.login-footer__divider {
+  color: #c7d4e1;
+  line-height: 1.5;
+}
+
+.agreement-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 48rpx;
+}
+
+.modal-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.34);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.modal-card {
+  position: relative;
+  width: 100%;
+  padding: 56rpx 48rpx;
+  border-radius: 40rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 32rpx 70rpx rgba(34, 73, 116, 0.16);
+  text-align: center;
+}
+
+.modal-title {
+  display: block;
+  color: #111827;
+  font-size: 36rpx;
+  font-weight: 720;
+  line-height: 1.35;
+}
+
+.modal-content {
+  margin-top: 34rpx;
+  color: #344054;
+  font-size: 28rpx;
+  line-height: 1.65;
+}
+
+.modal-link {
+  color: #237bc7;
+  font-weight: 680;
+}
+
+.modal-actions {
+  margin-top: 48rpx;
+  display: flex;
+  gap: 24rpx;
+}
+
+.modal-btn {
+  flex: 1;
+  height: 78rpx;
+  margin: 0;
+  border: 1rpx solid transparent;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  font-weight: 680;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.76);
+}
+
+.modal-btn:active {
+  transform: translateY(1rpx) scale(0.985);
+  opacity: 0.9;
+}
+
+.modal-btn--secondary {
+  color: #475467;
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.modal-btn--primary {
+  color: #2d8fe8;
+  border-color: rgba(45, 143, 232, 0.24);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(231, 244, 255, 0.92)),
+    #e7f4ff;
+}

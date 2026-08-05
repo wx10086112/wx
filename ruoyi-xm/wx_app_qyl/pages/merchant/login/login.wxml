@@ -1,0 +1,38 @@
+<view class="page-shell merchant-login-page">
+  <view class="page-head">
+    <text class="page-title">商家后台登录</text>
+    <text wx:if="{{entryLoading}}" class="page-status">识别中</text>
+  </view>
+
+  <view class="store-card">
+    <text class="store-card__label">当前门店</text>
+
+    <view wx:if="{{merchantEntry && merchantEntry.merchantId}}" class="store-card__body">
+      <image wx:if="{{merchantEntry.merchantImage}}" class="store-card__image" src="{{merchantEntry.merchantImage}}" mode="aspectFill"></image>
+      <text class="store-card__name">{{merchantEntry.merchantName || '未命名商家'}}</text>
+    </view>
+
+    <view wx:else class="store-card__empty">
+      <text class="store-card__empty-text">暂未识别到门店</text>
+    </view>
+  </view>
+
+  <view class="panel form-panel">
+    <view class="field-group">
+      <text class="panel-label">登录账号</text>
+      <input class="login-input" placeholder="请输入店长或店员账号" value="{{username}}" bindinput="onUsernameInput" />
+    </view>
+
+    <view class="field-group">
+      <text class="panel-label">登录密码</text>
+      <input class="login-input" password placeholder="请输入密码" value="{{password}}" bindinput="onPasswordInput" />
+    </view>
+
+    <view class="agreement-wrap">
+      <agreement-consent theme="primary" audience="merchant"></agreement-consent>
+    </view>
+
+    <button class="primary-btn login-btn" bindtap="submitLogin" loading="{{submitting}}" disabled="{{submitting}}">登录</button>
+
+  </view>
+</view>

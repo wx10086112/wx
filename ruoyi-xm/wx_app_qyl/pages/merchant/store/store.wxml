@@ -1,0 +1,46 @@
+<view class="page-shell">
+  <view wx:if="{{canManageStore}}" class="form-panel panel">
+    <text class="panel-title">基本信息</text>
+    <view class="field">
+      <text class="field-label">门店名称</text>
+      <input class="field-input" value="{{form.storeName}}" data-key="storeName" bindinput="handleInput" />
+    </view>
+    <view class="field">
+      <text class="field-label">商家简介</text>
+      <input class="field-input" value="{{form.brandSlogan}}" data-key="brandSlogan" bindinput="handleInput" />
+    </view>
+
+    <text class="panel-title separator">营业设置</text>
+    <view class="field">
+      <text class="field-label">营业时间</text>
+      <input class="field-input" value="{{form.businessHours}}" data-key="businessHours" bindinput="handleInput" placeholder="例如 10:00-22:00" />
+    </view>
+    <view class="field">
+      <text class="field-label">联系电话</text>
+      <input class="field-input" value="{{form.phone}}" data-key="phone" bindinput="handleInput" />
+    </view>
+    <view class="field">
+      <text class="field-label">门店地址</text>
+      <input class="field-input" value="{{form.address}}" data-key="address" bindinput="handleInput" />
+    </view>
+
+    <text class="panel-title separator">开关配置</text>
+    <view class="switch-row">
+      <text class="field-label">营业状态</text>
+      <switch checked="{{form.businessStatus}}" color="#2D8FE8" bindchange="handleSwitchChange" data-key="businessStatus" />
+    </view>
+    <view class="switch-row">
+      <text class="field-label">支持退款</text>
+      <switch checked="{{form.supportRefund}}" color="#2D8FE8" bindchange="handleSwitchChange" data-key="supportRefund" />
+    </view>
+    <view class="switch-row">
+      <text class="field-label">支持预点单</text>
+      <switch checked="{{form.supportBooking}}" color="#2D8FE8" bindchange="handleSwitchChange" data-key="supportBooking" />
+    </view>
+    <button class="primary-btn save-btn" bindtap="saveStore">保存门店信息</button>
+  </view>
+
+  <view wx:else class="empty-state">
+    <text class="empty-text">当前账号没有门店设置权限</text>
+  </view>
+</view>

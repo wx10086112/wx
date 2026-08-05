@@ -35,6 +35,30 @@
               <el-descriptions-item label="入驻时间">{{ merchant.createTime }}</el-descriptions-item>
             </el-descriptions>
 
+            <div class="section-header carousel-section-header">
+              <h3 class="section-title">
+                店铺轮播图
+                <el-tooltip content="最多上传 5 张，拖动可调整顺序，第一张作为小程序首页封面" placement="top">
+                  <i class="el-icon-question carousel-help" />
+                </el-tooltip>
+              </h3>
+              <el-button
+                type="primary"
+                icon="el-icon-check"
+                size="small"
+                :loading="carouselSaving"
+                @click="saveCarouselImages"
+              >保存轮播图</el-button>
+            </div>
+            <div class="carousel-upload-panel">
+              <ImageUpload
+                v-model="carouselForm.carouselImages"
+                :limit="5"
+                :file-size="5"
+                :file-type="['jpg', 'jpeg', 'png', 'webp']"
+              />
+            </div>
+
             <div class="section-header">
               <h3 class="section-title">商户小程序与商家后台入口</h3>
               <el-button type="primary" icon="el-icon-edit" size="small" @click="handleEditMiniApp">编辑配置</el-button>
@@ -884,6 +908,8 @@ export default {
       merchant: {},
       activeTab: 'basic',
       merchantId: null,
+      carouselSaving: false,
+      carouselForm: { id: null, carouselImages: '' },
       orderStatusMap: orderStatusMap,
       entryQrLoading: false,
       merchantEntry: {
@@ -1122,6 +1148,10 @@ export default {
       try {
         const res = await getMerchantDetail(this.merchantId)
         this.merchant = this.normalizeMerchantDetail(res.data)
+        this.carouselForm = {
+          id: this.merchantId,
+          carouselImages: this.merchant.carouselImages || ''
+        }
         await this.loadMerchantEntryQrCode(true)
       } catch (e) {
         this.$message.error('获取商家详情失败')
@@ -1172,10 +1202,28 @@ export default {
     applySavedMerchant(res) {
       if (res && res.data) {
         this.merchant = this.normalizeMerchantDetail({ ...this.merchant, ...res.data })
+        this.carouselForm = {
+          id: this.merchantId,
+          carouselImages: this.merchant.carouselImages || ''
+        }
         this.refreshLiveStats()
         return true
       }
       return false
+    },
+
+    async saveCarouselImages() {
+      this.carouselSaving = true
+      try {
+        const res = await updateMerchant({
+          id: this.merchantId,
+          carouselImages: this.carouselForm.carouselImages || ''
+        })
+        if (!this.applySavedMerchant(res)) await this.fetchDetail()
+        this.$message.success('店铺轮播图保存成功')
+      } finally {
+        this.carouselSaving = false
+      }
     },
 
     async loadMerchantEntryQrCode(silent = false) {
@@ -1865,6 +1913,22 @@ export default {
 }
 .section-title {
   margin: 0;
+}
+.carousel-section-header {
+  margin-top: 24px;
+}
+.carousel-help {
+  margin-left: 5px;
+  color: #909399;
+  font-size: 15px;
+  cursor: help;
+}
+.carousel-upload-panel {
+  min-height: 168px;
+  margin-top: 10px;
+  padding: 18px 18px 6px;
+  border: 1px solid #EBEEF5;
+  background: #FAFAFA;
 }
 .entry-panel {
   margin-top: 12px;

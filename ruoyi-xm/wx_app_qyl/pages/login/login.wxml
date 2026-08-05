@@ -1,0 +1,54 @@
+<view class="login-page">
+  <view class="login-hero">
+    <view class="brand-mark">
+      <image wx:if="{{brandLogo}}" class="brand-mark__image" src="{{brandLogo}}" mode="aspectFill"></image>
+      <text wx:else class="brand-mark__text">{{brandInitial}}</text>
+    </view>
+    <text class="brand-title">{{brandTitle}}</text>
+    <text class="brand-subtitle">{{brandSubtitle}}</text>
+  </view>
+
+  <view class="login-actions">
+    <button class="wechat-login-btn" bindtap="handleWechatLogin" loading="{{submitting}}">
+      <image class="wechat-icon" src="/assets/images/wechat-login.svg" mode="aspectFit"></image>
+      <text>微信登录</text>
+    </button>
+
+    <view class="agreement-line" bindtap="toggleAgreement">
+      <view class="agreement-check {{agreementAccepted ? 'checked' : ''}}">
+        <text wx:if="{{agreementAccepted}}">✓</text>
+      </view>
+      <view class="agreement-copy">
+        <text>已阅读并同意</text>
+        <text class="agreement-link" catchtap="openAgreementModal">《用户服务协议》</text>
+        <text>和</text>
+        <text class="agreement-link" catchtap="openAgreementModal">《隐私保护指引》</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="login-footer">
+    <text class="login-footer__link" bindtap="goHome">暂不登录</text>
+    <text class="login-footer__divider">|</text>
+    <text class="login-footer__link" bindtap="goMerchantEntry">商家入口</text>
+  </view>
+
+  <view wx:if="{{showAgreementModal}}" class="agreement-modal" catchtouchmove="preventMove">
+    <view class="modal-mask" bindtap="closeAgreementModal"></view>
+    <view class="modal-card">
+      <text class="modal-title">服务协议和隐私政策</text>
+      <view class="modal-content">
+        <text>为保障您的个人隐私权益，请在登录前仔细阅读</text>
+        <text class="modal-link" bindtap="openAgreementDetail" data-type="service">《用户服务协议》</text>
+        <text>和</text>
+        <text class="modal-link" bindtap="openAgreementDetail" data-type="privacy">《隐私保护指引》</text>
+      </view>
+      <view class="modal-actions">
+        <button class="modal-btn modal-btn--secondary" bindtap="closeAgreementModal">不同意</button>
+        <button class="modal-btn modal-btn--primary" bindtap="confirmAgreementAndLogin">同意</button>
+      </view>
+    </view>
+  </view>
+
+  <agreement-consent id="agreementDetail" trigger-visible="{{false}}"></agreement-consent>
+</view>

@@ -1,0 +1,97 @@
+<view class="page-shell">
+  <view class="form-panel panel">
+    <view wx:if="{{form.imageUrl}}" class="image-editor">
+      <view class="image-editor-head">
+        <view>
+          <text class="image-editor-title">套餐封面</text>
+        </view>
+        <button class="image-change-btn {{uploadingImage ? 'is-disabled' : ''}}" bindtap="chooseGoodsImage">
+          {{uploadingImage ? '上传中' : '换图'}}
+        </button>
+      </view>
+
+      <view
+        class="crop-frame"
+        catchtouchstart="handleCropTouchStart"
+        catchtouchmove="handleCropTouchMove"
+        catchtouchend="handleCropTouchEnd"
+        catchtouchcancel="handleCropTouchEnd"
+      >
+        <image class="crop-image" src="{{form.imageUrl}}" mode="aspectFill" style="{{imageCropStyle}}"></image>
+        <view class="crop-grid">
+          <view class="grid-line vertical left"></view>
+          <view class="grid-line vertical right"></view>
+          <view class="grid-line horizontal top"></view>
+          <view class="grid-line horizontal bottom"></view>
+        </view>
+      </view>
+
+      <view class="crop-toolbar">
+        <view class="scale-row">
+          <text class="scale-label">缩放</text>
+          <slider
+            class="scale-slider"
+            min="100"
+            max="220"
+            step="1"
+            value="{{cropScaleValue}}"
+            activeColor="#2D8FE8"
+            backgroundColor="#D3E5F4"
+            block-size="20"
+            bindchanging="handleCropScaleChanging"
+            bindchange="handleCropScaleChanging"
+          ></slider>
+        </view>
+        <view class="crop-actions">
+          <button class="crop-action-btn" data-delta="-0.1" bindtap="adjustCropScale">缩小</button>
+          <button class="crop-action-btn" data-delta="0.1" bindtap="adjustCropScale">放大</button>
+          <button class="crop-action-btn reset" bindtap="resetImageCrop">居中</button>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else class="image-uploader {{uploadingImage ? 'is-disabled' : ''}}" bindtap="chooseGoodsImage">
+      <view class="image-placeholder">
+        <text class="image-plus">+</text>
+        <text class="image-tip">{{uploadingImage ? '上传中...' : '上传套餐图片'}}</text>
+        <text class="image-subtip">建议上传横图，保存后用户端按 16:9 展示</text>
+      </view>
+    </view>
+
+    <view class="field">
+      <text class="field-label">套餐名称</text>
+      <input class="field-input" value="{{form.title}}" data-key="title" bindinput="handleInput" placeholder="请输入套餐名称" />
+    </view>
+    <view class="field">
+      <text class="field-label">副标题</text>
+      <input class="field-input" value="{{form.subtitle}}" data-key="subtitle" bindinput="handleInput" placeholder="请输入副标题" />
+    </view>
+    <view class="field two-col">
+      <view class="field-half">
+        <text class="field-label">现价</text>
+        <input class="field-input" type="digit" value="{{form.price}}" data-key="price" bindinput="handleInput" placeholder="0.00" />
+      </view>
+      <view class="field-half">
+        <text class="field-label">原价</text>
+        <input class="field-input" type="digit" value="{{form.originalPrice}}" data-key="originalPrice" bindinput="handleInput" placeholder="0.00" />
+      </view>
+    </view>
+    <view class="field">
+      <text class="field-label">库存</text>
+      <input class="field-input" type="number" value="{{form.stock}}" data-key="stock" bindinput="handleInput" placeholder="请输入库存" />
+    </view>
+    <view class="field">
+      <text class="field-label">有效天数</text>
+      <input class="field-input" type="number" value="{{form.validPeriod}}" data-key="validPeriod" bindinput="handleInput" placeholder="例如 30" />
+    </view>
+    <view class="field">
+      <text class="field-label">核销说明</text>
+      <textarea class="field-textarea" value="{{form.verifyNotice}}" data-key="verifyNotice" bindinput="handleInput" placeholder="请输入核销说明"></textarea>
+    </view>
+    <view class="switch-row">
+      <text class="field-label">上架状态</text>
+      <switch checked="{{form.status === 'ON_SHELF'}}" color="#2D8FE8" bindchange="handleStatusChange" />
+    </view>
+    <button class="primary-btn save-btn" bindtap="saveGoods">保存套餐</button>
+  </view>
+</view>

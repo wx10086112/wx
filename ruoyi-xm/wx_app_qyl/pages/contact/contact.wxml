@@ -1,0 +1,55 @@
+<view class="contact-page">
+  <view class="contact-card">
+    <view class="contact-icon-wrap">
+      <text class="contact-icon">☎</text>
+    </view>
+    <text class="contact-title">联系客服</text>
+    <text class="contact-desc">如有任何问题，欢迎联系我们的客服团队</text>
+
+    <view class="operator-row" wx:if="{{contactInfo.operatorName}}">
+      <text class="operator-label">运营主体</text>
+      <text class="operator-name">{{contactInfo.operatorName}}</text>
+    </view>
+
+    <view class="contact-phone-row" wx:if="{{contactInfo.phone}}">
+      <view class="contact-phone-main">
+        <text class="contact-phone-label">服务热线</text>
+        <text class="contact-phone">{{contactInfo.phone}}</text>
+      </view>
+      <view class="call-btn-inline" bindtap="callService">拨打</view>
+    </view>
+
+    <view class="contact-extra-list">
+      <view class="contact-extra-item" wx:if="{{contactInfo.email}}">
+        <text class="contact-extra-label">联系邮箱</text>
+        <text class="contact-extra-value">{{contactInfo.email}}</text>
+      </view>
+      <view class="contact-extra-item" wx:if="{{contactInfo.address}}">
+        <text class="contact-extra-label">联系地址</text>
+        <text class="contact-extra-value">{{contactInfo.address}}</text>
+      </view>
+    </view>
+
+    <view class="contact-info-list">
+      <view class="contact-info-item">
+        <text class="info-dot">●</text>
+        <text class="info-text">支付、核销或退款问题，可联系门店客服处理</text>
+      </view>
+      <view class="contact-info-item">
+        <text class="info-dot">●</text>
+        <text class="info-text">服务时间：{{contactInfo.businessHoursDisplay}}</text>
+      </view>
+      <view class="contact-info-item">
+        <text class="info-dot">●</text>
+        <text class="info-text">{{contactInfo.rightsRequestTipsDisplay}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{!contactInfo.configured && contactInfo.missingFields.length}}" class="config-warning">
+      <text class="config-warning-title">后台隐私联系信息待补充</text>
+      <view class="config-warning-fields">
+        <text wx:for="{{contactInfo.missingFields}}" wx:key="*this" class="config-warning-tag">{{item}}</text>
+      </view>
+    </view>
+  </view>
+</view>

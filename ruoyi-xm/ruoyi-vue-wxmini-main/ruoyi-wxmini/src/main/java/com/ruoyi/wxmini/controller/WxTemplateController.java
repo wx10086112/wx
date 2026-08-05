@@ -68,6 +68,7 @@ public class WxTemplateController {
         Map<String, Object> brandInfo = new HashMap<>();
         brandInfo.put("id", "brand_001");
         brandInfo.put("name", operatorName);
+        brandInfo.put("logo", resolveMerchantImage(appMerchant));
         brandInfo.put("slogan", "");
         brandInfo.put("notice", "欢迎使用门店团购小程序");
         brandInfo.put("servicePhone", servicePhone);
@@ -266,6 +267,13 @@ public class WxTemplateController {
 
     private String firstNonBlank(String first, String fallback) {
         return StringUtils.isNotBlank(first) ? first.trim() : fallback;
+    }
+
+    private String resolveMerchantImage(Merchant merchant) {
+        if (merchant == null) {
+            return "";
+        }
+        return firstNonBlank(merchant.getLogo(), firstNonBlank(merchant.getAvatar(), ""));
     }
 
     private List<String> buildMissingPrivacyFields(boolean operatorNameMissing, String servicePhone,

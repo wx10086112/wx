@@ -1,0 +1,122 @@
+<view class="goods-page">
+  <view class="goods-filter panel">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="value"
+      class="goods-filter__item {{currentTab === item.value ? 'is-active' : ''}}"
+      bindtap="switchTab"
+      data-tab="{{item.value}}"
+    >
+      {{item.label}}
+    </view>
+  </view>
+
+  <view wx:if="{{canManageGoods}}" class="goods-content">
+    <view class="goods-toolbar">
+      <view class="goods-toolbar__hint">上架中的套餐会自动出现在用户预点单页，无需单独配置预点单商品。</view>
+      <view class="goods-toolbar__actions">
+        <view class="goods-tool goods-tool--light" bindtap="toggleBatchMode">
+          {{batchMode ? '退出批量' : '批量管理'}}
+        </view>
+        <view class="goods-tool goods-tool--dark" bindtap="goAddGoods">新增套餐</view>
+      </view>
+    </view>
+
+    <view wx:if="{{batchMode}}" class="goods-batch panel">
+      <view class="goods-batch__head">
+        <view class="goods-batch__info">
+          <text class="goods-batch__title">批量管理</text>
+          <text class="goods-batch__count">已选 {{selectedIds.length}} / {{goodsList.length}} 项</text>
+        </view>
+        <view class="goods-batch__toggle" bindtap="selectAll">
+          {{selectedIds.length === goodsList.length ? '取消全选' : '全选'}}
+        </view>
+      </view>
+      <view class="goods-batch__actions">
+        <view class="goods-batch__action" bindtap="batchOnShelf">批量上架</view>
+        <view class="goods-batch__action goods-batch__action--warn" bindtap="batchOffShelf">批量下架</view>
+      </view>
+    </view>
+
+    <view wx:if="{{goodsList.length}}" class="goods-list">
+      <view wx:for="{{goodsList}}" wx:key="goodsId" class="goods-card panel">
+        <view wx:if="{{batchMode}}" class="goods-card__checkbox" bindtap="toggleSelectGoods" data-id="{{item.goodsId}}">
+          <view class="goods-card__checkbox-icon {{item.selected ? 'is-checked' : ''}}"></view>
+        </view>
+
+        <view class="goods-card__main">
+          <view class="goods-card__cover {{item.imageUrl ? '' : 'is-empty'}}">
+            <image
+              wx:if="{{item.imageUrl}}"
+              class="goods-card__cover-image"
+              src="{{item.imageUrl}}"
+              mode="aspectFill"
+              lazy-load
+              style="{{item.imageCropStyle}}"
+            ></image>
+            <text wx:else class="goods-card__cover-empty">暂无图片</text>
+          </view>
+
+          <view class="goods-card__head">
+            <view class="goods-card__summary">
+              <text class="goods-card__title">{{item.title}}</text>
+              <text class="goods-card__meta">库存 {{item.stock}} · 销量 {{item.sales}}</text>
+            </view>
+            <view class="goods-card__status {{item.status === 'ON_SHELF' ? 'is-on' : 'is-off'}}">
+              {{item.status === 'ON_SHELF' ? '上架中' : '已下架'}}
+            </view>
+          </view>
+
+          <text class="goods-card__subtitle">{{item.subtitle}}</text>
+
+          <view class="goods-card__footer">
+            <view class="goods-card__price-block">
+              <text class="goods-card__price">¥{{item.priceText}}</text>
+              <text class="goods-card__origin">¥{{item.originalPriceText}}</text>
+            </view>
+
+            <view wx:if="{{!batchMode}}" class="goods-card__actions">
+              <view class="goods-card__action goods-card__action--light" bindtap="toggleGoodsStatus" data-id="{{item.goodsId}}">
+                {{item.status === 'ON_SHELF' ? '下架' : '上架'}}
+              </view>
+              <view class="goods-card__action goods-card__action--dark" bindtap="goEditGoods" data-id="{{item.goodsId}}">
+                编辑
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else class="goods-empty panel">
+      <text class="goods-empty__text">当前筛选条件下没有商品</text>
+    </view>
+  </view>
+
+  <view wx:else class="goods-empty panel">
+    <text class="goods-empty__text">当前账号没有商品管理权限</text>
+  </view>
+
+  <view wx:if="{{confirmModalVisible}}" class="goods-modal-mask">
+    <view class="goods-modal panel">
+      <text class="goods-modal__title">{{confirmModal.title}}</text>
+      <text class="goods-modal__desc">{{confirmModal.desc}}</text>
+      <view class="goods-modal__actions">
+        <view class="goods-modal__btn goods-modal__btn--light" bindtap="closeConfirmModal">取消</view>
+        <view class="goods-modal__btn goods-modal__btn--dark" bindtap="confirmBatchAction">确认</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="merchant-tabbar safe-area-bottom">
+    <view
+      wx:for="{{merchantNavList}}"
+      wx:key="key"
+      class="merchant-tabbar__item {{item.active ? 'active' : ''}}"
+      bindtap="goMerchantTab"
+      data-url="{{item.url}}"
+    >
+      <text class="merchant-tabbar__label">{{item.label}}</text>
+    </view>
+  </view>
+</view>

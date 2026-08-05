@@ -1,0 +1,96 @@
+<view class="page-shell">
+  <view wx:if="{{canManageStaff}}">
+    <view class="panel staff-panel">
+      <view class="panel-header">
+        <text class="section-title">员工列表</text>
+        <view class="ghost-btn add-staff-btn" bindtap="showAddStaff">+ 添加员工</view>
+      </view>
+
+      <view wx:if="{{!staffList.length}}" class="empty-card">
+        <text class="empty-card-text">当前还没有员工账号，先创建店长或店员登录账号。</text>
+      </view>
+
+      <view wx:for="{{staffList}}" wx:key="staffId" class="staff-card">
+        <view class="staff-card-head">
+          <view class="staff-identity">
+            <view class="staff-name-row">
+              <text class="staff-name">{{item.name}}</text>
+              <text class="staff-role-tag">{{item.roleName}}</text>
+            </view>
+            <view class="staff-meta-grid">
+              <text class="staff-meta">账号：{{item.username}}</text>
+              <text class="staff-meta">手机号：{{item.phone || '未设置'}}</text>
+            </view>
+          </view>
+          <view class="status-tag {{item.status === 'ACTIVE' ? 'green' : 'gray'}}">{{item.statusText}}</view>
+        </view>
+        <view class="staff-permission">
+          <text class="permission-label">权限</text>
+          <text class="staff-summary">{{item.permissionSummary}}</text>
+        </view>
+        <view class="staff-btn-group">
+          <button class="ghost-btn mini-btn" catchtap="showEditStaff" data-id="{{item.staffId}}">编辑</button>
+          <button class="ghost-btn mini-btn" catchtap="toggleStaffStatus" data-id="{{item.staffId}}">
+            {{item.status === 'ACTIVE' ? '停用' : '启用'}}
+          </button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="empty-state">
+    <text class="empty-text">当前账号没有员工权限管理能力</text>
+  </view>
+
+  <view wx:if="{{showAddPanel}}" class="modal-mask" bindtap="hideAddPanel">
+    <view class="modal-panel panel" catchtap="preventTap">
+      <text class="modal-title">添加新员工</text>
+      <view class="modal-field">
+        <text class="field-label">登录账号</text>
+        <input class="field-input" maxlength="20" value="{{newStaff.username}}" data-key="username" bindinput="handleNewStaffInput" placeholder="请输入登录账号" />
+      </view>
+      <view class="modal-field">
+        <text class="field-label">初始密码</text>
+        <input class="field-input" password maxlength="32" value="{{newStaff.password}}" data-key="password" bindinput="handleNewStaffInput" placeholder="请输入初始密码" />
+      </view>
+      <view class="modal-field">
+        <text class="field-label">员工姓名</text>
+        <input class="field-input" maxlength="20" value="{{newStaff.realName}}" data-key="realName" bindinput="handleNewStaffInput" placeholder="请输入员工姓名" />
+      </view>
+      <view class="modal-field">
+        <text class="field-label">手机号</text>
+        <input class="field-input" type="number" maxlength="11" value="{{newStaff.phone}}" data-key="phone" bindinput="handleNewStaffInput" placeholder="请输入手机号（可选）" />
+      </view>
+      <view class="modal-actions">
+        <button class="ghost-btn modal-btn" bindtap="hideAddPanel">取消</button>
+        <button class="primary-btn modal-btn" bindtap="submitAddStaff">确定添加</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{showEditPanel}}" class="modal-mask" bindtap="hideEditPanel">
+    <view class="modal-panel panel" catchtap="preventTap">
+      <text class="modal-title">编辑员工信息</text>
+      <view class="modal-field">
+        <text class="field-label">登录账号</text>
+        <view class="field-input readonly-field">{{editStaff.username}}</view>
+      </view>
+      <view class="modal-field">
+        <text class="field-label">员工姓名</text>
+        <input class="field-input" maxlength="20" value="{{editStaff.realName}}" data-key="realName" bindinput="handleEditStaffInput" placeholder="请输入员工姓名" />
+      </view>
+      <view class="modal-field">
+        <text class="field-label">手机号</text>
+        <input class="field-input" type="number" maxlength="11" value="{{editStaff.phone}}" data-key="phone" bindinput="handleEditStaffInput" placeholder="请输入手机号（可选）" />
+      </view>
+      <view class="modal-field">
+        <text class="field-label">重置密码</text>
+        <input class="field-input" password maxlength="32" value="{{editStaff.password}}" data-key="password" bindinput="handleEditStaffInput" placeholder="留空表示不修改密码" />
+      </view>
+      <view class="modal-actions">
+        <button class="ghost-btn modal-btn" bindtap="hideEditPanel">取消</button>
+        <button class="primary-btn modal-btn" bindtap="submitEditStaff">保存修改</button>
+      </view>
+    </view>
+  </view>
+</view>

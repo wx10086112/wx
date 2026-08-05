@@ -1,0 +1,22 @@
+<view class="service-card" bindtap="onTap">
+  <image src="{{product.image}}" mode="aspectFill" class="service-img" lazy-load></image>
+  <view class="service-content">
+    <view class="service-top">
+      <view class="service-title">{{product.title}}</view>
+      <view class="service-meta" wx:if="{{product.subtitle || product.tags.length > 0}}">
+        <text wx:if="{{product.subtitle}}">{{product.subtitle}}</text>
+        <text wx:for="{{product.tags}}" wx:key="index" class="service-tag">{{item}}</text>
+      </view>
+    </view>
+    <view class="service-bottom">
+      <view class="service-price">
+        <text class="currency">¥</text>{{product.price / 100}}
+        <text wx:if="{{product.originalPrice > product.price}}" class="original-price">¥{{product.originalPrice / 100}}</text>
+      </view>
+      <view class="service-action">
+        <text class="service-sales">已售 {{product.totalSales || product.sales || 0}}</text>
+        <view class="btn-buy {{product.soldOut ? 'is-disabled' : ''}}" catchtap="onBuy">{{product.soldOut ? '售罄' : '加购'}}</view>
+      </view>
+    </view>
+  </view>
+</view>

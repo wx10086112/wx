@@ -1,0 +1,123 @@
+<view class="booking-page">
+  <view wx:if="{{loading}}" class="loading-state">
+    <view class="loading-dot"></view>
+    <text class="loading-text">正在加载预点单</text>
+  </view>
+
+  <block wx:else>
+    <view class="booking-header" style="padding-top: {{statusBarHeight}}px;">
+      <view class="home-shortcut" bindtap="goHome">
+        <view class="home-icon"></view>
+      </view>
+      <view class="header-title">预点单</view>
+      <view class="header-placeholder"></view>
+    </view>
+
+    <view class="booking-content">
+      <view class="store-panel" bindtap="goMerchantDetail">
+        <view class="store-main">
+          <text class="store-name">{{merchant.name}}</text>
+          <text class="store-address">{{merchant.address}}</text>
+        </view>
+        <view class="store-arrow"></view>
+      </view>
+
+      <view class="order-shell">
+        <scroll-view class="category-sidebar" scroll-y="true" enhanced="true" show-scrollbar="false">
+          <view
+            wx:for="{{categories}}"
+            wx:key="item"
+            class="category-item {{activeCategoryIndex === index ? 'active' : ''}}"
+            bindtap="onCategoryTap"
+            data-index="{{index}}"
+          >
+            <text>{{item}}</text>
+          </view>
+        </scroll-view>
+
+        <scroll-view class="product-area" scroll-y="true" enhanced="true" show-scrollbar="false">
+          <view wx:if="{{displayProductList.length}}" class="product-list">
+            <view
+              wx:for="{{displayProductList}}"
+              wx:key="id"
+              class="product-card"
+              bindtap="onProductTap"
+              data-index="{{index}}"
+            >
+              <image class="product-image" src="{{item.image}}" mode="aspectFill"></image>
+              <view class="product-info">
+                <text class="product-title">{{item.title}}</text>
+                <text class="product-desc">{{item.subtitle}}</text>
+                <text class="product-sales">已售 {{item.totalSales}}</text>
+                <view class="product-bottom">
+                  <text class="product-price">¥{{item.priceText}}</text>
+                  <view
+                    class="add-btn {{item.soldOut ? 'disabled' : ''}}"
+                    catchtap="addToCart"
+                    data-index="{{index}}"
+                  >{{item.soldOut ? '售罄' : '+'}}</view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view wx:else class="empty-card">
+            <text class="empty-title">暂无可点服务</text>
+            <text class="empty-desc">门店上架服务后，会在这里显示</text>
+          </view>
+        </scroll-view>
+      </view>
+
+      <view class="booking-action-card">
+        <view class="booking-info-row">
+          <view class="table-info">
+            <text class="muted">桌号：</text>
+            <text class="strong">{{tableNo}}</text>
+          </view>
+          <view class="people-info" bindtap="openPeopleDialog">
+            <text class="muted">人数：</text>
+            <text class="strong">{{selectedPeople}}</text>
+            <view class="tiny-arrow"></view>
+          </view>
+        </view>
+
+        <view class="cart-row">
+          <view class="cart-state">
+            <text wx:if="{{cartCount}}">已选 {{cartCount}} 件 · ¥{{cartAmountText}}</text>
+            <text wx:else>未选购商品</text>
+          </view>
+          <view class="checkout-btn {{cartCount ? 'active' : 'empty'}}" bindtap="goCheckout">
+            {{cartCount ? '去结算' : '去首页'}}
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{showPeopleDialog}}" class="dialog-mask" catchtap="closePeopleDialog">
+      <view class="people-dialog" catchtap="noop">
+        <text class="dialog-title">选择就餐人数</text>
+        <view class="people-grid">
+          <view
+            wx:for="{{peopleOptions}}"
+            wx:key="item"
+            class="people-option {{selectedPeople === item ? 'active' : ''}}"
+            bindtap="selectPeople"
+            data-value="{{item}}"
+          >{{item}}</view>
+        </view>
+
+        <picker mode="selector" range="{{tableOptions}}" value="{{tableIndex}}" bindchange="onTableChange">
+          <view class="table-picker-row">
+            <text>选择桌号：</text>
+            <view class="table-picker-value">
+              <text class="table-value">{{tableNo}}</text>
+              <view class="tiny-arrow"></view>
+            </view>
+          </view>
+        </picker>
+
+        <view class="confirm-btn" bindtap="confirmPeopleDialog">确认</view>
+      </view>
+    </view>
+  </block>
+</view>

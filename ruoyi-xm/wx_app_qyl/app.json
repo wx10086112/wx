@@ -1,0 +1,86 @@
+{
+  "pages": [
+    "pages/home/home",
+    "pages/order/order",
+    "pages/booking/booking",
+    "pages/mine/mine",
+    "pages/my-booking/my-booking",
+    "pages/login/login",
+    "pages/merchant-detail/merchant-detail",
+    "pages/product-detail/product-detail",
+    "pages/cart/cart",
+    "pages/checkout/checkout",
+    "pages/order-detail/order-detail",
+    "pages/coupon/coupon",
+    "pages/contact/contact",
+    "pages/profile-edit/profile-edit",
+    "pages/account-cancel/account-cancel",
+    "pages/settings/settings",
+    "pages/merchant/login/login",
+    "pages/merchant/index/index",
+    "pages/merchant/workbench/workbench",
+    "pages/merchant/order/order",
+    "pages/merchant/verify/verify",
+    "pages/merchant/goods/goods",
+    "pages/merchant/mine/mine",
+    "pages/merchant/order-detail/order-detail",
+    "pages/merchant/goods-edit/goods-edit",
+    "pages/merchant/store/store",
+    "pages/merchant/staff/staff",
+    "pages/merchant/verify-records/verify-records",
+    "pages/merchant/booking/booking",
+    "pages/merchant/finance/finance"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "本地生活",
+    "navigationBarBackgroundColor": "#EEF5FB",
+    "backgroundColor": "#EEF5FB"
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于展示你到本店的距离"
+    }
+  },
+  "__usePrivacyCheck__": true,
+  "requiredPrivateInfos": [
+    "getLocation"
+  ],
+  "tabBar": {
+    "custom": true,
+    "color": "#9A9A9E",
+    "selectedColor": "#2D8FE8",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        "iconPath": "assets/tabbar/home.png",
+        "selectedIconPath": "assets/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/order/order",
+        "text": "订单",
+        "iconPath": "assets/tabbar/order.png",
+        "selectedIconPath": "assets/tabbar/order-active.png"
+      },
+      {
+        "pagePath": "pages/booking/booking",
+        "text": "预点单",
+        "iconPath": "assets/tabbar/order.png",
+        "selectedIconPath": "assets/tabbar/order-active.png"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的",
+        "iconPath": "assets/tabbar/mine.png",
+        "selectedIconPath": "assets/tabbar/mine-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "componentFramework": "glass-easel",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

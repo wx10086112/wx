@@ -1,0 +1,99 @@
+<view class="merchant-detail-page">
+  <view class="loading-state" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:elif="{{loadFailed}}" class="empty-state">
+    <text class="empty-title">暂未获取到商家信息</text>
+    <text class="empty-desc">请稍后刷新，或返回首页重新进入</text>
+  </view>
+
+  <view wx:else class="detail-content">
+    <view class="hero-section">
+      <view class="hero-media">
+        <image
+          wx:if="{{merchant.heroImage}}"
+          src="{{merchant.heroImage}}"
+          class="hero-image"
+          mode="aspectFill"
+        ></image>
+        <view wx:else class="hero-image placeholder">
+          <text class="placeholder-text">{{merchant.name || '门店'}}</text>
+        </view>
+      </view>
+
+      <view class="hero-card">
+        <view class="hero-card-head">
+          <view class="hero-title-block">
+            <text class="hero-title">{{merchant.name || '暂无商家名称'}}</text>
+            <view class="hero-meta-row">
+              <text class="hero-status {{merchant.businessStatus ? 'open' : 'closed'}}">{{merchant.businessStatusText}}</text>
+              <text wx:if="{{merchant.distance}}" class="hero-meta-text">距您 {{merchant.distance}}</text>
+            </view>
+          </view>
+          <view class="hero-nav-action" catchtap="viewLocation">
+            <view class="hero-nav-icon"></view>
+            <text class="hero-nav-text">导航</text>
+          </view>
+        </view>
+
+        <view wx:if="{{merchant.displayTags.length || merchant.bookingText}}" class="hero-tag-row">
+          <text wx:for="{{merchant.displayTags}}" wx:key="index" class="hero-tag">{{item}}</text>
+          <text wx:if="{{merchant.bookingText}}" class="hero-tag highlight">{{merchant.bookingText}}</text>
+        </view>
+
+        <view class="hero-address-row">
+          <view class="hero-address-main">
+            <text class="hero-address">{{merchant.address || '暂无门店地址'}}</text>
+            <text class="hero-hours">{{merchant.businessHoursText || merchant.businessHours || '暂无营业时间'}}</text>
+          </view>
+          <view class="hero-phone-action" catchtap="makePhoneCall">
+            <view class="hero-phone-icon"></view>
+            <text class="hero-phone-text">联系门店</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{merchant.description}}" class="detail-card">
+      <view class="card-title-row">
+        <text class="card-title">商家简介</text>
+      </view>
+      <text class="primary-text">{{merchant.description}}</text>
+    </view>
+
+    <view class="detail-card">
+      <view class="card-title-row">
+        <text class="card-title">服务能力</text>
+      </view>
+      <view wx:if="{{merchant.serviceAbilityTags.length}}" class="ability-block">
+        <text class="ability-title">服务</text>
+        <view class="tag-grid">
+          <text wx:for="{{merchant.serviceAbilityTags}}" wx:key="index" class="ability-tag">{{item}}</text>
+        </view>
+      </view>
+      <view wx:if="{{merchant.facilityTags.length}}" class="ability-block">
+        <text class="ability-title">设施</text>
+        <view class="tag-grid">
+          <text wx:for="{{merchant.facilityTags}}" wx:key="index" class="ability-tag facility">{{item}}</text>
+        </view>
+      </view>
+      <text wx:if="{{!merchant.serviceAbilityTags.length && !merchant.facilityTags.length}}" class="muted-text no-margin">暂无服务能力说明</text>
+    </view>
+
+    <view wx:if="{{storeList.length}}" class="detail-card">
+      <view class="card-title-row">
+        <text class="card-title">门店列表</text>
+        <text class="muted-inline">{{storeList.length}} 家</text>
+      </view>
+      <view wx:for="{{storeList}}" wx:key="id" class="store-list-item">
+        <view class="store-list-name-row">
+          <text class="primary-text">{{item.name}}</text>
+          <text wx:if="{{item.isMain === 1}}" class="mini-tag">主门店</text>
+        </view>
+        <text class="muted-text no-margin">{{item.address || '暂无地址'}}</text>
+        <text class="muted-text no-margin">{{item.phone || '暂无电话'}} · {{item.businessHours || '暂无营业时间'}}</text>
+      </view>
+    </view>
+  </view>
+</view>

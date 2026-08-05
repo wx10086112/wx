@@ -164,28 +164,6 @@ public class WxMerchantController {
         dto.setStatus(merchant.getStatus());
         dto.setStoreCount(merchant.getStoreCount() != null ? merchant.getStoreCount() : stores.size());
         dto.setProductCount(merchant.getProductCount());
-        dto.setDistributorId(merchant.getDistributorId());
-        dto.setDistributorName(merchant.getDistributorName());
-        dto.setCMiniAppId(merchant.getCMiniAppId());
-        dto.setMMiniAppId(merchant.getMMiniAppId());
-        dto.setWxPayMchId(merchant.getWxPayMchId());
-        dto.setWxApplymentId(merchant.getWxApplymentId());
-        dto.setWxApplymentState(merchant.getWxApplymentState());
-        dto.setWxApplymentTime(merchant.getWxApplymentTime());
-        dto.setWxApplymentFinishTime(merchant.getWxApplymentFinishTime());
-        dto.setWxApplymentRejectReason(merchant.getWxApplymentRejectReason());
-        dto.setWxProfitSharingEnabled(merchant.getWxProfitSharingEnabled());
-        dto.setPlatformReceiverMchId(merchant.getPlatformReceiverMchId());
-        dto.setDistributorReceiverMchId(merchant.getDistributorReceiverMchId());
-        dto.setMerchantShareRate(merchant.getMerchantShareRate());
-        dto.setPlatformShareRate(merchant.getPlatformShareRate());
-        dto.setDistributorShareRate(merchant.getDistributorShareRate());
-        dto.setSettlementCycle(merchant.getSettlementCycle());
-        dto.setMapClaimStatus(merchant.getMapClaimStatus());
-        dto.setMapPoiId(merchant.getMapPoiId());
-        dto.setMapClaimUrl(merchant.getMapClaimUrl());
-        dto.setMapClaimTime(merchant.getMapClaimTime());
-        dto.setMapClaimRemark(merchant.getMapClaimRemark());
         dto.setStoreList(stores);
         dto.setAlbumList(buildAlbumList(merchant, stores));
         return AjaxResult.success(dto);
@@ -221,7 +199,12 @@ public class WxMerchantController {
         dto.setName(merchant.getName());
         dto.setShortName(merchant.getName());
         dto.setAvatar(appendThumb(merchant.getLogo(), "list"));
-        dto.setCoverImage(appendThumb(merchant.getLogo(), "detail"));
+        List<String> carouselImages = parseCarouselImages(merchant.getCarouselImages());
+        String fallbackCover = firstNotBlank(merchant.getLogo(), merchant.getAvatar(),
+                store == null ? null : store.getAvatar());
+        dto.setCoverImage(carouselImages.isEmpty()
+                ? appendThumb(fallbackCover, "detail")
+                : carouselImages.get(0));
         dto.setAddress(merchant.getAddress());
         dto.setPhone(merchant.getPhone());
         dto.setBusinessHours(merchant.getBusinessHours());
@@ -280,7 +263,10 @@ public class WxMerchantController {
         dto.setServiceAbilityTags(serviceAbilityTags);
 
         dto.setFacilityTags(new ArrayList<>());
-        dto.setAlbumList(new ArrayList<>());
+        if (carouselImages.isEmpty()) {
+            addIfNotBlank(carouselImages, new HashSet<>(), appendThumb(fallbackCover, "detail"));
+        }
+        dto.setAlbumList(carouselImages);
 
         return dto;
     }
@@ -301,6 +287,9 @@ public class WxMerchantController {
         Set<String> seen = new HashSet<>();
         List<String> albumList = new ArrayList<>();
 
+        for (String image : parseCarouselImages(merchant.getCarouselImages())) {
+            addIfNotBlank(albumList, seen, image);
+        }
         addIfNotBlank(albumList, seen, appendThumb(merchant.getLogo(), "detail"));
         addIfNotBlank(albumList, seen, appendThumb(merchant.getAvatar(), "detail"));
 
@@ -325,6 +314,30 @@ public class WxMerchantController {
         }
 
         return albumList;
+    }
+
+    private List<String> parseCarouselImages(String carouselImages) {
+        Set<String> seen = new HashSet<>();
+        List<String> result = new ArrayList<>();
+        if (carouselImages == null || carouselImages.trim().isEmpty()) {
+            return result;
+        }
+        for (String image : carouselImages.split("[,;]")) {
+            addIfNotBlank(result, seen, appendThumb(image.trim(), "detail"));
+        }
+        return result;
+    }
+
+    private String firstNotBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private WxGrouponItemDto convertProductToDto(Product product, String merchantName) {

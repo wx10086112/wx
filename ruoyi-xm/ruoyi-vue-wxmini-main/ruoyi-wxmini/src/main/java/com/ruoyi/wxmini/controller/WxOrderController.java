@@ -186,7 +186,12 @@ public class WxOrderController {
         if (currentUserPk == null) {
             return AjaxResult.success(new ArrayList<>());
         }
+        Long currentMerchantId = getCurrentMerchantId();
+        if (currentMerchantId == null) {
+            return AjaxResult.error("当前小程序登录态缺少商户信息");
+        }
         query.setUserId(currentUserPk);
+        query.setMerchantId(currentMerchantId);
         List<MallOrder> orders = mallOrderService.selectMallOrderList(query);
 
         Map<Long, String> merchantNameCache = new HashMap<>();
@@ -210,7 +215,7 @@ public class WxOrderController {
         }
 
         MallOrder order = mallOrderService.selectMallOrderByOrderNo(orderNo);
-        if (order == null || !isCurrentUserOrder(order, currentUserId)) {
+        if (order == null || !isCurrentUserOrder(order, currentUserId) || !isCurrentMerchantOrder(order)) {
             return AjaxResult.error("订单不存在");
         }
         return AjaxResult.success(convertToDto(order, new HashMap<>()));
@@ -224,7 +229,7 @@ public class WxOrderController {
         }
 
         MallOrder order = mallOrderService.selectMallOrderByOrderNo(orderNo);
-        if (order == null || !isCurrentUserOrder(order, currentUserId)) {
+        if (order == null || !isCurrentUserOrder(order, currentUserId) || !isCurrentMerchantOrder(order)) {
             return AjaxResult.error("订单不存在");
         }
         if (order.getStatus() == null || order.getStatus() != MallOrderStatus.PENDING) {
@@ -254,6 +259,16 @@ public class WxOrderController {
     private boolean isCurrentUserOrder(MallOrder order, String currentUserId) {
         Long currentUserPk = resolveCurrentUserPk(currentUserId);
         return currentUserPk != null && order.getUserId() != null && order.getUserId().equals(currentUserPk);
+    }
+
+    private boolean isCurrentMerchantOrder(MallOrder order) {
+        Long merchantId = getCurrentMerchantId();
+        return merchantId != null && order.getMerchantId() != null && merchantId.equals(order.getMerchantId());
+    }
+
+    private Long getCurrentMerchantId() {
+        Long merchantId = WxMiniUserContext.getCurrentMerchantId();
+        return merchantId != null ? merchantId : WxMiniUserContext.getAppIdMerchantId();
     }
 
     private Long resolveCurrentUserPk(String currentUserId) {

@@ -4,6 +4,7 @@ public class MerchantMiniEntryInfoDto {
 
     private Long merchantId;
     private String merchantName;
+    private String merchantImage;
     private String contact;
     private String phone;
     private String loginPage;
@@ -24,6 +25,14 @@ public class MerchantMiniEntryInfoDto {
 
     public void setMerchantName(String merchantName) {
         this.merchantName = merchantName;
+    }
+
+    public String getMerchantImage() {
+        return merchantImage;
+    }
+
+    public void setMerchantImage(String merchantImage) {
+        this.merchantImage = merchantImage;
     }
 
     public String getContact() {
