@@ -4,8 +4,9 @@ const agreement = require('../../utils/agreement')
 const userApi = require('../../api/user')
 const templateService = require('../../services/template')
 const merchantEntry = require('../../utils/merchant-entry')
+const { normalizeImageUrl } = require('../../utils/image-url')
 
-const DEFAULT_BRAND_NAME = '湘缘食尚餐厅(梨园路店)'
+const DEFAULT_BRAND_NAME = '秦月楼泡馍小炒烧烤'
 const DEFAULT_BRAND_LOGO = '/assets/images/merchant-logo-xiangyuan.png'
 const DEFAULT_BRAND_SUBTITLE = '生活有点苦，今天团点甜'
 const DEFAULT_USER_NAME = '微信用户'
@@ -34,7 +35,7 @@ const normalizeLoginUser = (info = {}) => {
     userId: info.userId || '',
     openId: info.openId || '',
     nickName: info.userName || DEFAULT_USER_NAME,
-    avatarUrl: info.avatarUrl || DEFAULT_AVATAR_URL,
+    avatarUrl: normalizeImageUrl(info.avatarUrl) || DEFAULT_AVATAR_URL,
     phone: info.phone || '',
     merchantId: info.merchantId || null,
     merchantName: info.merchantName || '',
@@ -115,7 +116,7 @@ Page({
     this.setData({
       brandTitle: title,
       brandInitial: title.slice(0, 1).toUpperCase(),
-      brandLogo: brandInfo.logo || DEFAULT_BRAND_LOGO,
+      brandLogo: normalizeImageUrl(brandInfo.logo) || DEFAULT_BRAND_LOGO,
       brandSubtitle: brandInfo.slogan || DEFAULT_BRAND_SUBTITLE
     })
   },

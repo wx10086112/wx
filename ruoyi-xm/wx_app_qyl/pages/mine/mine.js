@@ -3,6 +3,7 @@ const util = require('../../utils/util')
 const templateService = require('../../services/template')
 const merchantApi = require('../../api/merchant')
 const merchantEntry = require('../../utils/merchant-entry')
+const { normalizeImageUrl } = require('../../utils/image-url')
 
 const MENU_LIST = [
   { label: '个人资料', type: 'profile', icon: 'profile' },

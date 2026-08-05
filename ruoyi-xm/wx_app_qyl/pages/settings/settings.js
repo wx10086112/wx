@@ -262,8 +262,8 @@ Page({
     util.showModal('退出登录', '确定退出当前账号吗？').then((confirm) => {
       if (!confirm) return
       app.clearLoginInfo()
-      this.setData({ isLoggedIn: false })
       util.showToast('已退出登录', 'success')
+      wx.redirectTo({ url: '/pages/login/login' })
     })
   },
 

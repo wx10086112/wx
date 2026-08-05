@@ -1,5 +1,6 @@
 const merchantApi = require('../api/merchant')
 const util = require('./util')
+const { toListThumbnailUrl } = require('./image-url')
 
 const getMerchantId = (merchant = {}) => Number(merchant.merchantId || merchant.id || 0)
 
@@ -18,7 +19,7 @@ const buildEntry = (merchant = {}) => {
   return {
     merchantId,
     merchantName: merchant.merchantName || merchant.name || merchant.storeName || '',
-    merchantImage: merchant.merchantImage || merchant.logo || merchant.avatar || merchant.coverImage || '',
+    merchantImage: toListThumbnailUrl(merchant.merchantImage || merchant.logo || merchant.avatar || merchant.coverImage || ''),
     contact: merchant.contact || merchant.contactName || '',
     phone: merchant.phone || merchant.contactPhone || '',
     loginPage: `/pages/merchant/login/login?merchantId=${merchantId}`

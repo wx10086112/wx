@@ -8,7 +8,7 @@ const defaultTemplateConfig = {
   },
   brandInfo: {
     id: 'brand_default',
-    name: '商家名称',
+    name: '秦月楼泡馍小炒烧烤',
     slogan: '',
     notice: '支持微信支付、到店使用、退款售后与消息通知',
     servicePhone: '',

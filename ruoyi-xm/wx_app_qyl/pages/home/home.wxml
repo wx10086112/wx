@@ -5,8 +5,8 @@
   </view>
 
   <view wx:else class="content">
-    <view wx:if="{{hasMerchantData}}" class="store-shell">
-      <view class="store-visual">
+    <view wx:if="{{hasMerchantData}}" class="store-card">
+      <view class="store-cover">
         <swiper
           class="store-swiper"
           current="{{currentCarouselIndex}}"
@@ -25,13 +25,12 @@
             ></image>
           </swiper-item>
         </swiper>
-        <view class="carousel-count">
-          <view class="picture-icon"></view>
+        <view class="carousel-badge">
           <text>{{currentCarouselIndex + 1}}/{{currentMerchant.carouselCount}}</text>
         </view>
       </view>
 
-      <view class="store-summary">
+      <view class="store-info">
         <view class="store-title-row">
           <text class="store-name" bindtap="goMerchantDetail">{{currentMerchant.name}}</text>
           <view class="switch-store" catchtap="chooseMerchant">
