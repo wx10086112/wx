@@ -1,6 +1,7 @@
 package com.ruoyi.framework.web.service;
 
 import java.util.Set;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import com.ruoyi.common.constant.Constants;
@@ -18,6 +19,22 @@ import com.ruoyi.framework.security.context.PermissionContextHolder;
 @Service("ss")
 public class PermissionService
 {
+    /**
+     * 验证当前用户是否为系统超级管理员
+     *
+     * @return 用户ID是否为1
+     */
+    public boolean isAdmin()
+    {
+        Authentication authentication = SecurityUtils.getAuthentication();
+        if (StringUtils.isNull(authentication) || !(authentication.getPrincipal() instanceof LoginUser))
+        {
+            return false;
+        }
+        LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+        return SecurityUtils.isAdmin(loginUser.getUserId());
+    }
+
     /**
      * 验证用户是否具备某权限
      * 

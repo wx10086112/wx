@@ -63,7 +63,7 @@
     </view>
 
     <view class="section-head">
-      <text class="section-title">团购({{displayGrouponList.length}})</text>
+      <text class="section-title">本店优惠({{displayGrouponList.length}})</text>
       <text class="cart-link" bindtap="goCart">购物车</text>
     </view>
 

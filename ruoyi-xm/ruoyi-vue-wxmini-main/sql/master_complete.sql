@@ -370,6 +370,9 @@ INSERT INTO `sys_menu` VALUES
 INSERT INTO `sys_role_menu` SELECT 1, menu_id FROM sys_menu;
 INSERT INTO `sys_role_menu` VALUES (2, 100), (2, 101), (2, 102), (2, 103), (2, 200), (2, 201), (2, 202), (2, 203);
 
+-- 用户管理仅由内置超级管理员（user_id = 1）访问；该账号通过后端逻辑直接获取全部启用菜单。
+DELETE FROM `sys_role_menu` WHERE menu_id IN (100, 1000, 1001, 1002, 1003, 1004, 1005, 1006);
+
 -- 用戶-角色
 INSERT INTO `sys_user_role` VALUES (1, 1), (2, 2);
 

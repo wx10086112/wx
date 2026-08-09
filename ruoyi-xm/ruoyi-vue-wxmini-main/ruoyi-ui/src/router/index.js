@@ -155,6 +155,7 @@ export const dynamicRoutes = [
     permissions: ['system:menu:list'],
     meta: { title: '系统管理', icon: 'system' },
     children: [
+      { path: 'user', component: () => import('@/views/system/user/index'), name: 'UserManagement', permissions: ['*:*:*'], meta: { title: '用户管理' } },
       { path: 'role', component: () => import('@/views/system/role/index'), name: 'RolePermission', meta: { title: '角色权限' } },
       { path: 'menu', component: () => import('@/views/system/menu/index'), name: 'MenuConfig', meta: { title: '菜单管理' } },
       { path: 'config', component: () => import('@/views/system/config/index'), name: 'ParamConfig', meta: { title: '参数配置' } },
