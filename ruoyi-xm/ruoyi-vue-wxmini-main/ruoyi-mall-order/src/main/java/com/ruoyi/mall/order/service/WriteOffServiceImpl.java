@@ -38,6 +38,12 @@ public class WriteOffServiceImpl implements IWriteOffService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public WriteOffResultVO writeOff(String code, Long merchantId, Long operatorId, String operatorName) {
+        return writeOff(code, merchantId, operatorId, operatorName, null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public WriteOffResultVO writeOff(String code, Long merchantId, Long operatorId, String operatorName, Long storeId) {
         String normalizedCode = writeOffCodeGenerator.normalize(code);
         if (!writeOffCodeGenerator.isValid(normalizedCode)) {
             throw new ServiceException("核销码格式不正确");
@@ -68,6 +74,7 @@ public class WriteOffServiceImpl implements IWriteOffService {
         }
 
         Date now = new Date();
+        Long effectiveStoreId = storeId != null ? storeId : order.getStoreId();
         int affectedRows = mallOrderMapper.markOrderWriteOffCompleted(order.getId(), merchantId, operatorId, now);
         if (affectedRows == 0) {
             throw new ServiceException("订单状态已变更，请刷新后重试");
@@ -81,7 +88,7 @@ public class WriteOffServiceImpl implements IWriteOffService {
         record.setOrderNo(order.getOrderNo());
         record.setWriteOffCode(normalizedCode);
         record.setMerchantId(merchantId);
-        record.setStoreId(order.getStoreId());
+        record.setStoreId(effectiveStoreId);
         record.setOperatorId(operatorId);
         record.setOperatorName(operatorName);
         record.setWriteOffType(1);
@@ -96,7 +103,7 @@ public class WriteOffServiceImpl implements IWriteOffService {
             title = items.get(0).getProductName();
         }
         eventPublisher.publishEvent(new OrderCompletedEvent(this,
-                order.getOrderNo(), merchantId, null, order.getStoreId(), order.getPayAmount(), title));
+                order.getOrderNo(), merchantId, null, effectiveStoreId, order.getPayAmount(), title));
 
         WriteOffResultVO vo = new WriteOffResultVO();
         vo.setOrderNo(order.getOrderNo());

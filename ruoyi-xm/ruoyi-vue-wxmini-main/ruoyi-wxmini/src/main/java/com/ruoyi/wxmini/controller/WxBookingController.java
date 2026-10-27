@@ -6,6 +6,8 @@ import com.ruoyi.mall.order.domain.BookingService;
 import com.ruoyi.mall.order.mapper.BookingServiceMapper;
 import com.ruoyi.mall.order.constant.BookingStatus;
 import com.ruoyi.mall.order.domain.BookingRecord;
+import com.ruoyi.mall.merchant.domain.MerchantStore;
+import com.ruoyi.mall.merchant.mapper.MerchantStoreMapper;
 import com.ruoyi.mall.order.service.IBookingRecordService;
 import com.ruoyi.mall.product.domain.Product;
 import com.ruoyi.mall.product.service.IProductService;
@@ -45,6 +47,8 @@ public class WxBookingController {
     private IProductService productService;
     @Resource
     private IUserInfoService userInfoService;
+    @Resource
+    private MerchantStoreMapper merchantStoreMapper;
 
     @GetMapping("/list")
     public AjaxResult list(@RequestParam(required = false) String status) {
@@ -106,6 +110,15 @@ public class WxBookingController {
             return AjaxResult.error("服务不属于当前商家");
         }
 
+        Long storeId = requestDto.getStoreId();
+        if (storeId != null) {
+            MerchantStore store = merchantStoreMapper.selectMerchantStoreById(storeId);
+            if (store == null || !serviceMerchantId.equals(store.getMerchantId())
+                    || (store.getStatus() != null && store.getStatus() != 1)) {
+                return AjaxResult.error("门店不存在或已停用");
+            }
+        }
+
         Date bookingTime = new Date(requestDto.getBookingTime());
         if (bookingTime.before(new Date())) {
             return AjaxResult.error("预点单时间不能早于当前时间");
@@ -114,6 +127,7 @@ public class WxBookingController {
         BookingRecord record = new BookingRecord();
         record.setBookingNo(generateBookingNo());
         record.setMerchantId(serviceMerchantId);
+        record.setStoreId(storeId);
         record.setUserId(currentUserPk);
         record.setBookingServiceId(bookingService != null ? bookingService.getId() : null);
         record.setProductId(resolveBookingProductId(requestDto.getProductId(), bookingService, product));

@@ -275,9 +275,13 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
     public List<MerchantMiniOrderDto> listOrders(String status) {
         Long merchantId = getMerchantIdFromContext();
         List<MallOrder> orders = mallOrderMapper.selectMallOrderByMerchantId(merchantId);
+        Long staffStoreId = currentStaffStoreId();
 
         List<MerchantMiniOrderDto> result = new ArrayList<>();
         for (MallOrder order : orders) {
+            if (staffStoreId != null && order.getStoreId() != null && !staffStoreId.equals(order.getStoreId())) {
+                continue;
+            }
             String merchantStatus = mapOrderStatus(order.getStatus());
             if (StringUtils.isNotBlank(status) && !status.equals(merchantStatus)) {
                 continue;
@@ -296,6 +300,10 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
 
         BookingRecord query = new BookingRecord();
         query.setMerchantId(merchantId);
+        Long staffStoreId = currentStaffStoreId();
+        if (staffStoreId != null) {
+            query.setStoreId(staffStoreId);
+        }
         if (StringUtils.isNotBlank(status) && !"ALL".equalsIgnoreCase(status)) {
             query.setStatus(status);
         }
@@ -376,7 +384,10 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
 
         MerchantUser operator = merchantUserMapper.selectMerchantUserById(Long.valueOf(currentUserId));
         String operatorName = operator != null ? operator.getRealName() : "";
-        writeOffService.writeOff(order.getWriteOffCode(), merchantId, Long.valueOf(currentUserId), operatorName);
+        Long operatorStoreId = operator != null && !ROLE_OWNER.equals(operator.getRole())
+                ? operator.getStoreId() : null;
+        writeOffService.writeOff(order.getWriteOffCode(), merchantId, Long.valueOf(currentUserId),
+                operatorName, operatorStoreId);
 
         MallOrder latestOrder = mallOrderMapper.selectMallOrderByOrderNo(order.getOrderNo());
         if (latestOrder == null) {
@@ -428,9 +439,13 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         List<MallOrder> orders = mallOrderMapper.selectMallOrderByMerchantId(merchantId);
 
         List<MerchantMiniVerifyRecordDto> result = new ArrayList<>();
+        Long staffStoreId = currentStaffStoreId();
         long recordId = 1L;
         for (MallOrder order : orders) {
             if (order.getStatus() != ORDER_STATUS_COMPLETED && order.getStatus() != ORDER_STATUS_USED) {
+                continue;
+            }
+            if (staffStoreId != null && order.getStoreId() != null && !staffStoreId.equals(order.getStoreId())) {
                 continue;
             }
             MerchantMiniVerifyRecordDto record = buildVerifyRecordFromOrder(recordId++, order);
@@ -1221,6 +1236,21 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
     }
 
     // ==================== 辅助方法 ====================
+
+    /**
+     * 当前登录员工的所属门店；店长（owner）返回 null，表示可看全部门店。
+     */
+    private Long currentStaffStoreId() {
+        Long staffId = com.ruoyi.mall.common.util.WxMiniUserContext.getCurrentStaffId();
+        if (staffId == null) {
+            return null;
+        }
+        MerchantUser staff = merchantUserMapper.selectMerchantUserById(staffId);
+        if (staff == null || ROLE_OWNER.equals(staff.getRole())) {
+            return null;
+        }
+        return staff.getStoreId();
+    }
 
     private Long getMerchantIdFromContext() {
         // 优先从JWT token获取

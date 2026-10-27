@@ -13,4 +13,10 @@ public interface IWriteOffService {
      * @return 核销结果
      */
     WriteOffResultVO writeOff(String code, Long merchantId, Long operatorId, String operatorName);
+
+    /**
+     * 核销订单（指定核销门店）
+     * @param storeId 核销门店ID，为空时使用订单归属门店
+     */
+    WriteOffResultVO writeOff(String code, Long merchantId, Long operatorId, String operatorName, Long storeId);
 }

@@ -6,6 +6,7 @@ const merchantApi = require('../../api/merchant')
 const userApi = require('../../api/user')
 const agreement = require('../../utils/agreement')
 const cartStore = require('../../utils/cart')
+const storeUtil = require('../../utils/store')
 const cartSync = require('../../utils/cart-sync')
 const { toListThumbnailUrl } = require('../../utils/image-url')
 const app = getApp()
@@ -354,6 +355,7 @@ Page({
   },
 
   buildApiPayload() {
+    const currentStore = storeUtil.getCurrentStore() || {}
     return {
       productId: this.data.productList[0] && this.data.productList[0].productId,
       quantity: this.data.productList[0] && this.data.productList[0].quantity,
@@ -361,6 +363,7 @@ Page({
         productId: item.productId,
         quantity: item.quantity
       })),
+      storeId: currentStore.id || null,
       phone: String(this.data.phone || '').trim()
     }
   }

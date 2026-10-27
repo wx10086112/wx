@@ -11,6 +11,7 @@ public class WxBookingCreateRequestDto {
     private String contactName;
     private String contactPhone;
     private Integer peopleCount;
+    private Long storeId;
     private String remark;
 
     public Long getProductId() { return productId; }
@@ -23,6 +24,8 @@ public class WxBookingCreateRequestDto {
     public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }
     public Integer getPeopleCount() { return peopleCount; }
     public void setPeopleCount(Integer peopleCount) { this.peopleCount = peopleCount; }
+    public Long getStoreId() { return storeId; }
+    public void setStoreId(Long storeId) { this.storeId = storeId; }
     public String getRemark() { return remark; }
     public void setRemark(String remark) { this.remark = remark; }
 }

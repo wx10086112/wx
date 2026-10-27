@@ -5,6 +5,8 @@ import com.ruoyi.mall.common.service.IWxPayOrderService;
 import com.ruoyi.mall.common.util.WriteOffCodeGenerator;
 import com.ruoyi.mall.common.util.WxMiniUserContext;
 import com.ruoyi.mall.merchant.domain.Merchant;
+import com.ruoyi.mall.merchant.domain.MerchantStore;
+import com.ruoyi.mall.merchant.mapper.MerchantStoreMapper;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.mall.order.constant.MallOrderStatus;
 import com.ruoyi.mall.order.domain.MallOrder;
@@ -58,6 +60,8 @@ public class WxOrderController {
     private IProductService productService;
     @Resource
     private IMerchantService merchantService;
+    @Resource
+    private MerchantStoreMapper merchantStoreMapper;
     @Resource
     private WriteOffCodeGenerator writeOffCodeGenerator;
     @Resource
@@ -120,6 +124,15 @@ public class WxOrderController {
             return AjaxResult.error("商品不属于当前商家");
         }
 
+        Long storeId = requestDto.getStoreId();
+        if (storeId != null) {
+            MerchantStore store = merchantStoreMapper.selectMerchantStoreById(storeId);
+            if (store == null || !merchantId.equals(store.getMerchantId())
+                    || (store.getStatus() != null && store.getStatus() != 1)) {
+                return AjaxResult.error("门店不存在或已停用");
+            }
+        }
+
         BigDecimal couponAmount = BigDecimal.ZERO;
         BigDecimal payAmount = totalAmount.subtract(couponAmount);
         String orderNo = generateOrderNo();
@@ -133,6 +146,7 @@ public class WxOrderController {
         MallOrder order = new MallOrder();
         order.setOrderNo(orderNo);
         order.setMerchantId(merchantId);
+        order.setStoreId(storeId);
         order.setUserId(userId);
         order.setTotalAmount(totalAmount);
         order.setPayAmount(payAmount);

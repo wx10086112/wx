@@ -8,6 +8,7 @@ public class WxOrderCreateRequestDto {
     private Integer quantity;
     private String phone;
     private Long couponId;
+    private Long storeId;
     private List<OrderItemInput> items;
 
     public static class OrderItemInput {
@@ -28,6 +29,8 @@ public class WxOrderCreateRequestDto {
     public void setPhone(String phone) { this.phone = phone; }
     public Long getCouponId() { return couponId; }
     public void setCouponId(Long couponId) { this.couponId = couponId; }
+    public Long getStoreId() { return storeId; }
+    public void setStoreId(Long storeId) { this.storeId = storeId; }
     public List<OrderItemInput> getItems() { return items; }
     public void setItems(List<OrderItemInput> items) { this.items = items; }
 }
