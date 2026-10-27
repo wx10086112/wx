@@ -3,6 +3,8 @@ const templateService = require('../../services/template')
 const productApi = require('../../api/product')
 const merchantApi = require('../../api/merchant')
 const cartStore = require('../../utils/cart')
+const storeUtil = require('../../utils/store')
+const bookingApi = require('../../api/booking')
 const { toDetailThumbnailUrl, toListThumbnailUrl } = require('../../utils/image-url')
 const DEFAULT_PRODUCT_IMAGE = '/assets/images/yutuitang-logo.jpg'
 const DEFAULT_MERCHANT_IMAGE = '/assets/images/yutuitang-logo.jpg'
@@ -17,7 +19,14 @@ Page({
     ruleList: [],
     serviceHighlightList: [],
     productImageCropStyle: util.buildImageCropStyle(),
-    loading: true
+    loading: true,
+    showBooking: false,
+    bookingStoreName: '',
+    bookingDate: '',
+    bookingTime: '10:00',
+    bookingPeopleOptions: ['1', '2', '3', '4', '5', '6'],
+    bookingPeopleIndex: 0,
+    bookingSubmitting: false
   },
 
   onLoad(options) {
@@ -177,6 +186,78 @@ Page({
 
   goCart() {
     util.navigateTo('/pages/cart/cart')
+  },
+
+  openBooking() {
+    const store = storeUtil.getCurrentStore()
+    if (!store || !store.id) {
+      util.showToast('请先选择门店')
+      util.navigateTo('/pages/store-list/store-list')
+      return
+    }
+    const now = new Date()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    this.setData({
+      showBooking: true,
+      bookingStoreName: store.name || '',
+      bookingDate: `${now.getFullYear()}-${month}-${day}`,
+      bookingTime: '10:00',
+      bookingPeopleIndex: 0
+    })
+  },
+
+  closeBooking() {
+    this.setData({ showBooking: false })
+  },
+
+  noop() {},
+
+  onBookingDateChange(e) {
+    this.setData({ bookingDate: e.detail.value })
+  },
+
+  onBookingTimeChange(e) {
+    this.setData({ bookingTime: e.detail.value })
+  },
+
+  onBookingPeopleChange(e) {
+    this.setData({ bookingPeopleIndex: Number(e.detail.value) })
+  },
+
+  submitBooking() {
+    if (this.data.bookingSubmitting) {
+      return
+    }
+    const product = this.data.product || {}
+    const store = storeUtil.getCurrentStore() || {}
+    if (!store.id) {
+      util.showToast('请先选择门店')
+      return
+    }
+    const timeText = `${this.data.bookingDate} ${this.data.bookingTime}:00`.replace(/-/g, '/')
+    const bookingTime = new Date(timeText).getTime()
+    if (!bookingTime || bookingTime <= Date.now()) {
+      util.showToast('请选择未来的预约时间')
+      return
+    }
+    this.setData({ bookingSubmitting: true })
+    bookingApi.createBooking({
+      productId: product.productId || product.id,
+      bookingTime,
+      peopleCount: Number(this.data.bookingPeopleOptions[this.data.bookingPeopleIndex] || 1),
+      storeId: store.id
+    }).then(() => {
+      util.showToast('预约已提交', 'success')
+      this.setData({ showBooking: false })
+      setTimeout(() => {
+        util.navigateTo('/pages/my-booking/my-booking')
+      }, 600)
+    }).catch((err) => {
+      util.showToast((err && (err.message || err.msg)) || '预约失败')
+    }).finally(() => {
+      this.setData({ bookingSubmitting: false })
+    })
   },
 
   onShareAppMessage() {

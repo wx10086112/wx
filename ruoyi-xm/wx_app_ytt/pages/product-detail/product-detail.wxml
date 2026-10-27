@@ -39,6 +39,7 @@
         <text wx:else class="merchant-meta">{{merchant.businessHours}}</text>
         <text class="merchant-address">{{merchant.address}}</text>
         <view class="merchant-actions">
+          <text class="merchant-action" catchtap="openBooking">预约到店</text>
           <text class="merchant-action" catchtap="callMerchant">联系门店</text>
           <text class="merchant-action" catchtap="viewMerchantLocation">查看地图</text>
         </view>
@@ -78,5 +79,37 @@
 
   <view class="floating-cart-btn" wx:if="{{!loading}}" bindtap="goCart">
     <text class="floating-cart-text">购物车</text>
+  </view>
+
+  <view wx:if="{{showBooking}}" class="booking-mask" catchtap="closeBooking">
+    <view class="booking-panel" catchtap="noop">
+      <text class="booking-title">预约到店</text>
+      <view class="booking-row">
+        <text class="booking-label">门店</text>
+        <text class="booking-value">{{bookingStoreName}}</text>
+      </view>
+      <picker mode="date" start="{{bookingDate}}" value="{{bookingDate}}" bindchange="onBookingDateChange">
+        <view class="booking-row">
+          <text class="booking-label">日期</text>
+          <text class="booking-value">{{bookingDate}} ›</text>
+        </view>
+      </picker>
+      <picker mode="time" value="{{bookingTime}}" bindchange="onBookingTimeChange">
+        <view class="booking-row">
+          <text class="booking-label">时间</text>
+          <text class="booking-value">{{bookingTime}} ›</text>
+        </view>
+      </picker>
+      <picker mode="selector" range="{{bookingPeopleOptions}}" value="{{bookingPeopleIndex}}" bindchange="onBookingPeopleChange">
+        <view class="booking-row">
+          <text class="booking-label">人数</text>
+          <text class="booking-value">{{bookingPeopleOptions[bookingPeopleIndex]}} 人 ›</text>
+        </view>
+      </picker>
+      <view class="booking-actions">
+        <button class="booking-cancel" bindtap="closeBooking">取消</button>
+        <button class="booking-submit" bindtap="submitBooking">{{bookingSubmitting ? '提交中...' : '确认预约'}}</button>
+      </view>
+    </view>
   </view>
 </view>
