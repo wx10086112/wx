@@ -65,15 +65,22 @@ public class WxTemplateController {
         data.put("templateMeta", templateMeta);
 
         // brandInfo
+        String brandSuffix = appMerchant != null && appMerchant.getId() != null
+                ? String.valueOf(appMerchant.getId()) : "";
+        String brandSlogan = configValue("mall.brand.slogan." + brandSuffix,
+                configValue("mall.brand.slogan", ""));
+        String brandNotice = configValue("mall.brand.notice." + brandSuffix,
+                configValue("mall.brand.notice", "欢迎使用门店团购小程序"));
+        String brandPrimaryColor = configValue("mall.brand.primaryColor." + brandSuffix, "#2F7D5B");
         Map<String, Object> brandInfo = new HashMap<>();
         brandInfo.put("id", "brand_001");
         brandInfo.put("name", operatorName);
         brandInfo.put("logo", resolveMerchantImage(appMerchant));
-        brandInfo.put("slogan", "");
-        brandInfo.put("notice", "欢迎使用门店团购小程序");
+        brandInfo.put("slogan", brandSlogan);
+        brandInfo.put("notice", brandNotice);
         brandInfo.put("servicePhone", servicePhone);
         brandInfo.put("searchPlaceholder", "搜索套餐、服务项目");
-        brandInfo.put("primaryColor", "#1677ff");
+        brandInfo.put("primaryColor", brandPrimaryColor);
         data.put("brandInfo", brandInfo);
 
         Map<String, Object> contactInfo = new HashMap<>();
