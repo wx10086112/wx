@@ -212,11 +212,24 @@ public class MallOrderServiceImpl implements IMallOrderService {
         }
     }
 
+    private void decreaseProductSales(String orderNo) {
+        List<OrderItem> orderItems = orderItemMapper.selectOrderItemByOrderNo(orderNo);
+        if (orderItems == null) {
+            return;
+        }
+        for (OrderItem orderItem : orderItems) {
+            productService.decreaseSales(orderItem.getProductId(), orderItem.getQuantity());
+        }
+    }
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean markOrderRefunded(String orderNo, Date refundTime) {
         MallOrder order = mallOrderMapper.selectMallOrderByOrderNo(orderNo);
         int affectedRows = mallOrderMapper.markOrderRefunded(orderNo, refundTime);
         if (affectedRows > 0) {
+            // 退款成功后扣回销量，避免商品销量虚高
+            decreaseProductSales(orderNo);
             recordOrderStatusHistory(order, order != null ? order.getStatus() : null, MallOrderStatus.REFUNDED,
                     "REFUND_SUCCESS", "WECHAT_REFUND", null, null, null);
         }

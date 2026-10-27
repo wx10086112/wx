@@ -30,4 +30,14 @@ public interface IProductService {
     boolean restoreStock(Long productId, Integer quantity);
 
     boolean increaseSales(Long productId, Integer quantity);
+
+    /**
+     * 回退销量（退款成功时调用），结果不小于 0
+     */
+    boolean decreaseSales(Long productId, Integer quantity);
+
+    /**
+     * 按有效订单重算全部商品销量，返回实际更新的商品数
+     */
+    int reconcileSalesFromOrders();
 }

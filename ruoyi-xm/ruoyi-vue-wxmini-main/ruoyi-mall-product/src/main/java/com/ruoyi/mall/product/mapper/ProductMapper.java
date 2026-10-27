@@ -49,6 +49,16 @@ public interface ProductMapper {
 
     int increaseSales(@Param("id") Long id, @Param("quantity") Integer quantity);
 
+    /**
+     * 回退销量：退款成功时按订单明细扣回，sales 最小为 0
+     */
+    int decreaseSales(@Param("id") Long id, @Param("quantity") Integer quantity);
+
+    /**
+     * 按有效订单（已支付/已完成/已核销）重算全部商品销量，用于定时对账
+     */
+    int reconcileSalesFromOrders();
+
     @Select("SELECT p.*, m.name AS merchant_name FROM product p LEFT JOIN merchant m ON p.merchant_id = m.id WHERE p.status = 1 AND p.del_flag = '0' AND (m.del_flag = '0' OR m.id IS NULL) ORDER BY p.sales DESC LIMIT #{limit}")
     List<Map> selectHotProducts(@Param("limit") int limit);
 

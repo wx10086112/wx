@@ -195,4 +195,30 @@
         WHERE id = #{id} AND del_flag = '0'
     </update>
 
+    <update id="decreaseSales">
+        UPDATE product
+        SET sales = GREATEST(COALESCE(sales, 0) - #{quantity}, 0),
+            update_time = NOW()
+        WHERE id = #{id} AND del_flag = '0'
+    </update>
+
+    <!-- 按有效订单重算销量：status 1/2/3 分别对应已支付/已核销/已完成 -->
+    <update id="reconcileSalesFromOrders">
+        UPDATE product p
+        LEFT JOIN (
+            SELECT oi.product_id, SUM(oi.quantity) AS actual_sales
+            FROM order_item oi
+            INNER JOIN mall_order o
+                ON o.order_no = oi.order_no
+               AND o.del_flag = '0'
+               AND o.status IN (1, 2, 3)
+            WHERE oi.del_flag = '0'
+            GROUP BY oi.product_id
+        ) actual ON actual.product_id = p.id
+        SET p.sales = COALESCE(actual.actual_sales, 0),
+            p.update_time = NOW()
+        WHERE p.del_flag = '0'
+          AND COALESCE(p.sales, 0) &lt;&gt; COALESCE(actual.actual_sales, 0)
+    </update>
+
 </mapper>

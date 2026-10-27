@@ -102,4 +102,19 @@ public class ProductServiceImpl implements IProductService {
         }
         return productMapper.increaseSales(productId, quantity) > 0;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean decreaseSales(Long productId, Integer quantity) {
+        if (productId == null || quantity == null || quantity <= 0) {
+            return false;
+        }
+        return productMapper.decreaseSales(productId, quantity) > 0;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int reconcileSalesFromOrders() {
+        return productMapper.reconcileSalesFromOrders();
+    }
 }

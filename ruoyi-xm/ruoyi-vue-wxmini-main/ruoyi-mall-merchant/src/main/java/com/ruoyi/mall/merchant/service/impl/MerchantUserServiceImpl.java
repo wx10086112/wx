@@ -4,6 +4,7 @@ import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.merchant.domain.MerchantUser;
 import com.ruoyi.mall.merchant.mapper.MerchantUserMapper;
 import com.ruoyi.mall.merchant.service.IMerchantUserService;
+import com.ruoyi.mall.merchant.service.MerchantUserPhoneValidator;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -34,6 +35,9 @@ public class MerchantUserServiceImpl implements IMerchantUserService {
         if (StringUtils.isBlank(merchantUser.getPassword())) {
             throw new ServiceException("商家用户初始密码不能为空");
         }
+        // 手机号统一 trim，并保证同一商家下唯一（商家端支持手机号登录）
+        merchantUser.setPhone(StringUtils.trimToEmpty(merchantUser.getPhone()));
+        MerchantUserPhoneValidator.check(merchantUserMapper, merchantUser.getMerchantId(), merchantUser.getPhone(), null);
         // 加密密码
         merchantUser.setPassword(encoder.encode(merchantUser.getPassword()));
         if (merchantUser.getStatus() == null) {
@@ -47,6 +51,16 @@ public class MerchantUserServiceImpl implements IMerchantUserService {
 
     @Override
     public int updateMerchantUser(MerchantUser merchantUser) {
+        // 修改手机号时校验同一商家下唯一
+        if (merchantUser.getPhone() != null) {
+            MerchantUser existing = merchantUserMapper.selectMerchantUserById(merchantUser.getId());
+            if (existing == null) {
+                throw new ServiceException("商家账号不存在");
+            }
+            merchantUser.setPhone(StringUtils.trimToEmpty(merchantUser.getPhone()));
+            MerchantUserPhoneValidator.check(merchantUserMapper, existing.getMerchantId(),
+                    merchantUser.getPhone(), existing.getId());
+        }
         // 不更新密码字段
         merchantUser.setPassword(null);
         return merchantUserMapper.updateMerchantUser(merchantUser);

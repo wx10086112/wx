@@ -8,6 +8,7 @@ import com.ruoyi.mall.merchant.mapper.MerchantMapper;
 import com.ruoyi.mall.merchant.mapper.MerchantStoreMapper;
 import com.ruoyi.mall.merchant.mapper.MerchantUserMapper;
 import com.ruoyi.mall.merchant.service.IMerchantService;
+import com.ruoyi.mall.merchant.service.MerchantUserPhoneValidator;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -250,7 +251,9 @@ public class MerchantServiceImpl implements IMerchantService {
         owner.setUsername(buildDefaultOwnerUsername(merchant.getId()));
         owner.setPassword(SecurityUtils.encryptPassword(defaultPassword));
         owner.setRealName(resolveOwnerRealName(merchant));
-        owner.setPhone(merchant.getPhone());
+        owner.setPhone(StringUtils.trimToEmpty(merchant.getPhone()));
+        // 手机号用于商家端登录，同商家下必须唯一
+        MerchantUserPhoneValidator.check(merchantUserMapper, merchant.getId(), owner.getPhone(), null);
         owner.setRole("owner");
         owner.setStatus(1);
         owner.setRemark("系统自动创建的商家超级用户");

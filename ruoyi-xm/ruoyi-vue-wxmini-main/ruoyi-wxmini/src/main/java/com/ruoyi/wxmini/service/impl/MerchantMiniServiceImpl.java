@@ -15,6 +15,7 @@ import com.ruoyi.mall.merchant.domain.MerchantUser;
 import com.ruoyi.mall.merchant.mapper.MerchantMapper;
 import com.ruoyi.mall.merchant.mapper.MerchantStoreMapper;
 import com.ruoyi.mall.merchant.mapper.MerchantUserMapper;
+import com.ruoyi.mall.merchant.service.MerchantUserPhoneValidator;
 import com.ruoyi.mall.order.constant.BookingStatus;
 import com.ruoyi.mall.order.domain.BookingRecord;
 import com.ruoyi.mall.order.domain.MallOrder;
@@ -149,7 +150,42 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
 
     @Override
     public MerchantMiniLoginResponseDto login(String username, String password, Long merchantId, String appid) {
-        MerchantUser merchantUser = merchantUserMapper.selectMerchantUserByUsername(username);
+        String account = StringUtils.trimToEmpty(username);
+        MerchantUser merchantUser = merchantUserMapper.selectMerchantUserByUsername(account);
+
+        // 入口码/小程序 AppID 能确定商家时，登录账号允许使用手机号
+        Long loginMerchantId = merchantId;
+        if (loginMerchantId == null && StringUtils.isNotBlank(appid)) {
+            Merchant appMerchant = merchantMapper.selectMerchantByCAppId(appid);
+            if (appMerchant == null) {
+                appMerchant = merchantMapper.selectMerchantByMAppId(appid);
+            }
+            if (appMerchant == null) {
+                throw new IllegalArgumentException("该账号不属于当前小程序所属商家");
+            }
+            loginMerchantId = appMerchant.getId();
+        }
+
+        // 用户名查不到，或命中的账号不属于当前商家时，按手机号在该商家下再查一次
+        boolean accountMismatch = merchantUser == null
+                || (loginMerchantId != null && !loginMerchantId.equals(merchantUser.getMerchantId()));
+        if (accountMismatch && StringUtils.isNotBlank(account)) {
+            if (loginMerchantId == null) {
+                throw new IllegalArgumentException("请先通过商家后台入口码进入");
+            }
+            MerchantUser phoneQuery = new MerchantUser();
+            phoneQuery.setPhone(account);
+            phoneQuery.setMerchantId(loginMerchantId);
+            List<MerchantUser> phoneUsers = merchantUserMapper.selectMerchantUserList(phoneQuery);
+            if (phoneUsers.size() > 1) {
+                throw new IllegalArgumentException("该手机号关联多个账号，请使用用户名登录");
+            }
+            if (!phoneUsers.isEmpty()) {
+                merchantUser = phoneUsers.get(0);
+            } else if (merchantUser != null) {
+                throw new IllegalArgumentException("该账号不属于当前扫码商家");
+            }
+        }
         if (merchantUser == null) {
             throw new IllegalArgumentException("商家账号不存在");
         }
@@ -1085,12 +1121,16 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
             throw new IllegalArgumentException("用户名已存在");
         }
 
+        // 手机号用于商家端登录，同商家下必须唯一
+        String phone = StringUtils.trimToEmpty(requestDto.getPhone());
+        MerchantUserPhoneValidator.check(merchantUserMapper, merchantId, phone, null);
+
         MerchantUser newUser = new MerchantUser();
         newUser.setMerchantId(merchantId);
         newUser.setUsername(requestDto.getUsername());
         newUser.setPassword(com.ruoyi.common.utils.SecurityUtils.encryptPassword(requestDto.getPassword()));
         newUser.setRealName(StringUtils.isNotBlank(requestDto.getRealName()) ? requestDto.getRealName() : requestDto.getUsername());
-        newUser.setPhone(requestDto.getPhone());
+        newUser.setPhone(phone);
         newUser.setRole(StringUtils.isNotBlank(requestDto.getRole()) && ROLE_OWNER.equals(requestDto.getRole()) ? ROLE_OWNER : ROLE_MEMBER);
         newUser.setStatus(1);
         merchantUserMapper.insertMerchantUser(newUser);
@@ -1116,7 +1156,9 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
             update.setRealName(requestDto.getRealName());
         }
         if (StringUtils.isNotBlank(requestDto.getPhone())) {
-            update.setPhone(requestDto.getPhone());
+            String phone = requestDto.getPhone().trim();
+            MerchantUserPhoneValidator.check(merchantUserMapper, merchantId, phone, existing.getId());
+            update.setPhone(phone);
         }
         if (StringUtils.isNotBlank(requestDto.getRole())) {
             update.setRole(ROLE_OWNER.equals(requestDto.getRole()) ? ROLE_OWNER : ROLE_MEMBER);
