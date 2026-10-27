@@ -2,6 +2,7 @@ package com.ruoyi.mall.merchant.domain;
 
 import com.ruoyi.common.core.domain.BaseEntity;
 import java.math.BigDecimal;
+import java.util.Date;
 
 public class MerchantStore extends BaseEntity {
     private static final long serialVersionUID = 1L;
@@ -18,6 +19,12 @@ public class MerchantStore extends BaseEntity {
     private String avatar;
     private Integer status;
     private Integer isMain;
+    /** 腾讯地图认领（门店级） */
+    private String mapClaimStatus;
+    private String mapPoiId;
+    private String mapClaimUrl;
+    private Date mapClaimTime;
+    private String mapClaimRemark;
     /** 删除标志（0代表存在 2代表删除） */
     private String delFlag = "0";
 
@@ -45,6 +52,16 @@ public class MerchantStore extends BaseEntity {
     public void setStatus(Integer status) { this.status = status; }
     public Integer getIsMain() { return isMain; }
     public void setIsMain(Integer isMain) { this.isMain = isMain; }
+    public String getMapClaimStatus() { return mapClaimStatus; }
+    public void setMapClaimStatus(String mapClaimStatus) { this.mapClaimStatus = mapClaimStatus; }
+    public String getMapPoiId() { return mapPoiId; }
+    public void setMapPoiId(String mapPoiId) { this.mapPoiId = mapPoiId; }
+    public String getMapClaimUrl() { return mapClaimUrl; }
+    public void setMapClaimUrl(String mapClaimUrl) { this.mapClaimUrl = mapClaimUrl; }
+    public Date getMapClaimTime() { return mapClaimTime; }
+    public void setMapClaimTime(Date mapClaimTime) { this.mapClaimTime = mapClaimTime; }
+    public String getMapClaimRemark() { return mapClaimRemark; }
+    public void setMapClaimRemark(String mapClaimRemark) { this.mapClaimRemark = mapClaimRemark; }
     public String getDelFlag() { return delFlag; }
     public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
 }

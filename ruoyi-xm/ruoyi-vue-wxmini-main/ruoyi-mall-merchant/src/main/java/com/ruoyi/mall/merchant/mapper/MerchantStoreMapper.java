@@ -11,6 +11,7 @@ public interface MerchantStoreMapper {
     int insertMerchantStore(MerchantStore merchantStore);
     int updateMerchantStore(MerchantStore merchantStore);
     int updatePrimaryMerchantStore(MerchantStore merchantStore);
+    int updateMerchantStoreMapClaim(MerchantStore merchantStore);
     int deleteMerchantStoreById(Long id);
     int deleteMerchantStoreByIds(Long[] ids);
 }

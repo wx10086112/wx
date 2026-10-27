@@ -134,18 +134,24 @@
             </div>
 
             <div class="section-header">
-              <h3 class="section-title">腾讯地图认领</h3>
-              <el-button type="primary" icon="el-icon-edit" size="small" @click="handleEditMapClaim">编辑配置</el-button>
+              <h3 class="section-title">腾讯地图认领（按门店）</h3>
+              <el-button icon="el-icon-refresh" size="small" @click="loadMapStores">刷新</el-button>
             </div>
-            <el-descriptions :column="2" border style="margin-top: 10px;">
-              <el-descriptions-item label="认领状态">
-                <el-tag :type="mapClaimStatusType(merchant.mapClaimStatus)" size="small">{{ mapClaimStatusText(merchant.mapClaimStatus) }}</el-tag>
-              </el-descriptions-item>
-              <el-descriptions-item label="POI ID">{{ configText(merchant.mapPoiId) }}</el-descriptions-item>
-              <el-descriptions-item label="认领链接">{{ configText(merchant.mapClaimUrl) }}</el-descriptions-item>
-              <el-descriptions-item label="认领时间">{{ configText(merchant.mapClaimTime, '待认领完成') }}</el-descriptions-item>
-              <el-descriptions-item label="备注" :span="2">{{ merchant.mapClaimRemark || '无' }}</el-descriptions-item>
-            </el-descriptions>
+            <el-table :data="mapStores" size="small" border style="margin-top: 10px;" v-loading="mapStoresLoading">
+              <el-table-column prop="name" label="门店" min-width="180" show-overflow-tooltip />
+              <el-table-column label="认领状态" width="110">
+                <template slot-scope="{ row }">
+                  <el-tag :type="mapClaimStatusType(row.mapClaimStatus)" size="small">{{ mapClaimStatusText(row.mapClaimStatus) }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="mapPoiId" label="POI ID" min-width="150" show-overflow-tooltip />
+              <el-table-column prop="mapClaimUrl" label="认领链接" min-width="200" show-overflow-tooltip />
+              <el-table-column label="操作" width="90">
+                <template slot-scope="{ row }">
+                  <el-button type="text" size="small" @click="handleEditStoreMapClaim(row)">编辑</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
 
             <div class="section-header">
               <h3 class="section-title">微信支付与结算配置</h3>
@@ -637,9 +643,12 @@
       </div>
     </el-dialog>
 
-    <!-- 编辑腾讯地图认领配置弹窗 -->
-    <el-dialog title="编辑腾讯地图认领配置" :visible.sync="mapClaimDialogVisible" width="500px" append-to-body>
+    <!-- 编辑门店腾讯地图认领配置弹窗 -->
+    <el-dialog title="编辑门店腾讯地图认领" :visible.sync="mapClaimDialogVisible" width="500px" append-to-body>
       <el-form ref="mapClaimForm" :model="mapClaimForm" label-width="100px">
+        <el-form-item label="门店">
+          <el-input :value="mapClaimForm.storeName" disabled />
+        </el-form-item>
         <el-form-item label="认领状态">
           <el-select v-model="mapClaimForm.mapClaimStatus" placeholder="请选择状态" style="width: 100%;">
             <el-option label="未认领" value="NOT_CLAIMED" />
@@ -1029,7 +1038,7 @@
 </template>
 
 <script>
-import { getMerchantDetail, getMerchantStore, createMerchantStore, updateMerchantStore, getMerchantLiveStats, getMerchantEntryQrCode, getProductList, getProductCategoryList, addProductCategory, addProduct, updateProduct, deleteProduct, getMerchantOrders, getMerchantFlowList, orderStatusMap, getMerchantUserList, addMerchantUser, resetMerchantUserPwd, changeMerchantUserStatus, updateMerchant } from '@/api/merchant'
+import { getMerchantDetail, getMerchantStore, createMerchantStore, updateMerchantStore, getMerchantLiveStats, getMerchantEntryQrCode, getProductList, getProductCategoryList, addProductCategory, addProduct, updateProduct, deleteProduct, getMerchantOrders, getMerchantFlowList, orderStatusMap, getMerchantUserList, addMerchantUser, resetMerchantUserPwd, changeMerchantUserStatus, updateMerchant, getMerchantStores, updateMerchantStoreMapClaim } from '@/api/merchant'
 import { listGroupon, getGroupon, addGroupon, updateGroupon, deleteGroupon, changeGrouponStatus, listGrouponItem, addGrouponItem, updateGrouponItem, deleteGrouponItem, changeGrouponItemStatus } from '@/api/marketing/groupon'
 import { getToken } from '@/utils/auth'
 
@@ -1109,9 +1118,11 @@ export default {
       miniAppDialogVisible: false,
       miniAppForm: { cMiniAppId: '', cMiniAppSecret: '' },
 
-      // 腾讯地图认领
+      // 腾讯地图认领（按门店）
+      mapStores: [],
+      mapStoresLoading: false,
       mapClaimDialogVisible: false,
-      mapClaimForm: { mapClaimStatus: 'NOT_CLAIMED', mapPoiId: '', mapClaimUrl: '', mapClaimRemark: '' },
+      mapClaimForm: { storeId: null, storeName: '', mapClaimStatus: 'NOT_CLAIMED', mapPoiId: '', mapClaimUrl: '', mapClaimRemark: '' },
 
       // 微信特约商户
       wxApplymentDialogVisible: false,
@@ -1229,6 +1240,7 @@ export default {
       return
     }
     this.fetchDetail()
+    this.loadMapStores()
     this.loadProductCategories()
     this.loadProducts()
     this.startLiveStatsRefresh()
@@ -1702,21 +1714,38 @@ export default {
       const map = { NOT_CLAIMED: 'info', CLAIMING: 'warning', CLAIMED: 'success', FAILED: 'danger' }
       return map[status] || 'info'
     },
-    handleEditMapClaim() {
+    async loadMapStores() {
+      if (!this.merchantId) return
+      this.mapStoresLoading = true
+      try {
+        const res = await getMerchantStores(this.merchantId)
+        this.mapStores = res.data || []
+      } finally {
+        this.mapStoresLoading = false
+      }
+    },
+    handleEditStoreMapClaim(row) {
       this.mapClaimForm = {
-        id: this.merchant.id,
-        mapClaimStatus: this.merchant.mapClaimStatus || 'NOT_CLAIMED',
-        mapPoiId: this.merchant.mapPoiId || '',
-        mapClaimUrl: this.merchant.mapClaimUrl || '',
-        mapClaimRemark: this.merchant.mapClaimRemark || ''
+        storeId: row.id,
+        storeName: row.name,
+        mapClaimStatus: row.mapClaimStatus || 'NOT_CLAIMED',
+        mapPoiId: row.mapPoiId || '',
+        mapClaimUrl: row.mapClaimUrl || '',
+        mapClaimRemark: row.mapClaimRemark || ''
       }
       this.mapClaimDialogVisible = true
     },
     async submitMapClaimForm() {
-      const res = await updateMerchant(this.mapClaimForm)
-      if (!this.applySavedMerchant(res)) await this.fetchDetail()
+      if (!this.mapClaimForm.storeId) return
+      await updateMerchantStoreMapClaim(this.merchantId, this.mapClaimForm.storeId, {
+        mapClaimStatus: this.mapClaimForm.mapClaimStatus,
+        mapPoiId: this.mapClaimForm.mapPoiId,
+        mapClaimUrl: this.mapClaimForm.mapClaimUrl,
+        mapClaimRemark: this.mapClaimForm.mapClaimRemark
+      })
       this.mapClaimDialogVisible = false
-      this.$message.success('保存成功，详情已刷新')
+      this.$message.success('认领信息已保存')
+      await this.loadMapStores()
     },
 
     // ========== 微信特约商户 ==========

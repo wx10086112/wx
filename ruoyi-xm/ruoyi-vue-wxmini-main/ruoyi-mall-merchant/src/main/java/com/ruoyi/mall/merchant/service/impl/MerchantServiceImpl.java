@@ -118,6 +118,37 @@ public class MerchantServiceImpl implements IMerchantService {
         return merchantStoreMapper.selectMerchantStoreById(existing.getId());
     }
 
+    @Override
+    public List<MerchantStore> selectStoresByMerchantId(Long merchantId) {
+        requireMerchant(merchantId);
+        return merchantStoreMapper.selectMerchantStoreByMerchantId(merchantId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public MerchantStore updateStoreMapClaim(Long merchantId, Long storeId, MerchantStore claim) {
+        requireMerchant(merchantId);
+        if (storeId == null || claim == null) {
+            throw new IllegalArgumentException("参数不能为空");
+        }
+        MerchantStore store = merchantStoreMapper.selectMerchantStoreById(storeId);
+        if (store == null || !merchantId.equals(store.getMerchantId())) {
+            throw new IllegalArgumentException("门店不存在");
+        }
+        MerchantStore update = new MerchantStore();
+        update.setId(storeId);
+        update.setMerchantId(merchantId);
+        update.setMapClaimStatus(StringUtils.defaultIfBlank(claim.getMapClaimStatus(), "NOT_CLAIMED"));
+        update.setMapPoiId(StringUtils.trimToNull(claim.getMapPoiId()));
+        update.setMapClaimUrl(StringUtils.trimToNull(claim.getMapClaimUrl()));
+        update.setMapClaimRemark(StringUtils.trimToNull(claim.getMapClaimRemark()));
+        update.setMapClaimTime(claim.getMapClaimTime());
+        if (merchantStoreMapper.updateMerchantStoreMapClaim(update) <= 0) {
+            throw new IllegalArgumentException("腾讯地图认领信息保存失败");
+        }
+        return merchantStoreMapper.selectMerchantStoreById(storeId);
+    }
+
     private Merchant requireMerchant(Long merchantId) {
         Merchant merchant = merchantId == null ? null : merchantMapper.selectMerchantById(merchantId);
         if (merchant == null) {

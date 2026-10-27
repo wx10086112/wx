@@ -27,6 +27,10 @@ public interface IMerchantService {
 
     MerchantStore updatePrimaryStore(Long merchantId, MerchantStore merchantStore);
 
+    List<MerchantStore> selectStoresByMerchantId(Long merchantId);
+
+    MerchantStore updateStoreMapClaim(Long merchantId, Long storeId, MerchantStore claim);
+
     int deleteMerchantById(Long id);
 
     int deleteMerchantByIds(Long[] ids);

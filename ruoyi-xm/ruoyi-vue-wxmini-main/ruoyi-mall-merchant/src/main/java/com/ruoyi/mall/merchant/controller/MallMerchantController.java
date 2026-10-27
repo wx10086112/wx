@@ -126,6 +126,30 @@ public class MallMerchantController extends BaseController {
     }
 
     @PreAuthorize("@ss.hasPermi('mall:merchant:query')")
+    @GetMapping("/{id}/stores")
+    public AjaxResult listStores(@PathVariable Long id) {
+        try {
+            requireAccessibleMerchant(id);
+            return AjaxResult.success(merchantService.selectStoresByMerchantId(id));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("@ss.hasPermi('mall:merchant:edit')")
+    @Log(title = "商户门店地图认领", businessType = BusinessType.UPDATE)
+    @PutMapping("/{id}/stores/{storeId}/map-claim")
+    public AjaxResult updateStoreMapClaim(@PathVariable Long id, @PathVariable Long storeId,
+            @RequestBody MerchantStore claim) {
+        try {
+            requireAccessibleMerchant(id);
+            return AjaxResult.success(merchantService.updateStoreMapClaim(id, storeId, claim));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("@ss.hasPermi('mall:merchant:query')")
     @GetMapping("/{id}/live-stats")
     public AjaxResult getLiveStats(@PathVariable Long id) {
         Merchant merchant = merchantService.selectMerchantById(id);

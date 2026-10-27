@@ -263,3 +263,20 @@ export function changeMerchantUserStatus(id, status) {
     data: { id, status }
   })
 }
+
+// 商家全部门店（含门店级腾讯地图认领字段）
+export function getMerchantStores(id) {
+  return request({
+    url: '/mall/merchant/' + id + '/stores',
+    method: 'get'
+  })
+}
+
+// 保存单个门店的腾讯地图认领配置
+export function updateMerchantStoreMapClaim(id, storeId, data) {
+  return request({
+    url: '/mall/merchant/' + id + '/stores/' + storeId + '/map-claim',
+    method: 'put',
+    data
+  })
+}

@@ -17,6 +17,11 @@
         <result property="avatar" column="avatar"/>
         <result property="status" column="status"/>
         <result property="isMain" column="is_main"/>
+        <result property="mapClaimStatus" column="map_claim_status"/>
+        <result property="mapPoiId" column="map_poi_id"/>
+        <result property="mapClaimUrl" column="map_claim_url"/>
+        <result property="mapClaimTime" column="map_claim_time"/>
+        <result property="mapClaimRemark" column="map_claim_remark"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
         <result property="delFlag" column="del_flag"/>
@@ -24,7 +29,8 @@
 
     <sql id="selectMerchantStoreVo">
         select id, merchant_id, name, contact, phone, address, longitude, latitude,
-               business_hours, avatar, status, is_main, create_time, update_time
+               business_hours, avatar, status, is_main, map_claim_status, map_poi_id,
+               map_claim_url, map_claim_time, map_claim_remark, create_time, update_time
         from merchant_store
     </sql>
 
@@ -117,6 +123,19 @@
             avatar = #{avatar},
             status = #{status},
             is_main = 1
+        where id = #{id}
+          and merchant_id = #{merchantId}
+          and del_flag = '0'
+    </update>
+
+    <update id="updateMerchantStoreMapClaim" parameterType="com.ruoyi.mall.merchant.domain.MerchantStore">
+        update merchant_store
+        set map_claim_status = #{mapClaimStatus},
+            map_poi_id = #{mapPoiId},
+            map_claim_url = #{mapClaimUrl},
+            map_claim_remark = #{mapClaimRemark},
+            map_claim_time = #{mapClaimTime},
+            update_time = now()
         where id = #{id}
           and merchant_id = #{merchantId}
           and del_flag = '0'
