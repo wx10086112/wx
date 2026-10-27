@@ -9,7 +9,7 @@ const defaultTemplateConfig = {
   brandInfo: {
     id: 'brand_default',
     name: '裕推堂',
-    slogan: '筋骨调理 · 六店通用',
+    slogan: '生活美容 · 六店通用',
     notice: '支持微信支付、到店使用、退款售后与消息通知',
     servicePhone: '',
     primaryColor: '#1677ff'

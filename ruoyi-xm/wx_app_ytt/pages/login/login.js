@@ -8,7 +8,7 @@ const { normalizeImageUrl } = require('../../utils/image-url')
 
 const DEFAULT_BRAND_NAME = '裕推堂'
 const DEFAULT_BRAND_LOGO = '/assets/images/yutuitang-logo.jpg'
-const DEFAULT_BRAND_SUBTITLE = '筋骨调理 · 六店通用'
+const DEFAULT_BRAND_SUBTITLE = '生活美容 · 六店通用'
 const DEFAULT_USER_NAME = '微信用户'
 const DEFAULT_AVATAR_URL = '/assets/images/avatar.svg'
 
