@@ -41,6 +41,7 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 1 })
     }
+    app.applyBrandTitle()
     if (app.globalData.isLoggedIn) {
       this.loadOrders()
     }

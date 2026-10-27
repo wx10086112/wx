@@ -39,6 +39,7 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 })
     }
+    getApp().applyBrandTitle()
     this.applyCurrentStore()
     this.startProductVersionPolling()
     if (!this.data.loading && this.data.productVersion) {

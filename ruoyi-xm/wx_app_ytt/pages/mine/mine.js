@@ -28,6 +28,7 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 3 })
     }
+    app.applyBrandTitle()
     this.checkLoginStatus()
     if (!this.data.isLoggedIn) {
       this.goLogin()

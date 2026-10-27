@@ -82,7 +82,8 @@ App({
     isMerchantLoggedIn: false,
     permissionCodes: [],
     appId: '',
-    merchantEntry: null
+    merchantEntry: null,
+    brandName: ''
   },
 
   onLaunch(options = {}) {
@@ -113,7 +114,21 @@ App({
     templateService.fetchTemplateConfig({
       useRemote: true,
       force: true
+    }).then((config = {}) => {
+      const brand = (config && config.brandInfo) || {}
+      if (brand.name) {
+        this.globalData.brandName = brand.name
+        wx.setStorageSync('brandName', brand.name)
+        this.applyBrandTitle()
+      }
     }).catch(() => {})
+  },
+
+  applyBrandTitle() {
+    const name = this.globalData.brandName || wx.getStorageSync('brandName')
+    if (name) {
+      wx.setNavigationBarTitle({ title: name })
+    }
   },
 
   checkLoginStatus() {

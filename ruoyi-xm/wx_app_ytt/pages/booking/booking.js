@@ -98,6 +98,7 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 2 })
     }
+    getApp().applyBrandTitle()
     if (!this.data.loading) {
       this.loadData()
     }
