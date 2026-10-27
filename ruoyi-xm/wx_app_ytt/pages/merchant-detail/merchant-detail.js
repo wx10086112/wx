@@ -9,7 +9,7 @@ const normalizeMerchantDetail = (merchant = {}) => {
   const serviceAbilityTags = Array.isArray(merchant.serviceAbilityTags) ? merchant.serviceAbilityTags : []
   const facilityTags = Array.isArray(merchant.facilityTags) ? merchant.facilityTags : []
   const albumList = Array.isArray(merchant.albumList) ? merchant.albumList.filter(Boolean) : []
-  const heroImage = toDetailThumbnailUrl(merchant.avatar || DEFAULT_MERCHANT_IMAGE)
+  const heroImage = toDetailThumbnailUrl(merchant.coverImage || merchant.avatar || DEFAULT_MERCHANT_IMAGE)
 
   return {
     ...merchant,
