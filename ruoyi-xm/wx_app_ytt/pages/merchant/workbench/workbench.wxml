@@ -1,0 +1,122 @@
+<view class="page-shell">
+  <view class="dashboard-aura aura-blue"></view>
+  <view class="dashboard-aura aura-cyan"></view>
+
+  <view class="hero-card glass-card">
+    <view class="hero-top">
+      <view class="hero-identity">
+        <text class="hero-store">商家端</text>
+        <text class="hero-role">{{staffUser.name}} · {{staffUser.roleName}}</text>
+        <text wx:if="{{storeInfo.storeName}}" class="hero-shop">{{storeInfo.storeName}}</text>
+      </view>
+      <view class="status-switch {{storeInfo.businessStatus ? 'active' : ''}}" bindtap="toggleBusinessStatus" hover-class="switch-pressed" hover-stay-time="80">
+        <text class="status-text">{{storeInfo.businessStatus ? '营业中' : '休息中'}}</text>
+        <view class="status-track">
+          <text class="status-light"></text>
+          <text class="status-knob"></text>
+        </view>
+      </view>
+    </view>
+
+    <view class="sales-layout">
+      <view class="sales-main">
+        <text class="sales-label">今日流水</text>
+        <view class="sales-amount">
+          <text class="sales-currency">¥</text>
+          <text class="sales-value">{{todaySalesText}}</text>
+        </view>
+      </view>
+      <view class="sales-metrics">
+        <view class="sales-mini-card">
+          <text class="sales-mini-label">今日订单</text>
+          <text class="sales-mini-value">{{todayOrderCountText}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{alertList.length}}" class="alert-section">
+    <view wx:for="{{alertList}}" wx:key="text" class="alert-item {{item.type}} interactive-card" hover-class="card-pressed" hover-stay-time="80" bindtap="goAlertOrders" data-filter="{{item.filter}}" data-action="{{item.action}}">
+      <text class="alert-dot"></text>
+      <text class="alert-text">{{item.text}}</text>
+      <text class="alert-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="stats-grid">
+    <view
+      wx:for="{{statsCardList}}"
+      wx:key="label"
+      class="stats-card glass-card interactive-card {{item.highlight ? 'highlight' : ''}} {{item.warn ? 'warn' : ''}}"
+      hover-class="card-pressed"
+      hover-stay-time="80"
+      bindtap="goStatsCard"
+      data-url="{{item.url}}"
+      data-istab="{{item.isTab}}"
+      data-filter="{{item.filter}}"
+    >
+      <view class="stats-icon-wrap {{item.tone}}">
+        <text class="stats-icon">{{item.icon}}</text>
+      </view>
+      <text class="stats-label">{{item.label}}</text>
+      <text class="stats-value">{{item.value}}</text>
+    </view>
+  </view>
+
+  <view class="section glass-card">
+    <view class="section-head">
+      <text class="section-title">快捷入口</text>
+    </view>
+    <view class="quick-grid">
+      <view
+        wx:for="{{quickActionList}}"
+        wx:key="label"
+        class="quick-item interactive-card"
+        hover-class="card-pressed"
+        hover-stay-time="80"
+        bindtap="goQuickAction"
+        data-url="{{item.url}}"
+        data-istab="{{item.isTab}}"
+        data-filter="{{item.filter}}"
+      >
+        <text class="quick-icon {{item.tone}}">{{item.icon}}</text>
+        <text class="quick-label">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="section glass-card">
+    <view class="section-head">
+      <text class="section-title">待处理订单</text>
+    </view>
+    <view wx:if="{{pendingOrderList.length}}">
+      <view wx:for="{{pendingOrderList}}" wx:key="orderNo" class="pending-row interactive-card" hover-class="card-pressed" hover-stay-time="80" bindtap="goOrderDetail" data-orderno="{{item.orderNo}}">
+        <view class="pending-main">
+          <text class="pending-title">{{item.title}}</text>
+          <text class="pending-meta">{{item.customerName}} · {{item.payTimeText}}</text>
+        </view>
+        <view class="pending-side">
+          <text class="pending-price">¥{{item.payAmountText}}</text>
+          <view wx:if="{{item.statusMeta}}" class="status-tag {{item.statusMeta.className}} mini-tag">{{item.statusMeta.text}}</view>
+          <text wx:elif="{{item.writeOffCodeMasked}}" class="pending-code">{{item.writeOffCodeMasked}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="empty-inline">
+      <text class="empty-text">当前没有待处理订单</text>
+    </view>
+  </view>
+
+  <view class="merchant-tabbar safe-area-bottom">
+    <view
+      wx:for="{{merchantNavList}}"
+      wx:key="key"
+      class="merchant-tabbar__item {{item.active ? 'active' : ''}}"
+      bindtap="goMerchantTab"
+      data-url="{{item.url}}"
+    >
+      <text class="merchant-tabbar__icon"></text>
+      <text class="merchant-tabbar__label">{{item.label}}</text>
+    </view>
+  </view>
+</view>

@@ -20,6 +20,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -167,6 +168,61 @@ public class WxMerchantController {
         dto.setStoreList(stores);
         dto.setAlbumList(buildAlbumList(merchant, stores));
         return AjaxResult.success(dto);
+    }
+
+    @GetMapping("/stores")
+    public AjaxResult stores(@RequestParam(required = false) BigDecimal latitude,
+            @RequestParam(required = false) BigDecimal longitude) {
+        Long merchantId = WxMiniUserContext.getCurrentMerchantId();
+        if (merchantId == null) {
+            merchantId = WxMiniUserContext.getAppIdMerchantId();
+        }
+        if (merchantId == null) {
+            return AjaxResult.error("无法识别当前商家");
+        }
+        Merchant merchant = merchantService.selectMerchantById(merchantId);
+        if (merchant == null || merchant.getStatus() == null || merchant.getStatus() != 1) {
+            return AjaxResult.error("商家不存在或已下线");
+        }
+
+        List<MerchantStore> stores = merchantStoreMapper.selectMerchantStoreByMerchantId(merchantId);
+        List<Map<String, Object>> storeList = new ArrayList<>();
+        boolean hasLocation = latitude != null && longitude != null;
+        for (MerchantStore store : stores) {
+            if (store.getStatus() != null && store.getStatus() != 1) {
+                continue;
+            }
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("id", store.getId());
+            item.put("name", store.getName());
+            item.put("address", store.getAddress());
+            item.put("phone", store.getPhone());
+            item.put("businessHours", store.getBusinessHours());
+            item.put("avatar", appendThumb(store.getAvatar(), "detail"));
+            item.put("longitude", store.getLongitude());
+            item.put("latitude", store.getLatitude());
+            item.put("isMain", store.getIsMain());
+            if (hasLocation && store.getLatitude() != null && store.getLongitude() != null) {
+                long meters = (long) calculateDistance(latitude.doubleValue(), longitude.doubleValue(),
+                        store.getLatitude().doubleValue(), store.getLongitude().doubleValue());
+                item.put("distanceValue", meters);
+                item.put("distance", meters < 1000 ? meters + "m" : String.format("%.1fkm", meters / 1000.0));
+            }
+            storeList.add(item);
+        }
+        if (hasLocation) {
+            storeList.sort(Comparator.comparingLong(item -> {
+                Object value = item.get("distanceValue");
+                return value == null ? Long.MAX_VALUE : (Long) value;
+            }));
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("merchantId", merchant.getId());
+        result.put("merchantName", merchant.getName());
+        result.put("storeCount", storeList.size());
+        result.put("stores", storeList);
+        return AjaxResult.success(result);
     }
 
     @GetMapping("/album/{merchantId}")

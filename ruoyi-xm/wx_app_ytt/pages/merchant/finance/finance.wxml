@@ -1,0 +1,152 @@
+<view class="page-shell">
+  <view class="settlement-hero interactive-card" hover-class="card-pressed" hover-stay-time="80">
+    <view class="hero-topline">
+      <text class="hero-kicker">结算中心</text>
+      <text class="hero-badge">自动结算</text>
+    </view>
+    <view class="hero-content">
+      <text class="hero-label">待自动到账</text>
+      <text class="hero-amount">¥{{overview.pendingAutoTransferText}}</text>
+    </view>
+  </view>
+
+  <view class="stats-summary panel">
+    <view wx:for="{{statsCards}}" wx:key="label" class="stats-card interactive-card" hover-class="card-pressed" hover-stay-time="80">
+      <view class="stats-head">
+        <text class="stats-dot {{item.tone}}"></text>
+        <text class="stats-label">{{item.label}}</text>
+      </view>
+      <text class="stats-value">{{item.value}}</text>
+    </view>
+  </view>
+
+  <view class="panel section-panel">
+    <view class="section-head flow-head">
+      <text class="section-title">每日流水</text>
+      <view class="range-tabs">
+        <text
+          wx:for="{{dailyRangeTabs}}"
+          wx:key="value"
+          class="range-tab {{currentDailyRange === item.value ? 'active' : ''}}"
+          bindtap="switchDailyRange"
+          data-range="{{item.value}}"
+        >{{item.label}}</text>
+      </view>
+    </view>
+
+    <view class="daily-hero">
+      <view>
+        <text class="daily-label">{{dailyFlow.rangeLabel}}流水金额</text>
+        <view class="daily-amount">
+          <text class="daily-currency">¥</text>
+          <text class="daily-value">{{dailyFlow.totalAmountText}}</text>
+        </view>
+      </view>
+      <view class="daily-side">
+        <text class="daily-side-label">预计入账</text>
+        <text class="daily-side-value">¥{{dailyFlow.merchantAmountText}}</text>
+      </view>
+    </view>
+
+    <view class="daily-stats">
+      <view wx:for="{{dailyStatsCards}}" wx:key="label" class="daily-stat {{item.tone}}">
+        <text class="daily-stat-label">{{item.label}}</text>
+        <text class="daily-stat-value">{{item.value}}</text>
+      </view>
+    </view>
+
+    <view class="subsection-head record-head">
+      <text class="subsection-title">流水明细</text>
+    </view>
+    <view wx:if="{{flowRecordList.length}}">
+      <view wx:for="{{flowRecordList}}" wx:key="id" class="flow-record-row">
+        <view class="flow-record-main">
+          <text class="flow-record-title">{{item.title}}</text>
+          <text class="flow-record-meta">{{item.orderNo}} · {{item.flowTimeText}}</text>
+        </view>
+        <view class="flow-record-side">
+          <text class="flow-record-amount {{item.amountTone}}">{{item.amountPrefix}}¥{{item.orderAmountText}}</text>
+          <text class="flow-record-status">{{item.statusText}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="empty-inline compact-empty">
+      <text class="empty-text">暂无流水明细</text>
+    </view>
+  </view>
+
+  <view class="panel section-panel">
+    <view class="section-head">
+      <text class="section-title">到账记录</text>
+      <view class="filter-tabs">
+        <text
+          wx:for="{{filterTabs}}"
+          wx:key="value"
+          class="filter-tab {{currentFilter === item.value ? 'active' : ''}}"
+          bindtap="switchFilter"
+          data-filter="{{item.value}}"
+        >{{item.label}}</text>
+      </view>
+    </view>
+    <view wx:if="{{settlementRecordList.length}}">
+      <view wx:for="{{settlementRecordList}}" wx:key="settlementId" class="record-card interactive-card" hover-class="card-pressed" hover-stay-time="80">
+        <view class="record-main">
+          <text class="record-title">{{item.title}}</text>
+          <text wx:if="{{item.orderNo}}" class="record-meta">订单号：{{item.orderNo}}</text>
+          <text class="record-meta">
+            {{item.status === 'ARRIVED' ? '到账时间' : '预计到账'}}：
+            {{item.status === 'ARRIVED' ? item.arriveTimeText : item.expectedTransferTimeText}}
+          </text>
+        </view>
+        <view class="record-side">
+          <text class="record-amount">¥{{item.amountText}}</text>
+          <text class="status-pill {{item.statusClass}}">{{item.statusText}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="empty-inline">
+      <text class="empty-text">当前筛选条件下暂无到账记录</text>
+    </view>
+  </view>
+
+  <view class="panel section-panel">
+    <view class="section-head">
+      <view>
+        <text class="section-title">结算流水</text>
+      </view>
+    </view>
+    <view wx:if="{{ledgerList.length}}">
+      <view wx:for="{{ledgerList}}" wx:key="ledgerId" class="flow-card interactive-card" hover-class="card-pressed" hover-stay-time="80">
+        <view class="flow-row flow-title-row">
+          <text class="flow-label">订单</text>
+          <text class="flow-value flow-title">{{item.title}}</text>
+        </view>
+        <view class="flow-divider"></view>
+        <view class="flow-row">
+          <text class="flow-label">订单号</text>
+          <text class="flow-value">{{item.orderNo}}</text>
+        </view>
+        <view class="flow-row">
+          <text class="flow-label">完成时间</text>
+          <text class="flow-value">{{item.finishTimeText}}</text>
+        </view>
+        <view class="flow-row">
+          <text class="flow-label">预计打款</text>
+          <text class="flow-value">{{item.settleTimeText}}</text>
+        </view>
+        <view class="flow-summary">
+          <view>
+            <text class="flow-label">金额</text>
+            <text class="flow-money">¥{{item.merchantAmountText}}</text>
+          </view>
+          <view class="flow-summary-right">
+            <text class="status-pill {{item.statusClass}}">{{item.statusText}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="empty-inline">
+      <text class="empty-text">暂无结算流水</text>
+    </view>
+  </view>
+</view>

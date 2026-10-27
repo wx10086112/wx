@@ -1,5 +1,6 @@
 package com.ruoyi.wxmini.service;
 
+import com.ruoyi.mall.merchant.domain.MerchantStore;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniFinanceOverviewDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniBookingDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniLoginResponseDto;
@@ -71,6 +72,9 @@ public interface IMerchantMiniService {
     MerchantMiniStoreDto updateStoreProfile(MerchantMiniStoreDto storeDto);
 
     List<MerchantMiniStaffUserDto> listStaff();
+
+    /** 当前商家的有效门店列表（员工绑定门店用） */
+    List<MerchantStore> listStores();
 
     // 员工增删改
     MerchantMiniStaffUserDto addStaff(MerchantMiniStaffRequestDto requestDto);

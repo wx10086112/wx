@@ -1,0 +1,84 @@
+<view class="checkout-page">
+  <view class="checkout-card order-card">
+    <view class="card-head">
+      <view>
+        <text class="section-title">{{checkoutConfig.productSectionTitle || '订单内容'}}</text>
+        <text class="section-desc">{{merchant.name}}</text>
+      </view>
+      <view wx:if="{{fromCart}}" class="edit-cart-btn" bindtap="goCart">调整</view>
+    </view>
+
+    <view class="checkout-product-list">
+      <view wx:for="{{productList}}" wx:key="productId" class="checkout-product-item">
+        <image src="{{item.image}}" class="product-image" mode="aspectFill" lazy-load></image>
+        <view class="product-info">
+          <text class="product-title">{{item.title}}</text>
+          <text class="product-meta">x{{item.quantity}}</text>
+          <view class="product-price-row">
+            <text class="product-price">¥{{item.priceText}}</text>
+            <text class="product-subtotal">小计 ¥{{item.subtotalText}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="checkout-card">
+    <view class="section-title">{{checkoutConfig.infoSectionTitle || '购买信息'}}</view>
+    <view class="line-row">
+      <text class="line-label">{{checkoutConfig.quantityLabel || '购买数量'}}</text>
+      <view wx:if="{{fromCart}}" class="line-link" bindtap="goCart">返回购物车调整</view>
+      <view wx:else class="quantity-box">
+        <view class="quantity-btn" bindtap="changeQuantity" data-delta="-1">-</view>
+        <text class="quantity-value">{{quantity}}</text>
+        <view class="quantity-btn" bindtap="changeQuantity" data-delta="1">+</view>
+      </view>
+    </view>
+    <view class="line-row">
+      <text class="line-label">{{checkoutConfig.phoneLabel || '联系手机号'}}</text>
+      <view wx:if="{{phoneBound}}" class="phone-text">{{phone}}</view>
+      <view wx:else class="line-link" bindtap="goBindPhone">授权手机号</view>
+    </view>
+    <view class="line-row">
+      <text class="line-label">到店门店</text>
+      <view class="line-value-group">
+        <text class="line-value">{{merchant.shortName || merchant.name}}</text>
+        <text wx:if="{{merchant.distance}}" class="line-value-tip">{{merchant.distance}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="checkout-card">
+    <view class="section-title">{{checkoutConfig.priceSectionTitle || '价格明细'}}</view>
+    <view class="line-row">
+      <text class="line-label">{{checkoutConfig.subtotalLabel || '商品金额'}}</text>
+      <text class="line-value">¥{{subtotalText}}</text>
+    </view>
+    <view class="line-row total-row">
+      <text class="total-label">{{checkoutConfig.totalLabel || '应付金额'}}</text>
+      <text class="pay-text">¥{{payAmountText}}</text>
+    </view>
+  </view>
+
+  <view class="checkout-card">
+    <view class="section-title">{{checkoutConfig.useRuleSectionTitle || '使用规则'}}</view>
+    <view wx:for="{{useRuleList}}" wx:key="index" class="rule-line">{{item}}</view>
+    <view class="notice-strip">
+      <text class="notice-text">支付成功后自动生成同一订单使用码，可在订单中心查看并到店核销。</text>
+    </view>
+    <text class="login-hint">{{checkoutConfig.loginHintText}}</text>
+  </view>
+
+  <view class="pay-bar safe-area-bottom">
+    <agreement-consent class="pay-agreement"></agreement-consent>
+    <view class="pay-row">
+      <view class="pay-summary">
+        <text class="summary-label">{{checkoutConfig.paySummaryLabel || '合计'}}</text>
+        <text class="summary-price">¥{{payAmountText}}</text>
+      </view>
+      <button class="pay-btn {{product.soldOut ? 'is-disabled' : ''}}" bindtap="submitOrder">
+        {{product.soldOut ? '库存不足' : (checkoutConfig.submitButtonText || '提交订单')}}
+      </button>
+    </view>
+  </view>
+</view>

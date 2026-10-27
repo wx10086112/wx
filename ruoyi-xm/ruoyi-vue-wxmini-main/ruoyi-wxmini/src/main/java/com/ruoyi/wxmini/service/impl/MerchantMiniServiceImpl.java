@@ -715,6 +715,20 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
     }
 
     @Override
+    public List<MerchantStore> listStores() {
+        Long merchantId = getMerchantIdFromContext();
+        List<MerchantStore> stores = merchantStoreMapper.selectMerchantStoreByMerchantId(merchantId);
+        List<MerchantStore> result = new ArrayList<>();
+        for (MerchantStore store : stores) {
+            if (store.getStatus() != null && store.getStatus() != 1) {
+                continue;
+            }
+            result.add(store);
+        }
+        return result;
+    }
+
+    @Override
     public List<MerchantMiniStaffUserDto> updateStaffPermission(MerchantMiniStaffPermissionRequestDto requestDto) {
         if (requestDto == null || requestDto.getStaffId() == null) {
             throw new IllegalArgumentException("员工ID不能为空");
@@ -1125,13 +1139,30 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         String phone = StringUtils.trimToEmpty(requestDto.getPhone());
         MerchantUserPhoneValidator.check(merchantUserMapper, merchantId, phone, null);
 
+        String role = StringUtils.isNotBlank(requestDto.getRole()) && ROLE_OWNER.equals(requestDto.getRole())
+                ? ROLE_OWNER : ROLE_MEMBER;
+        Long storeId = requestDto.getStoreId();
+        if (storeId != null) {
+            MerchantStore store = merchantStoreMapper.selectMerchantStoreById(storeId);
+            if (store == null || !merchantId.equals(store.getMerchantId())) {
+                throw new IllegalArgumentException("所属门店不存在");
+            }
+            if (store.getStatus() != null && store.getStatus() != 1) {
+                throw new IllegalArgumentException("所属门店已停用");
+            }
+        }
+        if (ROLE_MEMBER.equals(role) && storeId == null) {
+            throw new IllegalArgumentException("店员必须选择所属门店");
+        }
+
         MerchantUser newUser = new MerchantUser();
         newUser.setMerchantId(merchantId);
         newUser.setUsername(requestDto.getUsername());
         newUser.setPassword(com.ruoyi.common.utils.SecurityUtils.encryptPassword(requestDto.getPassword()));
         newUser.setRealName(StringUtils.isNotBlank(requestDto.getRealName()) ? requestDto.getRealName() : requestDto.getUsername());
         newUser.setPhone(phone);
-        newUser.setRole(StringUtils.isNotBlank(requestDto.getRole()) && ROLE_OWNER.equals(requestDto.getRole()) ? ROLE_OWNER : ROLE_MEMBER);
+        newUser.setRole(role);
+        newUser.setStoreId(storeId);
         newUser.setStatus(1);
         merchantUserMapper.insertMerchantUser(newUser);
 
@@ -1162,6 +1193,23 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         }
         if (StringUtils.isNotBlank(requestDto.getRole())) {
             update.setRole(ROLE_OWNER.equals(requestDto.getRole()) ? ROLE_OWNER : ROLE_MEMBER);
+        }
+        if (requestDto.getStoreId() != null) {
+            MerchantStore store = merchantStoreMapper.selectMerchantStoreById(requestDto.getStoreId());
+            if (store == null || !merchantId.equals(store.getMerchantId())) {
+                throw new IllegalArgumentException("所属门店不存在");
+            }
+            if (store.getStatus() != null && store.getStatus() != 1) {
+                throw new IllegalArgumentException("所属门店已停用");
+            }
+            update.setStoreId(store.getId());
+        }
+        String nextRole = StringUtils.isNotBlank(requestDto.getRole())
+                ? (ROLE_OWNER.equals(requestDto.getRole()) ? ROLE_OWNER : ROLE_MEMBER)
+                : existing.getRole();
+        Long nextStoreId = requestDto.getStoreId() != null ? requestDto.getStoreId() : existing.getStoreId();
+        if (ROLE_MEMBER.equals(nextRole) && nextStoreId == null) {
+            throw new IllegalArgumentException("店员必须选择所属门店");
         }
         if (StringUtils.isNotBlank(requestDto.getPassword())) {
             update.setPassword(com.ruoyi.common.utils.SecurityUtils.encryptPassword(requestDto.getPassword()));
@@ -1660,12 +1708,16 @@ public class MerchantMiniServiceImpl implements IMerchantMiniService {
         dto.setRoleName(ROLE_OWNER.equals(role) ? "店长" : "店员");
         dto.setPermissions(new ArrayList<>(buildPermissions(role)));
 
+        dto.setStoreId(user.getStoreId());
+        if (user.getStoreId() != null) {
+            MerchantStore store = merchantStoreMapper.selectMerchantStoreById(user.getStoreId());
+            if (store != null) {
+                dto.setStoreName(store.getName());
+            }
+        }
+
         if (merchant != null) {
             dto.setMerchantName(merchant.getName());
-            List<MerchantStore> stores = merchantStoreMapper.selectMerchantStoreByMerchantId(user.getMerchantId());
-            if (!stores.isEmpty()) {
-                dto.setStoreId(stores.get(0).getId());
-            }
         }
         return dto;
     }

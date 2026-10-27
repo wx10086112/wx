@@ -1,0 +1,216 @@
+.profile-edit-page {
+  min-height: 100vh;
+  padding: 24rpx 24rpx 64rpx;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.94) 0%, rgba(231, 244, 255, 0.9) 42%, rgba(245, 249, 253, 0.98) 100%),
+    #eef5fb;
+}
+
+.edit-section {
+  border-radius: 40rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.74);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.76)),
+    rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18rpx 54rpx rgba(34, 73, 116, 0.09);
+  overflow: hidden;
+}
+
+.edit-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 36rpx;
+  border-bottom: 1rpx solid rgba(20, 54, 91, 0.08);
+}
+
+.edit-item:last-child {
+  border-bottom: none;
+}
+
+.edit-item-avatar {
+  padding: 24rpx 36rpx;
+}
+
+.edit-label {
+  width: 180rpx;
+  flex-shrink: 0;
+  color: #111827;
+  font-size: 32rpx;
+  font-weight: 620;
+}
+
+.edit-value {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.avatar-btn {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  line-height: normal;
+}
+
+.phone-btn {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  line-height: normal;
+}
+
+.avatar-btn::after,
+.phone-btn::after {
+  border: none;
+}
+
+.phone-btn[disabled] {
+  opacity: 0.58;
+}
+
+.edit-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: #dbeefa;
+  border: 4rpx solid rgba(255, 255, 255, 0.86);
+  box-shadow: 0 12rpx 28rpx rgba(45, 143, 232, 0.12);
+}
+
+.edit-arrow {
+  margin-left: 16rpx;
+  color: #98a2b3;
+  font-size: 40rpx;
+  font-weight: 300;
+}
+
+.edit-input {
+  flex: 1;
+  color: #344054;
+  font-size: 32rpx;
+  text-align: right;
+}
+
+.edit-phone {
+  color: #667085;
+  font-size: 32rpx;
+}
+
+.edit-tip {
+  margin-top: 24rpx;
+  padding: 0 16rpx;
+}
+
+.tip-text {
+  color: #667085;
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+
+.save-section {
+  margin-top: 36rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-agreement {
+  width: 100%;
+}
+
+.save-btn {
+  width: 224rpx;
+  height: 72rpx;
+  margin: 0;
+  padding: 0;
+  border: 1rpx solid rgba(45, 143, 232, 0.24);
+  border-radius: 999rpx;
+  color: #2d8fe8;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(231, 244, 255, 0.92)),
+    #e7f4ff;
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.76);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 27rpx;
+  font-weight: 680;
+  line-height: 72rpx;
+}
+
+.save-btn:active {
+  transform: translateY(1rpx) scale(0.985);
+  opacity: 0.9;
+}
+
+.save-btn::after {
+  border: none;
+}
+
+.save-btn[disabled] {
+  color: #98a2b3;
+  border-color: rgba(148, 163, 184, 0.12);
+  background: #e4edf5;
+  box-shadow: none;
+}
+
+.save-btn-wide {
+  width: 320rpx;
+}
+
+.account-section {
+  margin-top: 64rpx;
+}
+
+.section-title {
+  display: block;
+  margin: 0 16rpx 16rpx;
+  color: #667085;
+  font-size: 24rpx;
+  line-height: 1.4;
+}
+
+.account-card {
+  min-height: 104rpx;
+  padding: 0 36rpx;
+  border-radius: 34rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.74);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 16rpx 44rpx rgba(34, 73, 116, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.account-card:active {
+  opacity: 0.78;
+}
+
+.account-danger {
+  color: #d94b4b;
+  font-size: 30rpx;
+  font-weight: 680;
+  line-height: 1.4;
+}
+
+.account-arrow {
+  color: #98a2b3;
+  font-size: 42rpx;
+  line-height: 1;
+  font-weight: 300;
+}

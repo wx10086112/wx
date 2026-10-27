@@ -1,0 +1,185 @@
+<view class="page-shell">
+  <view class="status-hero {{order.statusMeta.className}}">
+    <text class="status-hero-text">{{order.statusMeta.text}}</text>
+    <text wx:if="{{order.status === 'PENDING_VERIFY'}}" class="status-hero-tip">等待客户到店出示核销码使用</text>
+    <text wx:if="{{order.status === 'COMPLETED'}}" class="status-hero-tip">订单已完成核销</text>
+    <text wx:if="{{order.status === 'REFUNDING'}}" class="status-hero-tip">客户申请退款，等待商家处理</text>
+    <text wx:if="{{order.status === 'REFUNDED'}}" class="status-hero-tip">退款已处理完成</text>
+    <text wx:if="{{order.status === 'CANCELLED'}}" class="status-hero-tip">订单已取消</text>
+  </view>
+
+  <view class="detail-card panel">
+    <text class="detail-section-title">商品信息</text>
+    <text class="detail-title">{{order.title}}</text>
+    <view class="detail-grid">
+      <view class="detail-row">
+        <text class="detail-label">订单编号</text>
+        <text class="detail-value">{{order.orderNo}}</text>
+      </view>
+      <view class="detail-row">
+        <text class="detail-label">数量</text>
+        <text class="detail-value">{{order.quantity}} 份</text>
+      </view>
+      <view class="detail-row">
+        <text class="detail-label">金额</text>
+        <text class="detail-value price">¥{{order.payAmountText}}</text>
+      </view>
+      <view wx:if="{{order.writeOffCodeMasked}}" class="detail-row">
+        <text class="detail-label">核销码</text>
+        <text class="detail-value code">{{order.writeOffCodeMasked}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="detail-card panel customer-card">
+    <text class="detail-section-title">客户信息</text>
+    <view class="customer-grid">
+      <view class="customer-row">
+        <text class="customer-label">客户</text>
+        <text class="customer-value customer-name">{{order.customerNameText}}</text>
+      </view>
+      <view class="customer-row customer-phone-row">
+        <text class="customer-label">电话</text>
+        <view class="customer-phone-wrap">
+          <text class="customer-value customer-phone">{{order.customerPhoneText}}</text>
+          <view class="call-btn {{order.callPhone ? '' : 'disabled'}}" bindtap="callCustomer">拨号</view>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{order.remark}}" class="customer-note">
+      <text class="customer-note-label">备注</text>
+      <text class="customer-note-text">{{order.remark}}</text>
+    </view>
+  </view>
+
+  <view class="detail-card panel">
+    <text class="detail-section-title">订单进度</text>
+    <view class="timeline">
+      <block wx:if="{{order.historyList && order.historyList.length}}">
+        <view wx:for="{{order.historyList}}" wx:key="key" class="timeline-item {{item.className}}">
+          <view class="timeline-dot"></view>
+          <view class="timeline-content">
+            <text class="timeline-label">{{item.label}}</text>
+            <text wx:if="{{item.timeText}}" class="timeline-time">{{item.timeText}}</text>
+            <text wx:if="{{item.operatorText}}" class="timeline-reason">{{item.operatorText}}</text>
+            <text wx:if="{{item.remarkText}}" class="timeline-reason">Note: {{item.remarkText}}</text>
+          </view>
+        </view>
+      </block>
+      <block wx:else>
+      <view class="timeline-item done">
+        <view class="timeline-dot"></view>
+        <view class="timeline-content">
+          <text class="timeline-label">创建订单</text>
+          <text class="timeline-time">{{order.createTimeText}}</text>
+        </view>
+      </view>
+      <view class="timeline-item done">
+        <view class="timeline-dot"></view>
+        <view class="timeline-content">
+          <text class="timeline-label">支付完成</text>
+          <text class="timeline-time">{{order.payTimeText}}</text>
+        </view>
+      </view>
+      <view wx:if="{{order.verifyTimeText}}" class="timeline-item done">
+        <view class="timeline-dot"></view>
+        <view class="timeline-content">
+          <text class="timeline-label">核销完成</text>
+          <text class="timeline-time">{{order.verifyTimeText}}</text>
+          <text wx:if="{{order.verifyStaffName}}" class="timeline-reason">核销人：{{order.verifyStaffName}}</text>
+        </view>
+      </view>
+      <view wx:if="{{order.refundReason}}" class="timeline-item failed">
+        <view class="timeline-dot"></view>
+        <view class="timeline-content">
+          <text class="timeline-label">退款申请</text>
+          <text class="timeline-reason">原因：{{order.refundReason}}</text>
+        </view>
+      </view>
+      <view wx:if="{{order.refundRejectTimeText}}" class="timeline-item done">
+        <view class="timeline-dot"></view>
+        <view class="timeline-content">
+          <text class="timeline-label">拒绝退款</text>
+          <text class="timeline-time">{{order.refundRejectTimeText}}</text>
+          <text wx:if="{{order.refundRejectReason}}" class="timeline-reason">原因：{{order.refundRejectReason}}</text>
+        </view>
+      </view>
+      <view wx:if="{{order.refundTimeText}}" class="timeline-item done">
+        <view class="timeline-dot"></view>
+        <view class="timeline-content">
+          <text class="timeline-label">退款完成</text>
+          <text class="timeline-time">{{order.refundTimeText}}</text>
+        </view>
+      </view>
+      <view wx:if="{{order.cancelTimeText}}" class="timeline-item failed">
+        <view class="timeline-dot"></view>
+        <view class="timeline-content">
+          <text class="timeline-label">订单取消</text>
+          <text class="timeline-time">{{order.cancelTimeText}}</text>
+          <text wx:if="{{order.cancelReason}}" class="timeline-reason">原因：{{order.cancelReason}}</text>
+        </view>
+      </view>
+      </block>
+    </view>
+  </view>
+
+  <view wx:if="{{order.status === 'PENDING_VERIFY' || order.status === 'REFUNDING'}}" class="action-bar safe-area-bottom">
+    <block wx:if="{{order.status === 'PENDING_VERIFY'}}">
+      <button class="ghost-btn action-btn cancel-style" bindtap="handleCancelOrder">取消订单</button>
+      <button class="primary-btn action-btn" bindtap="goVerify">去核销</button>
+    </block>
+    <block wx:if="{{order.status === 'REFUNDING'}}">
+      <button class="ghost-btn action-btn reject-style" bindtap="handleRejectRefund">拒绝退款</button>
+      <button class="primary-btn action-btn refund-approve" bindtap="handleApproveRefund">同意退款</button>
+    </block>
+  </view>
+
+  <view wx:if="{{cancelModalVisible}}" class="cancel-modal-mask">
+    <view class="cancel-modal-card">
+      <text class="cancel-modal-title">取消订单</text>
+      <text class="cancel-modal-desc">请填写取消原因，便于后续对账和售后查看。</text>
+      <textarea
+        class="cancel-reason-input"
+        value="{{cancelReason}}"
+        bindinput="handleCancelReasonInput"
+        placeholder="例如：客户临时无法到店"
+        maxlength="80"
+        auto-focus
+      ></textarea>
+      <view class="cancel-modal-actions">
+        <button class="cancel-modal-btn secondary" bindtap="closeCancelModal">再想想</button>
+        <button class="cancel-modal-btn primary" bindtap="confirmCancelOrder">确认取消</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{approveRefundModalVisible}}" class="cancel-modal-mask">
+    <view class="cancel-modal-card">
+      <text class="cancel-modal-title">同意退款</text>
+      <text class="cancel-modal-desc">确认同意该订单的退款申请吗？退款将原路返回给用户。</text>
+      <view class="cancel-modal-actions">
+        <button class="cancel-modal-btn secondary" bindtap="closeApproveRefundModal">再核对</button>
+        <button class="cancel-modal-btn success" bindtap="confirmApproveRefund">同意退款</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{rejectRefundModalVisible}}" class="cancel-modal-mask">
+    <view class="cancel-modal-card">
+      <text class="cancel-modal-title">拒绝退款</text>
+      <text class="cancel-modal-desc">请填写拒绝退款原因，用户端和售后记录会使用这段说明。</text>
+      <textarea
+        class="cancel-reason-input"
+        value="{{rejectRefundReason}}"
+        bindinput="handleRejectRefundReasonInput"
+        placeholder="例如：团购券仍在有效期内，可继续到店使用"
+        maxlength="80"
+        auto-focus
+      ></textarea>
+      <view class="cancel-modal-actions">
+        <button class="cancel-modal-btn secondary" bindtap="closeRejectRefundModal">返回</button>
+        <button class="cancel-modal-btn primary" bindtap="confirmRejectRefund">确认拒绝</button>
+      </view>
+    </view>
+  </view>
+</view>

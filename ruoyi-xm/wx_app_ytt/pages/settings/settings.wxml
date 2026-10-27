@@ -1,0 +1,94 @@
+<view class="settings-page">
+  <view class="settings-card settings-card--main">
+    <view class="settings-row" bindtap="goProfile">
+      <text class="row-title">账号与个人信息管理</text>
+      <text class="row-arrow">›</text>
+    </view>
+    <view class="settings-row" bindtap="openAgreementSelector">
+      <text class="row-title">服务与协议</text>
+      <text class="row-arrow">›</text>
+    </view>
+    <view class="settings-row" bindtap="openPanel" data-type="collection">
+      <text class="row-title">个人信息收集清单</text>
+      <text class="row-arrow">›</text>
+    </view>
+    <view class="settings-row" bindtap="openPanel" data-type="sharing">
+      <text class="row-title">第三方信息共享清单</text>
+      <text class="row-arrow">›</text>
+    </view>
+    <view class="settings-row" bindtap="openPanel" data-type="summary">
+      <text class="row-title">隐私政策摘要</text>
+      <text class="row-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="settings-card settings-card--single" bindtap="openQualificationPanel">
+    <view class="single-row">
+      <text class="row-title">商家资质信息</text>
+      <text class="row-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="settings-card settings-card--single" bindtap="showVersionInfo">
+    <view class="single-row">
+      <text class="row-title">关于</text>
+      <text class="version-text">{{versionText}}</text>
+    </view>
+  </view>
+
+  <view wx:if="{{isLoggedIn}}" class="settings-card logout-card" bindtap="handleLogout">
+    <view class="single-row">
+      <text class="logout-text">退出登录</text>
+    </view>
+  </view>
+
+  <view wx:if="{{showAgreementPanel}}" class="settings-modal" catchtouchmove="preventMove">
+    <view class="settings-mask" bindtap="closeAgreementSelector"></view>
+    <view class="settings-sheet">
+      <view class="sheet-header">
+        <text class="sheet-title">服务与协议</text>
+        <text class="sheet-close" bindtap="closeAgreementSelector">×</text>
+      </view>
+      <view class="agreement-wrap">
+        <agreement-consent></agreement-consent>
+        <view class="agreement-row" bindtap="openWechatPrivacy">
+          <text class="agreement-row-title">微信小程序用户隐私保护指引</text>
+          <text class="row-arrow">›</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{activePanel}}" class="settings-modal" catchtouchmove="preventMove">
+    <view class="settings-mask" bindtap="closePanel"></view>
+    <view class="settings-sheet">
+      <view class="sheet-header">
+        <text class="sheet-title">{{panelData.title}}</text>
+        <text class="sheet-close" bindtap="closePanel">×</text>
+      </view>
+
+      <scroll-view scroll-y class="sheet-scroll">
+        <view wx:if="{{activePanel === 'qualification'}}" class="qualification-list">
+          <view class="merchant-name">{{merchantName}}</view>
+          <view wx:for="{{licenseList}}" wx:key="label" class="license-item" bindtap="previewLicense" data-image="{{item.image}}">
+            <view class="license-main">
+              <text class="license-title">{{item.label}}</text>
+              <text wx:if="{{item.number}}" class="license-number">证照编号：{{item.number}}</text>
+            </view>
+            <view class="license-status {{item.isPublic ? 'ready' : ''}}">{{item.status}}</view>
+          </view>
+        </view>
+
+        <view wx:else class="info-groups">
+          <view wx:for="{{panelData.groups}}" wx:key="title" class="info-group">
+            <text class="info-group-title">{{item.title}}</text>
+            <view wx:for="{{item.items}}" wx:for-item="line" wx:key="*this" class="info-line">
+              <text class="info-dot"></text>
+              <text class="info-text">{{line}}</text>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+</view>

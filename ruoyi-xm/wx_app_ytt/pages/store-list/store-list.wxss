@@ -1,0 +1,107 @@
+.store-page {
+  min-height: 100vh;
+  padding: 24rpx 24rpx 40rpx;
+  background: #f5f7fa;
+  box-sizing: border-box;
+}
+
+.state-text {
+  padding: 120rpx 0;
+  text-align: center;
+  color: #8a94a6;
+  font-size: 28rpx;
+}
+
+.page-head {
+  padding: 8rpx 8rpx 24rpx;
+}
+
+.page-title {
+  display: block;
+  color: #1f2d3d;
+  font-size: 38rpx;
+  font-weight: 700;
+}
+
+.page-subtitle {
+  display: block;
+  margin-top: 8rpx;
+  color: #8a94a6;
+  font-size: 26rpx;
+}
+
+.store-card {
+  margin-bottom: 20rpx;
+  padding: 26rpx 24rpx;
+  border-radius: 20rpx;
+  background: #ffffff;
+  border: 1rpx solid #edf1f5;
+}
+
+.store-card.is-current {
+  border-color: #2f7d5b;
+  box-shadow: 0 8rpx 24rpx rgba(47, 125, 91, 0.12);
+}
+
+.store-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.store-name {
+  color: #1f2d3d;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.tag {
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+}
+
+.tag-main {
+  color: #8a6d2f;
+  background: #fbf3df;
+}
+
+.tag-current {
+  color: #2f7d5b;
+  background: #e8f4ee;
+}
+
+.store-distance {
+  margin-left: auto;
+  color: #2f7d5b;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.store-address,
+.store-meta {
+  display: block;
+  margin-top: 10rpx;
+  color: #667085;
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+
+.store-actions {
+  display: flex;
+  gap: 32rpx;
+  margin-top: 18rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx solid #f1f3f6;
+}
+
+.action {
+  color: #2f7d5b;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.action-primary {
+  margin-left: auto;
+}

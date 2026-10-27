@@ -5,6 +5,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.mall.finance.domain.MerchantSettlementRecord;
 import com.ruoyi.mall.finance.service.IMerchantSettlementRecordService;
 import com.ruoyi.mall.merchant.domain.Merchant;
+import com.ruoyi.mall.merchant.domain.MerchantStore;
 import com.ruoyi.mall.merchant.service.IMerchantService;
 import com.ruoyi.wxmini.dto.merchant.*;
 import com.ruoyi.wxmini.service.IMerchantMiniService;
@@ -404,6 +405,26 @@ public class MerchantMiniController {
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
+    }
+
+    @GetMapping("/store/list")
+    public AjaxResult listStores() {
+        AjaxResult accessDenied = checkAccess(PERMISSION_STAFF_MANAGE);
+        if (accessDenied != null) {
+            return accessDenied;
+        }
+        List<MerchantStore> stores = merchantMiniService.listStores();
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (MerchantStore store : stores) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("id", store.getId());
+            item.put("name", store.getName());
+            item.put("address", store.getAddress());
+            item.put("status", store.getStatus());
+            item.put("isMain", store.getIsMain());
+            result.add(item);
+        }
+        return AjaxResult.success(result);
     }
 
     @GetMapping("/staff/list")

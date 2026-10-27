@@ -14,6 +14,8 @@ public class MerchantMiniStaffUserDto {
 
     private Long storeId;
 
+    private String storeName;
+
     private String name;
 
     private String phone;
@@ -66,6 +68,14 @@ public class MerchantMiniStaffUserDto {
 
     public void setStoreId(Long storeId) {
         this.storeId = storeId;
+    }
+
+    public String getStoreName() {
+        return storeName;
+    }
+
+    public void setStoreName(String storeName) {
+        this.storeName = storeName;
     }
 
     public String getName() {

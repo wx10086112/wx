@@ -1,0 +1,64 @@
+<view class="page-shell mine-page">
+  <view class="profile-card">
+    <view class="profile-top">
+      <view class="profile-main">
+        <view class="name-row">
+          <text class="user-name">{{staffUser.name}}</text>
+          <text class="role-pill">{{staffUser.roleName}}</text>
+        </view>
+        <text class="user-meta">{{staffUser.phone}}</text>
+      </view>
+      <view class="status-pill">{{storeInfo.businessStatus ? '营业中' : '休息中'}}</view>
+    </view>
+    <view class="store-block">
+      <text class="store-name">{{storeInfo.storeName}}</text>
+      <text class="store-desc">{{storeInfo.businessHours}} · {{storeInfo.shortName}}</text>
+    </view>
+  </view>
+
+  <view wx:if="{{operationList.length}}" class="panel section-card">
+    <view
+      wx:for="{{operationList}}"
+      wx:key="title"
+      class="menu-item"
+      bindtap="goMenu"
+      data-url="{{item.url}}"
+      data-istab="{{item.isTab}}"
+    >
+      <view class="menu-main">
+        <text class="menu-label">{{item.title}}</text>
+      </view>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <view wx:if="{{managementList.length}}" class="panel section-card">
+    <view
+      wx:for="{{managementList}}"
+      wx:key="title"
+      class="menu-item"
+      bindtap="goMenu"
+      data-url="{{item.url}}"
+      data-istab="{{item.isTab}}"
+    >
+      <view class="menu-main">
+        <text class="menu-label">{{item.title}}</text>
+      </view>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <button class="logout-btn" bindtap="logout">退出登录</button>
+
+  <view class="merchant-tabbar safe-area-bottom">
+    <view
+      wx:for="{{merchantNavList}}"
+      wx:key="key"
+      class="merchant-tabbar__item {{item.active ? 'active' : ''}}"
+      bindtap="goMerchantTab"
+      data-url="{{item.url}}"
+    >
+      <text class="merchant-tabbar__label">{{item.label}}</text>
+    </view>
+  </view>
+</view>

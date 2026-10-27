@@ -1,0 +1,28 @@
+<view wx:if="{{isLoggedIn}}" class="mine-page">
+  <view class="mine-top">
+    <view class="user-row">
+      <view class="user-main">
+        <image class="avatar" src="{{userInfo.avatarUrl || '/assets/images/avatar.svg'}}" mode="aspectFill"></image>
+        <view class="user-name-row">
+          <text class="user-name">{{userInfo.nickName || '微信用户'}}</text>
+        </view>
+      </view>
+    </view>
+
+  </view>
+
+  <view class="menu-card">
+    <block wx:for="{{menuList}}" wx:key="label">
+      <view
+        class="menu-row"
+        bindtap="goMenu"
+        data-type="{{item.type}}"
+      >
+        <view class="menu-icon icon-{{item.icon}}"></view>
+        <text class="menu-title">{{item.label}}</text>
+        <text class="menu-arrow">›</text>
+      </view>
+    </block>
+  </view>
+
+</view>

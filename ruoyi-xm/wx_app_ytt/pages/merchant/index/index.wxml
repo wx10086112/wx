@@ -1,0 +1,6 @@
+<view class="merchant-index-redirect">
+  <view class="redirect-card">
+    <view class="redirect-dot"></view>
+    <text class="redirect-title">正在进入商家端</text>
+  </view>
+</view>

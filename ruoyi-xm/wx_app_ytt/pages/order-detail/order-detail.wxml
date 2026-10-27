@@ -1,0 +1,145 @@
+<view class="order-detail-page">
+  <view class="loading-state" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:else class="detail-content">
+    <view class="status-section {{order.statusClass}}-bg">
+      <view class="status-icon">{{order.statusIcon}}</view>
+      <text class="status-text">{{order.statusText}}</text>
+      <text wx:if="{{order.status === 'PAID_UNUSED'}}" class="status-tip">请到店出示使用码完成服务</text>
+      <text wx:if="{{order.status === 'USED_COMPLETED'}}" class="status-tip">门店已完成确认，可再次购买</text>
+      <text wx:if="{{order.status === 'REFUNDING'}}" class="status-tip">退款审核中，请留意消息通知</text>
+    </view>
+
+    <view wx:if="{{order.status === 'PAID_UNUSED'}}" class="write-off-card">
+      <view class="card-header flex flex-between flex-align-center">
+        <text class="card-title fs-32 text-bold">到店核销码</text>
+        <view class="status-badge status-paid">待使用</view>
+      </view>
+
+      <view wx:if="{{order.writeOffQrText}}" class="qr-section">
+        <qrcode text="{{order.writeOffQrText}}" size="{{260}}" />
+      </view>
+
+      <view class="code-display">
+        <text
+          wx:for="{{order.writeOffCodeGroups}}"
+          wx:key="*this"
+          class="code-group"
+        >{{item}}</text>
+      </view>
+
+      <view class="code-info">
+        <text>有效期至 {{order.writeOffDeadlineText}}</text>
+      </view>
+    </view>
+
+    <view class="product-card">
+      <view class="card-header flex flex-between flex-align-center">
+        <text class="card-title fs-32 text-bold">商品明细</text>
+        <text class="item-count-text">{{order.itemCountText}}</text>
+      </view>
+      <text class="product-merchant text-muted fs-24 mt-8">{{order.merchantName}}</text>
+      <view class="order-product-list">
+        <view wx:for="{{order.items}}" wx:key="productId" class="order-product-item">
+          <image src="{{item.image}}" class="product-image" mode="aspectFill" lazy-load></image>
+          <view class="product-text">
+            <text class="product-title text-ellipsis-2 fs-30">{{item.title}}</text>
+            <view class="product-price-row">
+              <text class="item-price">¥{{item.priceText}}</text>
+              <text class="item-quantity">x{{item.quantity}}</text>
+            </view>
+            <text class="item-subtotal">小计 ¥{{item.subtotalText}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="order-info-card">
+      <view class="card-header mb-24">
+        <text class="card-title fs-32 text-bold">订单信息</text>
+      </view>
+      <view class="info-item flex flex-between py-20 border-bottom">
+        <text class="info-label text-muted">订单编号</text>
+        <text class="info-value">{{order.orderNo}}</text>
+      </view>
+      <view class="info-item flex flex-between py-20 border-bottom">
+        <text class="info-label text-muted">下单时间</text>
+        <text class="info-value">{{order.createTimeText}}</text>
+      </view>
+      <view wx:if="{{order.payTimeText}}" class="info-item flex flex-between py-20 border-bottom">
+        <text class="info-label text-muted">支付时间</text>
+        <text class="info-value">{{order.payTimeText}}</text>
+      </view>
+      <view wx:if="{{order.writeOffTimeText}}" class="info-item flex flex-between py-20 border-bottom">
+        <text class="info-label text-muted">核销时间</text>
+        <text class="info-value">{{order.writeOffTimeText}}</text>
+      </view>
+      <view wx:if="{{order.refundTimeText}}" class="info-item flex flex-between py-20 border-bottom">
+        <text class="info-label text-muted">退款时间</text>
+        <text class="info-value">{{order.refundTimeText}}</text>
+      </view>
+      <view wx:if="{{order.refundReason}}" class="info-item flex flex-between py-20">
+        <text class="info-label text-muted">退款原因</text>
+        <text class="info-value">{{order.refundReason}}</text>
+      </view>
+    </view>
+
+    <view class="price-info-card">
+      <view class="card-header mb-24">
+        <text class="card-title fs-32 text-bold">支付信息</text>
+      </view>
+      <view class="price-item flex flex-between py-16">
+        <text class="price-label text-muted">商品金额</text>
+        <text class="price-value">¥{{order.priceAmountText}}</text>
+      </view>
+      <view wx:if="{{order.couponAmount}}" class="price-item flex flex-between py-16">
+        <text class="price-label text-muted">优惠券抵扣</text>
+        <text class="price-value text-success">-¥{{order.couponAmountText}}</text>
+      </view>
+      <view class="price-item flex flex-between py-24 border-top mt-16">
+        <text class="total-label fs-30">实付金额</text>
+        <text class="total-price fs-40">¥{{order.payAmountText}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{order.historyList && order.historyList.length}}" class="history-card">
+      <view class="card-header mb-24">
+        <text class="card-title fs-32 text-bold">订单历史</text>
+      </view>
+      <view class="history-timeline">
+        <view wx:for="{{order.historyList}}" wx:key="key" class="history-item {{item.className}}">
+          <view class="history-dot"></view>
+          <view class="history-content">
+            <text class="history-label">{{item.label}}</text>
+            <text wx:if="{{item.timeText}}" class="history-time">{{item.timeText}}</text>
+            <text wx:if="{{item.operatorText}}" class="history-extra">{{item.operatorText}}</text>
+            <text wx:if="{{item.remarkText}}" class="history-extra">说明：{{item.remarkText}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="bottom-bar safe-area-bottom" wx:if="{{!loading}}">
+    <view wx:if="{{order.status === 'PENDING_PAY'}}" class="bar-actions is-pair">
+      <button class="action-btn action-btn-outline" bindtap="cancelOrder">取消订单</button>
+      <button class="action-btn action-btn-primary" bindtap="payOrder">去支付</button>
+    </view>
+    <view wx:if="{{order.status === 'PAID_UNUSED'}}" class="bar-actions is-pair">
+      <button class="action-btn action-btn-outline" bindtap="applyRefund">申请退款</button>
+      <button class="action-btn action-btn-primary" bindtap="queryWriteOffResult">刷新核销状态</button>
+    </view>
+    <view wx:if="{{order.status === 'USED_COMPLETED'}}" class="bar-actions is-single">
+      <button class="action-btn action-btn-primary" bindtap="buyAgain">再来一单</button>
+    </view>
+    <view wx:if="{{order.status === 'REFUNDING' || order.status === 'REFUNDED'}}" class="bar-actions is-pair">
+      <button class="action-btn action-btn-outline" bindtap="contactMerchant">联系客服</button>
+      <button class="action-btn action-btn-primary" bindtap="buyAgain">重新购买</button>
+    </view>
+    <view wx:if="{{order.status === 'CANCELLED' || order.status === 'CLOSED'}}" class="bar-actions is-single">
+      <button class="action-btn action-btn-primary" bindtap="buyAgain">重新购买</button>
+    </view>
+  </view>
+</view>

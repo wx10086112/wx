@@ -1,0 +1,7 @@
+{
+  "navigationStyle": "custom",
+  "navigationBarTitleText": "裕推堂",
+  "usingComponents": {
+    "agreement-consent": "/components/agreement-consent/agreement-consent"
+  }
+}

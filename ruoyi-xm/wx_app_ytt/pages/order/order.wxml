@@ -1,0 +1,57 @@
+<view class="order-page">
+  <view class="page-intro">
+    <text class="page-title">我的订单</text>
+  </view>
+
+  <view class="overview-strip">
+    <view
+      wx:for="{{orderStats}}"
+      wx:key="label"
+      class="overview-item {{currentTab === item.tab ? 'active' : ''}}"
+      bindtap="onQuickFilterTap"
+      data-tab="{{item.tab}}"
+    >
+      <text class="overview-value">{{item.value}}</text>
+      <text class="overview-label">{{item.label}}</text>
+    </view>
+  </view>
+
+  <view class="order-tabs">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="value"
+      class="tab-item {{currentTab === item.value ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="{{item.value}}"
+    >
+      <text class="tab-text">{{item.label}}</text>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-card">
+    <view class="loading-dot"></view>
+    <text class="loading-text">正在加载订单</text>
+  </view>
+
+  <block wx:elif="{{orderList.length}}">
+    <view class="order-list">
+      <order-card
+        wx:for="{{orderList}}"
+        wx:key="id"
+        order="{{item}}"
+        showActions="{{true}}"
+        bind:click="onOrderTap"
+        bind:cancel="onCancelOrder"
+        bind:pay="onPayOrder"
+        bind:refund="onRefundOrder"
+        bind:rebuy="onRebuyOrder"
+      ></order-card>
+    </view>
+  </block>
+
+  <view wx:else class="empty-card">
+    <view class="empty-badge">订单</view>
+    <text class="empty-title">暂无相关订单</text>
+    <view class="empty-action" bindtap="goShopping">去逛逛</view>
+  </view>
+</view>

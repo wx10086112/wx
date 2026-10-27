@@ -15,6 +15,10 @@ public class MerchantUser extends BaseEntity {
     private String realName;
     private String phone;
     private String role;
+    /** 所属门店ID（NULL 表示全部门店，仅 owner 允许） */
+    private Long storeId;
+    /** 门店名称（非数据库字段，列表展示用） */
+    private String storeName;
     private Integer status;
     private Date lastLoginTime;
     /** 删除标志（0代表存在 2代表删除） */
@@ -34,6 +38,10 @@ public class MerchantUser extends BaseEntity {
     public void setPhone(String phone) { this.phone = phone; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+    public Long getStoreId() { return storeId; }
+    public void setStoreId(Long storeId) { this.storeId = storeId; }
+    public String getStoreName() { return storeName; }
+    public void setStoreName(String storeName) { this.storeName = storeName; }
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
     public Date getLastLoginTime() { return lastLoginTime; }

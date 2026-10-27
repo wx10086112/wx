@@ -1,6 +1,7 @@
 package com.ruoyi.wxmini.service.impl;
 
 import com.ruoyi.mall.common.bo.WxMiniAuthContext;
+import com.ruoyi.mall.merchant.domain.MerchantStore;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniFinanceLedgerDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniFinanceOverviewDto;
 import com.ruoyi.wxmini.dto.merchant.MerchantMiniBookingDto;
@@ -320,6 +321,19 @@ public class MerchantMiniMockServiceImpl implements IMerchantMiniService {
     @Override
     public synchronized List<MerchantMiniStaffUserDto> listStaff() {
         return cloneStaffList();
+    }
+
+    @Override
+    public List<MerchantStore> listStores() {
+        MerchantStore store = new MerchantStore();
+        store.setId(STORE_ID);
+        store.setMerchantId(MERCHANT_ID);
+        store.setName("示例门店");
+        store.setStatus(1);
+        store.setIsMain(1);
+        List<MerchantStore> stores = new ArrayList<>();
+        stores.add(store);
+        return stores;
     }
 
     @Override

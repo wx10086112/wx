@@ -1,0 +1,42 @@
+<view class="cart-page">
+  <view wx:if="{{hasItems}}" class="cart-content">
+    <view class="cart-header card">
+      <view>
+        <text class="section-title">当前订单</text>
+        <text class="section-desc">{{cart.merchantName || '同一门店商品可合并下单'}}</text>
+      </view>
+      <button class="ghost-btn clear-btn" bindtap="clearCart">清空</button>
+    </view>
+
+    <view class="card item-card" wx:for="{{cart.items}}" wx:key="productId">
+      <image src="{{item.image}}" class="item-image" mode="aspectFill" lazy-load></image>
+      <view class="item-main">
+        <text class="item-title">{{item.title}}</text>
+        <text class="item-meta">库存 {{item.stock}}</text>
+        <view class="item-bottom">
+          <text class="item-price">¥{{item.priceText}}</text>
+          <view class="quantity-box">
+            <view class="quantity-btn" data-id="{{item.productId}}" data-delta="-1" bindtap="changeQuantity">-</view>
+            <text class="quantity-value">{{item.quantity}}</text>
+            <view class="quantity-btn" data-id="{{item.productId}}" data-delta="1" bindtap="changeQuantity">+</view>
+          </view>
+        </view>
+      </view>
+      <view class="remove-btn" data-id="{{item.productId}}" catchtap="removeItem">×</view>
+    </view>
+  </view>
+
+  <view wx:else class="empty-card">
+    <text class="empty-title">购物车为空</text>
+    <text class="empty-desc">先去选择想购买的团购商品</text>
+    <button class="primary-btn empty-btn" bindtap="goHome">去逛逛</button>
+  </view>
+
+  <view wx:if="{{hasItems}}" class="cart-bar safe-area-bottom">
+    <view class="summary-block">
+      <text class="summary-label">共 {{summary.totalQuantity}} 件</text>
+      <text class="summary-price">¥{{summary.totalAmountText}}</text>
+    </view>
+    <button class="primary-btn checkout-btn" bindtap="goCheckout">去结算</button>
+  </view>
+</view>

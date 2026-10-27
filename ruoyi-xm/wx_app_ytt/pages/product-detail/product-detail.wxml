@@ -1,0 +1,82 @@
+<view class="product-page">
+  <view class="loading-state" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:else class="product-detail">
+    <swiper class="image-swiper" indicator-dots autoplay circular interval="3000">
+      <swiper-item>
+        <view class="product-image-frame">
+          <image src="{{product.image}}" class="product-image" mode="aspectFill" style="{{productImageCropStyle}}"></image>
+        </view>
+      </swiper-item>
+    </swiper>
+
+    <view class="price-section">
+      <view class="price-row">
+        <text class="price">¥{{product.priceText}}</text>
+        <text wx:if="{{product.originalPrice > product.price}}" class="original-price">¥{{product.originalPriceText}}</text>
+        <text wx:if="{{product.originalPrice > product.price}}" class="discount-tag">立省{{product.savingAmountText}}元</text>
+      </view>
+      <text class="product-title">{{product.title}}</text>
+      <text wx:if="{{product.soldOut}}" class="sold-out-tip">当前商品已售罄</text>
+      <text class="subtitle">{{product.subtitle}}</text>
+      <view class="highlight-tags" wx:if="{{serviceHighlightList.length}}">
+        <text wx:for="{{serviceHighlightList}}" wx:key="index" class="highlight-tag">{{item}}</text>
+      </view>
+      <view class="stats-row">
+        <text>{{productConfig.salesLabel}} {{product.sales}}</text>
+        <text>{{productConfig.stockLabel}} {{product.stock}}</text>
+        <text>{{productConfig.validDaysLabel}} {{product.validDays}} 天</text>
+      </view>
+    </view>
+
+    <view class="merchant-section" bindtap="goMerchant">
+      <image src="{{merchant.avatar}}" class="merchant-avatar" mode="aspectFill" lazy-load></image>
+      <view class="merchant-info">
+        <text class="merchant-name">{{merchant.name}}</text>
+        <text wx:if="{{merchant.distance}}" class="merchant-meta">{{merchant.distance}} · {{merchant.businessHours}}</text>
+        <text wx:else class="merchant-meta">{{merchant.businessHours}}</text>
+        <text class="merchant-address">{{merchant.address}}</text>
+        <view class="merchant-actions">
+          <text class="merchant-action" catchtap="callMerchant">联系门店</text>
+          <text class="merchant-action" catchtap="viewMerchantLocation">查看地图</text>
+        </view>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+
+    <view class="detail-section">
+      <view class="section-title">{{productConfig.decisionSectionTitle}}</view>
+      <view class="detail-card">
+        <text wx:for="{{decisionList}}" wx:key="index" class="detail-item">{{item}}</text>
+      </view>
+    </view>
+
+    <view class="detail-section">
+      <view class="section-title">{{productConfig.contentSectionTitle}}</view>
+      <view class="detail-card">
+        <text wx:for="{{product.contentDetail}}" wx:key="index" class="detail-item">{{index + 1}}. {{item}}</text>
+        <text class="detail-item">{{product.description}}</text>
+      </view>
+    </view>
+
+    <view class="detail-section">
+      <view class="section-title">{{productConfig.ruleSectionTitle}}</view>
+      <view class="detail-card">
+        <text wx:for="{{ruleList}}" wx:key="index" class="detail-item">{{item}}</text>
+      </view>
+    </view>
+
+  </view>
+
+  <view class="bottom-bar" wx:if="{{!loading}}">
+    <button class="share-btn" open-type="share">{{productConfig.shareText}}</button>
+    <button class="add-cart-btn {{product.soldOut ? 'is-disabled' : ''}}" bindtap="addToCart">{{product.soldOut ? '已售罄' : '加入'}}</button>
+    <button class="buy-btn {{product.soldOut ? 'is-disabled' : ''}}" bindtap="buyNow">{{product.soldOut ? '已售罄' : productConfig.buyButtonText}}</button>
+  </view>
+
+  <view class="floating-cart-btn" wx:if="{{!loading}}" bindtap="goCart">
+    <text class="floating-cart-text">购物车</text>
+  </view>
+</view>

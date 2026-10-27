@@ -1,0 +1,243 @@
+page {
+  --page-bg: #eef5fb;
+  --page-bg-deep: #e5f1fb;
+  --text-main: #111827;
+  --text-sub: #667085;
+  --text-muted: #98a2b3;
+  --line-soft: rgba(20, 54, 91, 0.08);
+  --line-strong: rgba(20, 54, 91, 0.14);
+  --card-bg: rgba(255, 255, 255, 0.86);
+  --card-solid: #ffffff;
+  --blue: #58aef7;
+  --blue-deep: #2d8fe8;
+  --blue-soft: #e7f4ff;
+  --green: #16a36a;
+  --orange: #e58a19;
+  --red: #d94b4b;
+  --radius-xl: 40rpx;
+  --radius-lg: 32rpx;
+  --radius-md: 24rpx;
+  --shadow-card: 0 18rpx 54rpx rgba(34, 73, 116, 0.09);
+  --shadow-soft: 0 12rpx 34rpx rgba(34, 73, 116, 0.07);
+
+  min-height: 100vh;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.94) 0%, rgba(230, 244, 255, 0.9) 44%, rgba(242, 247, 251, 0.96) 100%),
+    var(--page-bg);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+  font-size: 28rpx;
+  color: var(--text-main);
+  box-sizing: border-box;
+}
+
+view,
+text,
+image,
+button,
+input,
+textarea,
+scroll-view {
+  box-sizing: border-box;
+}
+
+button {
+  font: inherit;
+}
+
+.container {
+  padding: 24rpx;
+}
+
+.page-shell {
+  min-height: 100vh;
+  padding: 24rpx;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, rgba(231, 244, 255, 0.9) 42%, rgba(244, 248, 252, 0.96) 100%),
+    var(--page-bg);
+}
+
+.panel {
+  border-radius: var(--radius-lg);
+  border: 1rpx solid rgba(255, 255, 255, 0.72);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72)),
+    var(--card-bg);
+  box-shadow: var(--shadow-card);
+}
+
+.section-title {
+  color: var(--text-main);
+  font-size: 34rpx;
+  font-weight: 760;
+  line-height: 1.28;
+}
+
+.section-desc {
+  margin-top: 8rpx;
+  color: var(--text-sub);
+  font-size: 24rpx;
+  line-height: 1.45;
+}
+
+.primary-btn,
+.ghost-btn {
+  height: 76rpx;
+  margin: 0;
+  padding: 0 26rpx;
+  border: 1rpx solid transparent;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  font-weight: 680;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.78);
+}
+
+.primary-btn {
+  color: var(--blue-deep);
+  border-color: rgba(45, 143, 232, 0.24);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(231, 244, 255, 0.92)),
+    var(--blue-soft);
+}
+
+.ghost-btn {
+  color: #475467;
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.primary-btn::after,
+.ghost-btn::after {
+  border: none;
+}
+
+.primary-btn:active,
+.ghost-btn:active,
+.interactive-card:active {
+  opacity: 0.9;
+  transform: translateY(1rpx) scale(0.985);
+}
+
+.status-tag,
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 680;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.status-tag {
+  padding: 8rpx 16rpx;
+}
+
+.status-tag.blue,
+.status-pending,
+.status-refunding {
+  background: #e7f4ff;
+  color: #237bc7;
+}
+
+.status-tag.green,
+.status-paid {
+  background: #e9f8f1;
+  color: #168257;
+}
+
+.status-tag.orange {
+  background: #fff5e8;
+  color: #c76f12;
+}
+
+.status-tag.gray,
+.status-completed,
+.status-cancelled,
+.status-default {
+  background: #edf2f7;
+  color: #667085;
+}
+
+.empty-text {
+  color: var(--text-sub);
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-bold {
+  font-weight: 700;
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-ellipsis-2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.safe-area-bottom {
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.merchant-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 112rpx;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 10rpx 18rpx calc(10rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.88);
+  border-top: 1rpx solid rgba(255, 255, 255, 0.74);
+  box-shadow: 0 -14rpx 40rpx rgba(34, 73, 116, 0.08);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  z-index: 90;
+}
+
+.merchant-tabbar__item {
+  min-height: 86rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+}
+
+.merchant-tabbar__label {
+  color: #8a9aad;
+  font-size: 22rpx;
+  font-weight: 620;
+  line-height: 1;
+}
+
+.merchant-tabbar__item.active .merchant-tabbar__label {
+  color: var(--blue-deep);
+  font-weight: 760;
+}

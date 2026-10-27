@@ -8,6 +8,8 @@ public class MerchantMiniStaffRequestDto {
     private String realName;
     private String phone;
     private String role;
+    /** 所属门店ID；owner 可为空表示全部门店 */
+    private Long storeId;
 
     public Long getStaffId() {
         return staffId;
@@ -55,5 +57,13 @@ public class MerchantMiniStaffRequestDto {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public Long getStoreId() {
+        return storeId;
+    }
+
+    public void setStoreId(Long storeId) {
+        this.storeId = storeId;
     }
 }

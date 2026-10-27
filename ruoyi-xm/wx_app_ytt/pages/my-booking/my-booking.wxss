@@ -1,0 +1,252 @@
+.my-booking-page {
+  min-height: 100vh;
+  padding: 28rpx 24rpx 70rpx;
+  background:
+    radial-gradient(circle at 18% 6%, rgba(45, 143, 232, 0.12), transparent 30%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.96) 0%, rgba(231, 244, 255, 0.92) 44%, rgba(245, 249, 253, 0.98) 100%),
+    #eef5fb;
+}
+
+.page-hero {
+  padding: 12rpx 8rpx 4rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.eyebrow {
+  display: block;
+  color: #237bc7;
+  font-size: 23rpx;
+  font-weight: 720;
+  letter-spacing: 4rpx;
+}
+
+.page-title {
+  display: block;
+  margin-top: 8rpx;
+  color: #111827;
+  font-size: 44rpx;
+  font-weight: 820;
+  line-height: 1.18;
+}
+
+.hero-badge {
+  height: 56rpx;
+  padding: 0 22rpx;
+  border-radius: 999rpx;
+  color: #237bc7;
+  background: rgba(231, 244, 255, 0.92);
+  border: 1rpx solid rgba(45, 143, 232, 0.18);
+  font-size: 24rpx;
+  font-weight: 680;
+  line-height: 56rpx;
+}
+
+.status-tabs {
+  margin-top: 24rpx;
+  white-space: nowrap;
+}
+
+.status-tabs-inner {
+  display: inline-flex;
+  gap: 12rpx;
+  min-width: 100%;
+}
+
+.status-tab {
+  height: 66rpx;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  color: #667085;
+  background: rgba(211, 229, 244, 0.72);
+  font-size: 25rpx;
+  font-weight: 650;
+  line-height: 66rpx;
+}
+
+.status-tab.active {
+  color: #111827;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10rpx 24rpx rgba(34, 73, 116, 0.11);
+}
+
+.booking-list {
+  padding-top: 18rpx;
+}
+
+.booking-card,
+.empty-card,
+.loading-card {
+  border-radius: 36rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.74);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 16rpx 44rpx rgba(34, 73, 116, 0.08);
+}
+
+.booking-card {
+  padding: 18rpx;
+  display: flex;
+  margin-bottom: 18rpx;
+}
+
+.booking-image {
+  width: 150rpx;
+  height: 150rpx;
+  border-radius: 28rpx;
+  background: #dbeefa;
+  flex-shrink: 0;
+}
+
+.booking-info {
+  flex: 1;
+  min-width: 0;
+  margin-left: 18rpx;
+}
+
+.booking-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+}
+
+.booking-title {
+  flex: 1;
+  min-width: 0;
+  color: #111827;
+  font-size: 29rpx;
+  font-weight: 760;
+  line-height: 1.32;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.status-pill {
+  height: 46rpx;
+  padding: 0 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 720;
+  line-height: 46rpx;
+  flex-shrink: 0;
+}
+
+.status-pill.pending {
+  color: #237bc7;
+  background: #e7f4ff;
+}
+
+.status-pill.confirmed {
+  color: #16764f;
+  background: #e8f8f0;
+}
+
+.status-pill.completed {
+  color: #344054;
+  background: #edf2f7;
+}
+
+.status-pill.cancelled,
+.status-pill.expired,
+.status-pill.default {
+  color: #667085;
+  background: #f2f4f7;
+}
+
+.booking-time {
+  display: block;
+  margin-top: 12rpx;
+  color: #237bc7;
+  font-size: 25rpx;
+  font-weight: 650;
+}
+
+.booking-meta,
+.booking-no {
+  display: block;
+  margin-top: 8rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.35;
+}
+
+.booking-remark {
+  margin-top: 12rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 18rpx;
+  color: #475467;
+  background: #f6fbff;
+  font-size: 23rpx;
+  line-height: 1.4;
+}
+
+.booking-bottom {
+  margin-top: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.cancel-btn {
+  height: 54rpx;
+  padding: 0 22rpx;
+  border-radius: 999rpx;
+  color: #237bc7;
+  background: #e7f4ff;
+  border: 1rpx solid rgba(45, 143, 232, 0.18);
+  font-size: 24rpx;
+  font-weight: 680;
+  line-height: 54rpx;
+  flex-shrink: 0;
+}
+
+.empty-card,
+.loading-card {
+  margin-top: 22rpx;
+  min-height: 240rpx;
+  padding: 38rpx 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.empty-badge {
+  min-width: 88rpx;
+  height: 52rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  color: #237bc7;
+  background: #e7f4ff;
+  font-size: 24rpx;
+  font-weight: 720;
+  line-height: 52rpx;
+}
+
+.empty-title {
+  margin-top: 18rpx;
+  color: #111827;
+  font-size: 31rpx;
+  font-weight: 760;
+}
+
+.empty-desc,
+.loading-text {
+  margin-top: 12rpx;
+  color: #667085;
+  font-size: 25rpx;
+  line-height: 1.45;
+}
+
+.loading-dot {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  border: 5rpx solid rgba(45, 143, 232, 0.16);
+  border-top-color: #2d8fe8;
+}
